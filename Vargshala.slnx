@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vargshala.API/Vargshala.API.csproj" />
+    <Project Path="src/Vargshala.Application/Vargshala.Application.csproj" />
+    <Project Path="src/Vargshala.Contracts/Vargshala.Contracts.csproj" />
+    <Project Path="src/Vargshala.Domain/Vargshala.Domain.csproj" />
+    <Project Path="src/Vargshala.Infrastructure/Vargshala.Infrastructure.csproj" />
+    <Project Path="src/Vargshala.Web/Vargshala.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Vargshala.IntegrationTests/Vargshala.IntegrationTests.csproj" />
+    <Project Path="tests/Vargshala.UnitTests/Vargshala.UnitTests.csproj" />
+  </Folder>
+</Solution>

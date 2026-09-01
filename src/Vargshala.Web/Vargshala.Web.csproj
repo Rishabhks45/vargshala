@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vargshala.Contracts\Vargshala.Contracts.csproj" />
+  </ItemGroup>
+
+  <!-- Auto-compile Tailwind CSS on dotnet build -->
+  <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="Building Tailwind CSS..." />
+    <Exec Command="&quot;$(ProjectDir)tailwindcss.exe&quot; -i &quot;$(ProjectDir)Styles\app.css&quot; -o &quot;$(ProjectDir)wwwroot\app.css&quot; $(TailwindMinifyFlag)"
+          WorkingDirectory="$(ProjectDir)"
+          ContinueOnError="false" />
+  </Target>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <TailwindMinifyFlag>--minify</TailwindMinifyFlag>
+  </PropertyGroup>
+
+</Project>
