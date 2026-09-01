@@ -36,7 +36,7 @@ module.exports = {
           900: '#4c1d95',
           950: '#2e1065',
         },
-        // Emerald (Success & Completed Badges)
+        // Emerald (Success & Badges)
         emerald: {
           50: '#ecfdf5',
           100: '#d1fae5',
@@ -44,6 +44,12 @@ module.exports = {
           500: '#10b981',
           600: '#059669',
           700: '#047857',
+        },
+        // Coral / Amber Accent
+        coral: {
+          400: '#fb7185',
+          500: '#f43f5e',
+          600: '#e11d48',
         },
         // Slate & Dark Surfaces
         surface: {
@@ -63,10 +69,40 @@ module.exports = {
         'soft-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
         'brand': '0 10px 25px -5px rgba(79, 70, 229, 0.3), 0 8px 10px -6px rgba(79, 70, 229, 0.2)',
         'violet-glow': '0 10px 25px -5px rgba(124, 58, 237, 0.3), 0 8px 10px -6px rgba(124, 58, 237, 0.2)',
+        'float': '0 15px 35px -5px rgba(15, 23, 42, 0.12), 0 5px 15px rgba(0, 0, 0, 0.06)',
       },
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.5rem',
+      },
+      animation: {
+        'float-slow': 'float 6s ease-in-out infinite',
+        'float-medium': 'float 4s ease-in-out infinite',
+        'float-reverse': 'float-reverse 5s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'plane-fly': 'plane-fly 4s ease-in-out infinite',
+        'dash-flow': 'dash-flow 20s linear infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-12px)' },
+        },
+        'float-reverse': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(12px)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
+          '50%': { opacity: '0.4', transform: 'scale(1.05)' },
+        },
+        'plane-fly': {
+          '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+          '50%': { transform: 'translate(10px, -15px) rotate(3deg)' },
+        },
+        'dash-flow': {
+          to: { strokeDashoffset: '-100' },
+        },
       }
     },
   },
