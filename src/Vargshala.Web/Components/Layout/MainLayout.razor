@@ -1,27 +1,40 @@
 @inherits LayoutComponentBase
 
 <div class="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
-    <!-- Sidebar Navigation -->
-    <NavMenu />
+    <!-- Sidebar Navigation (Collapsible with Icon-only mode) -->
+    <NavMenu @bind-IsCollapsed="_sidebarCollapsed" />
 
     <!-- Main Content Area -->
     <div class="flex flex-col flex-1 min-w-0">
         <!-- Top Navbar -->
-        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-            <!-- Search Bar -->
-            <div class="relative w-96">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+            
+            <!-- Left: Sidebar Toggle Button & Search Bar -->
+            <div class="flex items-center gap-4">
+                <button type="button" 
+                        @onclick="ToggleSidebar"
+                        class="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="@(_sidebarCollapsed ? "Expand Menu" : "Collapse to Icons")">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
-                </span>
-                <input type="text" 
-                       placeholder="Search students, batches, fee records..." 
-                       class="w-full py-2 pl-9 pr-4 text-sm bg-slate-100 dark:bg-slate-800/70 border border-transparent rounded-xl focus:border-brand-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400" />
+                </button>
+
+                <!-- Search Bar -->
+                <div class="relative w-80 lg:w-96 hidden sm:block">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" 
+                           placeholder="Search students, batches, fee records..." 
+                           class="w-full py-2 pl-9 pr-4 text-xs bg-slate-100 dark:bg-slate-800/70 border border-transparent rounded-xl focus:border-brand-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400" />
+                </div>
             </div>
 
             <!-- Top Right Action Controls -->
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3.5">
                 <!-- Academic Session Badge -->
                 <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200 dark:border-brand-800/40 text-xs font-semibold">
                     <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
@@ -37,8 +50,8 @@
                 </button>
 
                 <!-- Quick Action: New Admission -->
-                <button class="btn-brand-primary text-xs py-2 px-4 shadow-brand">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button class="btn-brand-primary text-xs py-2 px-3.5 shadow-brand">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     <span>New Admission</span>
@@ -47,8 +60,17 @@
         </header>
 
         <!-- Page Body Content -->
-        <main class="flex-1 p-8 overflow-y-auto">
+        <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
             @Body
         </main>
     </div>
 </div>
+
+@code {
+    private bool _sidebarCollapsed = false;
+
+    private void ToggleSidebar()
+    {
+        _sidebarCollapsed = !_sidebarCollapsed;
+    }
+}

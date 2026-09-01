@@ -1,99 +1,217 @@
-<aside class="flex flex-col w-64 min-h-screen bg-slate-900 border-r border-slate-800 text-slate-300">
-    <!-- Brand Header -->
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-800/80">
-        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-violet-500 shadow-brand text-white font-bold text-xl">
-            V
-        </div>
-        <div>
-            <div class="font-bold text-lg text-white tracking-tight flex items-center gap-1.5">
-                Vargshala
-                <span class="text-[10px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">SaaS</span>
+<aside class="@GetAsideClass()">
+    
+    <!-- Brand Header & Collapse Toggle -->
+    <div class="@GetHeaderClass()">
+        @if (!IsCollapsed)
+        {
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-violet-500 shadow-brand text-white font-bold text-lg shrink-0">
+                    V
+                </div>
+                <div class="min-w-0">
+                    <div class="font-bold text-base text-white tracking-tight flex items-center gap-1.5">
+                        <span class="truncate">Vargshala</span>
+                        <span class="text-[9px] uppercase font-extrabold tracking-wider px-1 py-0.2 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">SaaS</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 truncate">Institute Portal</p>
+                </div>
             </div>
-            <p class="text-xs text-slate-400">Coaching Management</p>
-        </div>
+        }
+        else
+        {
+            <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-violet-500 shadow-brand text-white font-bold text-xl cursor-pointer" 
+                 title="Expand Sidebar"
+                 @onclick="ToggleCollapse">
+                V
+            </div>
+        }
+
+        <!-- Toggle Collapse Button -->
+        @if (!IsCollapsed)
+        {
+            <button type="button" 
+                    @onclick="ToggleCollapse" 
+                    class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Collapse Sidebar (Icon Only)">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+            </button>
+        }
     </div>
 
     <!-- Navigation Menu -->
-    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <div class="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
-            Main Menu
-        </div>
+    <nav class="flex-1 px-2.5 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
+        
+        @if (!IsCollapsed)
+        {
+            <div class="px-3 pb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                Main Menu
+            </div>
+        }
 
-        <NavLink class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="" Match="NavLinkMatch.All" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Dashboard -->
+        <NavLink class="@GetNavLinkClass()" 
+                 href="" 
+                 Match="NavLinkMatch.All" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Dashboard" : "")">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
-            <span>Dashboard</span>
+            @if (!IsCollapsed)
+            {
+                <span class="truncate">Dashboard</span>
+            }
         </NavLink>
 
-        <NavLink class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="students" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <div class="flex items-center gap-3">
-                <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Students -->
+        <NavLink class="@GetNavLinkSpreadClass()" 
+                 href="students" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Students (125)" : "")">
+            <div class="flex items-center gap-3 min-w-0">
+                <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
-                <span>Students</span>
+                @if (!IsCollapsed)
+                {
+                    <span class="truncate">Students</span>
+                }
             </div>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">125</span>
+            @if (!IsCollapsed)
+            {
+                <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 shrink-0">125</span>
+            }
         </NavLink>
 
-        <NavLink class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="teachers" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Teachers & Faculty -->
+        <NavLink class="@GetNavLinkClass()" 
+                 href="teachers" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Teachers & Faculty" : "")">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
-            <span>Teachers & Faculty</span>
+            @if (!IsCollapsed)
+            {
+                <span class="truncate">Teachers & Faculty</span>
+            }
         </NavLink>
 
-        <NavLink class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="batches" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Batches & Timetable -->
+        <NavLink class="@GetNavLinkClass()" 
+                 href="batches" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Batches & Timetable" : "")">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
             </svg>
-            <span>Batches & Timetable</span>
+            @if (!IsCollapsed)
+            {
+                <span class="truncate">Batches & Timetable</span>
+            }
         </NavLink>
 
-        <div class="pt-4 px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
-            Finance & Learning
-        </div>
+        @if (!IsCollapsed)
+        {
+            <div class="pt-3 px-3 pb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                Finance & Learning
+            </div>
+        }
+        else
+        {
+            <div class="my-2 border-t border-slate-800/80"></div>
+        }
 
-        <NavLink class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="fees" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Fee Management -->
+        <NavLink class="@GetNavLinkClass()" 
+                 href="fees" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Fee Management" : "")">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <span>Fee Management</span>
+            @if (!IsCollapsed)
+            {
+                <span class="truncate">Fee Management</span>
+            }
         </NavLink>
 
-        <NavLink class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="quizzes" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Quizzes & Tests -->
+        <NavLink class="@GetNavLinkClass()" 
+                 href="quizzes" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Quizzes & Tests" : "")">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
-            <span>Quizzes & Tests</span>
+            @if (!IsCollapsed)
+            {
+                <span class="truncate">Quizzes & Tests</span>
+            }
         </NavLink>
 
-        <NavLink class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors text-slate-300 hover:text-white hover:bg-slate-800/60" href="settings" ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600">
-            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Institute Settings -->
+        <NavLink class="@GetNavLinkClass()" 
+                 href="settings" 
+                 ActiveClass="bg-brand-600 text-white shadow-brand hover:bg-brand-600"
+                 title="@(IsCollapsed ? "Institute Settings" : "")">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-            <span>Institute Settings</span>
+            @if (!IsCollapsed)
+            {
+                <span class="truncate">Institute Settings</span>
+            }
         </NavLink>
     </nav>
 
     <!-- Bottom User Section -->
-    <div class="p-4 border-t border-slate-800/80 bg-slate-950/40">
-        <div class="flex items-center gap-3">
-            <div class="relative">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-brand-600 flex items-center justify-center font-bold text-white shadow-soft">
+    <div class="p-3 border-t border-slate-800/80 bg-slate-950/40">
+        <div class="flex items-center @(IsCollapsed ? "justify-center" : "gap-3")">
+            <div class="relative cursor-pointer" title="Rishabh Sharma (Org Admin)">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-brand-600 flex items-center justify-center font-bold text-white shadow-soft shrink-0 text-sm">
                     RS
                 </div>
-                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
             </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-white truncate">Rishabh Sharma</p>
-                <p class="text-xs text-brand-400 truncate flex items-center gap-1">
-                    <span>Org Admin</span>
-                    <span class="text-slate-600">•</span>
-                    <span class="text-slate-400">Vargshala</span>
-                </p>
-            </div>
+            @if (!IsCollapsed)
+            {
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-white truncate">Rishabh Sharma</p>
+                    <p class="text-xs text-brand-400 truncate flex items-center gap-1">
+                        <span>Org Admin</span>
+                        <span class="text-slate-600">•</span>
+                        <span class="text-slate-400">Vargshala</span>
+                    </p>
+                </div>
+            }
         </div>
     </div>
+
 </aside>
+
+@code {
+    [Parameter] public bool IsCollapsed { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsCollapsedChanged { get; set; }
+
+    private string GetAsideClass() =>
+        $"flex flex-col {(IsCollapsed ? "w-20" : "w-64")} min-h-screen bg-slate-900 border-r border-slate-800 text-slate-300 transition-all duration-300 ease-in-out shrink-0 select-none";
+
+    private string GetHeaderClass() =>
+        $"flex items-center {(IsCollapsed ? "justify-center px-2" : "justify-between px-5")} py-4 border-b border-slate-800/80 h-16";
+
+    private string GetNavLinkClass() =>
+        $"flex items-center {(IsCollapsed ? "justify-center p-3" : "gap-3 px-3.5 py-2.5")} rounded-xl font-medium text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 group relative";
+
+    private string GetNavLinkSpreadClass() =>
+        $"flex items-center {(IsCollapsed ? "justify-center p-3" : "justify-between px-3.5 py-2.5")} rounded-xl font-medium text-sm transition-all text-slate-300 hover:text-white hover:bg-slate-800/60 group relative";
+
+    private async Task ToggleCollapse()
+    {
+        IsCollapsed = !IsCollapsed;
+        await IsCollapsedChanged.InvokeAsync(IsCollapsed);
+    }
+}
