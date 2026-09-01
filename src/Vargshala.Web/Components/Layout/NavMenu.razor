@@ -16,37 +16,33 @@
                     <p class="text-[11px] text-slate-400 truncate">Institute Portal</p>
                 </div>
             </div>
+
+            <!-- Exact Sidebar Toggle Icon (Collapse <) -->
+            <button type="button" 
+                    @onclick="ToggleCollapse" 
+                    class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Collapse Sidebar (Icon Only)">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.8" />
+                    <line x1="8.5" y1="3" x2="8.5" y2="21" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M15.5 9.5l-2.5 2.5 2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         }
         else
         {
-            <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-violet-500 shadow-brand text-white font-bold text-xl cursor-pointer" 
-                 title="Expand Sidebar"
-                 @onclick="ToggleCollapse">
-                V
-            </div>
-        }
-
-        <!-- Exact Sidebar Toggle Icon (As Requested) -->
-        <button type="button" 
-                @onclick="ToggleCollapse" 
-                class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors @(IsCollapsed ? "hidden" : "block")"
-                title="@(IsCollapsed ? "Expand Sidebar" : "Collapse Sidebar (Icon Only)")">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <!-- Outer rounded container -->
-                <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.8" />
-                <!-- Left sidebar dividing line -->
-                <line x1="8.5" y1="3" x2="8.5" y2="21" stroke="currentColor" stroke-width="1.8" />
-                <!-- Dynamic Collapse Chevron < / > -->
-                @if (!IsCollapsed)
-                {
-                    <path d="M15.5 9.5l-2.5 2.5 2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                }
-                else
-                {
+            <!-- Exact Sidebar Toggle Icon (Expand >) -->
+            <button type="button" 
+                    @onclick="ToggleCollapse" 
+                    class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Expand Sidebar">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.8" />
+                    <line x1="8.5" y1="3" x2="8.5" y2="21" stroke="currentColor" stroke-width="1.8" />
                     <path d="M13 9.5l2.5 2.5-2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                }
-            </svg>
-        </button>
+                </svg>
+            </button>
+        }
     </div>
 
     <!-- Navigation Menu -->
