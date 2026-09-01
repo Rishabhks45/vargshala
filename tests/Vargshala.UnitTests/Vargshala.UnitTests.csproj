@@ -9,6 +9,7 @@
     <ProjectReference Include="..\..\src\Vargshala.Domain\Vargshala.Domain.csproj" />
   </ItemGroup>
 
+    
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
