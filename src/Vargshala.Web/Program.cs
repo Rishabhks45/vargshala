@@ -1,3 +1,5 @@
+using FluentValidation;
+using Vargshala.Contracts.Students;
 using Vargshala.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register FluentValidation Validators
+builder.Services.AddValidatorsFromAssemblyContaining<StudentDtoValidator>();
 
 var app = builder.Build();
 
