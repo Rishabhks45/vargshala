@@ -1,5 +1,6 @@
 @page "/students"
 @using Vargshala.Contracts.Students
+@using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Badges
 @using Vargshala.Web.Components.UI.Buttons
 @using Vargshala.Web.Components.UI.Modals
@@ -132,40 +133,40 @@
             <table class="w-full min-w-[720px] text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider select-none">
-                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => SortBy("Name")'>
+                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => _sortState.Toggle("Name")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Student</span>
-                                <span class="@GetSortIndicatorClass("Name")">@GetSortIndicator("Name")</span>
+                                <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => SortBy("Roll")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => _sortState.Toggle("Roll")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Roll</span>
-                                <span class="@GetSortIndicatorClass("Roll")">@GetSortIndicator("Roll")</span>
+                                <span class="@_sortState.GetIndicatorClass("Roll")">@_sortState.GetIndicator("Roll")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => SortBy("Batch")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => _sortState.Toggle("Batch")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Batch</span>
-                                <span class="@GetSortIndicatorClass("Batch")">@GetSortIndicator("Batch")</span>
+                                <span class="@_sortState.GetIndicatorClass("Batch")">@_sortState.GetIndicator("Batch")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => SortBy("Contact")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => _sortState.Toggle("Contact")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Contact</span>
-                                <span class="@GetSortIndicatorClass("Contact")">@GetSortIndicator("Contact")</span>
+                                <span class="@_sortState.GetIndicatorClass("Contact")">@_sortState.GetIndicator("Contact")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => SortBy("Status")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => _sortState.Toggle("Status")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Status</span>
-                                <span class="@GetSortIndicatorClass("Status")">@GetSortIndicator("Status")</span>
+                                <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => SortBy("Fees")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors group" @onclick='() => _sortState.Toggle("Fees")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Fees</span>
-                                <span class="@GetSortIndicatorClass("Fees")">@GetSortIndicator("Fees")</span>
+                                <span class="@_sortState.GetIndicatorClass("Fees")">@_sortState.GetIndicator("Fees")</span>
                             </div>
                         </th>
                         <th class="py-3.5 px-6 text-right">Actions</th>
@@ -644,23 +645,7 @@
     private string _selectedFeeStatus = string.Empty;
     private string _selectedStatus = string.Empty;
     private string _selectedPaymentMode = "UPI / Online (GPay, PhonePe, Paytm)";
-    public enum SortDirection { None, Ascending, Descending }
-    private string? _sortColumn = null;
-    private SortDirection _sortDirection = SortDirection.None;
-
-    private string GetSortIndicator(string column)
-    {
-        if (_sortColumn != column || _sortDirection == SortDirection.None)
-            return "↕";
-        return _sortDirection == SortDirection.Ascending ? "▲" : "▼";
-    }
-
-    private string GetSortIndicatorClass(string column)
-    {
-        if (_sortColumn == column && _sortDirection != SortDirection.None)
-            return "text-[#009488] font-bold text-[11px]";
-        return "text-slate-300 group-hover:text-slate-400 text-[10px]";
-    }
+    private readonly TableSortState _sortState = new();
 
     private readonly List<CustomSelect.CustomSelectOption> _batchFilterOptions = new()
     {
@@ -753,45 +738,21 @@
                 (string.IsNullOrWhiteSpace(_selectedStatus) || s.Status == _selectedStatus)
             );
 
-            if (_sortDirection != SortDirection.None && !string.IsNullOrEmpty(_sortColumn))
+            if (_sortState.IsSorted)
             {
-                query = _sortColumn switch
+                query = _sortState.Column switch
                 {
-                    "Name" => _sortDirection == SortDirection.Ascending ? query.OrderBy(s => s.Name) : query.OrderByDescending(s => s.Name),
-                    "Roll" => _sortDirection == SortDirection.Ascending ? query.OrderBy(s => s.RollNumber) : query.OrderByDescending(s => s.RollNumber),
-                    "Batch" => _sortDirection == SortDirection.Ascending ? query.OrderBy(s => s.BatchName) : query.OrderByDescending(s => s.BatchName),
-                    "Contact" => _sortDirection == SortDirection.Ascending ? query.OrderBy(s => s.Phone) : query.OrderByDescending(s => s.Phone),
-                    "Status" => _sortDirection == SortDirection.Ascending ? query.OrderBy(s => s.Status) : query.OrderByDescending(s => s.Status),
-                    "Fees" => _sortDirection == SortDirection.Ascending ? query.OrderBy(s => s.FeeStatus) : query.OrderByDescending(s => s.FeeStatus),
+                    "Name" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(s => s.Name) : query.OrderByDescending(s => s.Name),
+                    "Roll" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(s => s.RollNumber) : query.OrderByDescending(s => s.RollNumber),
+                    "Batch" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(s => s.BatchName) : query.OrderByDescending(s => s.BatchName),
+                    "Contact" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(s => s.Phone) : query.OrderByDescending(s => s.Phone),
+                    "Status" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(s => s.Status) : query.OrderByDescending(s => s.Status),
+                    "Fees" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(s => s.FeeStatus) : query.OrderByDescending(s => s.FeeStatus),
                     _ => query
                 };
             }
 
             return query.ToList();
-        }
-    }
-
-    private void SortBy(string column)
-    {
-        if (_sortColumn == column)
-        {
-            _sortDirection = _sortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-
-            if (_sortDirection == SortDirection.None)
-            {
-                _sortColumn = null;
-            }
-        }
-        else
-        {
-            _sortColumn = column;
-            _sortDirection = SortDirection.Ascending;
         }
     }
 
