@@ -1,0 +1,219 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Outer Ring Gradient -->
+    <linearGradient id="vsRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="50%" stop-color="#009488" />
+      <stop offset="100%" stop-color="#004d40" />
+    </linearGradient>
+
+    <!-- Inner Disc Gradient -->
+    <radialGradient id="vsBgGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#005b4c" />
+      <stop offset="70%" stop-color="#00382e" />
+      <stop offset="100%" stop-color="#00241d" />
+    </radialGradient>
+
+    <!-- Leaf Highlights -->
+    <linearGradient id="vsLeafGrad1" x1="0%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="40%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#99f6e4" />
+    </linearGradient>
+
+    <linearGradient id="vsLeafGrad2" x1="100%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="50%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#5eead4" />
+    </linearGradient>
+
+    <linearGradient id="vsLeafDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#004d40" />
+      <stop offset="100%" stop-color="#002d24" />
+    </linearGradient>
+
+    <!-- Book Covers Gradient -->
+    <linearGradient id="vsBookGrad" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#00796b" />
+      <stop offset="50%" stop-color="#004d40" />
+      <stop offset="100%" stop-color="#002820" />
+    </linearGradient>
+
+    <linearGradient id="vsBookTopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#009488" />
+      <stop offset="100%" stop-color="#004d40" />
+    </linearGradient>
+
+    <!-- Pages Gradient -->
+    <linearGradient id="vsPagesGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="85%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <!-- Text Glow Filter -->
+    <filter id="vsGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#001a14" flood-opacity="0.8" />
+    </filter>
+
+    <!-- Plant Glow -->
+    <filter id="vsPlantGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#14b8a6" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- ========================================================================= -->
+  <!-- 1. CIRCULAR BADGE / MEDAL FRAME -->
+  <!-- ========================================================================= -->
+  <!-- Outer Bevel Ring -->
+  <circle cx="250" cy="250" r="240" fill="url(#vsRingGrad)" />
+  <circle cx="250" cy="250" r="236" fill="none" stroke="#5eead4" stroke-width="2.5" opacity="0.6" />
+
+  <!-- Inner Dark Teal Core Background -->
+  <circle cx="250" cy="250" r="226" fill="url(#vsBgGrad)" />
+  <circle cx="250" cy="250" r="220" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.85" />
+
+  <!-- ========================================================================= -->
+  <!-- 2. LAUREL WREATH BRANCHES (BACKGROUND EMBEDDED) -->
+  <!-- ========================================================================= -->
+  <g fill="#005446" opacity="0.6">
+    <!-- Left Wreath Leaves -->
+    <path d="M 85 240 C 75 220 75 180 95 150 C 90 175 95 205 110 220 Z" />
+    <path d="M 98 180 C 85 160 90 120 115 100 C 108 125 118 155 132 165 Z" />
+    <path d="M 125 130 C 110 110 125 75 155 65 C 145 90 158 115 170 120 Z" />
+    <path d="M 75 290 C 70 265 72 230 90 205 C 88 230 98 255 115 270 Z" />
+    <path d="M 82 340 C 78 315 82 280 102 260 C 98 285 110 310 128 320 Z" />
+
+    <!-- Right Wreath Leaves -->
+    <path d="M 415 240 C 425 220 425 180 405 150 C 410 175 405 205 390 220 Z" />
+    <path d="M 402 180 C 415 160 410 120 385 100 C 392 125 382 155 368 165 Z" />
+    <path d="M 375 130 C 390 110 375 75 345 65 C 355 90 342 115 330 120 Z" />
+    <path d="M 425 290 C 430 265 428 230 410 205 C 412 230 402 255 385 270 Z" />
+    <path d="M 418 340 C 422 315 418 280 398 260 C 402 285 390 310 372 320 Z" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 3. ISOMETRIC STACKED BOOKS -->
+  <!-- ========================================================================= -->
+  <g id="books-group">
+    
+    <!-- BOTTOM BOOK -->
+    <!-- Spine Rounded Left Cap -->
+    <path d="M 135 295 C 135 275 155 260 175 260 L 260 295 C 240 295 220 310 220 330 L 135 295 Z" 
+          fill="url(#vsBookGrad)" />
+    <!-- Bottom Book Spine Details (Silver/Mint Ribbon Lines) -->
+    <path d="M 155 265 C 145 275 145 285 155 295" stroke="#5eead4" stroke-width="4" fill="none" opacity="0.8" />
+    <path d="M 165 268 C 155 278 155 288 165 298" stroke="#5eead4" stroke-width="4" fill="none" opacity="0.8" />
+    
+    <!-- Bottom Book Top Cover (Teal Surface) -->
+    <path d="M 175 260 L 375 225 L 460 260 L 260 295 Z" 
+          fill="url(#vsBookTopGrad)" stroke="#5eead4" stroke-width="1.5" />
+
+    <!-- Bottom Book White Pages Block -->
+    <path d="M 260 295 L 460 260 L 455 295 L 260 330 Z" 
+          fill="url(#vsPagesGrad)" stroke="#64748b" stroke-width="1" />
+    <!-- Page Cut Lines -->
+    <path d="M 270 300 L 450 268 M 270 306 L 450 274 M 270 312 L 450 280 M 270 318 L 450 286" 
+          stroke="#94a3b8" stroke-width="1" opacity="0.6" />
+
+    <!-- Bottom Book Base Edge -->
+    <path d="M 135 295 L 260 330 L 455 295 L 460 300 L 260 336 L 135 300 Z" 
+          fill="#00241d" />
+
+    <!-- TOP BOOK (SLANTED) -->
+    <!-- Top Book White Pages Block -->
+    <path d="M 270 250 L 395 230 L 390 260 L 270 280 Z" 
+          fill="url(#vsPagesGrad)" stroke="#64748b" stroke-width="1" />
+    <path d="M 275 256 L 385 238 M 275 262 L 385 244 M 275 268 L 385 250" 
+          stroke="#94a3b8" stroke-width="1" opacity="0.6" />
+
+    <!-- Top Book Top Cover Surface -->
+    <path d="M 240 230 L 345 205 L 400 230 L 275 255 Z" 
+          fill="url(#vsBookTopGrad)" stroke="#5eead4" stroke-width="1.5" />
+    
+    <!-- Top Book Left Spine Curve -->
+    <path d="M 240 230 C 230 240 230 265 240 275 L 270 280 L 275 255 Z" 
+          fill="url(#vsBookGrad)" />
+    <path d="M 246 238 C 240 246 240 260 246 268" stroke="#5eead4" stroke-width="3" fill="none" opacity="0.8" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 4. GROWING MINT-TEAL PLANT (WITH MULTI-TIER LEAF SYSTEM) -->
+  <!-- ========================================================================= -->
+  <g id="plant-group" filter="url(#vsPlantGlow)">
+    
+    <!-- Central Main Stem -->
+    <path d="M 230 270 C 235 220 245 160 250 80 C 255 160 245 220 238 270 Z" 
+          fill="url(#vsLeafGrad1)" />
+
+    <!-- TOP APICAL LEAF (TALL CENTER) -->
+    <!-- Left Half -->
+    <path d="M 250 80 C 230 110 220 150 250 200 C 250 150 250 110 250 80 Z" 
+          fill="url(#vsLeafGrad1)" />
+    <!-- Right Half -->
+    <path d="M 250 80 C 270 110 380 130 250 200 C 250 150 250 110 250 80 Z" 
+          fill="url(#vsLeafGrad2)" />
+    <!-- Leaf Center Rib -->
+    <path d="M 250 80 L 250 200" stroke="#ffffff" stroke-width="2" opacity="0.8" />
+
+    <!-- UPPER LEFT LEAF -->
+    <!-- Leaf Base -->
+    <path d="M 245 170 C 200 130 140 100 145 100 C 150 120 190 170 240 185 Z" 
+          fill="url(#vsLeafGrad1)" />
+    <path d="M 145 100 C 180 120 220 160 242 178" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.75" />
+
+    <!-- UPPER RIGHT LEAF -->
+    <path d="M 255 170 C 300 130 360 100 355 100 C 350 120 310 170 260 185 Z" 
+          fill="url(#vsLeafGrad2)" />
+    <path d="M 355 100 C 320 120 280 160 258 178" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.75" />
+
+    <!-- MIDDLE LEFT BROAD LEAF -->
+    <path d="M 240 210 C 180 180 115 150 120 160 C 130 200 180 230 235 225 Z" 
+          fill="url(#vsLeafGrad1)" />
+    <path d="M 120 160 C 160 180 205 210 238 218" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.8" />
+
+    <!-- MIDDLE RIGHT BROAD LEAF -->
+    <path d="M 255 210 C 315 180 380 150 375 160 C 365 200 315 230 260 225 Z" 
+          fill="url(#vsLeafGrad2)" />
+    <path d="M 375 160 C 335 180 290 210 257 218" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.8" />
+
+    <!-- LOWER LEFT LEAF -->
+    <path d="M 235 240 C 180 230 135 235 140 245 C 155 270 195 270 230 255 Z" 
+          fill="url(#vsLeafGrad1)" />
+    <path d="M 140 245 C 175 245 205 250 232 248" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7" />
+
+    <!-- LOWER RIGHT LEAF -->
+    <path d="M 255 240 C 310 230 355 235 350 245 C 335 270 295 270 260 255 Z" 
+          fill="url(#vsLeafGrad2)" />
+    <path d="M 350 245 C 315 245 285 250 258 248" stroke="#ffffff" stroke-width="1.5" fill="none" opacity="0.7" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 5. TYPOGRAPHY: "Vargshala" & DECORATIVE OPEN BOOK FLOURISH -->
+  <!-- ========================================================================= -->
+  <g id="typography" filter="url(#vsGlow)">
+    <!-- Main Bold Wordmark -->
+    <text x="250" y="380" 
+          text-anchor="middle" 
+          font-family="system-ui, -apple-system, 'Plus Jakarta Sans', 'Inter', sans-serif" 
+          font-weight="900" 
+          font-size="62" 
+          letter-spacing="-1.5"
+          fill="#ffffff">
+      Vargshala
+    </text>
+
+    <!-- Decorative Accent Line Left -->
+    <line x1="125" y1="405" x2="200" y2="405" stroke="#2dd4bf" stroke-width="3.5" stroke-linecap="round" />
+
+    <!-- Center Open Book Icon -->
+    <path d="M 250 422 C 240 412 215 408 205 410 C 205 418 230 420 250 432 C 270 420 295 418 295 410 C 285 408 260 412 250 422 Z" 
+          fill="#5eead4" />
+    <path d="M 250 412 C 242 402 222 398 212 400 C 212 406 235 408 250 418 C 265 408 288 406 288 400 C 278 398 258 402 250 412 Z" 
+          fill="#ffffff" />
+
+    <!-- Decorative Accent Line Right -->
+    <line x1="300" y1="405" x2="375" y2="405" stroke="#2dd4bf" stroke-width="3.5" stroke-linecap="round" />
+  </g>
+
+</svg>

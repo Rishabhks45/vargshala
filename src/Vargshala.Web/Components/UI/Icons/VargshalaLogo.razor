@@ -1,0 +1,16 @@
+<img src="images/vargshala-logo.svg" 
+     alt="Vargshala" 
+     class="@GetClass()" 
+     style="@GetStyle()" />
+
+@code {
+    [Parameter] public int? Size { get; set; }
+    [Parameter] public string Class { get; set; } = "w-10 h-10";
+    [Parameter] public string? Style { get; set; }
+
+    private string GetClass() =>
+        Size.HasValue ? $"shrink-0 {Class}" : Class;
+
+    private string GetStyle() =>
+        Size.HasValue ? $"width: {Size}px; height: {Size}px; {Style}" : (Style ?? "");
+}
