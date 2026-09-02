@@ -26,6 +26,7 @@ public class ChatConversationDto
     public string Name { get; set; } = string.Empty;
     public string Subtitle { get; set; } = string.Empty;
     public ConversationType Type { get; set; } = ConversationType.Direct;
+    public string BranchName { get; set; } = "Main Campus — Patna";
     public string BatchName { get; set; } = string.Empty;
     public string Initials { get; set; } = string.Empty;
     public string AvatarColor { get; set; } = "teal";
@@ -37,6 +38,12 @@ public class ChatConversationDto
     public int UnreadCount { get; set; } = 0;
     public bool IsPinned { get; set; } = false;
     public bool IsMuted { get; set; } = false;
+    
+    // Permissions & Administration
+    public ChannelPostingPermission WhoCanPost { get; set; } = ChannelPostingPermission.AllMembers;
+    public List<string> Admins { get; set; } = new();
+    public string CreatedByRole { get; set; } = "Admin"; // "Admin", "Teacher", "Student"
+    
     public List<ChatMemberDto> Members { get; set; } = new();
     public List<SharedFileDto> SharedFiles { get; set; } = new();
 }
@@ -47,12 +54,21 @@ public enum ConversationType
     Channel
 }
 
+public enum ChannelPostingPermission
+{
+    AllMembers,
+    AdminsAndTeachersOnly,
+    AdminsOnly
+}
+
 public class ChatMemberDto
 {
     public string Name { get; set; } = string.Empty;
-    public string Role { get; set; } = "Student";
+    public string Role { get; set; } = "Student"; // "Teacher", "Student", "Admin", "Parent"
     public string Initials { get; set; } = string.Empty;
     public bool IsOnline { get; set; } = false;
+    public bool IsAdmin { get; set; } = false;
+    public bool CanPost { get; set; } = true;
 }
 
 public class SharedFileDto
