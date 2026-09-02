@@ -381,108 +381,116 @@
             </button>
         </div>
 
-        <!-- Drawer Scrollable Form Body -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-5 select-text">
-            
-            <!-- Section 1: Basic Information -->
-            <div class="space-y-3">
-                <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
-                    <span>1. Basic Information</span>
+        <!-- Blazor EditForm Wrapper for Type-Safety and Validation -->
+        <EditForm Model="@_modalModel" OnValidSubmit="SaveStudentAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <DataAnnotationsValidator />
+
+            <!-- Drawer Scrollable Form Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-5 select-text">
+                
+                <!-- Section 1: Basic Information -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
+                        <span>1. Basic Information</span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700">Full Name *</label>
+                        <InputText @bind-Value="_modalModel.Name" placeholder="e.g. Aarav Mehta" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                        <ValidationMessage For="@(() => _modalModel.Name)" class="text-[10px] text-rose-500" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700">Roll Number *</label>
+                            <InputText @bind-Value="_modalModel.RollNumber" placeholder="e.g. 10A-01" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                            <ValidationMessage For="@(() => _modalModel.RollNumber)" class="text-[10px] text-rose-500" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700">Enrollment ID</label>
+                            <InputText @bind-Value="_modalModel.EnrollmentNumber" placeholder="e.g. VM-2026-001" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                        </div>
+                    </div>
                 </div>
 
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-700">Full Name *</label>
-                    <input type="text" @bind="_modalModel.Name" placeholder="e.g. Aarav Mehta" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                <!-- Section 2: Batch & Academic Details -->
+                <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
+                        <span>2. Batch Assignment</span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700">Assign Batch *</label>
+                        <CustomSelect @bind-Value="_modalModel.BatchName" Options="_drawerBatchOptions" Placeholder="Select Batch" Class="w-full" />
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700">Roll Number *</label>
-                        <input type="text" @bind="_modalModel.RollNumber" placeholder="e.g. 10A-01" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                <!-- Section 3: Contact & Guardian Info -->
+                <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
+                        <span>3. Contact & Guardian</span>
                     </div>
+
                     <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700">Enrollment ID</label>
-                        <input type="text" @bind="_modalModel.EnrollmentNumber" placeholder="e.g. VM-2026-001" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                        <label class="text-[11px] font-semibold text-slate-700">Phone Number *</label>
+                        <InputText @bind-Value="_modalModel.Phone" placeholder="+91 90000 10001" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                        <ValidationMessage For="@(() => _modalModel.Phone)" class="text-[10px] text-rose-500" />
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700">Parent / Guardian Name *</label>
+                        <InputText @bind-Value="_modalModel.ParentName" placeholder="e.g. Rohit Mehta" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
+                        <ValidationMessage For="@(() => _modalModel.ParentName)" class="text-[10px] text-rose-500" />
                     </div>
                 </div>
+
+                <!-- Section 4: Fees & Account Status -->
+                <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
+                        <span>4. Fee Setup & Status</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700">Fee Status</label>
+                            <CustomSelect @bind-Value="_modalModel.FeeStatus" Options="_drawerFeeStatusOptions" Placeholder="Fee Status" Class="w-full" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700">Student Status</label>
+                            <CustomSelect @bind-Value="_modalModel.Status" Options="_drawerStatusOptions" Placeholder="Student Status" Class="w-full" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700">Total Course Fee (₹)</label>
+                            <InputNumber @bind-Value="_modalModel.TotalFee" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none font-bold text-slate-800" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700">Amount Paid (₹)</label>
+                            <InputNumber @bind-Value="_modalModel.PaidFee" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none font-bold text-slate-800" />
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Section 2: Batch & Academic Details -->
-            <div class="space-y-3 pt-2 border-t border-slate-100">
-                <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
-                    <span>2. Batch Assignment</span>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-700">Assign Batch *</label>
-                    <CustomSelect @bind-Value="_modalModel.BatchName" Options="_drawerBatchOptions" Placeholder="Select Batch" Class="w-full" />
-                </div>
+            <!-- Drawer Sticky Footer -->
+            <div class="p-4 px-6 border-t border-slate-200/80 bg-slate-50/90 backdrop-blur-sm flex items-center justify-between gap-3">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync" 
+                        class="px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/20 hover:shadow-lg hover:shadow-teal-800/30 border border-teal-400/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+                    <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>@(_editingStudent == null ? "Save & Enroll Student" : "Update Student Records")</span>
+                </button>
             </div>
-
-            <!-- Section 3: Contact & Guardian Info -->
-            <div class="space-y-3 pt-2 border-t border-slate-100">
-                <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
-                    <span>3. Contact & Guardian</span>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-700">Phone Number *</label>
-                    <input type="text" @bind="_modalModel.Phone" placeholder="+91 90000 10001" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-700">Parent / Guardian Name *</label>
-                    <input type="text" @bind="_modalModel.ParentName" placeholder="e.g. Rohit Mehta" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all" />
-                </div>
-            </div>
-
-            <!-- Section 4: Fees & Account Status -->
-            <div class="space-y-3 pt-2 border-t border-slate-100">
-                <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] uppercase tracking-wider">
-                    <span>4. Fee Setup & Status</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700">Fee Status</label>
-                        <CustomSelect @bind-Value="_modalModel.FeeStatus" Options="_drawerFeeStatusOptions" Placeholder="Fee Status" Class="w-full" />
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700">Student Status</label>
-                        <CustomSelect @bind-Value="_modalModel.Status" Options="_drawerStatusOptions" Placeholder="Student Status" Class="w-full" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700">Total Course Fee (₹)</label>
-                        <input type="number" @bind="_modalModel.TotalFee" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none font-bold text-slate-800" />
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700">Amount Paid (₹)</label>
-                        <input type="number" @bind="_modalModel.PaidFee" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none font-bold text-slate-800" />
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Drawer Sticky Footer -->
-        <div class="p-4 px-6 border-t border-slate-200/80 bg-slate-50/90 backdrop-blur-sm flex items-center justify-between gap-3">
-            <button type="button" 
-                    @onclick="CloseDrawerAsync" 
-                    class="px-5 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer">
-                Cancel
-            </button>
-            <button type="button" 
-                    @onclick="SaveStudentAsync" 
-                    class="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/20 hover:shadow-lg hover:shadow-teal-800/30 border border-teal-400/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span>@(_editingStudent == null ? "Save & Enroll Student" : "Update Student Records")</span>
-            </button>
-        </div>
+        </EditForm>
 
     </div>
 }
