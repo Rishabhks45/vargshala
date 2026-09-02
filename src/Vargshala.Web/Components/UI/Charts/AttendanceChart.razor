@@ -4,7 +4,9 @@
 }
 else
 {
-    <div class="card-surface p-6 relative select-none">
+    <div class="card-surface p-6 relative select-none"
+         @onmouseleave="HandleMouseLeaveChart">
+        
         <!-- Header & Legend -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-tealborder gap-2">
             <div>
@@ -24,8 +26,7 @@ else
         </div>
 
         <!-- Interactive SVG Line Chart Container -->
-        <div class="mt-6 relative h-64 w-full"
-             @onmouseleave="HandleMouseLeaveChart">
+        <div class="mt-6 relative h-64 w-full">
             
             <!-- Y-Axis Labels & Gridlines -->
             <div class="absolute inset-0 flex flex-col justify-between text-[11px] text-slate-400 select-none pointer-events-none">
@@ -78,18 +79,18 @@ else
                       stroke="#009488" 
                       stroke-width="3.5" />
 
-                <!-- Active Vertical Hover Guideline -->
-                @if (ActivePoint != null)
+                <!-- Active Vertical Hover Guideline (Only visible on hover) -->
+                @if (_hoveredPoint != null)
                 {
-                    <line x1="@ActivePoint.SvgX" y1="0" x2="@ActivePoint.SvgX" y2="200" 
+                    <line x1="@_hoveredPoint.SvgX" y1="0" x2="@_hoveredPoint.SvgX" y2="200" 
                           stroke="#009488" stroke-width="1.5" stroke-dasharray="3,3" class="opacity-70" />
 
                     <!-- Node on Last Month Curve -->
-                    <circle cx="@ActivePoint.SvgX" cy="@ActivePoint.SvgYLast" r="5" fill="#94a3b8" stroke="#fff" stroke-width="2" />
+                    <circle cx="@_hoveredPoint.SvgX" cy="@_hoveredPoint.SvgYLast" r="5" fill="#94a3b8" stroke="#fff" stroke-width="2" />
 
                     <!-- Active Node on This Month Curve with Pulse -->
-                    <circle cx="@ActivePoint.SvgX" cy="@ActivePoint.SvgYCurrent" r="8" fill="#009488" fill-opacity="0.3" class="animate-ping" />
-                    <circle cx="@ActivePoint.SvgX" cy="@ActivePoint.SvgYCurrent" r="6" fill="#009488" stroke="#fff" stroke-width="2.5" />
+                    <circle cx="@_hoveredPoint.SvgX" cy="@_hoveredPoint.SvgYCurrent" r="8" fill="#009488" fill-opacity="0.3" class="animate-ping" />
+                    <circle cx="@_hoveredPoint.SvgX" cy="@_hoveredPoint.SvgYCurrent" r="6" fill="#009488" stroke="#fff" stroke-width="2.5" />
                 }
 
                 <!-- Interactive Target Nodes & Click / Hover Rectangles -->
@@ -97,7 +98,7 @@ else
                 {
                     @foreach (var pt in _chartPoints)
                     {
-                        var isCurrent = ActivePoint == pt;
+                        var isCurrent = _hoveredPoint == pt;
                         <circle cx="@pt.SvgX" cy="@pt.SvgYCurrent" r="@(isCurrent ? 6 : 4.5)" fill="#009488" stroke="#fff" stroke-width="2" />
                         <circle cx="@pt.SvgX" cy="@pt.SvgYLast" r="@(isCurrent ? 5 : 3.5)" fill="#cbd5e1" stroke="#fff" stroke-width="1.5" />
 
@@ -111,32 +112,32 @@ else
                 }
             </svg>
 
-            <!-- Floating Interactive Tooltip Popover (Mathematically Pinned to Exactly Each Dot) -->
-            @if (ActivePoint != null)
+            <!-- Floating Interactive Tooltip Popover (Only Shown on Active Hover) -->
+            @if (_hoveredPoint != null)
             {
-                <div class="absolute z-20 pointer-events-none transition-all duration-200"
-                     style="@GetTooltipPlacementStyle(ActivePoint)">
+                <div class="absolute z-20 pointer-events-none transition-all duration-150 ease-out"
+                     style="@GetTooltipPlacementStyle(_hoveredPoint)">
                     <div class="bg-slate-900/95 text-white p-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md min-w-[170px] space-y-1.5">
                         <div class="flex items-center justify-between text-[11px] font-bold border-b border-slate-700/70 pb-1 text-slate-300">
-                            <span>📅 @ActivePoint.DateLabel, 2026</span>
-                            <span class="text-emerald-400 font-extrabold text-[10px]">+@(ActivePoint.CurrentMonthValue - ActivePoint.LastMonthValue)%</span>
+                            <span>📅 @_hoveredPoint.DateLabel, 2026</span>
+                            <span class="text-emerald-400 font-extrabold text-[10px]">+@(_hoveredPoint.CurrentMonthValue - @_hoveredPoint.LastMonthValue)%</span>
                         </div>
                         <div class="flex items-center justify-between text-xs pt-0.5">
                             <span class="text-teal-300 flex items-center gap-1">
                                 <span class="w-2 h-2 rounded-full bg-brand-500"></span>
                                 This Month:
                             </span>
-                            <span class="font-extrabold text-white">@ActivePoint.CurrentMonthValue%</span>
+                            <span class="font-extrabold text-white">@_hoveredPoint.CurrentMonthValue%</span>
                         </div>
                         <div class="flex items-center justify-between text-[11px] text-slate-400">
                             <span class="flex items-center gap-1">
                                 <span class="w-2 h-2 rounded-full bg-slate-400"></span>
                                 Last Month:
                             </span>
-                            <span class="font-medium text-slate-300">@ActivePoint.LastMonthValue%</span>
+                            <span class="font-medium text-slate-300">@_hoveredPoint.LastMonthValue%</span>
                         </div>
                         <div class="text-[9px] text-slate-400 text-center pt-1 border-t border-slate-800">
-                            Present: @Math.Round(ActivePoint.CurrentMonthValue * 12.48) / 1,248 students
+                            Present: @Math.Round(_hoveredPoint.CurrentMonthValue * 12.48) / 1,248 students
                         </div>
                     </div>
                 </div>
@@ -148,7 +149,7 @@ else
                 {
                     @foreach (var pt in _chartPoints)
                     {
-                        var isCurrent = ActivePoint == pt;
+                        var isCurrent = _hoveredPoint == pt;
                         <span class="@(isCurrent ? "text-brand-600 font-bold" : "") cursor-pointer transition-colors"
                               @onmouseenter="@(() => SetHovered(pt))"
                               @onclick="@(() => SetHovered(pt))">
@@ -188,10 +189,8 @@ else
 
     private ChartPointModel? _hoveredPoint;
 
-    private ChartPointModel ActivePoint => _hoveredPoint ?? _chartPoints[2]; // Default to 15 May
-
-    private int DisplayCurrentValue => ActivePoint.CurrentMonthValue;
-    private int DisplayLastValue => ActivePoint.LastMonthValue;
+    private int DisplayCurrentValue => _hoveredPoint?.CurrentMonthValue ?? 92;
+    private int DisplayLastValue => _hoveredPoint?.LastMonthValue ?? 86;
 
     private void SetHovered(ChartPointModel pt)
     {
@@ -200,8 +199,7 @@ else
 
     private void HandleMouseLeaveChart()
     {
-        // Resets to center default point
-        _hoveredPoint = _chartPoints[2];
+        _hoveredPoint = null; // Automatically hides tooltip when mouse leaves chart!
     }
 
     private string GetTooltipPlacementStyle(ChartPointModel pt)
