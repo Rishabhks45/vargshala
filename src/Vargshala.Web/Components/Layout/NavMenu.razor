@@ -5,10 +5,12 @@
         @if (!IsCollapsed)
         {
             <div class="flex items-center gap-3 overflow-hidden">
-                <img src="images/vargshala-logo.png" alt="Vargshala" class="w-8 h-8 rounded-full shadow-sm shrink-0 drop-shadow-md" />
+                <div class="w-8 h-8 rounded-xl bg-amber-400 p-1 flex items-center justify-center shadow-md shrink-0">
+                    <img src="images/plant-books.png" alt="Vargshala" class="w-full h-full object-contain" />
+                </div>
                 <div class="min-w-0">
-                    <div class="font-bold text-base text-white tracking-tight leading-tight">
-                        Vargshala
+                    <div class="font-extrabold text-base tracking-tight leading-tight flex items-center">
+                        <span class="text-white">Varg</span><span class="text-[#2DD4BF]">shala</span>
                     </div>
                     <p class="text-[9px] text-teal-200/80 uppercase tracking-wider">Institute SaaS</p>
                 </div>
@@ -16,8 +18,10 @@
         }
         else
         {
-            <!-- Always Visible Centered Brand Logo in Collapsed Icon Mode -->
-            <img src="images/vargshala-logo.png" alt="Vargshala" class="w-8 h-8 rounded-full shadow-sm shrink-0 drop-shadow-md cursor-pointer" title="Vargshala Institute SaaS" />
+            <!-- Always Visible Centered Brand Logo in Collapsed Icon Mode with Yellow BG -->
+            <div class="w-8 h-8 rounded-xl bg-amber-400 p-1 flex items-center justify-center shadow-md shrink-0 cursor-pointer" title="Vargshala Institute SaaS">
+                <img src="images/plant-books.png" alt="Vargshala" class="w-full h-full object-contain" />
+            </div>
         }
     </div>
 
