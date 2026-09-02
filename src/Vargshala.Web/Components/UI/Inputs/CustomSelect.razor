@@ -1,5 +1,5 @@
-<div class="relative inline-block text-left @Class" @onclick:stopPropagation="true">
-    <!-- Trigger Button -->
+<div class="relative inline-block text-left @(Class.Contains("w-") ? Class : $"w-full sm:w-auto {Class}")" @onclick:stopPropagation="true">
+    <!-- Trigger Button (Full Responsive with Theme 4 Hover & Focus Ring) -->
     <button type="button" 
             @onclick="ToggleDropdown"
             class="w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 shadow-2xs transition-all cursor-pointer select-none">
@@ -12,26 +12,28 @@
         </svg>
     </button>
 
-    <!-- Floating Custom Dropdown Menu with Theme 4 Styling (No OS Blue Box!) -->
+    <!-- Floating Custom Dropdown Menu with Pill Selection (Perfect Fit, No Gaps!) -->
     @if (_isOpen)
     {
-        <div class="fixed inset-0 z-30" @onclick="Close"></div>
-        <div class="absolute left-0 top-full mt-1.5 w-full min-w-[160px] bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100 overflow-hidden select-none">
-            @foreach (var opt in Options)
-            {
-                var isSelected = opt.Value == Value;
-                <button type="button"
-                        @onclick="() => SelectOption(opt.Value)"
-                        class="w-full px-3.5 py-2 text-xs text-left flex items-center justify-between transition-colors @(isSelected ? "bg-[#009488] text-white font-bold" : "text-slate-700 hover:bg-teal-50/80 hover:text-[#00796b]")">
-                    <span class="truncate">@opt.Label</span>
-                    @if (isSelected)
-                    {
-                        <svg class="w-3.5 h-3.5 text-white shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    }
-                </button>
-            }
+        <div class="fixed inset-0 z-40" @onclick="Close"></div>
+        <div class="absolute left-0 sm:left-auto right-0 top-full mt-1.5 w-full min-w-[180px] bg-white rounded-2xl shadow-xl border border-slate-100 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
+            <div class="space-y-0.5">
+                @foreach (var opt in Options)
+                {
+                    var isSelected = opt.Value == Value;
+                    <button type="button"
+                            @onclick="() => SelectOption(opt.Value)"
+                            class="w-full px-3 py-2 rounded-xl text-xs text-left flex items-center justify-between transition-all cursor-pointer @(isSelected ? "bg-[#009488] text-white font-bold shadow-xs" : "text-slate-700 hover:bg-teal-50/80 hover:text-[#00796b]")">
+                        <span class="truncate">@opt.Label</span>
+                        @if (isSelected)
+                        {
+                            <svg class="w-3.5 h-3.5 text-white shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        }
+                    </button>
+                }
+            </div>
         </div>
     }
 </div>
