@@ -1,0 +1,39 @@
+<span class="@GetBadgeClass()">
+    @if (ShowDot)
+    {
+        <span class="w-1.5 h-1.5 rounded-full @GetDotClass()"></span>
+    }
+    @Text
+    @ChildContent
+</span>
+
+@code {
+    [Parameter] public string Text { get; set; } = string.Empty;
+    [Parameter] public BadgeVariant Variant { get; set; } = BadgeVariant.Teal;
+    [Parameter] public bool ShowDot { get; set; } = false;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    public enum BadgeVariant
+    {
+        Teal,
+        Coral,
+        Green,
+        Gray
+    }
+
+    private string GetBadgeClass() => Variant switch
+    {
+        BadgeVariant.Coral => "badge-coral",
+        BadgeVariant.Green => "badge-green",
+        BadgeVariant.Gray => "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200",
+        _ => "badge-teal"
+    };
+
+    private string GetDotClass() => Variant switch
+    {
+        BadgeVariant.Coral => "bg-coral-500",
+        BadgeVariant.Green => "bg-emerald-500",
+        BadgeVariant.Gray => "bg-slate-400",
+        _ => "bg-brand-600"
+    };
+}

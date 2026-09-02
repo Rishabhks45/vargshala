@@ -1,0 +1,64 @@
+<button type="@Type" 
+        class="@GetButtonClass()" 
+        disabled="@Disabled"
+        @onclick="HandleClick">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        @if (Icon == "Export")
+        {
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+        }
+        else if (Icon == "Plus")
+        {
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+        }
+        else if (IconTemplate != null)
+        {
+            @IconTemplate
+        }
+    }
+    @if (!string.IsNullOrEmpty(Text))
+    {
+        <span>@Text</span>
+    }
+    @ChildContent
+</button>
+
+@code {
+    [Parameter] public string Text { get; set; } = string.Empty;
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Primary;
+    [Parameter] public string Type { get; set; } = "button";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public RenderFragment? IconTemplate { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    public enum ButtonVariant
+    {
+        Primary,
+        Coral,
+        Secondary,
+        Danger
+    }
+
+    private string GetButtonClass() => Variant switch
+    {
+        ButtonVariant.Coral => "btn-coral text-xs",
+        ButtonVariant.Secondary => "btn-secondary text-xs",
+        ButtonVariant.Danger => "btn-coral bg-rose-600 hover:bg-rose-700 text-xs",
+        _ => "btn-primary text-xs"
+    };
+
+    private async Task HandleClick()
+    {
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync();
+        }
+    }
+}
