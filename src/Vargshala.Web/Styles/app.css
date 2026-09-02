@@ -31,6 +31,11 @@
     font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   }
 
+  .dark body {
+    background-color: #0c1417;
+    color: #f1f5f9;
+  }
+
   ::selection {
     background-color: #009488;
     color: #ffffff;
@@ -61,6 +66,11 @@
     padding: 8px 12px;
   }
 
+  .dark select option {
+    background-color: #111c21;
+    color: #f1f5f9;
+  }
+
   select option:hover,
   select option:focus,
   select option:active,
@@ -82,18 +92,27 @@
     background-color: #99f6e4;
     border-radius: 9999px;
   }
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: #004D40;
+  }
   ::-webkit-scrollbar-thumb:hover {
     background-color: #2dd4bf;
   }
 }
 
 @layer components {
-  /* Theme 4 Card Surface */
+  /* Theme 4 Card Surface (Light & Dark) */
   .card-surface {
     background-color: #ffffff;
     border-radius: 1rem;
     border: 1px solid #e2f1ef;
     box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+  }
+
+  .dark .card-surface {
+    background-color: #111c21;
+    border-color: #1e2f37;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   }
 
   /* Skeleton Shimmer Animation */
