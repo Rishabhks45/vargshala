@@ -1,21 +1,26 @@
 @inherits LayoutComponentBase
 
-<div class="h-screen max-h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 flex flex-col justify-between selection:bg-brand-500 selection:text-white">
-    <!-- Main Auth Content Area (Centered & Fits inside Viewport) -->
-    <main class="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 min-h-0 overflow-hidden">
+<div class="h-screen max-h-screen overflow-hidden bg-[#00382E] font-sans text-teal-100 flex flex-col justify-between selection:bg-[#009488] selection:text-white relative">
+    
+    <!-- Background Gradient Ambience Matching Theme 4 -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-[#009488]/20 rounded-full blur-[100px] pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-[#FB6868]/15 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <!-- Main Auth Content Area (Centered & Fits inside 100vh Viewport) -->
+    <main class="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 min-h-0 overflow-hidden relative z-10">
         @Body
     </main>
 
     <!-- Minimal Fixed-Height Footer -->
-    <footer class="py-2.5 text-center text-[11px] text-slate-500 border-t border-slate-900/80 bg-slate-950 shrink-0">
+    <footer class="py-2 text-center text-[11px] text-teal-300/60 border-t border-teal-900/60 bg-[#002B23]/90 shrink-0 relative z-10">
         <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-1">
-            <span>© 2026 Vargshala SaaS • Multi-Tenant Institute Platform</span>
-            <div class="flex items-center gap-3 text-slate-400">
-                <a href="#" class="hover:text-brand-400 transition-colors">Privacy Policy</a>
+            <span>© 2026 Vargshala • Coaching Institute Management SaaS</span>
+            <div class="flex items-center gap-3 text-teal-300/70">
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
                 <span>•</span>
-                <a href="#" class="hover:text-brand-400 transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
                 <span>•</span>
-                <a href="#" class="hover:text-brand-400 transition-colors">Help Center</a>
+                <a href="#" class="hover:text-white transition-colors">Help Center</a>
             </div>
         </div>
     </footer>
