@@ -4,108 +4,95 @@
 
 <PageTitle>Sign In | Vargshala</PageTitle>
 
-<div class="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center h-full max-h-full">
+<div class="w-full max-w-5xl mx-auto flex items-center justify-center h-full">
     
-    <!-- ========================================================================= -->
-    <!-- LEFT COLUMN: Theme 4 Educational Showcase with Plant & Books PNG -->
-    <!-- ========================================================================= -->
-    <div class="hidden lg:flex lg:col-span-7 flex-col justify-center relative">
+    <!-- Unified 2-Column Responsive Card Shell (Matching Heights & Zero Clipping) -->
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
         
-        <!-- Glowing Ambient Lights in background -->
-        <div class="absolute top-4 left-4 w-60 h-60 bg-[#009488]/30 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
-        <div class="absolute bottom-4 right-4 w-60 h-60 bg-[#FB6868]/20 rounded-full blur-3xl pointer-events-none"></div>
-
-        <!-- Illustration Canvas Container (Compact Proportional Height: 440px) -->
-        <div class="relative w-full h-[430px] bg-[#004D40]/80 rounded-3xl border border-teal-700/60 backdrop-blur-xl p-6 overflow-hidden shadow-2xl flex flex-col items-center justify-center">
+        <!-- ========================================================================= -->
+        <!-- LEFT COLUMN: Theme 4 Educational Showcase with Plant & Books PNG -->
+        <!-- ========================================================================= -->
+        <div class="hidden lg:flex lg:col-span-7 flex-col justify-between relative rounded-3xl bg-[#004D40]/80 border border-teal-700/60 backdrop-blur-xl p-6 shadow-2xl overflow-hidden min-h-[440px]">
             
+            <!-- Glowing Ambient Background Lights -->
+            <div class="absolute -top-10 -left-10 w-60 h-60 bg-[#009488]/30 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
+            <div class="absolute -bottom-10 -right-10 w-60 h-60 bg-[#FB6868]/20 rounded-full blur-3xl pointer-events-none"></div>
+
             <!-- Background Dotted Trajectory Curves -->
-            <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 40 120 Q 180 30 380 90 T 480 250" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="6,6" class="animate-dash-flow" />
-                <path d="M 60 340 Q 200 400 420 310" fill="none" stroke="#fb6868" stroke-width="2" stroke-dasharray="6,6" />
+            <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 40 100 Q 180 20 380 80 T 480 220" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="6,6" class="animate-dash-flow" />
+                <path d="M 60 320 Q 200 380 420 290" fill="none" stroke="#fb6868" stroke-width="2" stroke-dasharray="6,6" />
             </svg>
 
-            <!-- Floating Target Badge -->
-            <div class="absolute top-6 left-6 p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/50 shadow-lg text-teal-300 animate-float-slow">
-                <svg class="w-5 h-5 text-[#14B8A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                    <circle cx="12" cy="12" r="6" stroke-width="2"></circle>
-                    <circle cx="12" cy="12" r="2" stroke-width="2"></circle>
-                </svg>
+            <!-- Top Row Floating Badges -->
+            <div class="flex items-center justify-between relative z-10 w-full">
+                <!-- Target Icon -->
+                <div class="p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/50 shadow-lg text-teal-300 animate-float-slow">
+                    <svg class="w-4 h-4 text-[#14B8A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                        <circle cx="12" cy="12" r="6" stroke-width="2"></circle>
+                        <circle cx="12" cy="12" r="2" stroke-width="2"></circle>
+                    </svg>
+                </div>
+
+                <!-- Paper Airplane -->
+                <div class="p-2.5 rounded-2xl bg-gradient-to-tr from-[#FB6868] to-amber-500 text-white shadow-lg animate-plane-fly">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </div>
             </div>
 
-            <!-- Flying Paper Plane (Coral Accent) -->
-            <div class="absolute top-8 right-8 p-2.5 rounded-2xl bg-gradient-to-tr from-[#FB6868] to-amber-500 text-white shadow-lg animate-plane-fly">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                </svg>
-            </div>
-
-            <!-- Central Hero: Plant & Books PNG with Glowing Halo -->
-            <div class="relative flex flex-col items-center justify-center animate-float-medium group">
-                <div class="absolute -inset-4 bg-[#009488]/30 rounded-full blur-2xl group-hover:bg-[#14B8A6]/40 transition-all"></div>
+            <!-- Center Plant & Books Illustration with Soft Glow -->
+            <div class="relative flex flex-col items-center justify-center my-auto py-2 group z-10">
+                <div class="absolute inset-0 bg-[#009488]/25 rounded-full blur-2xl group-hover:bg-[#14B8A6]/35 transition-all"></div>
                 <img src="images/plant-books.png" 
                      alt="Vargshala Learning" 
-                     class="w-64 h-56 object-contain relative drop-shadow-[0_20px_35px_rgba(0,148,136,0.35)]" />
+                     class="w-56 h-48 object-contain relative drop-shadow-[0_15px_30px_rgba(0,148,136,0.35)]" />
             </div>
 
-            <!-- Floating Top Card: Live Batch Active -->
-            <div class="absolute bottom-6 left-6 p-3 rounded-2xl bg-[#00382E]/90 border border-teal-600/60 shadow-2xl backdrop-blur-md flex items-center gap-2.5 animate-float-reverse">
-                <div class="w-8 h-8 rounded-xl bg-amber-400 text-slate-900 font-bold flex items-center justify-center text-xs shadow-md">
-                    📚
-                </div>
-                <div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[11px] font-bold text-white">Vidya Mandir</span>
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-emerald-900/80 text-emerald-300 border border-emerald-500/50">
-                            ● LIVE
-                        </span>
+            <!-- Bottom Floating Telemetry Badges -->
+            <div class="grid grid-cols-2 gap-3 relative z-10 w-full">
+                <!-- Live Class Telemetry -->
+                <div class="p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/60 shadow-xl backdrop-blur-md flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-400 text-slate-900 font-bold flex items-center justify-center text-xs shadow-md shrink-0">
+                        📚
                     </div>
-                    <p class="text-[10px] text-teal-200">64 Batches • 1,248 Students</p>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[11px] font-bold text-white truncate">Vidya Mandir</span>
+                            <span class="inline-flex items-center px-1 py-0.2 rounded text-[7px] font-bold bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 shrink-0">
+                                ● LIVE
+                            </span>
+                        </div>
+                        <p class="text-[9px] text-teal-200 truncate">64 Batches • 1,248 Students</p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Floating Right Card: Attendance & Performance -->
-            <div class="absolute bottom-6 right-6 p-3 rounded-2xl bg-[#00382E]/90 border border-teal-600/60 shadow-2xl backdrop-blur-md flex items-center gap-2.5 animate-float-slow">
-                <div class="w-8 h-8 rounded-xl bg-[#009488] text-white flex items-center justify-center text-xs shadow-md font-bold">
-                    📈
-                </div>
-                <div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[11px] font-bold text-white">Attendance Rate</span>
-                        <span class="text-[9px] font-bold text-emerald-400">↑ 92%</span>
+                <!-- Attendance Rate Telemetry -->
+                <div class="p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/60 shadow-xl backdrop-blur-md flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-[#009488] text-white flex items-center justify-center text-xs shadow-md font-bold shrink-0">
+                        📈
                     </div>
-                    <p class="text-[10px] text-teal-200">Real-Time Institute Sync</p>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[11px] font-bold text-white">Attendance</span>
+                            <span class="text-[9px] font-bold text-emerald-400">↑ 92%</span>
+                        </div>
+                        <p class="text-[9px] text-teal-200 truncate">Real-Time Institute Sync</p>
+                    </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- Institute Highlight Metrics Footer (Theme 4 Style) -->
-        <div class="grid grid-cols-3 gap-3 mt-3">
-            <div class="py-2 px-3 rounded-xl bg-[#00382E]/60 border border-teal-800/60 text-center">
-                <p class="text-sm font-bold text-white">99.9%</p>
-                <p class="text-[10px] text-teal-200/80">Cloud Uptime</p>
-            </div>
-            <div class="py-2 px-3 rounded-xl bg-[#00382E]/60 border border-teal-800/60 text-center">
-                <p class="text-sm font-bold text-[#14B8A6]">Multi-Tenant</p>
-                <p class="text-[10px] text-teal-200/80">Org Data Security</p>
-            </div>
-            <div class="py-2 px-3 rounded-xl bg-[#00382E]/60 border border-teal-800/60 text-center">
-                <p class="text-sm font-bold text-[#FB6868]">Instant Sync</p>
-                <p class="text-[10px] text-teal-200/80">Batch & Fees</p>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- RIGHT COLUMN: Theme 4 Teal Glassmorphic Login Form Card -->
-    <!-- ========================================================================= -->
-    <div class="lg:col-span-5 w-full max-w-md mx-auto">
-        <div class="p-6 sm:p-7 rounded-3xl bg-[#004D40]/90 border border-teal-700/70 shadow-2xl backdrop-blur-2xl">
+        <!-- ========================================================================= -->
+        <!-- RIGHT COLUMN: Theme 4 Teal Glassmorphic Login Form Card -->
+        <!-- ========================================================================= -->
+        <div class="lg:col-span-5 w-full flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[#004D40]/90 border border-teal-700/70 shadow-2xl backdrop-blur-2xl min-h-[440px]">
             
             <!-- Branding Header with Golden Logo -->
-            <div class="text-center space-y-1 mb-4">
+            <div class="text-center space-y-1">
                 <div class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-amber-400 text-slate-900 font-extrabold text-xl shadow-lg mb-1">
                     <svg class="w-6 h-6 text-teal-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -119,13 +106,13 @@
                 </p>
             </div>
 
-            <!-- Login Form (Theme 4 Inputs & Actions) -->
-            <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3.5 mt-2">
+            <!-- Login Form -->
+            <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3.5 my-auto py-2">
                 <DataAnnotationsValidator />
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
-                    <div class="p-2.5 rounded-xl bg-rose-950/70 border border-rose-700 text-rose-200 text-[11px] flex items-center gap-2">
+                    <div class="p-2 rounded-xl bg-rose-950/70 border border-rose-700 text-rose-200 text-[11px] flex items-center gap-2">
                         <svg class="w-3.5 h-3.5 shrink-0 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -135,7 +122,7 @@
 
                 @if (!string.IsNullOrEmpty(_successMessage))
                 {
-                    <div class="p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-700 text-emerald-200 text-[11px] flex items-center gap-2">
+                    <div class="p-2 rounded-xl bg-emerald-950/70 border border-emerald-700 text-emerald-200 text-[11px] flex items-center gap-2">
                         <svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -156,7 +143,7 @@
                         </span>
                         <InputText @bind-Value="_loginModel.Email" 
                                    placeholder="name@institute.com"
-                                   class="w-full py-2 pl-9 pr-3 text-xs bg-[#00382E] border border-teal-600/70 rounded-xl focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-teal-400/30 text-white placeholder-teal-300/50 transition-all" />
+                                   class="w-full py-2.5 pl-9 pr-3 text-xs bg-[#00382E] border border-teal-600/70 rounded-xl focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-teal-400/30 text-white placeholder-teal-300/50 transition-all" />
                     </div>
                     <ValidationMessage For="@(() => _loginModel.Email)" class="text-[10px] text-rose-300" />
                 </div>
@@ -180,7 +167,7 @@
                         <input type="@(_showPassword ? "text" : "password")" 
                                @bind="_loginModel.Password" 
                                placeholder="••••••••"
-                               class="w-full py-2 pl-9 pr-9 text-xs bg-[#00382E] border border-teal-600/70 rounded-xl focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-teal-400/30 text-white placeholder-teal-300/50 transition-all" />
+                               class="w-full py-2.5 pl-9 pr-9 text-xs bg-[#00382E] border border-teal-600/70 rounded-xl focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-teal-400/30 text-white placeholder-teal-300/50 transition-all" />
                         <button type="button" 
                                 @onclick="TogglePasswordVisibility"
                                 class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-teal-400 hover:text-white">
@@ -210,7 +197,7 @@
                     </label>
                 </div>
 
-                <!-- Submit Button (Theme 4 Teal / Coral Action Button) -->
+                <!-- Submit Button -->
                 <button type="submit" 
                         disabled="@_isLoading"
                         class="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-[#009488] hover:bg-[#0f766e] transition-all shadow-[0_8px_20px_-4px_rgba(0,148,136,0.5)] flex items-center justify-center gap-2">
@@ -230,7 +217,7 @@
             </EditForm>
 
             <!-- Register Organization Footer Link -->
-            <div class="mt-4 pt-3 border-t border-teal-800/80 text-center">
+            <div class="pt-3 border-t border-teal-800/80 text-center">
                 <p class="text-[11px] text-teal-200/80">
                     New Institute?
                     <a href="register" class="font-bold text-amber-300 hover:text-white hover:underline ml-1">
@@ -240,6 +227,7 @@
             </div>
 
         </div>
+
     </div>
 
 </div>
