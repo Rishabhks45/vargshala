@@ -28,7 +28,7 @@
             </button>
 
             <button type="button" 
-                    @onclick="OpenAddModal"
+                    @onclick="OpenAddModalAsync"
                     class="btn-brand text-xs px-4 py-2 flex items-center gap-2 shadow-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -336,7 +336,7 @@
                                                     <span>View profile</span>
                                                 </button>
                                                 <button type="button" 
-                                                        @onclick="() => OpenEditModal(student)"
+                                                        @onclick="() => OpenEditModalAsync(student)"
                                                         class="w-full px-3.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors">
                                                     <span>Edit</span>
                                                 </button>
@@ -403,12 +403,12 @@
 <!-- ========================================================================= -->
 @if (_showAddEditModal)
 {
-    <!-- Backdrop Overlay -->
-    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
-         @onclick="() => _showAddEditModal = false"></div>
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
 
-    <!-- Right Side-Over Drawer Container with Theme 4 Deep Teal Styling & Smooth Slide -->
-    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white shadow-2xl flex flex-col justify-between border-l border-teal-800/80 animate-drawer-slide select-none overflow-hidden">
+    <!-- Right Side-Over Drawer Container with Bidirectional Smooth Slide Transition -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white shadow-2xl flex flex-col justify-between border-l border-teal-800/80 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
         
         <!-- Drawer Header with Theme 4 Deep Teal Gradient & Golden/Teal Badge -->
         <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
@@ -430,7 +430,7 @@
             </div>
 
             <button type="button" 
-                    @onclick="() => _showAddEditModal = false" 
+                    @onclick="CloseDrawerAsync" 
                     class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors"
                     title="Close Drawer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -539,12 +539,12 @@
         <!-- Drawer Sticky Footer -->
         <div class="p-4 px-6 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3">
             <button type="button" 
-                    @onclick="() => _showAddEditModal = false" 
+                    @onclick="CloseDrawerAsync" 
                     class="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl transition-colors">
                 Cancel
             </button>
             <button type="button" 
-                    @onclick="SaveStudent" 
+                    @onclick="SaveStudentAsync" 
                     class="btn-brand text-xs px-6 py-2.5 shadow-md flex items-center gap-2">
                 <span>@(_editingStudent == null ? "Save & Enroll Student →" : "Update Student Records →")</span>
             </button>
@@ -668,6 +668,7 @@
 
     private Guid? _activeMenuStudentId;
     private bool _showAddEditModal = false;
+    private bool _isDrawerOpen = false;
     private StudentDto? _editingStudent;
     private StudentDto _modalModel = new();
     private StudentDto? _selectedProfileStudent;
@@ -734,7 +735,7 @@
         _activeMenuStudentId = _activeMenuStudentId == studentId ? null : studentId;
     }
 
-    private void OpenAddModal()
+    private async Task OpenAddModalAsync()
     {
         _editingStudent = null;
         _modalModel = new StudentDto
@@ -745,9 +746,13 @@
             Status = "Active"
         };
         _showAddEditModal = true;
+        StateHasChanged();
+        await Task.Delay(20);
+        _isDrawerOpen = true;
+        StateHasChanged();
     }
 
-    private void OpenEditModal(StudentDto student)
+    private async Task OpenEditModalAsync(StudentDto student)
     {
         _activeMenuStudentId = null;
         _editingStudent = student;
@@ -766,9 +771,23 @@
             PaidFee = student.PaidFee
         };
         _showAddEditModal = true;
+        StateHasChanged();
+        await Task.Delay(20);
+        _isDrawerOpen = true;
+        StateHasChanged();
     }
 
-    private void SaveStudent()
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(300);
+        _showAddEditModal = false;
+        _editingStudent = null;
+        StateHasChanged();
+    }
+
+    private async Task SaveStudentAsync()
     {
         if (string.IsNullOrWhiteSpace(_modalModel.Name)) return;
 
@@ -785,8 +804,7 @@
             _students.Insert(0, _modalModel);
         }
 
-        _showAddEditModal = false;
-        _editingStudent = null;
+        await CloseDrawerAsync();
     }
 
     private void OpenViewProfile(StudentDto student)
