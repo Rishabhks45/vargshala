@@ -119,34 +119,8 @@
                 </p>
             </div>
 
-            <!-- Quick Demo Fill Pills -->
-            <div class="mb-4 p-2.5 rounded-2xl bg-[#00382E]/80 border border-teal-700/60 space-y-1.5">
-                <div class="flex items-center justify-between text-[10px] text-teal-300 font-semibold px-1">
-                    <span>⚡ QUICK DEMO LOGIN:</span>
-                    <span class="text-[#14B8A6]">Click to Auto-fill</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" 
-                            @onclick="FillSuperAdminDemo"
-                            class="p-1.5 px-2 rounded-xl text-left bg-[#004D40] border border-teal-600/60 hover:border-[#14B8A6] hover:bg-[#005B4D] transition-all text-xs group">
-                        <span class="font-bold text-white text-[11px] flex items-center gap-1 group-hover:text-teal-200">
-                            👑 SuperAdmin
-                        </span>
-                        <span class="text-[9px] text-teal-300/80 block truncate">rishabh.sharma@@...</span>
-                    </button>
-                    <button type="button" 
-                            @onclick="FillOrgAdminDemo"
-                            class="p-1.5 px-2 rounded-xl text-left bg-[#004D40] border border-teal-600/60 hover:border-[#FB6868] hover:bg-[#005B4D] transition-all text-xs group">
-                        <span class="font-bold text-white text-[11px] flex items-center gap-1 group-hover:text-coral-300">
-                            🏫 Org Admin
-                        </span>
-                        <span class="text-[9px] text-teal-300/80 block truncate">rishabh.admin@@...</span>
-                    </button>
-                </div>
-            </div>
-
             <!-- Login Form (Theme 4 Inputs & Actions) -->
-            <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3">
+            <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3.5 mt-2">
                 <DataAnnotationsValidator />
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
@@ -287,22 +261,6 @@
     private void TogglePasswordVisibility()
     {
         _showPassword = !_showPassword;
-    }
-
-    private void FillSuperAdminDemo()
-    {
-        _loginModel.Email = "rishabh.sharma@vargshala.com";
-        _loginModel.Password = "Admin@12345";
-        _errorMessage = null;
-        _successMessage = "SuperAdmin credentials filled!";
-    }
-
-    private void FillOrgAdminDemo()
-    {
-        _loginModel.Email = "rishabh.admin@vargshala.com";
-        _loginModel.Password = "Admin@12345";
-        _errorMessage = null;
-        _successMessage = "OrganizationAdmin credentials filled!";
     }
 
     private async Task HandleLogin()
