@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 
 <div class="flex min-h-screen bg-[#004D40] font-sans text-slate-800 antialiased overflow-hidden">
-    <!-- Theme 4 Deep Teal Sidebar Navigation -->
+    <!-- Theme 4 Deep Teal Sidebar Navigation (With dedicated toggle button inside) -->
     <NavMenu @bind-IsCollapsed="_sidebarCollapsed" />
 
     <!-- Main Content Shell (Matching Deep Teal Header with Rounded Canvas) -->
@@ -9,31 +9,14 @@
         <!-- Seamless Deep Teal Top Header (Zero Border) -->
         <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-[#004D40] text-white select-none border-none">
             
-            <!-- Left: Sidebar Toggle Button & Search Bar -->
-            <div class="flex items-center gap-4">
-                <!-- Sidebar Collapse/Expand Icon Button -->
-                <button type="button" 
-                        @onclick="ToggleSidebar"
-                        class="p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-all active:scale-95"
-                        title="@(_sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar")">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <rect x="3" y="3" width="18" height="18" rx="5" />
-                        <line x1="8.5" y1="3" x2="8.5" y2="21" />
-                        @if (!_sidebarCollapsed)
-                        {
-                            <path d="M16 8.5l-3.5 3.5 3.5 3.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        }
-                        else
-                        {
-                            <path d="M12.5 8.5l3.5 3.5-3.5 3.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        }
-                    </svg>
-                </button>
-
-                <!-- Reusable SearchInput Component -->
-                <div class="hidden sm:block">
-                    <SearchInput />
-                </div>
+            <!-- Left: Page Title & Coaching Name + Address (Matching User Screenshot) -->
+            <div class="flex flex-col justify-center">
+                <h1 class="text-lg font-bold text-white tracking-tight leading-tight">
+                    Dashboard
+                </h1>
+                <p class="text-xs text-teal-200/90 font-medium">
+                    Vidya Mandir Coaching Institute <span class="text-teal-400/80">•</span> Jaipur, Rajasthan
+                </p>
             </div>
 
             <!-- Top Right Profile & Notification Controls -->
@@ -75,9 +58,4 @@
 
 @code {
     private bool _sidebarCollapsed = false;
-
-    private void ToggleSidebar()
-    {
-        _sidebarCollapsed = !_sidebarCollapsed;
-    }
 }
