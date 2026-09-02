@@ -1,17 +1,17 @@
 @inherits LayoutComponentBase
 
-<div class="flex min-h-screen bg-[#F4F9F8] font-sans text-slate-800">
-    <!-- Theme 4 Sidebar Navigation -->
+<div class="flex min-h-screen bg-[#004D40] font-sans text-slate-800 antialiased overflow-hidden">
+    <!-- Theme 4 Deep Teal Sidebar Navigation -->
     <NavMenu @bind-IsCollapsed="_sidebarCollapsed" />
 
-    <!-- Main Content Area -->
-    <div class="flex flex-col flex-1 min-w-0">
-        <!-- Top Navbar (Matching Screenshot) -->
-        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-[#00695C] text-white shadow-sm border-b border-teal-700/50">
+    <!-- Main Content Shell (Matching Deep Teal Header with Rounded Canvas) -->
+    <div class="flex flex-col flex-1 min-w-0 bg-[#004D40]">
+        <!-- Seamless Deep Teal Top Header (Zero Border) -->
+        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-[#004D40] text-white select-none border-none">
             
             <!-- Left: Sidebar Toggle Button & Search Bar -->
             <div class="flex items-center gap-4">
-                <!-- Exact Sidebar Collapse Icon -->
+                <!-- Sidebar Collapse/Expand Icon Button -->
                 <button type="button" 
                         @onclick="ToggleSidebar"
                         class="p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-all active:scale-95"
@@ -39,12 +39,12 @@
             <!-- Top Right Profile & Notification Controls -->
             <div class="flex items-center gap-4">
                 
-                <!-- Notification Bell with Red Badge Dot -->
+                <!-- Notification Bell with Coral Badge Dot -->
                 <button class="relative p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
-                    <span class="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-coral-500 rounded-full border border-[#00695C]">
+                    <span class="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-coral-500 rounded-full border-2 border-[#004D40]">
                         1
                     </span>
                 </button>
@@ -66,8 +66,8 @@
             </div>
         </header>
 
-        <!-- Page Body Content -->
-        <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+        <!-- Page Body Canvas with Smooth Curved Top-Left Radius (Matching Screenshot) -->
+        <main class="flex-1 bg-[#F4F9F8] rounded-tl-[32px] p-6 lg:p-8 overflow-y-auto min-h-0 shadow-inner">
             @Body
         </main>
     </div>

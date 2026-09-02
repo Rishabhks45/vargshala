@@ -223,10 +223,10 @@
     [Parameter] public EventCallback<bool> IsCollapsedChanged { get; set; }
 
     private string GetAsideClass() =>
-        $"flex flex-col {(IsCollapsed ? "w-16" : "w-60")} h-screen max-h-screen sticky top-0 bg-[#004D40] text-teal-100 transition-all duration-300 ease-in-out shrink-0 select-none shadow-xl border-r border-teal-800/40 overflow-hidden";
+        $"flex flex-col {(IsCollapsed ? "w-16" : "w-60")} h-screen max-h-screen sticky top-0 bg-[#004D40] text-teal-100 transition-all duration-300 ease-in-out shrink-0 select-none border-none overflow-hidden";
 
     private string GetHeaderClass() =>
-        $"flex items-center {(IsCollapsed ? "justify-center px-2" : "justify-between px-4")} h-14 border-b border-teal-800/60 shrink-0";
+        $"flex items-center {(IsCollapsed ? "justify-center px-2" : "justify-between px-4")} h-16 border-none shrink-0";
 
     private string GetNavLinkClass() =>
         $"flex items-center {(IsCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2")} rounded-xl text-xs font-medium transition-all text-teal-100 hover:text-white hover:bg-white/10 group relative";
