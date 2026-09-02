@@ -1,0 +1,88 @@
+<div class="relative inline-block text-left @Class" @onclick:stopPropagation="true">
+    <!-- Trigger Button -->
+    <button type="button" 
+            @onclick="ToggleDropdown"
+            class="w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 shadow-2xs transition-all cursor-pointer select-none">
+        <span class="truncate @(string.IsNullOrEmpty(Value) ? "text-slate-400" : "text-slate-800")">
+            @(SelectedLabel)
+        </span>
+        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 transform transition-transform duration-200 @(_isOpen ? "rotate-180 text-[#009488]" : "")" 
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </button>
+
+    <!-- Floating Custom Dropdown Menu with Theme 4 Styling (No OS Blue Box!) -->
+    @if (_isOpen)
+    {
+        <div class="fixed inset-0 z-30" @onclick="Close"></div>
+        <div class="absolute left-0 top-full mt-1.5 w-full min-w-[160px] bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100 overflow-hidden select-none">
+            @foreach (var opt in Options)
+            {
+                var isSelected = opt.Value == Value;
+                <button type="button"
+                        @onclick="() => SelectOption(opt.Value)"
+                        class="w-full px-3.5 py-2 text-xs text-left flex items-center justify-between transition-colors @(isSelected ? "bg-[#009488] text-white font-bold" : "text-slate-700 hover:bg-teal-50/80 hover:text-[#00796b]")">
+                    <span class="truncate">@opt.Label</span>
+                    @if (isSelected)
+                    {
+                        <svg class="w-3.5 h-3.5 text-white shrink-0 ml-2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    }
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public List<CustomSelectOption> Options { get; set; } = new();
+    [Parameter] public string Placeholder { get; set; } = "Select option...";
+    [Parameter] public string Class { get; set; } = string.Empty;
+
+    private bool _isOpen = false;
+
+    private string SelectedLabel
+    {
+        get
+        {
+            var match = Options.FirstOrDefault(o => o.Value == Value);
+            return match != null ? match.Label : (string.IsNullOrEmpty(Placeholder) ? Value : Placeholder);
+        }
+    }
+
+    private void ToggleDropdown()
+    {
+        _isOpen = !_isOpen;
+    }
+
+    private void Close()
+    {
+        _isOpen = false;
+    }
+
+    private async Task SelectOption(string val)
+    {
+        Value = val;
+        _isOpen = false;
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(val);
+        }
+    }
+
+    public class CustomSelectOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+
+        public CustomSelectOption(string value, string label)
+        {
+            Value = value;
+            Label = label;
+        }
+    }
+}

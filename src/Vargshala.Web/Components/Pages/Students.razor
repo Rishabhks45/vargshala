@@ -3,6 +3,7 @@
 @using Vargshala.Web.Components.UI.Badges
 @using Vargshala.Web.Components.UI.Buttons
 @using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Inputs
 @rendermode InteractiveServer
 
 <PageTitle>Students Directory | Vargshala</PageTitle>
@@ -116,50 +117,11 @@
             }
         </div>
 
-        <!-- Filter Dropdowns with Custom Chevron Icons -->
+        <!-- Filter Dropdowns with 100% Theme 4 Teal Custom Styling (Zero Browser Blue Boxes) -->
         <div class="flex flex-wrap items-center gap-2.5">
-            <!-- Batch Filter -->
-            <div class="relative">
-                <select @bind="_selectedBatch" 
-                        class="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 rounded-xl pl-3 pr-8 py-2.5 text-slate-700 focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none cursor-pointer appearance-none shadow-2xs transition-all">
-                    <option value="">All Batches</option>
-                    <option value="Class 10 — Maths">Class 10 — Maths</option>
-                    <option value="Class 10 — Science">Class 10 — Science</option>
-                    <option value="Class 12 — Physics">Class 12 — Physics</option>
-                    <option value="Class 12 — Chemistry">Class 12 — Chemistry</option>
-                    <option value="IIT-JEE Morning Batch">IIT-JEE Morning Batch</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </div>
-            </div>
-
-            <!-- Fee Status Filter -->
-            <div class="relative">
-                <select @bind="_selectedFeeStatus" 
-                        class="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 rounded-xl pl-3 pr-8 py-2.5 text-slate-700 focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none cursor-pointer appearance-none shadow-2xs transition-all">
-                    <option value="">All Fee Status</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Partial">Partial</option>
-                    <option value="Overdue">Overdue</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </div>
-            </div>
-
-            <!-- Status Filter -->
-            <div class="relative">
-                <select @bind="_selectedStatus" 
-                        class="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 rounded-xl pl-3 pr-8 py-2.5 text-slate-700 focus:bg-white focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none cursor-pointer appearance-none shadow-2xs transition-all">
-                    <option value="">All Status</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </div>
-            </div>
+            <CustomSelect @bind-Value="_selectedBatch" Options="_batchFilterOptions" Placeholder="All Batches" />
+            <CustomSelect @bind-Value="_selectedFeeStatus" Options="_feeStatusFilterOptions" Placeholder="All Fee Status" />
+            <CustomSelect @bind-Value="_selectedStatus" Options="_statusFilterOptions" Placeholder="All Status" />
         </div>
     </div>
 
@@ -495,13 +457,7 @@
 
                 <div class="space-y-1">
                     <label class="text-[11px] font-semibold text-slate-700">Assign Batch *</label>
-                    <select @bind="_modalModel.BatchName" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none cursor-pointer">
-                        <option value="Class 10 — Maths">Class 10 — Maths</option>
-                        <option value="Class 10 — Science">Class 10 — Science</option>
-                        <option value="Class 12 — Physics">Class 12 — Physics</option>
-                        <option value="Class 12 — Chemistry">Class 12 — Chemistry</option>
-                        <option value="IIT-JEE Morning Batch">IIT-JEE Morning Batch</option>
-                    </select>
+                    <CustomSelect @bind-Value="_modalModel.BatchName" Options="_drawerBatchOptions" Placeholder="Select Batch" Class="w-full" />
                 </div>
             </div>
 
@@ -531,18 +487,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1">
                         <label class="text-[11px] font-semibold text-slate-700">Fee Status</label>
-                        <select @bind="_modalModel.FeeStatus" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none cursor-pointer">
-                            <option value="Paid">Paid</option>
-                            <option value="Partial">Partial</option>
-                            <option value="Overdue">Overdue</option>
-                        </select>
+                        <CustomSelect @bind-Value="_modalModel.FeeStatus" Options="_drawerFeeStatusOptions" Placeholder="Fee Status" Class="w-full" />
                     </div>
                     <div class="space-y-1">
                         <label class="text-[11px] font-semibold text-slate-700">Student Status</label>
-                        <select @bind="_modalModel.Status" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#009488] focus:outline-none cursor-pointer">
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+                        <CustomSelect @bind-Value="_modalModel.Status" Options="_drawerStatusOptions" Placeholder="Student Status" Class="w-full" />
                     </div>
                 </div>
 
@@ -655,12 +604,7 @@
                     </div>
                     <div class="space-y-1">
                         <label class="text-[11px] font-semibold text-slate-600">Payment Mode</label>
-                        <select class="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#009488] focus:outline-none cursor-pointer">
-                            <option>UPI / Online (GPay, PhonePe, Paytm)</option>
-                            <option>Cash Receipt</option>
-                            <option>Bank Transfer (NEFT/IMPS)</option>
-                            <option>Cheque</option>
-                        </select>
+                        <CustomSelect @bind-Value="_selectedPaymentMode" Options="_paymentModeOptions" Placeholder="Select Payment Mode" Class="w-full" />
                     </div>
                 </div>
             </div>
@@ -685,8 +629,64 @@
     private string _selectedBatch = string.Empty;
     private string _selectedFeeStatus = string.Empty;
     private string _selectedStatus = string.Empty;
+    private string _selectedPaymentMode = "UPI / Online (GPay, PhonePe, Paytm)";
     private string _sortColumn = "Name";
     private bool _isAscending = true;
+
+    private readonly List<CustomSelect.CustomSelectOption> _batchFilterOptions = new()
+    {
+        new("", "All Batches"),
+        new("Class 10 — Maths", "Class 10 — Maths"),
+        new("Class 10 — Science", "Class 10 — Science"),
+        new("Class 12 — Physics", "Class 12 — Physics"),
+        new("Class 12 — Chemistry", "Class 12 — Chemistry"),
+        new("IIT-JEE Morning Batch", "IIT-JEE Morning Batch")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _feeStatusFilterOptions = new()
+    {
+        new("", "All Fee Status"),
+        new("Paid", "Paid"),
+        new("Partial", "Partial"),
+        new("Overdue", "Overdue")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Status"),
+        new("Active", "Active"),
+        new("Inactive", "Inactive")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _drawerBatchOptions = new()
+    {
+        new("Class 10 — Maths", "Class 10 — Maths"),
+        new("Class 10 — Science", "Class 10 — Science"),
+        new("Class 12 — Physics", "Class 12 — Physics"),
+        new("Class 12 — Chemistry", "Class 12 — Chemistry"),
+        new("IIT-JEE Morning Batch", "IIT-JEE Morning Batch")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _drawerFeeStatusOptions = new()
+    {
+        new("Paid", "Paid"),
+        new("Partial", "Partial"),
+        new("Overdue", "Overdue")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _drawerStatusOptions = new()
+    {
+        new("Active", "Active"),
+        new("Inactive", "Inactive")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _paymentModeOptions = new()
+    {
+        new("UPI / Online (GPay, PhonePe, Paytm)", "UPI / Online (GPay, PhonePe, Paytm)"),
+        new("Cash Receipt", "Cash Receipt"),
+        new("Bank Transfer (NEFT/IMPS)", "Bank Transfer (NEFT/IMPS)"),
+        new("Cheque", "Cheque")
+    };
 
     private Guid? _activeMenuStudentId;
     private bool _showAddEditModal = false;
