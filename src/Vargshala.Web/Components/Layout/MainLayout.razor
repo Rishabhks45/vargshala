@@ -1,21 +1,21 @@
 @inherits LayoutComponentBase
 
-<div class="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
-    <!-- Sidebar Navigation (Collapsible with Icon-only mode) -->
+<div class="flex min-h-screen bg-[#F4F9F8] font-sans text-slate-800">
+    <!-- Theme 4 Sidebar Navigation -->
     <NavMenu @bind-IsCollapsed="_sidebarCollapsed" />
 
     <!-- Main Content Area -->
     <div class="flex flex-col flex-1 min-w-0">
-        <!-- Top Navbar -->
-        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+        <!-- Top Navbar (Matching Screenshot) -->
+        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-6 bg-[#00695C] text-white shadow-sm border-b border-teal-700/50">
             
             <!-- Left: Sidebar Toggle Button & Search Bar -->
             <div class="flex items-center gap-4">
-                <!-- Exact Sidebar Collapse Icon with State 1 (<) and State 2 (>) -->
+                <!-- Exact Sidebar Collapse Icon -->
                 <button type="button" 
                         @onclick="ToggleSidebar"
-                        class="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
-                        title="@(_sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar (Icon Only)")">
+                        class="p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                        title="@(_sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar")">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect x="3" y="3" width="18" height="18" rx="5" />
                         <line x1="8.5" y1="3" x2="8.5" y2="21" />
@@ -30,42 +30,46 @@
                     </svg>
                 </button>
 
-                <!-- Search Bar -->
+                <!-- Search Input Pill (White background inside Teal Topbar as shown in screenshot) -->
                 <div class="relative w-80 lg:w-96 hidden sm:block">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </span>
                     <input type="text" 
-                           placeholder="Search students, batches, fee records..." 
-                           class="w-full py-2 pl-9 pr-4 text-xs bg-slate-100 dark:bg-slate-800/70 border border-transparent rounded-xl focus:border-brand-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all text-slate-800 dark:text-slate-200 placeholder-slate-400" />
+                           placeholder="Search anything..." 
+                           class="w-full py-2 pl-10 pr-4 text-xs bg-white text-slate-800 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-300 placeholder-slate-400 border-none transition-all" />
                 </div>
             </div>
 
-            <!-- Top Right Action Controls -->
-            <div class="flex items-center gap-3.5">
-                <!-- Academic Session Badge -->
-                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200 dark:border-brand-800/40 text-xs font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
-                    <span>Session: 2026-2027</span>
-                </div>
-
-                <!-- Notifications Button -->
-                <button class="relative p-2 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <!-- Top Right Profile & Notification Controls -->
+            <div class="flex items-center gap-4">
+                
+                <!-- Notification Bell with Red Badge Dot -->
+                <button class="relative p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-600 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+                    <span class="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[9px] font-bold text-white bg-coral-500 rounded-full border border-[#00695C]">
+                        1
+                    </span>
                 </button>
 
-                <!-- Quick Action: New Admission -->
-                <button class="btn-brand-primary text-xs py-2 px-3.5 shadow-brand">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                <!-- Admin User Profile Pill -->
+                <div class="flex items-center gap-2.5 pl-2 cursor-pointer hover:opacity-95 transition-opacity">
+                    <div class="w-9 h-9 rounded-full bg-slate-200 border border-teal-300 overflow-hidden shrink-0 flex items-center justify-center font-bold text-teal-800 text-xs shadow-sm">
+                        RS
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <p class="text-xs font-bold text-white leading-tight">Rishabh Sharma</p>
+                        <p class="text-[10px] text-teal-200">Super Admin</p>
+                    </div>
+                    <svg class="w-3.5 h-3.5 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
-                    <span>New Admission</span>
-                </button>
+                </div>
+
             </div>
         </header>
 

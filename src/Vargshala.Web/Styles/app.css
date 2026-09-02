@@ -6,9 +6,19 @@
 
 @layer base {
   :root {
-    --color-brand-primary: #4f46e5;
-    --color-brand-violet: #7c3aed;
-    --color-brand-emerald: #10b981;
+    --primary: #009488;
+    --primary-light: #14b8a6;
+    --primary-bg: #ccfbf1;
+    --primary-bg-light: #f0fdfa;
+    --white: #ffffff;
+    --coral: #fb6868;
+    --orange: #f59e0b;
+    --text-muted: #64748b;
+    --border: #e2f1ef;
+    --success: #10b981;
+    --danger: #ef4444;
+    --shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+    --radius: 10px;
   }
 
   html {
@@ -16,7 +26,14 @@
   }
 
   body {
-    @apply font-sans bg-slate-50 text-slate-900 antialiased selection:bg-brand-500 selection:text-white dark:bg-slate-950 dark:text-slate-100;
+    background-color: #F4F9F8;
+    color: #1e293b;
+    font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+  }
+
+  ::selection {
+    background-color: #009488;
+    color: #ffffff;
   }
 
   /* Custom Clean Scrollbar */
@@ -28,38 +45,112 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+    background-color: #99f6e4;
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400 dark:bg-slate-600;
+    background-color: #2dd4bf;
   }
 }
 
 @layer components {
-  /* Glassmorphism Surface Cards */
-  .glass-card {
-    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-soft;
+  /* Theme 4 Card Surface */
+  .card-surface {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid #e2f1ef;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
   }
 
-  /* Gradient Action Buttons */
-  .btn-brand-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-white bg-gradient-to-r from-brand-600 to-violet-600 hover:from-brand-700 hover:to-violet-700 active:scale-[0.98] transition-all shadow-brand hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
+  /* Action Buttons */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #009488;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 8px 20px -4px rgba(0, 148, 136, 0.35);
+  }
+  .btn-primary:hover {
+    background-color: #0f766e;
   }
 
-  .btn-brand-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500;
+  .btn-coral {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #fb6868;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 8px 20px -4px rgba(251, 104, 104, 0.35);
+  }
+  .btn-coral:hover {
+    background-color: #e11d48;
   }
 
-  /* Status Badges */
-  .badge-emerald {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800/50;
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    color: #009488;
+    background-color: #ffffff;
+    border: 1px solid #009488;
+    transition: all 0.2s ease-in-out;
+  }
+  .btn-secondary:hover {
+    background-color: #f0fdfa;
   }
 
-  .badge-violet {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/50 dark:text-violet-400 dark:border-violet-800/50;
+  /* Badges */
+  .badge-teal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #ccfbf1;
+    color: #0f766e;
+    border: 1px solid #99f6e4;
   }
 
-  .badge-brand {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200 dark:bg-brand-950/50 dark:text-brand-400 dark:border-brand-800/50;
+  .badge-coral {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #ffe4e6;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+  }
+
+  .badge-green {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
   }
 }
