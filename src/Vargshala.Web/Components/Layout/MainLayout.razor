@@ -30,16 +30,9 @@
                     </svg>
                 </button>
 
-                <!-- Search Input Pill (White background inside Teal Topbar as shown in screenshot) -->
-                <div class="relative w-80 lg:w-96 hidden sm:block">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </span>
-                    <input type="text" 
-                           placeholder="Search anything..." 
-                           class="w-full py-2 pl-10 pr-4 text-xs bg-white text-slate-800 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-300 placeholder-slate-400 border-none transition-all" />
+                <!-- Reusable SearchInput Component -->
+                <div class="hidden sm:block">
+                    <SearchInput />
                 </div>
             </div>
 
