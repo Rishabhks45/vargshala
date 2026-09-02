@@ -148,13 +148,85 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider">
-                        <th class="py-3.5 px-6">Student</th>
-                        <th class="py-3.5 px-4">Roll</th>
-                        <th class="py-3.5 px-4">Batch</th>
-                        <th class="py-3.5 px-4">Contact</th>
-                        <th class="py-3.5 px-4">Status</th>
-                        <th class="py-3.5 px-4">Fees</th>
+                    <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 tracking-wider select-none">
+                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 transition-colors" @onclick='() => SortBy("Name")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Student</span>
+                                @if (_sortColumn == "Name")
+                                {
+                                    <span class="text-[#009488]">@(_isAscending ? "▲" : "▼")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-300 group-hover:text-slate-400 text-[10px]">↕</span>
+                                }
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors" @onclick='() => SortBy("Roll")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Roll</span>
+                                @if (_sortColumn == "Roll")
+                                {
+                                    <span class="text-[#009488]">@(_isAscending ? "▲" : "▼")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-300 text-[10px]">↕</span>
+                                }
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors" @onclick='() => SortBy("Batch")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Batch</span>
+                                @if (_sortColumn == "Batch")
+                                {
+                                    <span class="text-[#009488]">@(_isAscending ? "▲" : "▼")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-300 text-[10px]">↕</span>
+                                }
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors" @onclick='() => SortBy("Contact")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Contact</span>
+                                @if (_sortColumn == "Contact")
+                                {
+                                    <span class="text-[#009488]">@(_isAscending ? "▲" : "▼")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-300 text-[10px]">↕</span>
+                                }
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors" @onclick='() => SortBy("Status")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Status</span>
+                                @if (_sortColumn == "Status")
+                                {
+                                    <span class="text-[#009488]">@(_isAscending ? "▲" : "▼")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-300 text-[10px]">↕</span>
+                                }
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 transition-colors" @onclick='() => SortBy("Fees")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Fees</span>
+                                @if (_sortColumn == "Fees")
+                                {
+                                    <span class="text-[#009488]">@(_isAscending ? "▲" : "▼")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-300 text-[10px]">↕</span>
+                                }
+                            </div>
+                        </th>
                         <th class="py-3.5 px-6 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -523,6 +595,8 @@
     private string _selectedBatch = string.Empty;
     private string _selectedFeeStatus = string.Empty;
     private string _selectedStatus = string.Empty;
+    private string _sortColumn = "Name";
+    private bool _isAscending = true;
 
     private Guid? _activeMenuStudentId;
     private bool _showAddEditModal = false;
@@ -544,16 +618,48 @@
         new() { Name = "Meera Iyer", EnrollmentNumber = "VM-2026-071", RollNumber = "JEE-12", BatchName = "IIT-JEE Morning Batch", Phone = "+91 90000 10008", ParentName = "Ganesh Iyer", Status = "Active", FeeStatus = "Paid", TotalFee = 65000, PaidFee = 65000 }
     };
 
-    private List<StudentDto> FilteredStudents => _students.Where(s =>
-        (string.IsNullOrWhiteSpace(_searchQuery) || 
-         s.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
-         s.RollNumber.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
-         s.EnrollmentNumber.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-         s.Phone.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)) &&
-        (string.IsNullOrWhiteSpace(_selectedBatch) || s.BatchName == _selectedBatch) &&
-        (string.IsNullOrWhiteSpace(_selectedFeeStatus) || s.FeeStatus == _selectedFeeStatus) &&
-        (string.IsNullOrWhiteSpace(_selectedStatus) || s.Status == _selectedStatus)
-    ).ToList();
+    private List<StudentDto> FilteredStudents
+    {
+        get
+        {
+            var query = _students.Where(s =>
+                (string.IsNullOrWhiteSpace(_searchQuery) || 
+                 s.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
+                 s.RollNumber.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
+                 s.EnrollmentNumber.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                 s.Phone.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(_selectedBatch) || s.BatchName == _selectedBatch) &&
+                (string.IsNullOrWhiteSpace(_selectedFeeStatus) || s.FeeStatus == _selectedFeeStatus) &&
+                (string.IsNullOrWhiteSpace(_selectedStatus) || s.Status == _selectedStatus)
+            );
+
+            query = _sortColumn switch
+            {
+                "Name" => _isAscending ? query.OrderBy(s => s.Name) : query.OrderByDescending(s => s.Name),
+                "Roll" => _isAscending ? query.OrderBy(s => s.RollNumber) : query.OrderByDescending(s => s.RollNumber),
+                "Batch" => _isAscending ? query.OrderBy(s => s.BatchName) : query.OrderByDescending(s => s.BatchName),
+                "Contact" => _isAscending ? query.OrderBy(s => s.Phone) : query.OrderByDescending(s => s.Phone),
+                "Status" => _isAscending ? query.OrderBy(s => s.Status) : query.OrderByDescending(s => s.Status),
+                "Fees" => _isAscending ? query.OrderBy(s => s.FeeStatus) : query.OrderByDescending(s => s.FeeStatus),
+                _ => query.OrderBy(s => s.Name)
+            };
+
+            return query.ToList();
+        }
+    }
+
+    private void SortBy(string column)
+    {
+        if (_sortColumn == column)
+        {
+            _isAscending = !_isAscending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _isAscending = true;
+        }
+    }
 
     private void ToggleMenu(Guid studentId)
     {
