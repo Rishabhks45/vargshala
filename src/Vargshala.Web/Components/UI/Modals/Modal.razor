@@ -1,0 +1,62 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 @(IsOpen ? "animate-in fade-in duration-150" : "hidden")"
+     @onclick="HandleBackdropClick">
+    <div class="w-full @MaxWidth bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4 animate-in zoom-in-95 duration-150 relative select-none"
+         @onclick:stopPropagation="true">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            @if (HeaderTemplate != null)
+            {
+                @HeaderTemplate
+            }
+            else
+            {
+                <h3 class="text-base font-extrabold text-slate-800">@Title</h3>
+            }
+            <button type="button" 
+                    @onclick="Close" 
+                    class="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Close">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body Content -->
+        <div class="select-text">
+            @ChildContent
+        </div>
+
+        <!-- Optional Modal Footer -->
+        @if (FooterTemplate != null)
+        {
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                @FooterTemplate
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; } = true;
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string MaxWidth { get; set; } = "max-w-md";
+    [Parameter] public RenderFragment? HeaderTemplate { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterTemplate { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close()
+    {
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        await Close();
+    }
+}

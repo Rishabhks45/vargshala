@@ -1,5 +1,8 @@
 @page "/students"
 @using Vargshala.Contracts.Students
+@using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
+@using Vargshala.Web.Components.UI.Modals
 @rendermode InteractiveServer
 
 <PageTitle>Students Directory | Vargshala</PageTitle>
@@ -559,108 +562,103 @@
 }
 
 <!-- ========================================================================= -->
-<!-- MODAL 2: View Profile Modal -->
+<!-- MODAL 2: View Profile Modal (Using Blazor UI Component Tags) -->
 <!-- ========================================================================= -->
 @if (_selectedProfileStudent != null)
 {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 class="text-base font-extrabold text-slate-800">Student Profile</h3>
-                <button type="button" @onclick="() => _selectedProfileStudent = null" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+    <Modal IsOpen="true" Title="Student Profile" MaxWidth="max-w-md" OnClose="() => _selectedProfileStudent = null">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200 text-[#00796b] font-black text-lg flex items-center justify-center shadow-xs">
+                        @_selectedProfileStudent.Initials
+                    </div>
+                    <div>
+                        <h4 class="text-base font-bold text-slate-900">@_selectedProfileStudent.Name</h4>
+                        <p class="text-xs text-slate-400 font-medium">Roll: @_selectedProfileStudent.RollNumber • ID: @_selectedProfileStudent.EnrollmentNumber</p>
+                        <div class="mt-1">
+                            <Badge Text="@_selectedProfileStudent.Status" 
+                                   Variant="@(_selectedProfileStudent.Status == "Active" ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" 
+                                   ShowDot="true" />
+                        </div>
+                    </div>
+                </div>
 
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200 text-[#00796b] font-black text-lg flex items-center justify-center shadow-xs">
-                    @_selectedProfileStudent.Initials
-                </div>
-                <div>
-                    <h4 class="text-base font-bold text-slate-900">@_selectedProfileStudent.Name</h4>
-                    <p class="text-xs text-slate-400">Roll: @_selectedProfileStudent.RollNumber • ID: @_selectedProfileStudent.EnrollmentNumber</p>
-                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        @_selectedProfileStudent.Status
-                    </span>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 p-3.5 rounded-2xl space-y-2 text-xs">
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400 font-medium">Batch</span>
-                    <span class="font-bold text-slate-800">@_selectedProfileStudent.BatchName</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400 font-medium">Contact</span>
-                    <span class="font-bold text-slate-800">@_selectedProfileStudent.Phone</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400 font-medium">Parent / Guardian</span>
-                    <span class="font-bold text-slate-800">@_selectedProfileStudent.ParentName</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400 font-medium">Fee Status</span>
-                    <span class="font-bold @(_selectedProfileStudent.FeeStatus == "Paid" ? "text-emerald-600" : _selectedProfileStudent.FeeStatus == "Partial" ? "text-amber-600" : "text-rose-600")">
-                        @_selectedProfileStudent.FeeStatus (₹@_selectedProfileStudent.PaidFee / ₹@_selectedProfileStudent.TotalFee)
-                    </span>
+                <div class="bg-slate-50 p-3.5 rounded-2xl space-y-2.5 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-medium">Batch</span>
+                        <span class="font-bold text-slate-800">@_selectedProfileStudent.BatchName</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-medium">Contact</span>
+                        <span class="font-bold text-slate-800">@_selectedProfileStudent.Phone</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-medium">Parent / Guardian</span>
+                        <span class="font-bold text-slate-800">@_selectedProfileStudent.ParentName</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-medium">Fee Status</span>
+                        <Badge Text="@($"{_selectedProfileStudent.FeeStatus} (₹{_selectedProfileStudent.PaidFee:N0} / ₹{_selectedProfileStudent.TotalFee:N0})")"
+                               Variant="@(_selectedProfileStudent.FeeStatus == "Paid" ? Badge.BadgeVariant.Green : _selectedProfileStudent.FeeStatus == "Partial" ? Badge.BadgeVariant.Teal : Badge.BadgeVariant.Coral)" />
+                    </div>
                 </div>
             </div>
-
-            <div class="pt-2 flex items-center justify-end gap-2">
-                <button type="button" @onclick="() => OpenFeeModal(_selectedProfileStudent)" class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
-                    <span>Collect Fee</span>
-                </button>
-            </div>
-        </div>
-    </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" 
+                    @onclick="() => OpenFeeModal(_selectedProfileStudent)" 
+                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
+                <span>Collect Fee</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
 }
 
 <!-- ========================================================================= -->
-<!-- MODAL 3: Collect Fee Modal -->
+<!-- MODAL 3: Collect Fee Modal (Using Blazor UI Component Tags) -->
 <!-- ========================================================================= -->
 @if (_feeCollectStudent != null)
 {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 class="text-base font-extrabold text-slate-800">Collect Student Fee</h3>
-                <button type="button" @onclick="() => _feeCollectStudent = null" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="p-3 bg-teal-50/70 border border-teal-100 rounded-2xl text-xs space-y-1">
-                <p class="font-bold text-slate-800">@_feeCollectStudent.Name (@_feeCollectStudent.RollNumber)</p>
-                <p class="text-slate-500">Batch: @_feeCollectStudent.BatchName</p>
-                <p class="text-slate-500">Total: ₹@_feeCollectStudent.TotalFee | Paid: ₹@_feeCollectStudent.PaidFee | <span class="font-bold text-rose-600">Due: ₹@_feeCollectStudent.DueFee</span></p>
-            </div>
-
-            <div class="space-y-3">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-600">Payment Amount (₹)</label>
-                    <input type="number" @bind="_feeAmountToCollect" class="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#009488] focus:outline-none font-bold text-slate-800" />
+    <Modal IsOpen="true" Title="Collect Student Fee" MaxWidth="max-w-md" OnClose="() => _feeCollectStudent = null">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="p-3 bg-teal-50/70 border border-teal-100 rounded-2xl text-xs space-y-1">
+                    <p class="font-bold text-slate-800">@_feeCollectStudent.Name (@_feeCollectStudent.RollNumber)</p>
+                    <p class="text-slate-500">Batch: @_feeCollectStudent.BatchName</p>
+                    <p class="text-slate-500">Total: ₹@_feeCollectStudent.TotalFee:N0 | Paid: ₹@_feeCollectStudent.PaidFee:N0 | <span class="font-bold text-rose-600">Due: ₹@_feeCollectStudent.DueFee:N0</span></p>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-600">Payment Mode</label>
-                    <select class="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#009488] focus:outline-none cursor-pointer">
-                        <option>UPI / Online (GPay, PhonePe, Paytm)</option>
-                        <option>Cash Receipt</option>
-                        <option>Bank Transfer (NEFT/IMPS)</option>
-                        <option>Cheque</option>
-                    </select>
+
+                <div class="space-y-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-600">Payment Amount (₹)</label>
+                        <input type="number" @bind="_feeAmountToCollect" class="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#009488] focus:outline-none font-bold text-slate-800" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-600">Payment Mode</label>
+                        <select class="w-full px-3.5 py-2.5 text-xs border border-slate-200 rounded-xl focus:border-[#009488] focus:outline-none cursor-pointer">
+                            <option>UPI / Online (GPay, PhonePe, Paytm)</option>
+                            <option>Cash Receipt</option>
+                            <option>Bank Transfer (NEFT/IMPS)</option>
+                            <option>Cheque</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button type="button" @onclick="() => _feeCollectStudent = null" class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-all cursor-pointer">
-                    Cancel
-                </button>
-                <button type="button" @onclick="ProcessFeePayment" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
-                    <span>Confirm & Generate Receipt</span>
-                </button>
-            </div>
-        </div>
-    </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" 
+                    @onclick="() => _feeCollectStudent = null" 
+                    class="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-all cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="ProcessFeePayment" 
+                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
+                <span>Confirm & Generate Receipt</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
 }
 
 @code {
