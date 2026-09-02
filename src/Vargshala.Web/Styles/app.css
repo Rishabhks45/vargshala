@@ -40,6 +40,36 @@
     outline: none !important;
   }
 
+  /* Override browser default blue dropdown & input outlines with Theme 4 Teal */
+  select, input, textarea, button {
+    accent-color: #009488 !important;
+    caret-color: #009488 !important;
+  }
+
+  select:focus, select:focus-visible, 
+  input:focus, input:focus-visible, 
+  textarea:focus, textarea:focus-visible {
+    outline: none !important;
+    border-color: #009488 !important;
+    box-shadow: 0 0 0 3px rgba(0, 148, 136, 0.18) !important;
+  }
+
+  /* Dropdown Options Theme Styling */
+  select option {
+    background-color: #ffffff;
+    color: #1e293b;
+    padding: 8px 12px;
+  }
+
+  select option:hover,
+  select option:focus,
+  select option:active,
+  select option:checked {
+    background-color: #009488 !important;
+    background: linear-gradient(0deg, #009488 0%, #009488 100%) !important;
+    color: #ffffff !important;
+  }
+
   /* Custom Clean Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
