@@ -1,0 +1,41 @@
+<div class="card-surface p-6 overflow-hidden">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="flex items-center justify-between pb-4 mb-4 border-b border-tealborder">
+            <Skeleton Width="140px" Height="18px" />
+            <Skeleton Width="80px" Height="30px" Shape="Skeleton.SkeletonShape.Rounded" />
+        </div>
+    }
+
+    <!-- Table Header Skeleton -->
+    <div class="grid grid-cols-4 gap-4 pb-3 border-b border-slate-100">
+        <Skeleton Height="12px" />
+        <Skeleton Height="12px" />
+        <Skeleton Height="12px" />
+        <Skeleton Height="12px" />
+    </div>
+
+    <!-- Table Rows Skeleton -->
+    <div class="divide-y divide-slate-100">
+        @for (int r = 0; r < Rows; r++)
+        {
+            <div class="grid grid-cols-4 gap-4 py-3.5 items-center">
+                <div class="flex items-center gap-2">
+                    <Skeleton Width="28px" Height="28px" Shape="Skeleton.SkeletonShape.Circle" />
+                    <Skeleton Width="90px" Height="12px" />
+                </div>
+                <Skeleton Width="70px" Height="12px" />
+                <Skeleton Width="110px" Height="12px" />
+                <div class="flex justify-end">
+                    <Skeleton Width="60px" Height="20px" Shape="Skeleton.SkeletonShape.Pill" />
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public int Rows { get; set; } = 5;
+    [Parameter] public int Columns { get; set; } = 4;
+}

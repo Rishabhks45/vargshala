@@ -1,0 +1,32 @@
+<div class="skeleton-shimmer @GetRoundedClass() @Class" style="@GetStyle()"></div>
+
+@code {
+    [Parameter] public string? Width { get; set; }
+    [Parameter] public string? Height { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public SkeletonShape Shape { get; set; } = SkeletonShape.Rounded;
+
+    public enum SkeletonShape
+    {
+        Rectangle,
+        Rounded,
+        Pill,
+        Circle
+    }
+
+    private string GetRoundedClass() => Shape switch
+    {
+        SkeletonShape.Circle => "rounded-full shrink-0",
+        SkeletonShape.Pill => "rounded-full",
+        SkeletonShape.Rectangle => "rounded-none",
+        _ => "rounded-xl"
+    };
+
+    private string GetStyle()
+    {
+        var styles = new List<string>();
+        if (!string.IsNullOrEmpty(Width)) styles.Add($"width: {Width}");
+        if (!string.IsNullOrEmpty(Height)) styles.Add($"height: {Height}");
+        return string.Join("; ", styles);
+    }
+}

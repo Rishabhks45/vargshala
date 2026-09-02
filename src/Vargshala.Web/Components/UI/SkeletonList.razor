@@ -1,0 +1,26 @@
+<div class="card-surface p-6">
+    <div class="flex items-center justify-between pb-4 border-b border-tealborder">
+        <Skeleton Width="130px" Height="18px" />
+        <Skeleton Width="50px" Height="14px" />
+    </div>
+
+    <div class="mt-4 space-y-4">
+        @for (int i = 0; i < Rows; i++)
+        {
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <Skeleton Width="36px" Height="36px" Shape="Skeleton.SkeletonShape.Rounded" />
+                    <div class="space-y-1.5">
+                        <Skeleton Width="120px" Height="12px" />
+                        <Skeleton Width="80px" Height="10px" />
+                    </div>
+                </div>
+                <Skeleton Width="45px" Height="10px" />
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Rows { get; set; } = 4;
+}
