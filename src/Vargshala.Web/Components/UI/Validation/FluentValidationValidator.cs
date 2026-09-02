@@ -46,10 +46,11 @@ public class FluentValidationValidator : ComponentBase, IDisposable
         var context = new ValidationContext<object>(CurrentEditContext.Model);
         var validationResult = validator.Validate(context);
 
-        foreach (var error in validationResult.Errors)
+        foreach (var errorGroup in validationResult.Errors.GroupBy(e => e.PropertyName))
         {
-            var fieldIdentifier = new FieldIdentifier(CurrentEditContext.Model, error.PropertyName);
-            _messageStore.Add(fieldIdentifier, error.ErrorMessage);
+            var firstError = errorGroup.First();
+            var fieldIdentifier = new FieldIdentifier(CurrentEditContext.Model, firstError.PropertyName);
+            _messageStore.Add(fieldIdentifier, firstError.ErrorMessage);
         }
 
         CurrentEditContext.NotifyValidationStateChanged();
@@ -71,9 +72,10 @@ public class FluentValidationValidator : ComponentBase, IDisposable
 
         var validationResult = validator.Validate(context);
 
-        foreach (var error in validationResult.Errors)
+        var firstError = validationResult.Errors.FirstOrDefault();
+        if (firstError != null)
         {
-            _messageStore.Add(args.FieldIdentifier, error.ErrorMessage);
+            _messageStore.Add(args.FieldIdentifier, firstError.ErrorMessage);
         }
 
         CurrentEditContext.NotifyValidationStateChanged();

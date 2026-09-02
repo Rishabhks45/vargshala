@@ -6,6 +6,9 @@ public class StudentDtoValidator : AbstractValidator<StudentDto>
 {
     public StudentDtoValidator()
     {
+        RuleLevelCascadeMode = CascadeMode.Stop;
+        ClassLevelCascadeMode = CascadeMode.Stop;
+
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Full Name is required.")
             .MaximumLength(100).WithMessage("Full Name cannot exceed 100 characters.");
