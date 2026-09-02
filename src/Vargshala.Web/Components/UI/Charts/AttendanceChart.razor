@@ -4,22 +4,26 @@
 }
 else
 {
-    <div class="card-surface p-6">
+    <div class="card-surface p-6 relative">
+        <!-- Header & Legend -->
         <div class="flex items-center justify-between pb-4 border-b border-tealborder">
-            <h2 class="font-bold text-base text-slate-800">@Title</h2>
+            <div>
+                <h2 class="font-bold text-base text-slate-800">@Title</h2>
+                <p class="text-[11px] text-slate-400 mt-0.5">Average attendance across all 64 batches</p>
+            </div>
             <div class="flex items-center gap-4 text-xs">
-                <span class="flex items-center gap-1.5 font-medium text-brand-700">
+                <span class="flex items-center gap-1.5 font-semibold text-brand-700">
                     <span class="w-2.5 h-2.5 rounded-full bg-brand-600"></span>
-                    @CurrentMonthLabel
+                    @CurrentMonthLabel (@_hoveredPoint?.CurrentMonthValue ?? 92)%
                 </span>
                 <span class="flex items-center gap-1.5 text-slate-400">
                     <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-                    @LastMonthLabel
+                    @LastMonthLabel (@_hoveredPoint?.LastMonthValue ?? 86)%
                 </span>
             </div>
         </div>
 
-        <!-- Responsive SVG Line Chart -->
+        <!-- Interactive SVG Line Chart Container -->
         <div class="mt-6 relative h-64 w-full">
             <!-- Y-Axis Labels & Gridlines -->
             <div class="absolute inset-0 flex flex-col justify-between text-[11px] text-slate-400 select-none pointer-events-none">
@@ -45,34 +49,102 @@ else
                 </div>
             </div>
 
-            <!-- SVG Line Paths -->
-            <svg class="absolute inset-0 w-full h-full pl-10 pb-5" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <!-- SVG Curves, Guidelines & Data Points -->
+            <svg class="absolute inset-0 w-full h-full pl-10 pb-6" viewBox="0 0 500 200" preserveAspectRatio="none">
+                <defs>
+                    <!-- Gradient for Area Under Curve -->
+                    <linearGradient id="tealAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#009488" stop-opacity="0.18" />
+                        <stop offset="100%" stop-color="#009488" stop-opacity="0.0" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Soft Area Under Solid Curve -->
+                <path d="M 10 150 Q 60 110 120 75 T 230 60 T 350 40 T 480 25 L 480 200 L 10 200 Z" 
+                      fill="url(#tealAreaGrad)" />
+
                 <!-- Dotted Line for Last Month -->
                 <path d="M 10 160 Q 60 140 120 130 T 230 110 T 350 80 T 480 60" 
                       fill="none" 
                       stroke="#cbd5e1" 
                       stroke-width="2" 
-                      stroke-dasharray="4,4" />
+                      stroke-dasharray="5,5" />
 
                 <!-- Solid Teal Line for This Month -->
                 <path d="M 10 150 Q 60 110 120 75 T 230 60 T 350 40 T 480 25" 
                       fill="none" 
                       stroke="#009488" 
-                      stroke-width="3" />
+                      stroke-width="3.5" />
 
-                <!-- Data Nodes -->
-                <circle cx="10" cy="150" r="4" fill="#009488" stroke="#fff" stroke-width="2" />
-                <circle cx="120" cy="75" r="4" fill="#009488" stroke="#fff" stroke-width="2" />
-                <circle cx="230" cy="60" r="4" fill="#009488" stroke="#fff" stroke-width="2" />
-                <circle cx="350" cy="40" r="4" fill="#009488" stroke="#fff" stroke-width="2" />
-                <circle cx="480" cy="25" r="4" fill="#009488" stroke="#fff" stroke-width="2" />
+                <!-- Active Vertical Hover Guideline -->
+                @if (_hoveredPoint != null)
+                {
+                    <line x1="@_hoveredPoint.SvgX" y1="0" x2="@_hoveredPoint.SvgX" y2="200" 
+                          stroke="#009488" stroke-width="1.5" stroke-dasharray="3,3" class="opacity-70 transition-all duration-150" />
+
+                    <!-- Highlight Ring on Last Month Node -->
+                    <circle cx="@_hoveredPoint.SvgX" cy="@_hoveredPoint.SvgYLast" r="5" fill="#94a3b8" stroke="#fff" stroke-width="2" />
+
+                    <!-- Glowing Pulsing Ring on This Month Node -->
+                    <circle cx="@_hoveredPoint.SvgX" cy="@_hoveredPoint.SvgYCurrent" r="8" fill="#009488" fill-opacity="0.3" class="animate-ping" />
+                    <circle cx="@_hoveredPoint.SvgX" cy="@_hoveredPoint.SvgYCurrent" r="6" fill="#009488" stroke="#fff" stroke-width="2.5" />
+                }
+
+                <!-- Interactive Data Node Targets -->
+                @foreach (var pt in _chartPoints)
+                {
+                    <!-- Node Dot -->
+                    <circle cx="@pt.SvgX" cy="@pt.SvgYCurrent" r="4.5" fill="#009488" stroke="#fff" stroke-width="2" />
+                    <circle cx="@pt.SvgX" cy="@pt.SvgYLast" r="3.5" fill="#cbd5e1" stroke="#fff" stroke-width="1.5" />
+
+                    <!-- Large Invisible Hit Box for Easy Hover -->
+                    <rect x="@(pt.SvgX - 30)" y="0" width="60" height="200" 
+                          fill="transparent" 
+                          class="cursor-pointer"
+                          @onmouseenter="() => SetHovered(pt)" 
+                          @onmouseleave="ClearHovered" />
+                }
             </svg>
 
+            <!-- Floating Interactive Tooltip Popover -->
+            @if (_hoveredPoint != null)
+            {
+                <div class="absolute z-20 pointer-events-none transform -translate-x-1/2 transition-all duration-150"
+                     style="left: calc(40px + (@_hoveredPoint.PercentX% * (100% - 40px) / 100)); top: @(_hoveredPoint.TooltipTopPx)px;">
+                    <div class="bg-slate-900/95 text-white p-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md min-w-[170px] space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] font-bold border-b border-slate-700/70 pb-1 text-slate-300">
+                            <span>📅 @_hoveredPoint.DateLabel, 2026</span>
+                            <span class="text-emerald-400 font-extrabold text-[10px]">+@(_hoveredPoint.CurrentMonthValue - _hoveredPoint.LastMonthValue)%</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs pt-0.5">
+                            <span class="text-teal-300 flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                                This Month:
+                            </span>
+                            <span class="font-extrabold text-white">@_hoveredPoint.CurrentMonthValue%</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span class="flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                Last Month:
+                            </span>
+                            <span class="font-medium text-slate-300">@_hoveredPoint.LastMonthValue%</span>
+                        </div>
+                        <div class="text-[9px] text-slate-400 text-center pt-1 border-t border-slate-800">
+                            Present: @Math.Round(_hoveredPoint.CurrentMonthValue * 12.48) / 1,248 students
+                        </div>
+                    </div>
+                </div>
+            }
+
             <!-- X-Axis Labels -->
-            <div class="absolute bottom-0 left-10 right-0 flex justify-between text-[10px] text-slate-400 select-none">
-                @foreach (var label in XAxisLabels)
+            <div class="absolute bottom-0 left-10 right-0 flex justify-between text-[11px] text-slate-400 select-none pt-1">
+                @foreach (var pt in _chartPoints)
                 {
-                    <span>@label</span>
+                    <span class="@(_hoveredPoint == pt ? "text-brand-600 font-bold" : "") cursor-pointer transition-colors"
+                          @onmouseenter="() => SetHovered(pt)">
+                        @pt.DateLabel
+                    </span>
                 }
             </div>
         </div>
@@ -84,5 +156,37 @@ else
     [Parameter] public string Title { get; set; } = "Attendance Overview";
     [Parameter] public string CurrentMonthLabel { get; set; } = "This Month";
     [Parameter] public string LastMonthLabel { get; set; } = "Last Month";
-    [Parameter] public List<string> XAxisLabels { get; set; } = new() { "01 May", "08 May", "15 May", "22 May", "29 May" };
+
+    public class ChartPointModel
+    {
+        public string DateLabel { get; set; } = string.Empty;
+        public double SvgX { get; set; }
+        public double SvgYCurrent { get; set; }
+        public double SvgYLast { get; set; }
+        public int CurrentMonthValue { get; set; }
+        public int LastMonthValue { get; set; }
+        public double PercentX { get; set; }
+        public int TooltipTopPx { get; set; }
+    }
+
+    private readonly List<ChartPointModel> _chartPoints = new()
+    {
+        new() { DateLabel = "01 May", SvgX = 10, SvgYCurrent = 150, SvgYLast = 160, CurrentMonthValue = 78, LastMonthValue = 72, PercentX = 2, TooltipTopPx = 30 },
+        new() { DateLabel = "08 May", SvgX = 120, SvgYCurrent = 75, SvgYLast = 130, CurrentMonthValue = 88, LastMonthValue = 79, PercentX = 24, TooltipTopPx = 10 },
+        new() { DateLabel = "15 May", SvgX = 230, SvgYCurrent = 60, SvgYLast = 110, CurrentMonthValue = 91, LastMonthValue = 84, PercentX = 46, TooltipTopPx = 5 },
+        new() { DateLabel = "22 May", SvgX = 350, SvgYCurrent = 40, SvgYLast = 80, CurrentMonthValue = 95, LastMonthValue = 87, PercentX = 70, TooltipTopPx = 0 },
+        new() { DateLabel = "29 May", SvgX = 480, SvgYCurrent = 25, SvgYLast = 60, CurrentMonthValue = 98, LastMonthValue = 90, PercentX = 94, TooltipTopPx = 0 }
+    };
+
+    private ChartPointModel? _hoveredPoint;
+
+    private void SetHovered(ChartPointModel pt)
+    {
+        _hoveredPoint = pt;
+    }
+
+    private void ClearHovered()
+    {
+        // Keep last hovered or reset
+    }
 }
