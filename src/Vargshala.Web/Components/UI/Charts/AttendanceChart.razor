@@ -111,11 +111,11 @@ else
                 }
             </svg>
 
-            <!-- Floating Interactive Tooltip Popover with Smart Clamping -->
+            <!-- Floating Interactive Tooltip Popover (Mathematically Pinned to Exactly Each Dot) -->
             @if (ActivePoint != null)
             {
-                <div class="absolute z-20 pointer-events-none @GetTooltipTransform(ActivePoint) transition-all duration-200"
-                     style="@GetTooltipStyle(ActivePoint)">
+                <div class="absolute z-20 pointer-events-none transition-all duration-200"
+                     style="@GetTooltipPlacementStyle(ActivePoint)">
                     <div class="bg-slate-900/95 text-white p-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md min-w-[170px] space-y-1.5">
                         <div class="flex items-center justify-between text-[11px] font-bold border-b border-slate-700/70 pb-1 text-slate-300">
                             <span>📅 @ActivePoint.DateLabel, 2026</span>
@@ -175,17 +175,15 @@ else
         public double SvgYLast { get; set; }
         public int CurrentMonthValue { get; set; }
         public int LastMonthValue { get; set; }
-        public double PercentX { get; set; }
-        public int TooltipTopPx { get; set; }
     }
 
     private readonly List<ChartPointModel> _chartPoints = new()
     {
-        new() { DateLabel = "01 May", SvgX = 10, SvgYCurrent = 150, SvgYLast = 160, CurrentMonthValue = 78, LastMonthValue = 72, PercentX = 2, TooltipTopPx = 30 },
-        new() { DateLabel = "08 May", SvgX = 120, SvgYCurrent = 75, SvgYLast = 130, CurrentMonthValue = 88, LastMonthValue = 79, PercentX = 24, TooltipTopPx = 15 },
-        new() { DateLabel = "15 May", SvgX = 230, SvgYCurrent = 60, SvgYLast = 110, CurrentMonthValue = 91, LastMonthValue = 84, PercentX = 46, TooltipTopPx = 10 },
-        new() { DateLabel = "22 May", SvgX = 350, SvgYCurrent = 40, SvgYLast = 80, CurrentMonthValue = 95, LastMonthValue = 87, PercentX = 70, TooltipTopPx = 10 },
-        new() { DateLabel = "29 May", SvgX = 480, SvgYCurrent = 25, SvgYLast = 60, CurrentMonthValue = 98, LastMonthValue = 90, PercentX = 94, TooltipTopPx = 10 }
+        new() { DateLabel = "01 May", SvgX = 10, SvgYCurrent = 150, SvgYLast = 160, CurrentMonthValue = 78, LastMonthValue = 72 },
+        new() { DateLabel = "08 May", SvgX = 120, SvgYCurrent = 75, SvgYLast = 130, CurrentMonthValue = 88, LastMonthValue = 79 },
+        new() { DateLabel = "15 May", SvgX = 230, SvgYCurrent = 60, SvgYLast = 110, CurrentMonthValue = 91, LastMonthValue = 84 },
+        new() { DateLabel = "22 May", SvgX = 350, SvgYCurrent = 40, SvgYLast = 80, CurrentMonthValue = 95, LastMonthValue = 87 },
+        new() { DateLabel = "29 May", SvgX = 480, SvgYCurrent = 25, SvgYLast = 60, CurrentMonthValue = 98, LastMonthValue = 90 }
     };
 
     private ChartPointModel? _hoveredPoint;
@@ -206,24 +204,31 @@ else
         _hoveredPoint = _chartPoints[2];
     }
 
-    private string GetTooltipTransform(ChartPointModel pt)
+    private string GetTooltipPlacementStyle(ChartPointModel pt)
     {
-        // On the left side (01 May, 08 May), anchor tooltip to the right of node
-        if (pt.PercentX <= 30)
-        {
-            return "transform translate-x-3";
-        }
-        // On the right side (29 May), anchor tooltip to the left of node
-        if (pt.PercentX >= 80)
-        {
-            return "transform -translate-x-full -translate-x-3";
-        }
-        // In the middle, center the tooltip
-        return "transform -translate-x-1/2";
-    }
+        // 1. Calculate Exact CSS Coordinates of the SVG Node Point
+        string leftPos = $"calc(40px + ((100% - 40px) * {pt.SvgX} / 500))";
+        string topPos = $"calc((100% - 24px) * {pt.SvgYCurrent} / 200)";
 
-    private string GetTooltipStyle(ChartPointModel pt)
-    {
-        return $"left: calc(40px + ({pt.PercentX}% * (100% - 60px) / 100)); top: {Math.Max(10, pt.TooltipTopPx)}px;";
+        // 2. Smart Boundary Transform based on dot position
+        string transform;
+        if (pt.SvgX <= 80) // 1st dot (01 May - Far Left)
+        {
+            transform = "translate(10px, -100%) translateY(-10px)";
+        }
+        else if (pt.SvgX >= 400) // 5th dot (29 May - Far Right & High Node)
+        {
+            transform = "translate(calc(-100% - 10px), 12px)";
+        }
+        else if (pt.SvgYCurrent <= 50) // 4th dot (22 May - High Node)
+        {
+            transform = "translate(-50%, 14px)";
+        }
+        else // Center dots (08 May, 15 May)
+        {
+            transform = "translate(-50%, -100%) translateY(-12px)";
+        }
+
+        return $"left: {leftPos}; top: {topPos}; transform: {transform};";
     }
 }
