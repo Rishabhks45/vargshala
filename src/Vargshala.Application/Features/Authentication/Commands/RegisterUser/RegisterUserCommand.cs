@@ -1,25 +1,30 @@
 using FluentValidation;
 using MediatR;
+using Vargshala.Contracts.Authentication;
 using Vargshala.Contracts.Common;
-using Vargshala.Contracts.Users;
 
-namespace Vargshala.Application.Features.Users.Commands.CreateUser;
+namespace Vargshala.Application.Features.Authentication.Commands.RegisterUser;
 
-public record CreateUserCommand(
+public record RegisterUserCommand(
+    string OrganizationCode,
     string FirstName,
     string LastName,
-    string? Email,
+    string Email,
     string? Mobile,
     string Password,
-    UserRole Role
-) : IRequest<ApiResponse<UserDto>>;
+    UserRole Role = UserRole.Student
+) : IRequest<ApiResponse<LoginResponse>>;
 
-public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+public class RegisterUserCommandValidator : AbstractValidator<RegisterUserCommand>
 {
-    public CreateUserCommandValidator()
+    public RegisterUserCommandValidator()
     {
         ClassLevelCascadeMode = CascadeMode.Stop;
         RuleLevelCascadeMode = CascadeMode.Stop;
+
+        RuleFor(x => x.OrganizationCode)
+            .NotEmpty().WithMessage("Organization code is required.")
+            .MaximumLength(50).WithMessage("Organization code cannot exceed 50 characters.");
 
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First name is required.")
@@ -30,9 +35,9 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
             .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters.");
 
         RuleFor(x => x.Email)
-            .EmailAddress().WithMessage("A valid email address is required.")
-            .MaximumLength(150)
-            .When(x => !string.IsNullOrWhiteSpace(x.Email));
+            .NotEmpty().WithMessage("Email is required.")
+            .MaximumLength(150).WithMessage("Email cannot exceed 150 characters.")
+            .EmailAddress().WithMessage("Enter a valid email address.");
 
         RuleFor(x => x.Mobile)
             .MaximumLength(20).WithMessage("Mobile number cannot exceed 20 characters.");

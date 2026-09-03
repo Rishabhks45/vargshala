@@ -1,30 +1,33 @@
 using Mapster;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Vargshala.Application.Abstractions.Authentication;
 using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Users.Infrastructure;
+using Vargshala.Application.Settings;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Users;
 using Vargshala.Domain.Entities;
-using Vargshala.Domain.Enums;
 
 namespace Vargshala.Application.Features.Users.Commands.CreateUser;
 
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiResponse<UserDto>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IUserRepository _userRepository;
     private readonly ICurrentUser _currentUser;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IEncryptionService _encryptionService;
+    private readonly EncryptionSettings _encryptionSettings;
 
     public CreateUserCommandHandler(
-        IVargshalaDbContext db,
+        IUserRepository userRepository,
         ICurrentUser currentUser,
-        IPasswordHasher passwordHasher)
+        IEncryptionService encryptionService,
+        IOptions<EncryptionSettings> encryptionOptions)
     {
-        _db = db;
+        _userRepository = userRepository;
         _currentUser = currentUser;
-        _passwordHasher = passwordHasher;
+        _encryptionService = encryptionService;
+        _encryptionSettings = encryptionOptions.Value;
     }
 
     public async Task<ApiResponse<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -34,13 +37,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
             return ApiResponse<UserDto>.FailureResponse("You must belong to an organization to create users.");
         }
 
-        if (!Enum.TryParse<Role>(request.Role, ignoreCase: true, out var role))
-        {
-            return ApiResponse<UserDto>.FailureResponse($"Invalid role: {request.Role}. Valid roles: {string.Join(", ", Enum.GetNames<Role>())}");
-        }
-
         // Prevent creating SuperAdmin or OrganizationAdmin through this endpoint
-        if (role is Role.SuperAdmin)
+        if (request.Role is UserRole.SuperAdmin)
         {
             return ApiResponse<UserDto>.FailureResponse("Cannot create a SuperAdmin user through this endpoint.");
         }
@@ -48,10 +46,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
         // Check for duplicate email within the organization
         if (!string.IsNullOrWhiteSpace(request.Email))
         {
-            var emailExists = await _db.Users
-                .AnyAsync(u => u.Email == request.Email
-                    && u.OrganizationId == _currentUser.OrganizationId
-                    && !u.IsDeleted, cancellationToken);
+            var emailExists = await _userRepository.ExistsByEmailAndOrgAsync(
+                request.Email, _currentUser.OrganizationId.Value, cancellationToken);
 
             if (emailExists)
             {
@@ -67,18 +63,18 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
             LastName = request.LastName,
             Email = request.Email,
             Mobile = request.Mobile,
-            PasswordHash = _passwordHasher.Hash(request.Password),
-            Role = role,
+            PasswordHash = _encryptionService.Encrypt(request.Password, _encryptionSettings.MasterKey),
+            Role = request.Role,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = _currentUser.UserId
         };
 
-        _db.Users.Add(user);
-        await _db.SaveChangesAsync(cancellationToken);
+        await _userRepository.AddAsync(user, cancellationToken);
+        await _userRepository.SaveChangesAsync(cancellationToken);
 
         var dto = user.Adapt<UserDto>();
-        dto.Role = user.Role.ToString();
+        dto.Role = user.Role;
 
         return ApiResponse<UserDto>.SuccessResponse(dto, "User created successfully.");
     }

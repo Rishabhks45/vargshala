@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Vargshala.Application.Abstractions.CurrentUser;
+using Vargshala.Contracts.Common;
 
 namespace Vargshala.Infrastructure.Authentication;
 
@@ -35,7 +36,9 @@ public class CurrentUser : ICurrentUser
 
     public string Role => User?.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
 
+    public UserRole? UserRole => Enum.TryParse<UserRole>(Role, out var role) ? role : null;
+
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 
-    public bool IsSuperAdmin => Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase);
+    public bool IsSuperAdmin => UserRole == Contracts.Common.UserRole.SuperAdmin || Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase);
 }

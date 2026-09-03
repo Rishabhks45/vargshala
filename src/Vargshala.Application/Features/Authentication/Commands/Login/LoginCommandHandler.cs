@@ -1,7 +1,8 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Vargshala.Application.Abstractions.Authentication;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Authentication.Infrastructure;
+using Vargshala.Application.Settings;
 using Vargshala.Contracts.Authentication;
 using Vargshala.Contracts.Common;
 
@@ -9,25 +10,26 @@ namespace Vargshala.Application.Features.Authentication.Commands.Login;
 
 public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<LoginResponse>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IAuthRepository _authRepository;
     private readonly ITokenService _tokenService;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IEncryptionService _encryptionService;
+    private readonly EncryptionSettings _encryptionSettings;
 
     public LoginCommandHandler(
-        IVargshalaDbContext db,
+        IAuthRepository authRepository,
         ITokenService tokenService,
-        IPasswordHasher passwordHasher)
+        IEncryptionService encryptionService,
+        IOptions<EncryptionSettings> encryptionOptions)
     {
-        _db = db;
+        _authRepository = authRepository;
         _tokenService = tokenService;
-        _passwordHasher = passwordHasher;
+        _encryptionService = encryptionService;
+        _encryptionSettings = encryptionOptions.Value;
     }
 
     public async Task<ApiResponse<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await _db.Users
-            .Include(u => u.Organization)
-            .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted, cancellationToken);
+        var user = await _authRepository.GetUserByEmailWithOrgAsync(request.Email, cancellationToken);
 
         if (user is null)
         {
@@ -39,7 +41,15 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
             return ApiResponse<LoginResponse>.FailureResponse("Your account has been deactivated. Please contact your administrator.");
         }
 
-        if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
+        try
+        {
+            var decryptedPassword = _encryptionService.Decrypt(user.PasswordHash, _encryptionSettings.MasterKey);
+            if (request.Password != decryptedPassword)
+            {
+                return ApiResponse<LoginResponse>.FailureResponse("Invalid email or password.");
+            }
+        }
+        catch
         {
             return ApiResponse<LoginResponse>.FailureResponse("Invalid email or password.");
         }
@@ -52,7 +62,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         user.LastLoginAt = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _authRepository.SaveChangesAsync(cancellationToken);
 
         var response = new LoginResponse
         {
@@ -65,7 +75,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                Role = user.Role.ToString(),
+                Role = user.Role,
                 OrganizationId = user.OrganizationId,
                 OrganizationName = user.Organization?.Name
             }

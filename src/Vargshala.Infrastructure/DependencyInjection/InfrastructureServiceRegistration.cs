@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Vargshala.Application.Abstractions.Authentication;
 using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Settings;
 using Vargshala.Infrastructure.Authentication;
 using Vargshala.Infrastructure.Persistence;
+using Vargshala.Infrastructure.Services;
 
 namespace Vargshala.Infrastructure.DependencyInjection;
 
@@ -28,9 +30,12 @@ public static class InfrastructureServiceRegistration
         // JWT Options
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
-        // Authentication services
+        // Encryption Settings
+        services.Configure<EncryptionSettings>(configuration.GetSection(EncryptionSettings.SectionName));
+
+        // Authentication & Encryption services
+        services.AddScoped<IEncryptionService, EncryptionService>();
         services.AddScoped<ITokenService, JwtTokenService>();
-        services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<ICurrentUser, CurrentUser>();
 
         // HttpContextAccessor (needed by CurrentUser)

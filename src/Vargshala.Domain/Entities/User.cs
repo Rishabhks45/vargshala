@@ -1,5 +1,5 @@
 using Vargshala.Domain.Common;
-using Vargshala.Domain.Enums;
+using Vargshala.Contracts.Common;
 
 namespace Vargshala.Domain.Entities;
 
@@ -17,7 +17,7 @@ public class User : BaseEntity
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public Role Role { get; set; }
+    public UserRole Role { get; set; }
 
     public bool EmailVerified { get; set; }
 

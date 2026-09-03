@@ -1,0 +1,561 @@
+@page "/register-organization"
+@page "/register"
+@layout AuthLayout
+@using Microsoft.AspNetCore.Components.Forms
+@using Vargshala.Web.Components.UI.Validation
+@using Vargshala.Contracts.Organizations
+@using Vargshala.Contracts.Authentication
+@using Vargshala.Contracts.Users
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Register Your Institute | Vargshala</PageTitle>
+
+<div class="w-full max-w-4xl mx-auto flex items-center justify-center h-full py-4">
+
+    @if (_isRegistered)
+    {
+        <!-- ========================================================================= -->
+        <!-- SUCCESS REGISTRATION STATE -->
+        <!-- ========================================================================= -->
+        <div class="w-full max-w-lg card-surface p-8 sm:p-10 rounded-3xl border border-teal-500/40 shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-200">
+            <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-[#009488] to-[#00796b] text-white flex items-center justify-center shadow-lg shadow-teal-500/30">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+
+            <div class="space-y-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                    🎉 Registration Successful!
+                </span>
+                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Welcome to Vargshala</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    <span class="font-bold text-slate-700 dark:text-slate-200">@_model.Name</span> has been registered with organization code <span class="font-mono font-bold text-[#009488]">@_model.Code</span>.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-800 text-left text-xs space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Super Admin:</span>
+                    <span class="font-bold text-slate-800 dark:text-white">@_model.AdminFirstName @_model.AdminLastName</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Login Email:</span>
+                    <span class="font-bold text-slate-800 dark:text-white">@_model.AdminEmail</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">City / State:</span>
+                    <span class="font-bold text-slate-800 dark:text-white">@_model.City, @_model.State</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Academic Session:</span>
+                    <span class="font-bold text-emerald-600">@_model.AcademicSession</span>
+                </div>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                <button type="button" @onclick='() => Navigation.NavigateTo("/")'
+                        class="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                    Launch Dashboard →
+                </button>
+                <button type="button" @onclick='() => Navigation.NavigateTo("/login")'
+                        class="px-5 py-3 rounded-xl bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                    Sign In
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- ========================================================================= -->
+        <!-- REGISTRATION FORM CARD -->
+        <!-- ========================================================================= -->
+        <div class="w-full bg-white dark:bg-[#111c21] rounded-3xl border border-teal-600/40 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col backdrop-blur-md">
+            
+            <!-- Header Banner -->
+            <div class="px-6 py-4 bg-gradient-to-r from-[#004D40] via-[#00695c] to-[#00796b] text-white shrink-0 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-extrabold text-sm shadow-inner">
+                        🏛️
+                    </div>
+                    <div>
+                        <h1 class="text-base font-extrabold tracking-tight">Register Coaching Institute</h1>
+                        <p class="text-[11px] text-teal-200">Start your multi-tenant coaching management workspace</p>
+                    </div>
+                </div>
+
+                <a href="/login" class="text-xs font-bold text-teal-200 hover:text-white transition-colors">
+                    Sign In Instead →
+                </a>
+            </div>
+
+            <!-- Stepper Progress Bar -->
+            <div class="px-6 py-3 bg-slate-50 dark:bg-[#18262c] border-b border-slate-200 dark:border-slate-800 shrink-0">
+                <div class="flex items-center justify-between text-xs font-bold">
+                    <button type="button" @onclick="() => _currentStep = 1"
+                            class="flex items-center gap-2 cursor-pointer transition-colors @(_currentStep == 1 ? "text-[#009488]" : (_currentStep > 1 ? "text-emerald-600" : "text-slate-400"))">
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] @(_currentStep == 1 ? "bg-[#009488] text-white shadow-xs" : (_currentStep > 1 ? "bg-emerald-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"))">
+                            @(_currentStep > 1 ? "✓" : "1")
+                        </span>
+                        <span>Institute Details</span>
+                    </button>
+
+                    <div class="flex-1 h-0.5 mx-3 bg-slate-200 dark:bg-slate-700">
+                        <div class="h-full bg-[#009488] transition-all duration-300" style="width: @(_currentStep == 1 ? "0%" : (_currentStep == 2 ? "50%" : "100%"))"></div>
+                    </div>
+
+                    <button type="button" @onclick="() => { if (ValidateStep1()) _currentStep = 2; }"
+                            class="flex items-center gap-2 cursor-pointer transition-colors @(_currentStep == 2 ? "text-[#009488]" : (_currentStep > 2 ? "text-emerald-600" : "text-slate-400"))">
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] @(_currentStep == 2 ? "bg-[#009488] text-white shadow-xs" : (_currentStep > 2 ? "bg-emerald-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"))">
+                            @(_currentStep > 2 ? "✓" : "2")
+                        </span>
+                        <span>Campus Location</span>
+                    </button>
+
+                    <div class="flex-1 h-0.5 mx-3 bg-slate-200 dark:bg-slate-700">
+                        <div class="h-full bg-[#009488] transition-all duration-300" style="width: @(_currentStep <= 2 ? "0%" : "100%")"></div>
+                    </div>
+
+                    <button type="button" @onclick="() => { if (ValidateStep1() && ValidateStep2()) _currentStep = 3; }"
+                            class="flex items-center gap-2 cursor-pointer transition-colors @(_currentStep == 3 ? "text-[#009488]" : "text-slate-400")">
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] @(_currentStep == 3 ? "bg-[#009488] text-white shadow-xs" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300")">
+                            3
+                        </span>
+                        <span>Admin Account</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Form Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <EditForm Model="_model" OnValidSubmit="HandleRegisterAsync">
+                    <FluentValidationValidator />
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 mb-4">
+                            <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>@_errorMessage</span>
+                        </div>
+                    }
+
+                    <!-- ================================================================= -->
+                    <!-- STEP 1: INSTITUTE DETAILS -->
+                    <!-- ================================================================= -->
+                    @if (_currentStep == 1)
+                    {
+                        <div class="space-y-4 animate-in fade-in duration-150">
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-2">
+                                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Step 1: Institute Information</h3>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Tell us about your educational institution or coaching centre.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Institute Name -->
+                                <div class="sm:col-span-2 space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Institute / Organization Name *</label>
+                                    <InputText @bind-Value="_model.Name" @bind-Value:after="OnNameChanged"
+                                               placeholder="e.g. Apex IIT-JEE & Medical Academy"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.Name)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Institute Short Code -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Institute Code (Prefix for IDs) *</label>
+                                    <div class="relative">
+                                        <InputText @bind-Value="_model.Code" placeholder="e.g. APEX"
+                                                   class="w-full uppercase px-3.5 py-2.5 text-xs font-mono font-bold bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-[#009488] dark:text-teal-400 transition-all" />
+                                    </div>
+                                    <ValidationMessage For="@(() => _model.Code)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Institute Type -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Institution Type *</label>
+                                    <CustomSelect @bind-Value="_model.InstituteType" Options="_typeOptions" Placeholder="Select Institute Type" />
+                                </div>
+
+                                <!-- Official Email -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Official Institute Email *</label>
+                                    <InputText @bind-Value="_model.Email" placeholder="contact@apexacademy.edu.in"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.Email)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Official Mobile -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Contact / Helpline Mobile *</label>
+                                    <InputText @bind-Value="_model.Mobile" placeholder="+91 9876543210"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.Mobile)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Academic Session -->
+                                <div class="space-y-1.5 sm:col-span-2">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Current Academic Session *</label>
+                                    <CustomSelect @bind-Value="_model.AcademicSession" Options="_sessionOptions" Placeholder="Academic Session" />
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex justify-end">
+                                <button type="button" @onclick="NextToStep2"
+                                        class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer flex items-center gap-2">
+                                    <span>Next: Campus Location</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ================================================================= -->
+                    <!-- STEP 2: CAMPUS LOCATION -->
+                    <!-- ================================================================= -->
+                    @if (_currentStep == 2)
+                    {
+                        <div class="space-y-4 animate-in fade-in duration-150">
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-2">
+                                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Step 2: Campus Location & Address</h3>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Specify your main center or head office location.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Street Address -->
+                                <div class="sm:col-span-2 space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Street / Campus Address</label>
+                                    <InputText @bind-Value="_model.Address" placeholder="e.g. Plot No 42, Main Tonk Road, Near Metro Station"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                </div>
+
+                                <!-- City -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">City *</label>
+                                    <InputText @bind-Value="_model.City" placeholder="e.g. Jaipur"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.City)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- State -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">State *</label>
+                                    <InputText @bind-Value="_model.State" placeholder="e.g. Rajasthan"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.State)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Pincode -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Pincode (6 digits) *</label>
+                                    <InputText @bind-Value="_model.Pincode" placeholder="302015" maxlength="6"
+                                               class="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.Pincode)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex items-center justify-between">
+                                <button type="button" @onclick="() => _currentStep = 1"
+                                        class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                    <span>Back</span>
+                                </button>
+                                <button type="button" @onclick="NextToStep3"
+                                        class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer flex items-center gap-2">
+                                    <span>Next: Admin Account</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ================================================================= -->
+                    <!-- STEP 3: SUPER ADMIN CREDENTIALS -->
+                    <!-- ================================================================= -->
+                    @if (_currentStep == 3)
+                    {
+                        <div class="space-y-4 animate-in fade-in duration-150">
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-2">
+                                <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Step 3: Primary Super Admin Account</h3>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">This account will have full owner privileges to manage teachers, students, and billing.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- First Name -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Admin First Name *</label>
+                                    <InputText @bind-Value="_model.AdminFirstName" placeholder="e.g. Rishabh"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.AdminFirstName)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Last Name -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Admin Last Name *</label>
+                                    <InputText @bind-Value="_model.AdminLastName" placeholder="e.g. Sharma"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.AdminLastName)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Admin Email -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Admin Login Email *</label>
+                                    <InputText @bind-Value="_model.AdminEmail" placeholder="admin@apexacademy.edu.in"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.AdminEmail)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Admin Mobile -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Admin Mobile Number *</label>
+                                    <InputText @bind-Value="_model.AdminMobile" placeholder="+91 9876543210"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.AdminMobile)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Password -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Password (Min. 6 chars) *</label>
+                                    <InputText @bind-Value="_model.Password" type="password" placeholder="••••••••"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.Password)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Confirm Password -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Confirm Password *</label>
+                                    <InputText @bind-Value="_model.ConfirmPassword" type="password" placeholder="••••••••"
+                                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                    <ValidationMessage For="@(() => _model.ConfirmPassword)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+
+                                <!-- Terms & Conditions -->
+                                <div class="sm:col-span-2 pt-2">
+                                    <label class="flex items-start gap-2.5 cursor-pointer">
+                                        <InputCheckbox @bind-Value="_model.AcceptTerms" class="mt-0.5 rounded border-slate-300 text-[#009488] focus:ring-teal-500" />
+                                        <span class="text-xs text-slate-600 dark:text-slate-300">
+                                            I agree to the <a href="#" class="text-[#009488] font-bold hover:underline">Terms of Service</a> and <a href="#" class="text-[#009488] font-bold hover:underline">Privacy Policy</a> of Vargshala SaaS.
+                                        </span>
+                                    </label>
+                                    <ValidationMessage For="@(() => _model.AcceptTerms)" class="text-[10px] text-rose-500 font-bold" />
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex items-center justify-between">
+                                <button type="button" @onclick="() => _currentStep = 2"
+                                        class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                    <span>Back</span>
+                                </button>
+                                <button type="submit" disabled="@_isSubmitting"
+                                        class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
+                                    @if (_isSubmitting)
+                                    {
+                                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                        <span>Creating Institute...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Complete Registration 🚀</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                </EditForm>
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@code {
+    private int _currentStep = 1;
+    private bool _isSubmitting = false;
+    private bool _isRegistered = false;
+    private string _errorMessage = string.Empty;
+
+    private RegisterOrganizationRequest _model = new();
+
+    private readonly List<CustomSelect.CustomSelectOption> _typeOptions = new()
+    {
+        new("Coaching Institute", "Coaching / Test Prep (IIT, NEET, UPSC)"),
+        new("K-12 School", "K-12 School (CBSE / ICSE / State)"),
+        new("College / University", "College / Degree Institute"),
+        new("Skill & IT Academy", "Skill & IT Training Academy")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _sessionOptions = new()
+    {
+        new("2026-2027", "2026-2027 (Active Session)"),
+        new("2025-2026", "2025-2026"),
+        new("2027-2028", "2027-2028")
+    };
+
+    private void OnNameChanged()
+    {
+        // Auto-generate a clean code proposal if code is empty
+        if (string.IsNullOrWhiteSpace(_model.Code) && !string.IsNullOrWhiteSpace(_model.Name))
+        {
+            var words = _model.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 1)
+            {
+                _model.Code = words[0].Substring(0, Math.Min(6, words[0].Length)).ToUpper();
+            }
+            else
+            {
+                _model.Code = string.Concat(words.Select(w => char.ToUpper(w[0])));
+            }
+        }
+    }
+
+    private bool ValidateStep1()
+    {
+        _errorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(_model.Name))
+        {
+            _errorMessage = "Please enter the Institute / Organization name.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(_model.Code))
+        {
+            _errorMessage = "Please specify an Institute Code.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(_model.Email))
+        {
+            _errorMessage = "Please enter an official institute email.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(_model.Mobile))
+        {
+            _errorMessage = "Please enter the institute contact number.";
+            return false;
+        }
+        return true;
+    }
+
+    private void NextToStep2()
+    {
+        if (ValidateStep1())
+        {
+            _currentStep = 2;
+        }
+    }
+
+    private bool ValidateStep2()
+    {
+        _errorMessage = string.Empty;
+        if (string.IsNullOrWhiteSpace(_model.City))
+        {
+            _errorMessage = "Please enter the City.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(_model.State))
+        {
+            _errorMessage = "Please enter the State.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(_model.Pincode) || _model.Pincode.Length != 6)
+        {
+            _errorMessage = "Please enter a valid 6-digit Pincode.";
+            return false;
+        }
+        return true;
+    }
+
+    private void NextToStep3()
+    {
+        if (ValidateStep1() && ValidateStep2())
+        {
+            _currentStep = 3;
+        }
+    }
+
+    private async Task HandleRegisterAsync()
+    {
+        _errorMessage = string.Empty;
+
+        if (!ValidateStep1()) { _currentStep = 1; return; }
+        if (!ValidateStep2()) { _currentStep = 2; return; }
+
+        if (string.IsNullOrWhiteSpace(_model.AdminFirstName) || string.IsNullOrWhiteSpace(_model.AdminLastName))
+        {
+            _errorMessage = "Please provide Admin First and Last Name.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_model.AdminEmail) || string.IsNullOrWhiteSpace(_model.Password))
+        {
+            _errorMessage = "Please provide Admin Email and Password.";
+            return;
+        }
+
+        if (_model.Password != _model.ConfirmPassword)
+        {
+            _errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        if (!_model.AcceptTerms)
+        {
+            _errorMessage = "You must agree to the Terms of Service to register.";
+            return;
+        }
+
+        _isSubmitting = true;
+        await Task.Delay(800); // simulate quick tenant provisioning
+
+        try
+        {
+            var newOrgId = Guid.NewGuid();
+            var newUserId = Guid.NewGuid();
+
+            // Set tenant in Helper context
+            Helper.SetCurrentOrg(new OrganizationDto
+            {
+                Id = newOrgId,
+                Name = _model.Name,
+                Code = _model.Code.ToUpper(),
+                Email = _model.Email,
+                Mobile = _model.Mobile,
+                Address = _model.Address,
+                City = _model.City,
+                State = _model.State,
+                Pincode = _model.Pincode,
+                AcademicSession = _model.AcademicSession,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            Helper.SetCurrentUser(new UserDto
+            {
+                Id = newUserId,
+                OrganizationId = newOrgId,
+                FirstName = _model.AdminFirstName,
+                LastName = _model.AdminLastName,
+                Email = _model.AdminEmail,
+                Mobile = _model.AdminMobile,
+                Role = "SuperAdmin",
+                IsActive = true,
+                EmailVerified = true,
+                MobileVerified = true,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            _isRegistered = true;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Registration failed: " + ex.Message;
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+}

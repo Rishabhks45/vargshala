@@ -55,7 +55,7 @@ VALUES (
     'rishabh.sharma@vargshala.com',
     '+919876543210',
     '$2a$11$0wGZqPcf9260Y70/eF1dCe1mUjLszn34Xo26q2K7P.CjD1/uV4v1S',
-    1, -- Role.SuperAdmin
+    1001, -- Role.SuperAdmin
     true,
     true,
     NULL,
@@ -89,7 +89,7 @@ VALUES (
     'rishabh.admin@vargshala.com',
     '+919876543210',
     '$2a$11$0wGZqPcf9260Y70/eF1dCe1mUjLszn34Xo26q2K7P.CjD1/uV4v1S',
-    2, -- Role.OrganizationAdmin
+    1, -- Role.OrganizationAdmin
     true,
     true,
     NULL,

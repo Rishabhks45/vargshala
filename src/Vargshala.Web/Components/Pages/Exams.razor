@@ -925,7 +925,7 @@
                     </div>
                     @if (_previewExam.Status == "Upcoming")
                     {
-                        <button type="button" @onclick="() => { var e = _previewExam; _previewExam = null; OpenEditDrawerAsync(e); }"
+                        <button type="button" @onclick="async () => { var e = _previewExam; _previewExam = null; await OpenEditDrawerAsync(e); }"
                                 class="px-3 py-1 bg-[#009488] text-white font-bold text-xs rounded-lg hover:bg-[#00796b] transition-colors cursor-pointer">
                             Edit Quiz →
                         </button>

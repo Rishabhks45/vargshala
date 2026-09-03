@@ -1,8 +1,7 @@
 using Mapster;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Organizations.Infrastructure;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Organizations;
 
@@ -11,12 +10,12 @@ namespace Vargshala.Application.Features.Organizations.Queries.GetOrganization;
 public class GetOrganizationQueryHandler
     : IRequestHandler<GetOrganizationQuery, ApiResponse<OrganizationDto>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IOrganizationRepository _organizationRepository;
     private readonly ICurrentUser _currentUser;
 
-    public GetOrganizationQueryHandler(IVargshalaDbContext db, ICurrentUser currentUser)
+    public GetOrganizationQueryHandler(IOrganizationRepository organizationRepository, ICurrentUser currentUser)
     {
-        _db = db;
+        _organizationRepository = organizationRepository;
         _currentUser = currentUser;
     }
 
@@ -29,9 +28,7 @@ public class GetOrganizationQueryHandler
             return ApiResponse<OrganizationDto>.FailureResponse("No organization associated with this user.");
         }
 
-        var organization = await _db.Organizations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.Id == _currentUser.OrganizationId && !o.IsDeleted, cancellationToken);
+        var organization = await _organizationRepository.GetByIdAsync(_currentUser.OrganizationId.Value, cancellationToken);
 
         if (organization is null)
         {

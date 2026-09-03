@@ -3,6 +3,9 @@ using Mapster;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Vargshala.Application.Behaviors;
+using Vargshala.Application.Features.Authentication.Infrastructure;
+using Vargshala.Application.Features.Organizations.Infrastructure;
+using Vargshala.Application.Features.Users.Infrastructure;
 
 namespace Vargshala.Application.DependencyInjection;
 
@@ -22,8 +25,10 @@ public static class ApplicationServiceRegistration
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
-        // Mapster
-        TypeAdapterConfig.GlobalSettings.Scan(assembly);
+        // Repositories
+        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IAuthRepository, AuthRepository>();
 
         return services;
     }

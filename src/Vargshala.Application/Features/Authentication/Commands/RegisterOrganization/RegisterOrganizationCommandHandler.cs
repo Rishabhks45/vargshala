@@ -1,29 +1,32 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Vargshala.Application.Abstractions.Authentication;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Authentication.Infrastructure;
+using Vargshala.Application.Settings;
 using Vargshala.Contracts.Authentication;
 using Vargshala.Contracts.Common;
 using Vargshala.Domain.Entities;
-using Vargshala.Domain.Enums;
 
 namespace Vargshala.Application.Features.Authentication.Commands.RegisterOrganization;
 
 public class RegisterOrganizationCommandHandler
     : IRequestHandler<RegisterOrganizationCommand, ApiResponse<LoginResponse>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IAuthRepository _authRepository;
     private readonly ITokenService _tokenService;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IEncryptionService _encryptionService;
+    private readonly EncryptionSettings _encryptionSettings;
 
     public RegisterOrganizationCommandHandler(
-        IVargshalaDbContext db,
+        IAuthRepository authRepository,
         ITokenService tokenService,
-        IPasswordHasher passwordHasher)
+        IEncryptionService encryptionService,
+        IOptions<EncryptionSettings> encryptionOptions)
     {
-        _db = db;
+        _authRepository = authRepository;
         _tokenService = tokenService;
-        _passwordHasher = passwordHasher;
+        _encryptionService = encryptionService;
+        _encryptionSettings = encryptionOptions.Value;
     }
 
     public async Task<ApiResponse<LoginResponse>> Handle(
@@ -31,23 +34,17 @@ public class RegisterOrganizationCommandHandler
         CancellationToken cancellationToken)
     {
         // Check if organization code already exists
-        var codeExists = await _db.Organizations
-            .AnyAsync(o => o.Code == request.OrganizationCode && !o.IsDeleted, cancellationToken);
-
+        var codeExists = await _authRepository.OrganizationCodeExistsAsync(request.OrganizationCode, cancellationToken);
         if (codeExists)
         {
-            return ApiResponse<LoginResponse>.FailureResponse(
-                "An organization with this code already exists.");
+            return ApiResponse<LoginResponse>.FailureResponse("An organization with this code already exists.");
         }
 
         // Check if email already exists
-        var emailExists = await _db.Users
-            .AnyAsync(u => u.Email == request.AdminEmail && !u.IsDeleted, cancellationToken);
-
+        var emailExists = await _authRepository.UserEmailExistsAsync(request.AdminEmail, cancellationToken);
         if (emailExists)
         {
-            return ApiResponse<LoginResponse>.FailureResponse(
-                "A user with this email already exists.");
+            return ApiResponse<LoginResponse>.FailureResponse("A user with this email already exists.");
         }
 
         // Create organization
@@ -56,6 +53,14 @@ public class RegisterOrganizationCommandHandler
             Id = Guid.NewGuid(),
             Name = request.OrganizationName,
             Code = request.OrganizationCode,
+            LogoUrl = request.LogoUrl,
+            Email = request.Email,
+            Mobile = request.Mobile,
+            Address = request.Address,
+            City = request.City,
+            State = request.State,
+            Pincode = request.Pincode,
+            AcademicSession = request.AcademicSession,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -70,8 +75,8 @@ public class RegisterOrganizationCommandHandler
             LastName = request.AdminLastName,
             Email = request.AdminEmail,
             Mobile = request.AdminMobile,
-            PasswordHash = _passwordHasher.Hash(request.Password),
-            Role = Role.OrganizationAdmin,
+            PasswordHash = _encryptionService.Encrypt(request.Password, _encryptionSettings.MasterKey),
+            Role = UserRole.OrganizationAdmin,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             RefreshToken = refreshToken,
@@ -79,13 +84,11 @@ public class RegisterOrganizationCommandHandler
             LastLoginAt = DateTime.UtcNow
         };
 
-        _db.Organizations.Add(organization);
-        _db.Users.Add(adminUser);
-        await _db.SaveChangesAsync(cancellationToken);
+        await _authRepository.AddOrganizationAsync(organization, cancellationToken);
+        await _authRepository.AddUserAsync(adminUser, cancellationToken);
+        await _authRepository.SaveChangesAsync(cancellationToken);
 
         var accessToken = _tokenService.GenerateAccessToken(adminUser);
-
-        // Set navigation for response mapping
         adminUser.Organization = organization;
 
         var response = new LoginResponse
@@ -99,7 +102,7 @@ public class RegisterOrganizationCommandHandler
                 FirstName = adminUser.FirstName,
                 LastName = adminUser.LastName,
                 Email = adminUser.Email,
-                Role = adminUser.Role.ToString(),
+                Role = adminUser.Role,
                 OrganizationId = organization.Id,
                 OrganizationName = organization.Name
             }

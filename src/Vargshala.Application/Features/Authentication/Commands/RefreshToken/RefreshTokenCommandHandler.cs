@@ -1,8 +1,7 @@
 using System.Security.Claims;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Vargshala.Application.Abstractions.Authentication;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Authentication.Infrastructure;
 using Vargshala.Contracts.Authentication;
 using Vargshala.Contracts.Common;
 
@@ -11,12 +10,12 @@ namespace Vargshala.Application.Features.Authentication.Commands.RefreshToken;
 public class RefreshTokenCommandHandler
     : IRequestHandler<RefreshTokenCommand, ApiResponse<RefreshTokenResponse>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IAuthRepository _authRepository;
     private readonly ITokenService _tokenService;
 
-    public RefreshTokenCommandHandler(IVargshalaDbContext db, ITokenService tokenService)
+    public RefreshTokenCommandHandler(IAuthRepository authRepository, ITokenService tokenService)
     {
-        _db = db;
+        _authRepository = authRepository;
         _tokenService = tokenService;
     }
 
@@ -36,8 +35,7 @@ public class RefreshTokenCommandHandler
             return ApiResponse<RefreshTokenResponse>.FailureResponse("Invalid token claims.");
         }
 
-        var user = await _db.Users
-            .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, cancellationToken);
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
 
         if (user is null || user.RefreshToken != request.RefreshToken
             || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
@@ -51,7 +49,7 @@ public class RefreshTokenCommandHandler
         user.RefreshToken = newRefreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _authRepository.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<RefreshTokenResponse>.SuccessResponse(new RefreshTokenResponse
         {

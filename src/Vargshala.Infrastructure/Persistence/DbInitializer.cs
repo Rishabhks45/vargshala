@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Vargshala.Application.Abstractions.Authentication;
 using Vargshala.Domain.Entities;
-using Vargshala.Domain.Enums;
+using Vargshala.Contracts.Common;
 
 namespace Vargshala.Infrastructure.Persistence;
 
@@ -13,7 +13,8 @@ public static class DbInitializer
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<VargshalaDbContext>();
-        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
+        var encryptionSettings = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<Vargshala.Application.Settings.EncryptionSettings>>().Value;
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<VargshalaDbContext>>();
 
         try
@@ -21,7 +22,7 @@ public static class DbInitializer
             // 1. Seed SuperAdmin (Platform Level - No Organization)
             const string superAdminEmail = "rishabh.sharma@vargshala.com";
             var superAdminExists = await context.Users
-                .AnyAsync(u => u.Email == superAdminEmail && u.Role == Role.SuperAdmin);
+                .AnyAsync(u => u.Email == superAdminEmail && u.Role == UserRole.SuperAdmin);
 
             if (!superAdminExists)
             {
@@ -33,8 +34,8 @@ public static class DbInitializer
                     LastName = "Sharma",
                     Email = superAdminEmail,
                     Mobile = "+919876543210",
-                    PasswordHash = passwordHasher.Hash("Admin@12345"),
-                    Role = Role.SuperAdmin,
+                    PasswordHash = encryptionService.Encrypt("Admin@12345", encryptionSettings.MasterKey),
+                    Role = UserRole.SuperAdmin,
                     EmailVerified = true,
                     MobileVerified = true,
                     IsActive = true,
@@ -87,8 +88,8 @@ public static class DbInitializer
                     LastName = "Sharma",
                     Email = orgAdminEmail,
                     Mobile = "+919876543210",
-                    PasswordHash = passwordHasher.Hash("Admin@12345"),
-                    Role = Role.OrganizationAdmin,
+                    PasswordHash = encryptionService.Encrypt("Admin@12345", encryptionSettings.MasterKey),
+                    Role = UserRole.OrganizationAdmin,
                     EmailVerified = true,
                     MobileVerified = true,
                     IsActive = true,

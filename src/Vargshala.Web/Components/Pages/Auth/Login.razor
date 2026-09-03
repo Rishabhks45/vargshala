@@ -104,7 +104,7 @@
 
             <!-- Login Form -->
             <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3.5 my-auto py-2">
-                <DataAnnotationsValidator />
+                <FluentValidationValidator />
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vargshala.Application.Features.Users.Commands.CreateUser;
 using Vargshala.Application.Features.Users.Queries.GetUsers;
+using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Users;
 
 namespace Vargshala.API.Controllers;
@@ -42,9 +43,9 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetUsers([FromQuery] PagedRequest request)
     {
-        var result = await _mediator.Send(new GetUsersQuery(page, pageSize));
+        var result = await _mediator.Send(new GetUsersQuery(request));
 
         if (!result.Success)
         {
