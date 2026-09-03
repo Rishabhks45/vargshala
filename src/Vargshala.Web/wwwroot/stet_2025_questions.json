@@ -1,0 +1,1502 @@
+[
+  {
+    "number": 1,
+    "section": "Computer Science",
+    "question": "Process-to-process communication involves communication between:",
+    "optionA": "Different network layers",
+    "optionB": "Different devices on the same network",
+    "optionC": "Devices using different protocols",
+    "optionD": "Processes on different devices",
+    "correct": "D"
+  },
+  {
+    "number": 2,
+    "section": "Computer Science",
+    "question": "Which of the following is a mapped data type?",
+    "optionA": "List",
+    "optionB": "Sets",
+    "optionC": "Dictionary",
+    "optionD": "Boolean",
+    "correct": "C"
+  },
+  {
+    "number": 3,
+    "section": "Computer Science",
+    "question": "MQTT का पूर्ण रूप क्या है?",
+    "optionA": "Multi-Queue Telemetry Things",
+    "optionB": "Multiple Queue Telemetry Things",
+    "optionC": "Message Queue Telemetry Things",
+    "optionD": "Message Queue Telemetry Transport",
+    "correct": "D"
+  },
+  {
+    "number": 4,
+    "section": "Computer Science",
+    "question": "The quality of ___ remains unchanged even if the size is increased or decreased.",
+    "optionA": "Vector graphics",
+    "optionB": "Illustrations",
+    "optionC": "Photographs",
+    "optionD": "Line images",
+    "correct": "A"
+  },
+  {
+    "number": 5,
+    "section": "Computer Science",
+    "question": "In computer graphics, arrays can be used to store pixel values for images. Which type of array would be suitable for this purpose?",
+    "optionA": "1-D array",
+    "optionB": "2-D array",
+    "optionC": "3-D array",
+    "optionD": "4-D array",
+    "correct": "B"
+  },
+  {
+    "number": 6,
+    "section": "Computer Science",
+    "question": "Zigbee आर्किटेक्चर में कितनी layers हैं?",
+    "optionA": "4",
+    "optionB": "5",
+    "optionC": "6",
+    "optionD": "7",
+    "correct": "A"
+  },
+  {
+    "number": 7,
+    "section": "Computer Science",
+    "question": "Convert the Boolean function F(A, B, C) = Σ(0, 1, 3, 5) to its simplified SOP form.",
+    "optionA": "A + B + C",
+    "optionB": "A'B' + B'C",
+    "optionC": "A + B + C'",
+    "optionD": "A'B'C",
+    "correct": "B"
+  },
+  {
+    "number": 8,
+    "section": "Computer Science",
+    "question": "A universal Turing machine is a --------",
+    "optionA": "Single tape Turing machine",
+    "optionB": "Two-tape Turing machine",
+    "optionC": "Reprogrammable Turing machine",
+    "optionD": "All of the above",
+    "correct": "C"
+  },
+  {
+    "number": 9,
+    "section": "Computer Science",
+    "question": "Assertion (A): It becomes difficult to update and maintain a website's design using CSS. Reason (R): CSS allows web developers to separate the presentation layer from the content layer (HTML).",
+    "optionA": "Both A and R are true and R is the correct explanation of A",
+    "optionB": "Both A and R are true, but R is not the correct explanation of A",
+    "optionC": "A is true, but R is false",
+    "optionD": "A is false, but R is true",
+    "correct": "D"
+  },
+  {
+    "number": 10,
+    "section": "Computer Science",
+    "question": "Frame design in the Data Link Layer includes:",
+    "optionA": "Deciding the routing path for data packets",
+    "optionB": "Defining the structure of data frames",
+    "optionC": "Assigning IP addresses to devices",
+    "optionD": "Setting the data transmission rate",
+    "correct": "B"
+  },
+  {
+    "number": 11,
+    "section": "Computer Science",
+    "question": "अभिकथन (A): पाइथन में प्रत्येक ऑब्जेक्ट एक यूनिक पहचान ID रखता है। कारण (R): उस ऑब्जेक्ट के विनाश तक ID संबंधित रहती है।",
+    "optionA": "Both A and R are true and R is the correct explanation of A",
+    "optionB": "Both A and R are true, but R is not the correct explanation of A",
+    "optionC": "A is true, but R is false",
+    "optionD": "A is false, but R is true",
+    "correct": "A"
+  },
+  {
+    "number": 12,
+    "section": "Computer Science",
+    "question": "SFTP is used for:",
+    "optionA": "Sending Files over the Internet in a secure manner",
+    "optionB": "Sending Mail over the Internet in a secure manner",
+    "optionC": "Video Conferencing",
+    "optionD": "Secure Chat Services",
+    "correct": "A"
+  },
+  {
+    "number": 13,
+    "section": "Computer Science",
+    "question": "The term used to describe the maximum amount of data that can be transmitted over a communication channel in a given time period is:",
+    "optionA": "Bandwidth",
+    "optionB": "Data Rate",
+    "optionC": "Latency",
+    "optionD": "Protocol",
+    "correct": "A"
+  },
+  {
+    "number": 14,
+    "section": "Computer Science",
+    "question": "When using the parity bit method, how does the receiver determine if an error has occurred during transmission?",
+    "optionA": "By counting the number of ones in the data",
+    "optionB": "By comparing the parity bit with the data",
+    "optionC": "By performing modulo arithmetic",
+    "optionD": "By comparing the number of ones with the parity bit",
+    "correct": "D"
+  },
+  {
+    "number": 15,
+    "section": "Computer Science",
+    "question": "In general, a file is basically a collection of all related ______.",
+    "optionA": "Rows & Columns",
+    "optionB": "Database",
+    "optionC": "Fields",
+    "optionD": "Records",
+    "correct": "D"
+  },
+  {
+    "number": 16,
+    "section": "Computer Science",
+    "question": "The aliasing effect on an image can be reduced using which of the following methods?",
+    "optionA": "By reducing the high-frequency components of image by clarifying the image",
+    "optionB": "By increasing the high-frequency components of image by clarifying the image",
+    "optionC": "By increasing the high-frequency components of image by blurring the image",
+    "optionD": "By reducing the high-frequency components of image by blurring the image",
+    "correct": "D"
+  },
+  {
+    "number": 17,
+    "section": "Computer Science",
+    "question": "The concept of monitors was introduced by:",
+    "optionA": "Edsger Dijkstra",
+    "optionB": "Alan Turing",
+    "optionC": "Tim Berners-Lee",
+    "optionD": "Linus Torvalds",
+    "correct": "A"
+  },
+  {
+    "number": 18,
+    "section": "Computer Science",
+    "question": "A threaded binary tree is a binary tree in which:",
+    "optionA": "Each node has two children",
+    "optionB": "Each node has at most one child",
+    "optionC": "Each node is connected to its parent",
+    "optionD": "Each node has a thread connecting it to its predecessor or successor",
+    "correct": "D"
+  },
+  {
+    "number": 19,
+    "section": "Computer Science",
+    "question": "Consider the statements:\nD={'S01': 95, 'S02': 96}\nfor I in D:\n    print(I, end='#')\nWhat is the output?",
+    "optionA": "S01#S02#",
+    "optionB": "95#96#",
+    "optionC": "S01,95#S02,96#",
+    "optionD": "S01#95#S02#96#",
+    "correct": "A"
+  },
+  {
+    "number": 20,
+    "section": "Computer Science",
+    "question": "SQL का पूर्ण रूप क्या है?",
+    "optionA": "Structured Query Language",
+    "optionB": "Simple Query Language",
+    "optionC": "Systematic Query Logic",
+    "optionD": "Standard Query Level",
+    "correct": "A"
+  },
+  {
+    "number": 21,
+    "section": "Computer Science",
+    "question": "To convert a Gray Code to its binary equivalent, which technique is commonly used?",
+    "optionA": "Subtraction method",
+    "optionB": "Addition method",
+    "optionC": "Exclusive OR (XOR) operation",
+    "optionD": "Division method",
+    "correct": "C"
+  },
+  {
+    "number": 22,
+    "section": "Computer Science",
+    "question": "SCADA का पूरा नाम क्या है?",
+    "optionA": "Supervisory Control and Document Acquisition",
+    "optionB": "Supervisory Control and Data Acquisition",
+    "optionC": "Supervisory Column and Data Assessment",
+    "optionD": "Supervisory Control and Data Assessment",
+    "correct": "B"
+  },
+  {
+    "number": 23,
+    "section": "Computer Science",
+    "question": "Which of the following conversion is not possible (algorithmically)?",
+    "optionA": "Regular grammar to context-free grammar",
+    "optionB": "Non-deterministic pushdown automata to deterministic pushdown automata",
+    "optionC": "Non-deterministic finite state automata to deterministic finite state automata",
+    "optionD": "Non-deterministic Turing machine to deterministic Turing machine",
+    "correct": "B"
+  },
+  {
+    "number": 24,
+    "section": "Computer Science",
+    "question": "निम्नलिखित स्टेटमेंट का आउटपुट क्या है?\nprint(14%3**2*4)",
+    "optionA": "16",
+    "optionB": "64",
+    "optionC": "20",
+    "optionD": "256",
+    "correct": "C"
+  },
+  {
+    "number": 25,
+    "section": "Computer Science",
+    "question": "How can you make an asynchronous request to a server in JavaScript?",
+    "optionA": "Using the 'async' keyword",
+    "optionB": "Using the 'await' keyword",
+    "optionC": "Using the fetch API or XMLHttpRequest",
+    "optionD": "By defining a callback function",
+    "correct": "C"
+  },
+  {
+    "number": 26,
+    "section": "Computer Science",
+    "question": "Which version of IP address is most suitable for IoT?",
+    "optionA": "IP V4",
+    "optionB": "IP V5",
+    "optionC": "IP V6",
+    "optionD": "IP V7",
+    "correct": "C"
+  },
+  {
+    "number": 27,
+    "section": "Computer Science",
+    "question": "Which among the following is not a property of knowledge representation?",
+    "optionA": "Representational Verification",
+    "optionB": "Representational Adequacy",
+    "optionC": "Inferential Adequacy",
+    "optionD": "Inferential Efficiency",
+    "correct": "A"
+  },
+  {
+    "number": 28,
+    "section": "Computer Science",
+    "question": "The popular method of organizing wireless network topologies are?",
+    "optionA": "Software",
+    "optionB": "Network",
+    "optionC": "Synchronization",
+    "optionD": "Cluster",
+    "correct": "D"
+  },
+  {
+    "number": 29,
+    "section": "Computer Science",
+    "question": "How are cookies typically stored on a client's device?",
+    "optionA": "In a plain text file",
+    "optionB": "In a database",
+    "optionC": "In an encrypted format",
+    "optionD": "In the browser's cache",
+    "correct": "A"
+  },
+  {
+    "number": 30,
+    "section": "Computer Science",
+    "question": "What is the term for defining multiple methods in a class with the same name but different parameters?",
+    "optionA": "Overriding",
+    "optionB": "Overloading",
+    "optionC": "Inheriting",
+    "optionD": "Inheritance",
+    "correct": "B"
+  },
+  {
+    "number": 31,
+    "section": "Computer Science",
+    "question": "What is the primary goal of the Backtracking approach in solving the Hamiltonian Cycle problem?",
+    "optionA": "To find a cycle with the fewest edges",
+    "optionB": "To find a cycle with the lowest weight",
+    "optionC": "To find a cycle that visits every vertex exactly once",
+    "optionD": "To find a cycle with the maximum number of edges",
+    "correct": "C"
+  },
+  {
+    "number": 32,
+    "section": "Computer Science",
+    "question": "A ___________ is an online platform or website where individuals or businesses regularly publish articles/journals, known as posts, on various topics.",
+    "optionA": "Browser",
+    "optionB": "Blog",
+    "optionC": "News Group",
+    "optionD": "Web Server",
+    "correct": "B"
+  },
+  {
+    "number": 33,
+    "section": "Computer Science",
+    "question": "Software engineering emerged due to:",
+    "optionA": "The decline of computer technology",
+    "optionB": "The need for complex hardware systems",
+    "optionC": "The challenges posed by software development",
+    "optionD": "The focus on hardware-only solutions",
+    "correct": "C"
+  },
+  {
+    "number": 34,
+    "section": "Computer Science",
+    "question": "What does the 'https' in a web address indicate?",
+    "optionA": "The website is hosted on a local server",
+    "optionB": "The website is a search engine",
+    "optionC": "The website uses standard HTTP protocol",
+    "optionD": "The website is secure using encryption",
+    "correct": "D"
+  },
+  {
+    "number": 35,
+    "section": "Computer Science",
+    "question": "Each ___ represents a particular colour.",
+    "optionA": "Frame",
+    "optionB": "Character",
+    "optionC": "Pixel value",
+    "optionD": "None of the above",
+    "correct": "C"
+  },
+  {
+    "number": 36,
+    "section": "Computer Science",
+    "question": "What is the value of the following expression?\n3 + 3.00, 3**3.0",
+    "optionA": "[6.0, 27.0]",
+    "optionB": "(6.0, 9.0)",
+    "optionC": "(6, 27)",
+    "optionD": "(6.0, 27.0)",
+    "correct": "D"
+  },
+  {
+    "number": 37,
+    "section": "Computer Science",
+    "question": "EBCDIC is mainly used in which type of computer systems?",
+    "optionA": "Mainframe computers",
+    "optionB": "Personal computers",
+    "optionC": "Supercomputers",
+    "optionD": "Mobile devices",
+    "correct": "A"
+  },
+  {
+    "number": 38,
+    "section": "Computer Science",
+    "question": "The applications of AI includes:",
+    "optionA": "Gaming",
+    "optionB": "Expert Systems",
+    "optionC": "ML and DL",
+    "optionD": "All of the above",
+    "correct": "D"
+  },
+  {
+    "number": 39,
+    "section": "Computer Science",
+    "question": "How many inputs does a full-adder circuit have for each individual binary digit being added or subtracted?",
+    "optionA": "1 input",
+    "optionB": "2 inputs",
+    "optionC": "3 inputs",
+    "optionD": "4 inputs",
+    "correct": "C"
+  },
+  {
+    "number": 40,
+    "section": "Computer Science",
+    "question": "Which of the following is not considered as a type of e-waste?",
+    "optionA": "Televisions",
+    "optionB": "Personal Electronic Devices",
+    "optionC": "Scanner and Copier",
+    "optionD": "Newspaper",
+    "correct": "D"
+  },
+  {
+    "number": 41,
+    "section": "Computer Science",
+    "question": "In Karnaugh Maps, which term refers to a group of adjacent cells that can be combined to simplify a logic expression?",
+    "optionA": "Block",
+    "optionB": "Cluster",
+    "optionC": "Pair",
+    "optionD": "Group",
+    "correct": "D"
+  },
+  {
+    "number": 42,
+    "section": "Computer Science",
+    "question": "Who is known as the father of AI?",
+    "optionA": "Fisher Ada",
+    "optionB": "Alan Turing",
+    "optionC": "John McCarthy",
+    "optionD": "Allen Newell",
+    "correct": "C"
+  },
+  {
+    "number": 43,
+    "section": "Computer Science",
+    "question": "Which of the following refers to the level of data abstraction that describes exactly how the data is actually stored?",
+    "optionA": "Conceptual Level",
+    "optionB": "Physical Level",
+    "optionC": "File Level",
+    "optionD": "Logical Level",
+    "correct": "B"
+  },
+  {
+    "number": 44,
+    "section": "Computer Science",
+    "question": "A socket is used for:",
+    "optionA": "Physical data transmission",
+    "optionB": "Process-to-process communication",
+    "optionC": "Storing network protocols",
+    "optionD": "Network management",
+    "correct": "B"
+  },
+  {
+    "number": 45,
+    "section": "Computer Science",
+    "question": "Which characteristics are taken together in chromaticity?",
+    "optionA": "Hue and Saturation",
+    "optionB": "Hue and Brightness",
+    "optionC": "Saturation, Hue, and Brightness",
+    "optionD": "Saturation and Brightness",
+    "correct": "A"
+  },
+  {
+    "number": 46,
+    "section": "Computer Science",
+    "question": "Which keyword is used to indicate that a class cannot be inherited by other classes?",
+    "optionA": "sealed",
+    "optionB": "final",
+    "optionC": "private",
+    "optionD": "static",
+    "correct": "B"
+  },
+  {
+    "number": 47,
+    "section": "Computer Science",
+    "question": "Let the word be 'automata'. The total number of states required to recognize the word using DFA would be:",
+    "optionA": "9 states",
+    "optionB": "8 states",
+    "optionC": "10 states",
+    "optionD": "Word cannot be recognized using DFA",
+    "correct": "A"
+  },
+  {
+    "number": 48,
+    "section": "Computer Science",
+    "question": "In XML, which attribute is used to uniquely identify an element?",
+    "optionA": "id",
+    "optionB": "class",
+    "optionC": "name",
+    "optionD": "tag",
+    "correct": "A"
+  },
+  {
+    "number": 49,
+    "section": "Computer Science",
+    "question": "Which type of method does not have an implementation in the base class and must be overridden by derived classes?",
+    "optionA": "Virtual method",
+    "optionB": "Abstract method",
+    "optionC": "Sealed method",
+    "optionD": "Static method",
+    "correct": "B"
+  },
+  {
+    "number": 50,
+    "section": "Computer Science",
+    "question": "Which programming paradigm focuses on breaking down a program into smaller procedures or functions?",
+    "optionA": "Object-Oriented Programming",
+    "optionB": "Procedural Programming",
+    "optionC": "Functional Programming",
+    "optionD": "Imperative Programming",
+    "correct": "B"
+  },
+  {
+    "number": 51,
+    "section": "Computer Science",
+    "question": "In the Backtracking approach for the 8-Queens problem, once a feasible solution is found, the algorithm:",
+    "optionA": "Stops and returns the solution",
+    "optionB": "Continues searching for more solutions",
+    "optionC": "Iterates through all possibilities",
+    "optionD": "Rearranges the queens to optimize the solution",
+    "correct": "B"
+  },
+  {
+    "number": 52,
+    "section": "Computer Science",
+    "question": "Which of the following is an extension to the basic model of Turing machine?",
+    "optionA": "Multi tape Turing machine",
+    "optionB": "Multi head Turing machine",
+    "optionC": "Nondeterministic Turing machine",
+    "optionD": "All of the above",
+    "correct": "D"
+  },
+  {
+    "number": 53,
+    "section": "Computer Science",
+    "question": "Which memory management technique uses fixed-sized blocks of memory, allowing processes to be loaded into any available block?",
+    "optionA": "Paging",
+    "optionB": "Segmentation",
+    "optionC": "Virtual memory",
+    "optionD": "Relocation",
+    "correct": "A"
+  },
+  {
+    "number": 54,
+    "section": "Computer Science",
+    "question": "Which of the following devices is essential to set up a wired LAN?",
+    "optionA": "Modem",
+    "optionB": "NIC",
+    "optionC": "Repeater",
+    "optionD": "Firewall",
+    "correct": "B"
+  },
+  {
+    "number": 55,
+    "section": "Computer Science",
+    "question": "In BFS, vertices are explored level by level, starting from the:",
+    "optionA": "Deepest level",
+    "optionB": "Shallowest level",
+    "optionC": "Middle level",
+    "optionD": "Highest degree vertex",
+    "correct": "B"
+  },
+  {
+    "number": 56,
+    "section": "Computer Science",
+    "question": "The minimum number of productions required to produce a language consisting of palindrome strings over Σ={a,b} is:",
+    "optionA": "3",
+    "optionB": "7",
+    "optionC": "5",
+    "optionD": "6",
+    "correct": "C"
+  },
+  {
+    "number": 57,
+    "section": "Computer Science",
+    "question": "Which algorithm can be optimized to meet the timing deadlines and rate requirements of continuous media?",
+    "optionA": "Earliest-Deadline-First scheduling",
+    "optionB": "SCAN-EDF scheduling",
+    "optionC": "Both A & B",
+    "optionD": "None of the above",
+    "correct": "C"
+  },
+  {
+    "number": 58,
+    "section": "Computer Science",
+    "question": "Stack works on the principle of…",
+    "optionA": "Mid Element First",
+    "optionB": "First In First Out",
+    "optionC": "Last In First Out",
+    "optionD": "Last In Last Out",
+    "correct": "C"
+  },
+  {
+    "number": 59,
+    "section": "Computer Science",
+    "question": "Greedy search strategy chooses the node for expansion in ___________",
+    "optionA": "Shallowest",
+    "optionB": "Deepest",
+    "optionC": "The one close to the goal node",
+    "optionD": "Minimum heuristic cost",
+    "correct": "D"
+  },
+  {
+    "number": 60,
+    "section": "Computer Science",
+    "question": "Assertion (A): CSS is an attribute of the table tag and is used to style tables on a web page. Reason (R): CSS is used to apply styles, such as fonts, colors, and spacing in an HTML document.",
+    "optionA": "Both A and R are true and R is the correct explanation of A",
+    "optionB": "Both A and R are true, but R is not the correct explanation of A",
+    "optionC": "A is true, but R is false",
+    "optionD": "A is false, but R is true",
+    "correct": "D"
+  },
+  {
+    "number": 61,
+    "section": "Computer Science",
+    "question": "Which one is not an encryption technique?",
+    "optionA": "AES",
+    "optionB": "DES",
+    "optionC": "RSA",
+    "optionD": "FTP",
+    "correct": "D"
+  },
+  {
+    "number": 62,
+    "section": "Computer Science",
+    "question": "AI is about:",
+    "optionA": "Playing games on Computer",
+    "optionB": "Making a machine intelligent",
+    "optionC": "Putting human intelligence into computer",
+    "optionD": "None of these",
+    "correct": "B"
+  },
+  {
+    "number": 63,
+    "section": "Computer Science",
+    "question": "Which of the following can be used to extract or filter data from the data warehouse?",
+    "optionA": "Data redundancy",
+    "optionB": "Data recovery tool",
+    "optionC": "Data mining",
+    "optionD": "Both B and C",
+    "correct": "C"
+  },
+  {
+    "number": 64,
+    "section": "Computer Science",
+    "question": "In HTML, we start a comment using:",
+    "optionA": "<!- -",
+    "optionB": "!- ->",
+    "optionC": "- -!>",
+    "optionD": "<--!",
+    "correct": "A"
+  },
+  {
+    "number": 65,
+    "section": "Computer Science",
+    "question": "Which of the following refers to the level of data abstraction that describes exactly how the data is stored?",
+    "optionA": "Conceptual Level",
+    "optionB": "Physical Level",
+    "optionC": "File Level",
+    "optionD": "Logical Level",
+    "correct": "B"
+  },
+  {
+    "number": 66,
+    "section": "Computer Science",
+    "question": "MYSQL में किस प्रकार के value को quotation marks में दर्ज करना आवश्यक है?",
+    "optionA": "DATE",
+    "optionB": "VARCHAR",
+    "optionC": "FLOAT",
+    "optionD": "CHAR",
+    "correct": "B"
+  },
+  {
+    "number": 67,
+    "section": "Computer Science",
+    "question": "Auxiliary storage space management in an operating system involves:",
+    "optionA": "Allocating memory for CPU registers",
+    "optionB": "Managing input/output operations between processes and devices",
+    "optionC": "Managing the allocation of memory to processes",
+    "optionD": "Managing the allocation of space on secondary storage devices",
+    "correct": "D"
+  },
+  {
+    "number": 68,
+    "section": "Computer Science",
+    "question": "Which statement is used to retrieve data from a database in SQL?",
+    "optionA": "SELECT",
+    "optionB": "UPDATE",
+    "optionC": "DELETE",
+    "optionD": "INSERT",
+    "correct": "A"
+  },
+  {
+    "number": 69,
+    "section": "Computer Science",
+    "question": "Which type of adder is designed to overcome the propagation delay issues in ripple carry adders?",
+    "optionA": "Ripple Carry Adder",
+    "optionB": "Carry Look-Ahead Adder",
+    "optionC": "Binary Adder",
+    "optionD": "Half Adder",
+    "correct": "B"
+  },
+  {
+    "number": 70,
+    "section": "Computer Science",
+    "question": "The easiest way to transfer control is when the old backup site sends __________ to the old primary.",
+    "optionA": "Redo logs",
+    "optionB": "Primary Logs",
+    "optionC": "Undo Logs",
+    "optionD": "All of the above",
+    "correct": "A"
+  },
+  {
+    "number": 71,
+    "section": "Computer Science",
+    "question": "Which sorting algorithm has a worst-case time complexity of O(n²) in its basic form?",
+    "optionA": "Quick Sort",
+    "optionB": "Merge Sort",
+    "optionC": "Insertion Sort",
+    "optionD": "Counting Sort",
+    "correct": "A"
+  },
+  {
+    "number": 72,
+    "section": "Computer Science",
+    "question": "Which function should be used to get first n rows of a dataframe?",
+    "optionA": "print(n)",
+    "optionB": "head(n)",
+    "optionC": "get(n)",
+    "optionD": "call(n)",
+    "correct": "B"
+  },
+  {
+    "number": 73,
+    "section": "Computer Science",
+    "question": "WSN का पूर्ण रूप क्या है?",
+    "optionA": "Wireless Standard Protocol",
+    "optionB": "Wireless Sensor Protocol",
+    "optionC": "Wireless Serial Protocol",
+    "optionD": "Wireless Single Protocol",
+    "correct": "B"
+  },
+  {
+    "number": 74,
+    "section": "Computer Science",
+    "question": "Which of the following describes e-commerce?",
+    "optionA": "Doing business electronically",
+    "optionB": "Doing business",
+    "optionC": "Sale of goods",
+    "optionD": "All of the above",
+    "correct": "A"
+  },
+  {
+    "number": 75,
+    "section": "Computer Science",
+    "question": "What is the primary purpose of Software Requirements Specification (SRS) documents?",
+    "optionA": "To list the programming languages used",
+    "optionB": "To describe the user interface design",
+    "optionC": "To define the software's functional and non-functional requirements",
+    "optionD": "To specify the hardware components required",
+    "correct": "C"
+  },
+  {
+    "number": 76,
+    "section": "Computer Science",
+    "question": "What is the purpose of error control in the Data Link Layer?",
+    "optionA": "To prevent unauthorized access",
+    "optionB": "To correct errors in the physical layer",
+    "optionC": "To ensure reliable data transmission",
+    "optionD": "To manage network congestion",
+    "correct": "C"
+  },
+  {
+    "number": 77,
+    "section": "Computer Science",
+    "question": "What is the purpose of Domain Name System Server in networking?",
+    "optionA": "To encrypt data during transmission",
+    "optionB": "To convert domain names into IP addresses",
+    "optionC": "To regulate network traffic flow",
+    "optionD": "To establish a secure connection between devices",
+    "correct": "B"
+  },
+  {
+    "number": 78,
+    "section": "Computer Science",
+    "question": "In Python, which module needs to be imported for implementing Double Ended Queue?",
+    "optionA": "counter",
+    "optionB": "collections",
+    "optionC": "random",
+    "optionD": "numpy",
+    "correct": "B"
+  },
+  {
+    "number": 79,
+    "section": "Computer Science",
+    "question": "Which form of e-marketplace brings together buyers and sellers from multiple industries, often for MRO materials?",
+    "optionA": "Horizontal",
+    "optionB": "Vertical",
+    "optionC": "Integrated",
+    "optionD": "Isolated",
+    "correct": "A"
+  },
+  {
+    "number": 80,
+    "section": "Computer Science",
+    "question": "Inter-process communication (IPC) is a mechanism used for:",
+    "optionA": "Preventing processes from executing concurrently",
+    "optionB": "Allowing processes to run independently without communication",
+    "optionC": "Enabling processes to exchange information and synchronize their actions",
+    "optionD": "Enabling processes to execute in a random order",
+    "correct": "C"
+  },
+  {
+    "number": 81,
+    "section": "Computer Science",
+    "question": "Which of the following is a DML command in SQL?",
+    "optionA": "UPDATE",
+    "optionB": "CREATE",
+    "optionC": "ALTER",
+    "optionD": "DROP",
+    "correct": "A"
+  },
+  {
+    "number": 82,
+    "section": "Computer Science",
+    "question": "Which software life cycle model is based on iterative prototyping?",
+    "optionA": "Waterfall model",
+    "optionB": "Spiral model",
+    "optionC": "Agile model",
+    "optionD": "Prototype model",
+    "correct": "D"
+  },
+  {
+    "number": 83,
+    "section": "Computer Science",
+    "question": "Which Internet Protocol is responsible for mapping IP addresses to MAC addresses?",
+    "optionA": "ARP",
+    "optionB": "TCP",
+    "optionC": "ICMP",
+    "optionD": "DNS",
+    "correct": "A"
+  },
+  {
+    "number": 84,
+    "section": "Computer Science",
+    "question": "Evaluate the given postfix expression: 3 5 * 6 + 2 3 * -",
+    "optionA": "39",
+    "optionB": "15",
+    "optionC": "-9",
+    "optionD": "-17",
+    "correct": "B"
+  },
+  {
+    "number": 85,
+    "section": "Computer Science",
+    "question": "_________________ uses packet switching technology to carry voice traffic over an IP network.",
+    "optionA": "E-mail",
+    "optionB": "HTTP",
+    "optionC": "VoIP",
+    "optionD": "SMTP",
+    "correct": "C"
+  },
+  {
+    "number": 86,
+    "section": "Computer Science",
+    "question": "अभिकथन (A): SMS, Smart Message Service का प्रथमाक्षर/आद्याक्षर है। कारण (R): SMS सबसे आम तकनीक है।",
+    "optionA": "Both A and R are true and R is the correct explanation of A",
+    "optionB": "Both A and R are true, but R is not the correct explanation of A",
+    "optionC": "A is true, but R is false",
+    "optionD": "A is false, but R is true",
+    "correct": "D"
+  },
+  {
+    "number": 87,
+    "section": "Computer Science",
+    "question": "Musa's Basic Model is used for measuring:",
+    "optionA": "Software complexity",
+    "optionB": "Software reliability",
+    "optionC": "Software performance",
+    "optionD": "Software size",
+    "correct": "B"
+  },
+  {
+    "number": 88,
+    "section": "Computer Science",
+    "question": "The Cost Estimation technique that involves expert judgments and consensus is called:",
+    "optionA": "COCOMO",
+    "optionB": "Delphi Method",
+    "optionC": "Waterfall Model",
+    "optionD": "Prototype Model",
+    "correct": "B"
+  },
+  {
+    "number": 89,
+    "section": "Computer Science",
+    "question": "Delphi and COCOMO are techniques used for estimating:",
+    "optionA": "Software size",
+    "optionB": "Software reliability",
+    "optionC": "Software complexity",
+    "optionD": "Software development cost",
+    "correct": "D"
+  },
+  {
+    "number": 90,
+    "section": "Computer Science",
+    "question": "Why do we need Industry 4.0?",
+    "optionA": "Detecting Machine failures",
+    "optionB": "Preventing Machine failures",
+    "optionC": "Improving safety",
+    "optionD": "All of the above",
+    "correct": "D"
+  },
+  {
+    "number": 91,
+    "section": "Computer Science",
+    "question": "What are the three main types of DBMSs?",
+    "optionA": "Relational, hierarchical, and network DBMSs",
+    "optionB": "Relational, object-oriented, and NoSQL DBMSs",
+    "optionC": "Hierarchical, network, and object-oriented DBMSs",
+    "optionD": "NoSQL, object-oriented, and relational DBMSs",
+    "correct": "A"
+  },
+  {
+    "number": 92,
+    "section": "Computer Science",
+    "question": "The dining philosophers problem is an example of a synchronization problem related to:",
+    "optionA": "Process scheduling",
+    "optionB": "Mutual exclusion",
+    "optionC": "Memory allocation",
+    "optionD": "Interrupt handling",
+    "correct": "B"
+  },
+  {
+    "number": 93,
+    "section": "Computer Science",
+    "question": "Which of the following is type 1 language or Type 1 grammar?",
+    "optionA": "Regular grammar / Regular language",
+    "optionB": "Context Free Grammar / Context Free language",
+    "optionC": "Context Sensitive Grammar / Context Sensitive language",
+    "optionD": "Recursively Enumerable",
+    "correct": "C"
+  },
+  {
+    "number": 94,
+    "section": "Computer Science",
+    "question": "The software developed to detect and remove viruses only is called:",
+    "optionA": "Malware",
+    "optionB": "Antivirus",
+    "optionC": "Spyware",
+    "optionD": "Adware",
+    "correct": "B"
+  },
+  {
+    "number": 95,
+    "section": "Computer Science",
+    "question": "The main advantage of the overlay technique in memory management is that it allows:",
+    "optionA": "Processes to be loaded into memory as a whole",
+    "optionB": "Processes to share memory partitions",
+    "optionC": "Large programs to be executed on systems with limited memory",
+    "optionD": "Processes to communicate directly with each other",
+    "correct": "C"
+  },
+  {
+    "number": 96,
+    "section": "Computer Science",
+    "question": "For a DFA accepting binary numbers whose decimal equivalent is divisible by 3, what are all the possible remainders?",
+    "optionA": "0",
+    "optionB": "0, 2",
+    "optionC": "0, 1, 2",
+    "optionD": "0, 1, 2, 3",
+    "correct": "C"
+  },
+  {
+    "number": 97,
+    "section": "Computer Science",
+    "question": "De Morgan's Theorems are particularly useful in simplifying logic expressions that have a large number of ___________.",
+    "optionA": "Variables",
+    "optionB": "Constants",
+    "optionC": "Terms",
+    "optionD": "Operators",
+    "correct": "C"
+  },
+  {
+    "number": 98,
+    "section": "Computer Science",
+    "question": "किस वर्ष में इंटेल ने पहला x86 माइक्रोप्रोसेसर, 8086 पेश किया?",
+    "optionA": "1971",
+    "optionB": "1981",
+    "optionC": "1986",
+    "optionD": "1991",
+    "correct": "A"
+  },
+  {
+    "number": 99,
+    "section": "Computer Science",
+    "question": "What is an entity in DTD?",
+    "optionA": "A reference to an external resource",
+    "optionB": "A mathematical equation",
+    "optionC": "A special XML tag",
+    "optionD": "A function in JavaScript",
+    "correct": "A"
+  },
+  {
+    "number": 100,
+    "section": "Computer Science",
+    "question": "Which technology offers the highest level of customization for implementing digital logic circuits?",
+    "optionA": "ROM-based design",
+    "optionB": "PLA-based design",
+    "optionC": "FPGA-based design",
+    "optionD": "Gate Array-based design",
+    "correct": "C"
+  },
+  {
+    "number": 101,
+    "section": "Teaching & Pedagogy",
+    "question": "शिक्षण की तत्वपूर्ण कल्पना क्या है?",
+    "optionA": "शिक्षक अधिकतम समय व्यतीत महसूस करे",
+    "optionB": "शिक्षक सक्षम बनाने में",
+    "optionC": "सुनिश्चित शिक्षण अधिकतम",
+    "optionD": "एकल शिक्षक का कार्य",
+    "correct": "C"
+  },
+  {
+    "number": 102,
+    "section": "Teaching & Pedagogy",
+    "question": "एक शिक्षक के लिए कक्षा में समस्याओं को हल करने का सबसे अच्छा तरीका क्या है?",
+    "optionA": "अन्य शिक्षक की राय पूछें",
+    "optionB": "किसी की अपनी राय पर निर्भर करता है",
+    "optionC": "बच्चों द्वारा दिए गए सुझावों पर सोचें और अच्छे पर अमल करें",
+    "optionD": "प्राचार्य जो दृष्टिकोण देता है उसका उपयोग करें",
+    "correct": "C"
+  },
+  {
+    "number": 103,
+    "section": "Teaching & Pedagogy",
+    "question": "At the highest level of hierarchy is:",
+    "optionA": "Understanding",
+    "optionB": "Application",
+    "optionC": "Evaluation",
+    "optionD": "Analysis",
+    "correct": "C"
+  },
+  {
+    "number": 104,
+    "section": "Teaching & Pedagogy",
+    "question": "विद्यार्थियों को कठिन परिश्रम के लिए प्रेरित करने का सर्वोत्तम तरीका क्या है?",
+    "optionA": "स्वयं परिश्रम करना चाहिए - यह देखकर विद्यार्थी स्वतः शिक्षण करें",
+    "optionB": "परिश्रमी विद्यार्थियों को पुरस्कृत करना चाहिए",
+    "optionC": "कड़ी मेहनत के महत्व के बारे में एक व्याख्यान दें",
+    "optionD": "कड़ी मेहनत से सफलता का उदाहरण प्रस्तुत करें",
+    "correct": "A"
+  },
+  {
+    "number": 105,
+    "section": "Teaching & Pedagogy",
+    "question": "एक जागरूक शिक्षक को अवश्य करना चाहिए:",
+    "optionA": "शिक्षण और नवीन चिंतन करना",
+    "optionB": "दैनिक प्रस्तुत रखना",
+    "optionC": "सब बच्चों को पहले यह तय करना कि पाठ्यक्रम जानें",
+    "optionD": "प्रशासनिक शिक्षण करना",
+    "correct": "C"
+  },
+  {
+    "number": 106,
+    "section": "Teaching & Pedagogy",
+    "question": "मानकीकृत परीक्षणों की आलोचनाओं में से एक यह है:",
+    "optionA": "वे मुख्य रूप से मुख्यधारा की संस्कृति का प्रतिबिम्ब करते हैं और इसलिए पक्षपाती हैं",
+    "optionB": "उनकी भाषा को समझना मुश्किल है",
+    "optionC": "परीक्षण बड़ी आबादी पर लागू नहीं किए जा सकते",
+    "optionD": "वे बच्चे की क्षमता की स्पष्ट तस्वीर नहीं देते",
+    "correct": "A"
+  },
+  {
+    "number": 107,
+    "section": "Teaching & Pedagogy",
+    "question": "शिक्षक को प्रतिपुष्टि (feedback) कब प्रदान करनी चाहिए?",
+    "optionA": "विषय वस्तु समाप्ति के बाद",
+    "optionB": "विषय वस्तु समाप्ति के दौरान",
+    "optionC": "विषय वस्तु समाप्ति से पहले",
+    "optionD": "इनमें से कोई नहीं",
+    "correct": "A"
+  },
+  {
+    "number": 108,
+    "section": "Teaching & Pedagogy",
+    "question": "The affective domain was classified by:",
+    "optionA": "Benjamin S. Bloom",
+    "optionB": "Simpson",
+    "optionC": "Krathwohl",
+    "optionD": "Both A and C",
+    "correct": "D"
+  },
+  {
+    "number": 109,
+    "section": "Teaching & Pedagogy",
+    "question": "अनेक स्वास्थ्य बनाए रखने में निम्न में से क्या अत्यधिक महत्वपूर्ण है?",
+    "optionA": "स्वस्थ भोजन और चलने की आवश्यकता",
+    "optionB": "अव्यवस्थित व्यवहार",
+    "optionC": "रुध्य",
+    "optionD": "शिक्षक और विद्यालय वातावरण",
+    "correct": "D"
+  },
+  {
+    "number": 110,
+    "section": "Teaching & Pedagogy",
+    "question": "Individualized Education Programme is planned from the perspective of:",
+    "optionA": "Special Education Programme",
+    "optionB": "Child-centered Education Programme",
+    "optionC": "Open School Education Programme",
+    "optionD": "e-Learning Education Programme",
+    "correct": "B"
+  },
+  {
+    "number": 111,
+    "section": "Teaching & Pedagogy",
+    "question": "The drawback of micro teaching is:",
+    "optionA": "Not successful in real classroom conditions",
+    "optionB": "Lack of supervision is found",
+    "optionC": "No room for feedback",
+    "optionD": "Longer duration of study",
+    "correct": "A"
+  },
+  {
+    "number": 112,
+    "section": "Teaching & Pedagogy",
+    "question": "सीखने के मनोशारीरिक क्षेत्र में मूल्यांकन के लिए उपयुक्त:",
+    "optionA": "स्वीकार करना",
+    "optionB": "स्पष्ट करना",
+    "optionC": "सम्बंधित करना",
+    "optionD": "संयोजन करना",
+    "correct": "D"
+  },
+  {
+    "number": 113,
+    "section": "Teaching & Pedagogy",
+    "question": "Which of the following would you use to shape the habits?",
+    "optionA": "Indoctrination",
+    "optionB": "Teaching",
+    "optionC": "Training",
+    "optionD": "None of these",
+    "correct": "C"
+  },
+  {
+    "number": 114,
+    "section": "Teaching & Pedagogy",
+    "question": "सिर्फ ___ को छोड़कर शेष सभी कक्षा प्रबंधन के प्रमुख घटक हैं:",
+    "optionA": "शिक्षक के प्रदर्शन का मूल्यांकन करना",
+    "optionB": "छात्र के सीखने का आकलन",
+    "optionC": "अपेक्षित सीखने के परिणाम",
+    "optionD": "कक्षा विनियमन",
+    "correct": "A"
+  },
+  {
+    "number": 115,
+    "section": "Teaching & Pedagogy",
+    "question": "Which domain of learning objectives is not being evaluated through our present system of examination?",
+    "optionA": "Affective",
+    "optionB": "Cognitive",
+    "optionC": "Psychomotor",
+    "optionD": "None of these",
+    "correct": "A"
+  },
+  {
+    "number": 116,
+    "section": "Teaching & Pedagogy",
+    "question": "Who developed inductive approach in science teaching?",
+    "optionA": "Aristotle",
+    "optionB": "Bruner",
+    "optionC": "Gagne",
+    "optionD": "Francis Bacon",
+    "correct": "D"
+  },
+  {
+    "number": 117,
+    "section": "Teaching & Pedagogy",
+    "question": "उद्देश्य पूर्ण सोच - विषय-वस्तु के लिए प्रभावी कैसे बनाएं? इस प्रकार का शिक्षण:",
+    "optionA": "आत्मक शिक्षण",
+    "optionB": "रचनात्मक शिक्षण",
+    "optionC": "सक्रिय शिक्षण",
+    "optionD": "इनमें से कोई नहीं",
+    "correct": "B"
+  },
+  {
+    "number": 118,
+    "section": "Teaching & Pedagogy",
+    "question": "निम्नलिखित में से कौन सी गतिविधि उत्तर-सक्रिय चरण है?",
+    "optionA": "शिक्षण रणनीतियों का वितरण",
+    "optionB": "एकत्रित साक्ष्यों के संदर्भ में रणनीतियों को बदलना",
+    "optionC": "शिक्षार्थियों का निदान",
+    "optionD": "प्रस्तुति के लिए विषय वस्तु के तत्वों को अनुक्रमित करना",
+    "correct": "B"
+  },
+  {
+    "number": 119,
+    "section": "Teaching & Pedagogy",
+    "question": "मूल्यांकन (Evaluation) विधियों में एक गुणात्मक रूप से मूल्य प्राप्त अपेक्षित पर तत्काल:",
+    "optionA": "जब चाहे",
+    "optionB": "मूल्य मापन करे",
+    "optionC": "गतिविधि करे",
+    "optionD": "चित्र-चित्रण करे",
+    "correct": "B"
+  },
+  {
+    "number": 120,
+    "section": "Teaching & Pedagogy",
+    "question": "Which educational psychologist believed in the fact that 'All children have the potential to learn'?",
+    "optionA": "Friedrich Frobel",
+    "optionB": "John Dewey",
+    "optionC": "Johann Friedrich Herbart",
+    "optionD": "Maria Montessori",
+    "correct": "D"
+  },
+  {
+    "number": 121,
+    "section": "Teaching & Pedagogy",
+    "question": "As a facilitator, the teacher must be:",
+    "optionA": "Dominating",
+    "optionB": "Short-tempered",
+    "optionC": "Autocratic",
+    "optionD": "Warm, understanding and self-controlling",
+    "correct": "D"
+  },
+  {
+    "number": 122,
+    "section": "Teaching & Pedagogy",
+    "question": "The basic requirement of teaching efficiency is:",
+    "optionA": "Mastery on teaching skills",
+    "optionB": "Mastery over use of different techniques of teaching",
+    "optionC": "Mastery over appropriate use of media and technology in teaching",
+    "optionD": "All the above",
+    "correct": "D"
+  },
+  {
+    "number": 123,
+    "section": "Teaching & Pedagogy",
+    "question": "In Piaget's theory of cognitive development, the form of reasoning at one stage becomes the ______ at the next stage:",
+    "optionA": "Content",
+    "optionB": "Structure",
+    "optionC": "Process",
+    "optionD": "Dialectical opposite",
+    "correct": "A"
+  },
+  {
+    "number": 124,
+    "section": "Teaching & Pedagogy",
+    "question": "A teacher should employ classroom management strategies which focus on:",
+    "optionA": "Controlling the class through rigid rules",
+    "optionB": "Expecting same behaviour from all children",
+    "optionC": "Making students abide to all rules without questioning",
+    "optionD": "Giving ample opportunities for self reflection",
+    "correct": "D"
+  },
+  {
+    "number": 125,
+    "section": "Teaching & Pedagogy",
+    "question": "कक्षा शिक्षण की सबसे प्रभावी विधि:",
+    "optionA": "व्याख्यान प्रदान करना",
+    "optionB": "चर्चा",
+    "optionC": "छात्र प्रदर्शन",
+    "optionD": "प्रश्न-उत्तर",
+    "correct": "D"
+  },
+  {
+    "number": 126,
+    "section": "Teaching & Pedagogy",
+    "question": "\"पुरुष और महिला की भूमिकाओं का निर्धारण समाज करता है।\" यह कथन बताता है:",
+    "optionA": "लैंगिकता एक अंतर्निहित अवतरण है",
+    "optionB": "लैंगिकता एक आनुवंशिक प्रतिभा है",
+    "optionC": "लैंगिकता एक अंतर्ज्ञानी अवतरण है",
+    "optionD": "लैंगिकता एक सामाजिक अवतरण है",
+    "correct": "D"
+  },
+  {
+    "number": 127,
+    "section": "Teaching & Pedagogy",
+    "question": "Component of curriculum is:",
+    "optionA": "Teaching strategies",
+    "optionB": "Objectives",
+    "optionC": "Evaluation",
+    "optionD": "All of these",
+    "correct": "D"
+  },
+  {
+    "number": 128,
+    "section": "Teaching & Pedagogy",
+    "question": "An outline of the topics of a subject which are covered in specific time is called:",
+    "optionA": "Programme",
+    "optionB": "Syllabus",
+    "optionC": "Curriculum",
+    "optionD": "Course",
+    "correct": "B"
+  },
+  {
+    "number": 129,
+    "section": "Teaching & Pedagogy",
+    "question": "For the change in the behaviour of the children, the most effective method is:",
+    "optionA": "Affectionate advice",
+    "optionB": "Reward",
+    "optionC": "Punishment",
+    "optionD": "Expulsion from house",
+    "correct": "A"
+  },
+  {
+    "number": 130,
+    "section": "Teaching & Pedagogy",
+    "question": "Delivering lectures about key concepts that lead to student discussions is an example of:",
+    "optionA": "Engage",
+    "optionB": "Elaborate",
+    "optionC": "Explore",
+    "optionD": "Explain",
+    "correct": "D"
+  },
+  {
+    "number": 131,
+    "section": "General Knowledge",
+    "question": "What did Gandhi do to break the salt law?",
+    "optionA": "Dandi March",
+    "optionB": "Ahmedabad March",
+    "optionC": "Champaran March",
+    "optionD": "All",
+    "correct": "A"
+  },
+  {
+    "number": 132,
+    "section": "General Knowledge",
+    "question": "आइरिश प्रेस ऐक्ट की तर्ज पर वर्नाक्यूलर प्रेस एक्ट किस वर्ष में पारित हुआ?",
+    "optionA": "1878",
+    "optionB": "1968",
+    "optionC": "1887",
+    "optionD": "1778",
+    "correct": "A"
+  },
+  {
+    "number": 133,
+    "section": "General Knowledge",
+    "question": "6 व्यक्ति, 3-3 पंक्तियों में E पर बैठे हैं। D, F के बगल में। C, E के पास और D के विपरीत में। B, F के पास। B के सामने कौन बैठा है?",
+    "optionA": "A",
+    "optionB": "E",
+    "optionC": "C",
+    "optionD": "D",
+    "correct": "C"
+  },
+  {
+    "number": 134,
+    "section": "General Knowledge",
+    "question": "What is a common effect of inflation on purchasing power?",
+    "optionA": "Increase in purchasing power",
+    "optionB": "Decrease in purchasing power",
+    "optionC": "No effect on purchasing power",
+    "optionD": "Increase in savings",
+    "correct": "B"
+  },
+  {
+    "number": 135,
+    "section": "General Knowledge",
+    "question": "Asia's first underground Hydel Project is located in which State of India?",
+    "optionA": "Jammu and Kashmir",
+    "optionB": "Himachal Pradesh",
+    "optionC": "Arunachal Pradesh",
+    "optionD": "Uttar Pradesh",
+    "correct": "B"
+  },
+  {
+    "number": 136,
+    "section": "General Knowledge",
+    "question": "\"यदि किसी निश्चित कोड में, ABCD को 24 और EFGH को 1680 कोड किया जाता है, तो उस कोड में IJKL को क्या कोड किया जाएगा?\"",
+    "optionA": "11880",
+    "optionB": "11240",
+    "optionC": "7920",
+    "optionD": "5940",
+    "correct": "A"
+  },
+  {
+    "number": 137,
+    "section": "General Knowledge",
+    "question": "भारत पर पहला आक्रमण और मुहम्मद-बिन-गजनवी के बारे में - कौन से कथन सही हैं?",
+    "optionA": "1 और 2",
+    "optionB": "केवल 2",
+    "optionC": "1 और 3",
+    "optionD": "केवल 3",
+    "correct": "C"
+  },
+  {
+    "number": 138,
+    "section": "General Knowledge",
+    "question": "जब 2765 को 6 से विभाजित किया जाता है तो शेषफल क्या है?",
+    "optionA": "5",
+    "optionB": "6",
+    "optionC": "4",
+    "optionD": "3",
+    "correct": "A"
+  },
+  {
+    "number": 139,
+    "section": "General Knowledge",
+    "question": "What is the national animal of America?",
+    "optionA": "Tiger and Bald Eagle",
+    "optionB": "Bald Eagle and the American Bison",
+    "optionC": "American Bison and Yak",
+    "optionD": "Golden eagle and Bison",
+    "correct": "B"
+  },
+  {
+    "number": 140,
+    "section": "General Knowledge",
+    "question": "दिये गये संख्या श्रृंखला में प्रश्नवाचक चिह्न के स्थान पर क्या आएगा?\n340, 316, 286, 250, ?",
+    "optionA": "280",
+    "optionB": "249",
+    "optionC": "208",
+    "optionD": "148",
+    "correct": "C"
+  },
+  {
+    "number": 141,
+    "section": "General Knowledge",
+    "question": "आम : फल :: जौ : ?",
+    "optionA": "अनाज",
+    "optionB": "फल",
+    "optionC": "सब्जी",
+    "optionD": "दूध",
+    "correct": "A"
+  },
+  {
+    "number": 142,
+    "section": "General Knowledge",
+    "question": "___________ कार्य करने की क्षमता है।",
+    "optionA": "ऊर्जा",
+    "optionB": "बल",
+    "optionC": "ऊर्जा और बल दोनों",
+    "optionD": "इनमें से कोई नहीं",
+    "correct": "A"
+  },
+  {
+    "number": 143,
+    "section": "General Knowledge",
+    "question": "Special Economic Zones (SEZ) are developed to:",
+    "optionA": "Generate additional economic activity throughout the country",
+    "optionB": "Beautify suburban areas",
+    "optionC": "Upgrade the facilities in the countryside",
+    "optionD": "Promote investment from domestic and foreign sources",
+    "correct": "D"
+  },
+  {
+    "number": 144,
+    "section": "General Knowledge",
+    "question": "एक श्रंखला दी गई है जिसमें एक पद लुप्त है: B, C, E, H, L, ?",
+    "optionA": "P",
+    "optionB": "O",
+    "optionC": "N",
+    "optionD": "Q",
+    "correct": "D"
+  },
+  {
+    "number": 145,
+    "section": "General Knowledge",
+    "question": "एक लड़के की ओर इशारा करते हुए एक महिला ने कहा, 'वह एकमात्र पुत्र है'। लड़का महिला का क्या है?",
+    "optionA": "बहन का पुत्र",
+    "optionB": "भतीजा",
+    "optionC": "पुत्र",
+    "optionD": "दामाद",
+    "correct": "C"
+  },
+  {
+    "number": 146,
+    "section": "General Knowledge",
+    "question": "What are triangular numbers?",
+    "optionA": "The numbers whose dot pattern can be arranged in triangles",
+    "optionB": "The numbers which form a triangle on adding",
+    "optionC": "The numbers which have three digits",
+    "optionD": "The numbers which do not give perfect squares on adding",
+    "correct": "A"
+  },
+  {
+    "number": 147,
+    "section": "General Knowledge",
+    "question": "रामेश्वरम और मुख्य भूमि 2 को जोड़ने वाला 'पम्बन ब्रिज' किस जलराशि के ऊपर बना है?",
+    "optionA": "बंगाल की खाड़ी",
+    "optionB": "अरब सागर",
+    "optionC": "पाक जलडमरूमध्य",
+    "optionD": "कोरोमंडल तट",
+    "correct": "C"
+  },
+  {
+    "number": 148,
+    "section": "General Knowledge",
+    "question": "तापमान के भूपृष्ठीय व्युत्क्रमण (Surface inversion) के बारे में:\n1. यह वायुमंडल के निचले स्तरों में अस्थिरता उत्पन्न करता है।\n2. यह व्युत्क्रमण सामान्यतः सूर्य के ऊपर चढ़ने से पहले तक रहता है।",
+    "optionA": "केवल 1",
+    "optionB": "केवल 2",
+    "optionC": "1 और 2 दोनों",
+    "optionD": "न तो 1, न ही 2",
+    "correct": "B"
+  },
+  {
+    "number": 149,
+    "section": "General Knowledge",
+    "question": "बहुफलक में शीर्ष (V), किनारे (E) और फलक (F) क्रमशः 10, 15 और x हैं। तब (3x-12) का मान है:",
+    "optionA": "9",
+    "optionB": "14",
+    "optionC": "18",
+    "optionD": "7",
+    "correct": "B"
+  },
+  {
+    "number": 150,
+    "section": "General Knowledge",
+    "question": "Which of the following is not a prism?",
+    "optionA": "Cuboid",
+    "optionB": "Circle",
+    "optionC": "Pentagonal Prism",
+    "optionD": "Cube",
+    "correct": "B"
+  }
+]

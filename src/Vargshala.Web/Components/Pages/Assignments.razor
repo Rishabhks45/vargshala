@@ -1,0 +1,177 @@
+@page "/assignments"
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Modals
+@rendermode InteractiveServer
+
+<PageTitle>Assignments & Homework | Vargshala</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Assignments & Homework</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Create tasks, track submissions, and review student homework.</p>
+        </div>
+        <button type="button" @onclick="() => _showCreateModal = true"
+                class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+            <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </span>
+            <span>New Assignment</span>
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div><p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total</p><h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_assignments.Count</h3></div>
+        </div>
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <div><p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Active</p><h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">@_assignments.Count(a => a.Status == "Active")</h3></div>
+        </div>
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div><p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Past Due</p><h3 class="text-lg font-extrabold text-rose-600 dark:text-rose-400">@_assignments.Count(a => a.Status == "Past Due")</h3></div>
+        </div>
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div><p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Reviewed</p><h3 class="text-lg font-extrabold text-blue-600 dark:text-blue-400">@_assignments.Count(a => a.Status == "Reviewed")</h3></div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card-surface p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <CustomSelect @bind-Value="_filterStatus" Options="_statusOptions" Placeholder="All Status" />
+        <CustomSelect @bind-Value="_filterBatch" Options="_batchOptions" Placeholder="All Batches" />
+    </div>
+
+    <!-- Assignment Cards -->
+    <div class="space-y-4">
+        @foreach (var assignment in FilteredAssignments)
+        {
+            <div class="card-surface p-5 flex flex-col lg:flex-row items-start lg:items-center gap-4 hover:shadow-md transition-all duration-200 border border-tealborder">
+                <!-- Left: Icon + Info -->
+                <div class="flex items-start gap-3.5 flex-1 min-w-0">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#009488] to-[#00796b] text-white flex items-center justify-center shadow-md shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate">@assignment.Title</h3>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">@assignment.Subject • @assignment.BatchName • Due: @assignment.Deadline</p>
+                    </div>
+                </div>
+
+                <!-- Middle: Submission Stats -->
+                <div class="flex items-center gap-4 text-xs shrink-0">
+                    <div class="text-center px-3">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Submitted</p>
+                        <p class="font-extrabold text-emerald-600 dark:text-emerald-400">@assignment.SubmittedCount</p>
+                    </div>
+                    <div class="text-center px-3 border-x border-slate-200/80 dark:border-slate-700">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Pending</p>
+                        <p class="font-extrabold text-amber-600 dark:text-amber-400">@assignment.PendingCount</p>
+                    </div>
+                    <div class="text-center px-3">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Late</p>
+                        <p class="font-extrabold text-rose-600 dark:text-rose-400">@assignment.LateCount</p>
+                    </div>
+                </div>
+
+                <!-- Right: Status Badge -->
+                <div class="shrink-0">
+                    @if (assignment.Status == "Active")
+                    { <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">Active</span> }
+                    else if (assignment.Status == "Past Due")
+                    { <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">Past Due</span> }
+                    else
+                    { <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800">Reviewed</span> }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Create Assignment Modal -->
+@if (_showCreateModal)
+{
+    <Modal IsOpen="true" Title="New Assignment" Subtitle="Create and assign homework to a batch" MaxWidth="max-w-md" OnClose="() => _showCreateModal = false">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Title *</label>
+                    <InputText @bind-Value="_newTitle" placeholder="e.g. Chapter 5 Practice Problems" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject</label>
+                        <CustomSelect @bind-Value="_newSubject" Options="_subjectOptions" Placeholder="Subject" Class="w-full" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch</label>
+                        <CustomSelect @bind-Value="_newBatch" Options="_batchOptions" Placeholder="Batch" Class="w-full" />
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Deadline</label>
+                    <input type="date" @bind="_newDeadline" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-bold transition-all" />
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" @onclick="() => _showCreateModal = false" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">Cancel</button>
+            <button type="button" @onclick="CreateAssignment" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <span>Create Assignment</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private string _filterStatus = string.Empty;
+    private string _filterBatch = string.Empty;
+    private bool _showCreateModal = false;
+    private string _newTitle = string.Empty;
+    private string _newSubject = "Mathematics";
+    private string _newBatch = "Class 10 — Maths";
+    private DateTime _newDeadline = DateTime.Today.AddDays(7);
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusOptions = new() { new("", "All Status"), new("Active", "Active"), new("Past Due", "Past Due"), new("Reviewed", "Reviewed") };
+    private readonly List<CustomSelect.CustomSelectOption> _batchOptions = new() { new("", "All Batches"), new("Class 10 — Maths", "Class 10 — Maths"), new("Class 10 — Science", "Class 10 — Science"), new("Class 12 — Physics", "Class 12 — Physics") };
+    private readonly List<CustomSelect.CustomSelectOption> _subjectOptions = new() { new("Mathematics", "Mathematics"), new("Physics", "Physics"), new("Chemistry", "Chemistry"), new("Biology", "Biology"), new("English", "English") };
+
+    private readonly List<AssignmentItem> _assignments = new()
+    {
+        new("Chapter 5 — Quadratic Equations", "Mathematics", "Class 10 — Maths", "Active", "10 Sep 2026", 28, 14, 0),
+        new("Newton's Laws Worksheet", "Physics", "Class 12 — Physics", "Active", "08 Sep 2026", 22, 13, 0),
+        new("Organic Chemistry Problems", "Chemistry", "Class 12 — Chemistry", "Past Due", "01 Sep 2026", 25, 3, 7),
+        new("Cell Biology Diagrams", "Biology", "NEET Evening Batch", "Reviewed", "25 Aug 2026", 40, 0, 2),
+        new("Trigonometry Practice Set", "Mathematics", "Class 10 — Maths", "Reviewed", "20 Aug 2026", 38, 0, 4),
+        new("English Essay Writing", "English", "Class 10 — Science", "Past Due", "28 Aug 2026", 15, 10, 5)
+    };
+
+    private List<AssignmentItem> FilteredAssignments => _assignments.Where(a =>
+        (string.IsNullOrWhiteSpace(_filterStatus) || a.Status == _filterStatus) &&
+        (string.IsNullOrWhiteSpace(_filterBatch) || a.BatchName == _filterBatch)
+    ).ToList();
+
+    private void CreateAssignment()
+    {
+        _assignments.Insert(0, new AssignmentItem(_newTitle, _newSubject, _newBatch, "Active", _newDeadline.ToString("dd MMM yyyy"), 0, 42, 0));
+        _showCreateModal = false;
+    }
+
+    public record AssignmentItem(string Title, string Subject, string BatchName, string Status, string Deadline, int SubmittedCount, int PendingCount, int LateCount);
+}

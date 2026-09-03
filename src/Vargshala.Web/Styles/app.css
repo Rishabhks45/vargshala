@@ -235,4 +235,15 @@
   .animate-drawer-slide {
     animation: drawerSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  /* Utility to completely hide scrollbar while keeping scroll functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
 }

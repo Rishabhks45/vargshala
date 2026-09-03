@@ -1,0 +1,818 @@
+@page "/masters"
+@using Vargshala.Contracts.Masters
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Badges
+@rendermode InteractiveServer
+
+<PageTitle>Master Configuration | Vargshala</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+                Master Data Setup
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Configure branches, academic subjects, faculty assignments, and bell schedules.
+            </p>
+        </div>
+
+        <div>
+            @if (_activeTab == "Branches")
+            {
+                <button type="button" @onclick="OpenAddBranchModal"
+                        class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                    <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    </span>
+                    <span>Add Branch</span>
+                </button>
+            }
+            else if (_activeTab == "Subjects")
+            {
+                <button type="button" @onclick="OpenAddSubjectModal"
+                        class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                    <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    </span>
+                    <span>Add Subject</span>
+                </button>
+            }
+            else if (_activeTab == "FacultyAssignment")
+            {
+                <button type="button" @onclick="OpenAddAssignmentModal"
+                        class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                    <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    </span>
+                    <span>Assign Faculty</span>
+                </button>
+            }
+            else if (_activeTab == "PeriodTimings")
+            {
+                <button type="button" @onclick="OpenAddPeriodModal"
+                        class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                    <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    </span>
+                    <span>Add Period Slot</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Master Tabs Header (4 Tabs) -->
+    <div class="card-surface p-1.5 flex items-center gap-1.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-x-auto">
+        <button type="button" @onclick='() => _activeTab = "Branches"'
+                class="flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer @(_activeTab == "Branches" ? "bg-[#009488] text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Branches</span>
+            <span class="ml-1 text-[10px] px-2 py-0.5 rounded-full @(_activeTab == "Branches" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300")">@_branches.Count</span>
+        </button>
+
+        <button type="button" @onclick='() => _activeTab = "Subjects"'
+                class="flex-1 min-w-[140px] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer @(_activeTab == "Subjects" ? "bg-[#009488] text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <span>Subjects</span>
+            <span class="ml-1 text-[10px] px-2 py-0.5 rounded-full @(_activeTab == "Subjects" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300")">@_subjects.Count</span>
+        </button>
+
+        <button type="button" @onclick='() => _activeTab = "FacultyAssignment"'
+                class="flex-1 min-w-[180px] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer @(_activeTab == "FacultyAssignment" ? "bg-[#009488] text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Assign to Faculty</span>
+            <span class="ml-1 text-[10px] px-2 py-0.5 rounded-full @(_activeTab == "FacultyAssignment" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300")">@_assignments.Count</span>
+        </button>
+
+        <button type="button" @onclick='() => _activeTab = "PeriodTimings"'
+                class="flex-1 min-w-[150px] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer @(_activeTab == "PeriodTimings" ? "bg-[#009488] text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Period Timings</span>
+            <span class="ml-1 text-[10px] px-2 py-0.5 rounded-full @(_activeTab == "PeriodTimings" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300")">@_periods.Count</span>
+        </button>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: BRANCHES -->
+    <!-- ========================================================================= -->
+    @if (_activeTab == "Branches")
+    {
+        <div class="space-y-4">
+            <!-- Search & Count -->
+            <div class="card-surface p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" @bind="_searchBranch" @bind:event="oninput" placeholder="Search branch by name, code, or city..."
+                           class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div class="text-xs text-slate-500 font-medium">
+                    Total Branches: <span class="font-bold text-slate-800 dark:text-white">@FilteredBranches.Count</span>
+                </div>
+            </div>
+
+            <!-- Branches Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var branch in FilteredBranches)
+                {
+                    <div class="card-surface p-5 space-y-3.5 border border-tealborder hover:shadow-md transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0 border border-teal-200 dark:border-teal-800">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-tight">@branch.Name</h3>
+                                    <span class="text-[10px] font-semibold text-[#009488]">@branch.Code</span>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                @branch.Status
+                            </span>
+                        </div>
+
+                        <p class="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                            <span>@branch.Address</span>
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-2 p-2.5 bg-slate-50 dark:bg-[#18262c] rounded-xl text-center text-xs border border-slate-100 dark:border-slate-800">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block font-medium">Active Batches</span>
+                                <span class="font-extrabold text-slate-800 dark:text-white">@branch.ActiveBatchesCount</span>
+                            </div>
+                            <div class="border-l border-slate-200 dark:border-slate-700">
+                                <span class="text-[10px] text-slate-400 block font-medium">Students</span>
+                                <span class="font-extrabold text-emerald-600 dark:text-emerald-400">@branch.TotalStudentsCount</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+                            <span>Head: <strong class="text-slate-700 dark:text-slate-300 font-semibold">@branch.ContactPerson</strong></span>
+                            <span>@branch.Phone</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: SUBJECTS -->
+    <!-- ========================================================================= -->
+    @if (_activeTab == "Subjects")
+    {
+        <div class="space-y-4">
+            <div class="card-surface p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" @bind="_searchSubject" @bind:event="oninput" placeholder="Search subject by name or code..."
+                           class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <CustomSelect @bind-Value="_filterStream" Options="_streamFilterOptions" Placeholder="All Streams" />
+                </div>
+            </div>
+
+            <!-- Subjects Table -->
+            <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[650px] text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
+                                <th class="py-3.5 px-6">Subject Code</th>
+                                <th class="py-3.5 px-4">Subject Name</th>
+                                <th class="py-3.5 px-4">Grade Level</th>
+                                <th class="py-3.5 px-4">Stream</th>
+                                <th class="py-3.5 px-4">Weekly Hours</th>
+                                <th class="py-3.5 px-4">Assigned Teachers</th>
+                                <th class="py-3.5 px-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            @foreach (var subject in FilteredSubjects)
+                            {
+                                <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/30 transition-colors">
+                                    <td class="py-3.5 px-6 font-mono font-bold text-[#009488]">@subject.Code</td>
+                                    <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">@subject.Name</td>
+                                    <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">@subject.GradeLevel</td>
+                                    <td class="py-3.5 px-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+                                            @subject.Stream
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-white">@subject.WeeklyHours hrs/wk</td>
+                                    <td class="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">@subject.TotalFacultyAssigned teachers</td>
+                                    <td class="py-3.5 px-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            @subject.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: ASSIGN SUBJECTS TO FACULTY -->
+    <!-- ========================================================================= -->
+    @if (_activeTab == "FacultyAssignment")
+    {
+        <div class="space-y-4">
+            <div class="card-surface p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" @bind="_searchFaculty" @bind:event="oninput" placeholder="Search by faculty, subject, or batch..."
+                           class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div class="text-xs text-slate-500 font-medium">
+                    Total Mappings: <span class="font-bold text-slate-800 dark:text-white">@FilteredAssignments.Count</span>
+                </div>
+            </div>
+
+            <!-- Faculty Assignment Table -->
+            <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[720px] text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
+                                <th class="py-3.5 px-6">Faculty Member</th>
+                                <th class="py-3.5 px-4">Subject</th>
+                                <th class="py-3.5 px-4">Branch</th>
+                                <th class="py-3.5 px-4">Assigned Batch</th>
+                                <th class="py-3.5 px-4">Hours / Wk</th>
+                                <th class="py-3.5 px-4">Role</th>
+                                <th class="py-3.5 px-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            @foreach (var item in FilteredAssignments)
+                            {
+                                <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/30 transition-colors">
+                                    <td class="py-3.5 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800 text-[#00796b] dark:text-teal-300 font-bold text-[10px] flex items-center justify-center shrink-0">
+                                                @item.FacultyInitials
+                                            </div>
+                                            <span class="font-bold text-slate-900 dark:text-white">@item.FacultyName</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800 text-[#00796b] dark:text-teal-300">
+                                            @item.SubjectName
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium">@item.BranchName</td>
+                                    <td class="py-3.5 px-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                                            @item.BatchName
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-white">@item.HoursPerWeek hrs</td>
+                                    <td class="py-3.5 px-4">
+                                        @if (item.IsPrimary)
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                                ★ Primary
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                                Support
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            @item.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: PERIOD TIMINGS -->
+    <!-- ========================================================================= -->
+    @if (_activeTab == "PeriodTimings")
+    {
+        <div class="space-y-4">
+            <div class="card-surface p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <!-- Shift Toggle -->
+                <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] overflow-hidden shadow-2xs">
+                    <button type="button" @onclick='() => _selectedShift = "Morning Shift"'
+                            class="px-4 py-2 text-xs font-bold transition-all @(_selectedShift == "Morning Shift" ? "bg-[#009488] text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")">
+                        🌅 Morning Shift (08:00 AM – 02:00 PM)
+                    </button>
+                    <button type="button" @onclick='() => _selectedShift = "Evening Shift"'
+                            class="px-4 py-2 text-xs font-bold transition-all @(_selectedShift == "Evening Shift" ? "bg-[#009488] text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")">
+                        🌆 Evening Shift (03:00 PM – 08:30 PM)
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-500 font-medium">
+                    Total Periods: <span class="font-bold text-slate-800 dark:text-white">@FilteredPeriods.Count</span> slots
+                </div>
+            </div>
+
+            <!-- Period Timetable List -->
+            <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[650px] text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
+                                <th class="py-3.5 px-6 w-16">Slot</th>
+                                <th class="py-3.5 px-4">Period Name</th>
+                                <th class="py-3.5 px-4">Start Time</th>
+                                <th class="py-3.5 px-4">End Time</th>
+                                <th class="py-3.5 px-4">Duration</th>
+                                <th class="py-3.5 px-4">Branch</th>
+                                <th class="py-3.5 px-4">Type</th>
+                                <th class="py-3.5 px-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            @foreach (var period in FilteredPeriods)
+                            {
+                                <tr class="@(period.IsBreak ? "bg-amber-50/40 dark:bg-amber-950/20" : "hover:bg-teal-50/40 dark:hover:bg-teal-950/30") transition-colors">
+                                    <td class="py-3.5 px-6 font-bold text-slate-500 dark:text-slate-400">#@period.PeriodNumber</td>
+                                    <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        @if (period.IsBreak)
+                                        {
+                                            <span class="text-amber-500 font-bold">☕</span>
+                                        }
+                                        <span>@period.PeriodName</span>
+                                    </td>
+                                    <td class="py-3.5 px-4 font-mono font-bold text-[#00796b] dark:text-teal-300">@period.StartTime</td>
+                                    <td class="py-3.5 px-4 font-mono font-bold text-[#00796b] dark:text-teal-300">@period.EndTime</td>
+                                    <td class="py-3.5 px-4 text-slate-700 dark:text-slate-300">@period.DurationMinutes min</td>
+                                    <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">@period.BranchName</td>
+                                    <td class="py-3.5 px-4">
+                                        @if (period.IsBreak)
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
+                                                Recess / Break
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-teal-950/70 border border-teal-200 dark:border-teal-800 text-[#00796b] dark:text-teal-300">
+                                                Lecture
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            @period.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODALS -->
+<!-- ========================================================================= -->
+
+<!-- Modal 1: Add Branch -->
+@if (_showAddBranchModal)
+{
+    <Modal IsOpen="true" Title="Add Institute Branch" Subtitle="Configure a new physical branch or campus" MaxWidth="max-w-md" OnClose="() => _showAddBranchModal = false">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch Name *</label>
+                    <input type="text" @bind="_newBranch.Name" placeholder="e.g. North Campus — Mansarovar"
+                           class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch Code *</label>
+                        <input type="text" @bind="_newBranch.Code" placeholder="e.g. BR-MSR-03"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Contact Number</label>
+                        <input type="text" @bind="_newBranch.Phone" placeholder="+91 98000 12345"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Address</label>
+                    <input type="text" @bind="_newBranch.Address" placeholder="Plot 12, Main Market, Mansarovar, Jaipur"
+                           class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch In-Charge</label>
+                    <input type="text" @bind="_newBranch.ContactPerson" placeholder="e.g. Anand Joshi"
+                           class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" @onclick="() => _showAddBranchModal = false" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">Cancel</button>
+            <button type="button" @onclick="SaveBranch" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
+                <span>Save Branch</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- Modal 2: Add Subject -->
+@if (_showAddSubjectModal)
+{
+    <Modal IsOpen="true" Title="Add New Subject" Subtitle="Configure academic subject and stream" MaxWidth="max-w-md" OnClose="() => _showAddSubjectModal = false">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject Name *</label>
+                    <input type="text" @bind="_newSubject.Name" placeholder="e.g. Advanced Mathematics"
+                           class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject Code *</label>
+                        <input type="text" @bind="_newSubject.Code" placeholder="SUB-MTH-10"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Weekly Hours</label>
+                        <input type="number" @bind="_newSubject.WeeklyHours"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-bold" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Stream</label>
+                        <CustomSelect @bind-Value="_newSubject.Stream" Options="_streamModalOptions" Placeholder="Stream" Class="w-full" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Grade Level</label>
+                        <input type="text" @bind="_newSubject.GradeLevel" placeholder="Class 11 & 12"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" @onclick="() => _showAddSubjectModal = false" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">Cancel</button>
+            <button type="button" @onclick="SaveSubject" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
+                <span>Save Subject</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- Modal 3: Assign Faculty -->
+@if (_showAddAssignmentModal)
+{
+    <Modal IsOpen="true" Title="Assign Subject to Faculty" Subtitle="Link a teacher to branch, subject, and batch" MaxWidth="max-w-md" OnClose="() => _showAddAssignmentModal = false">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Select Faculty *</label>
+                    <CustomSelect @bind-Value="_newAssignment.FacultyName" Options="_facultyOptions" Placeholder="Select Faculty" Class="w-full" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch *</label>
+                        <CustomSelect @bind-Value="_newAssignment.BranchName" Options="_branchOptionsList" Placeholder="Branch" Class="w-full" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject *</label>
+                        <CustomSelect @bind-Value="_newAssignment.SubjectName" Options="_subjectOptionsList" Placeholder="Subject" Class="w-full" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch *</label>
+                        <CustomSelect @bind-Value="_newAssignment.BatchName" Options="_batchOptionsList" Placeholder="Batch" Class="w-full" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Hours / Week</label>
+                        <input type="number" @bind="_newAssignment.HoursPerWeek"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-bold" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="chkPrimary" @bind="_newAssignment.IsPrimary" class="rounded text-[#009488] focus:ring-teal-500" />
+                    <label for="chkPrimary" class="text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">Designate as Primary Subject In-Charge for this batch</label>
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" @onclick="() => _showAddAssignmentModal = false" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">Cancel</button>
+            <button type="button" @onclick="SaveAssignment" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
+                <span>Save Assignment</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- Modal 4: Add Period Timing -->
+@if (_showAddPeriodModal)
+{
+    <Modal IsOpen="true" Title="Add Period Timing" Subtitle="Configure classroom bell and period slot" MaxWidth="max-w-md" OnClose="() => _showAddPeriodModal = false">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Period Slot #</label>
+                        <input type="number" @bind="_newPeriod.PeriodNumber" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-bold" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Period Name *</label>
+                        <input type="text" @bind="_newPeriod.PeriodName" placeholder="e.g. Period 5 or Lunch Break"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Start Time</label>
+                        <input type="text" @bind="_newPeriod.StartTime" placeholder="08:00 AM"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">End Time</label>
+                        <input type="text" @bind="_newPeriod.EndTime" placeholder="08:50 AM"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Duration (Minutes)</label>
+                        <input type="number" @bind="_newPeriod.DurationMinutes" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-bold" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Shift</label>
+                        <CustomSelect @bind-Value="_newPeriod.Shift" Options="_shiftModalOptions" Placeholder="Shift" Class="w-full" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="chkBreak" @bind="_newPeriod.IsBreak" class="rounded text-[#009488] focus:ring-teal-500" />
+                    <label for="chkBreak" class="text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">This slot is a Recess / Tiffin Break (No teaching)</label>
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" @onclick="() => _showAddPeriodModal = false" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">Cancel</button>
+            <button type="button" @onclick="SavePeriod" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
+                <span>Save Period</span>
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private string _activeTab = "Branches";
+    private string _selectedShift = "Morning Shift";
+
+    // Search filters
+    private string _searchBranch = string.Empty;
+    private string _searchSubject = string.Empty;
+    private string _filterStream = string.Empty;
+    private string _searchFaculty = string.Empty;
+
+    // Modals visibility
+    private bool _showAddBranchModal = false;
+    private bool _showAddSubjectModal = false;
+    private bool _showAddAssignmentModal = false;
+    private bool _showAddPeriodModal = false;
+
+    // New Models
+    private BranchDto _newBranch = new();
+    private SubjectDto _newSubject = new();
+    private FacultySubjectAssignmentDto _newAssignment = new();
+    private PeriodTimingDto _newPeriod = new();
+
+    // Dropdown options
+    private readonly List<CustomSelect.CustomSelectOption> _streamFilterOptions = new()
+    {
+        new("", "All Streams"),
+        new("Science", "Science"),
+        new("Commerce", "Commerce"),
+        new("General", "General")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _streamModalOptions = new()
+    {
+        new("Science", "Science"),
+        new("Commerce", "Commerce"),
+        new("General", "General")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _shiftModalOptions = new()
+    {
+        new("Morning Shift", "Morning Shift"),
+        new("Evening Shift", "Evening Shift")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _facultyOptions = new()
+    {
+        new("Dr. Priya Sharma", "Dr. Priya Sharma"),
+        new("Rajesh Verma", "Rajesh Verma"),
+        new("Sunita Gupta", "Sunita Gupta"),
+        new("Amit Tiwari", "Amit Tiwari"),
+        new("Dr. Kavita Reddy", "Dr. Kavita Reddy"),
+        new("Neha Agarwal", "Neha Agarwal")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _branchOptionsList = new()
+    {
+        new("Main Campus — Malviya Nagar", "Main Campus — Malviya Nagar"),
+        new("City Center — MI Road", "City Center — MI Road"),
+        new("North Campus — Mansarovar", "North Campus — Mansarovar")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _subjectOptionsList = new()
+    {
+        new("Mathematics", "Mathematics"),
+        new("Physics", "Physics"),
+        new("Chemistry", "Chemistry"),
+        new("Biology", "Biology"),
+        new("English", "English")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _batchOptionsList = new()
+    {
+        new("Class 10 — Maths", "Class 10 — Maths"),
+        new("Class 10 — Science", "Class 10 — Science"),
+        new("Class 12 — Physics", "Class 12 — Physics"),
+        new("Class 12 — Chemistry", "Class 12 — Chemistry"),
+        new("IIT-JEE Morning Batch", "IIT-JEE Morning Batch")
+    };
+
+    // Mock Data: Branches
+    private readonly List<BranchDto> _branches = new()
+    {
+        new() { Name = "Main Campus — Malviya Nagar", Code = "BR-JPR-01", Address = "Plot 14, Calgiri Marg, Malviya Nagar, Jaipur", ContactPerson = "Suresh Sharma", Phone = "+91 98290 11111", Email = "malviya@vargshala.com", ActiveBatchesCount = 6, TotalStudentsCount = 280, Status = "Active" },
+        new() { Name = "City Center — MI Road", Code = "BR-JPR-02", Address = "Ground Floor, MI Road, Near Clock Tower, Jaipur", ContactPerson = "Virendra Singh", Phone = "+91 98290 22222", Email = "citycenter@vargshala.com", ActiveBatchesCount = 4, TotalStudentsCount = 185, Status = "Active" },
+        new() { Name = "North Campus — Mansarovar", Code = "BR-JPR-03", Address = "Sector 7, Madhyam Marg, Mansarovar, Jaipur", ContactPerson = "Pooja Rathore", Phone = "+91 98290 33333", Email = "mansarovar@vargshala.com", ActiveBatchesCount = 5, TotalStudentsCount = 210, Status = "Active" }
+    };
+
+    // Mock Data: Subjects
+    private readonly List<SubjectDto> _subjects = new()
+    {
+        new() { Name = "Mathematics", Code = "SUB-MTH-10", GradeLevel = "Class 10", Stream = "General", WeeklyHours = 6, TotalFacultyAssigned = 2, Status = "Active" },
+        new() { Name = "Physics", Code = "SUB-PHY-12", GradeLevel = "Class 11 & 12", Stream = "Science", WeeklyHours = 7, TotalFacultyAssigned = 2, Status = "Active" },
+        new() { Name = "Chemistry", Code = "SUB-CHM-12", GradeLevel = "Class 11 & 12", Stream = "Science", WeeklyHours = 6, TotalFacultyAssigned = 2, Status = "Active" },
+        new() { Name = "Biology", Code = "SUB-BIO-12", GradeLevel = "Class 11 & 12", Stream = "Science", WeeklyHours = 6, TotalFacultyAssigned = 1, Status = "Active" },
+        new() { Name = "English Literature & Grammar", Code = "SUB-ENG-10", GradeLevel = "Class 9 & 10", Stream = "General", WeeklyHours = 4, TotalFacultyAssigned = 1, Status = "Active" },
+        new() { Name = "Computer Science & Python", Code = "SUB-CS-12", GradeLevel = "Class 11 & 12", Stream = "Science", WeeklyHours = 4, TotalFacultyAssigned = 1, Status = "Active" }
+    };
+
+    // Mock Data: Faculty Assignments
+    private readonly List<FacultySubjectAssignmentDto> _assignments = new()
+    {
+        new() { FacultyName = "Dr. Priya Sharma", BranchName = "Main Campus — Malviya Nagar", SubjectName = "Mathematics", BatchName = "Class 10 — Maths", HoursPerWeek = 6, IsPrimary = true, Status = "Active" },
+        new() { FacultyName = "Rajesh Verma", BranchName = "Main Campus — Malviya Nagar", SubjectName = "Physics", BatchName = "Class 12 — Physics", HoursPerWeek = 7, IsPrimary = true, Status = "Active" },
+        new() { FacultyName = "Sunita Gupta", BranchName = "City Center — MI Road", SubjectName = "Chemistry", BatchName = "Class 12 — Chemistry", HoursPerWeek = 6, IsPrimary = true, Status = "Active" },
+        new() { FacultyName = "Amit Tiwari", BranchName = "Main Campus — Malviya Nagar", SubjectName = "English", BatchName = "Class 10 — Science", HoursPerWeek = 4, IsPrimary = true, Status = "Active" },
+        new() { FacultyName = "Dr. Kavita Reddy", BranchName = "North Campus — Mansarovar", SubjectName = "Biology", BatchName = "NEET Evening Batch", HoursPerWeek = 8, IsPrimary = true, Status = "Active" },
+        new() { FacultyName = "Neha Agarwal", BranchName = "Main Campus — Malviya Nagar", SubjectName = "Computer Science", BatchName = "Class 12 — Physics", HoursPerWeek = 4, IsPrimary = false, Status = "Active" }
+    };
+
+    // Mock Data: Period Timings
+    private readonly List<PeriodTimingDto> _periods = new()
+    {
+        new() { PeriodNumber = 1, PeriodName = "Period 1 (Mathematics)", Shift = "Morning Shift", StartTime = "08:00 AM", EndTime = "08:50 AM", DurationMinutes = 50, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        new() { PeriodNumber = 2, PeriodName = "Period 2 (Physics)", Shift = "Morning Shift", StartTime = "08:55 AM", EndTime = "09:45 AM", DurationMinutes = 50, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        new() { PeriodNumber = 3, PeriodName = "Short Break (Tiffin)", Shift = "Morning Shift", StartTime = "09:45 AM", EndTime = "10:05 AM", DurationMinutes = 20, BranchName = "All Branches", IsBreak = true, Status = "Active" },
+        new() { PeriodNumber = 4, PeriodName = "Period 3 (Chemistry)", Shift = "Morning Shift", StartTime = "10:05 AM", EndTime = "10:55 AM", DurationMinutes = 50, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        new() { PeriodNumber = 5, PeriodName = "Period 4 (Biology / CS)", Shift = "Morning Shift", StartTime = "11:00 AM", EndTime = "11:50 AM", DurationMinutes = 50, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        new() { PeriodNumber = 6, PeriodName = "Period 5 (Problem Solving)", Shift = "Morning Shift", StartTime = "11:55 AM", EndTime = "12:45 PM", DurationMinutes = 50, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        // Evening Shift
+        new() { PeriodNumber = 1, PeriodName = "Evening Period 1", Shift = "Evening Shift", StartTime = "03:00 PM", EndTime = "04:00 PM", DurationMinutes = 60, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        new() { PeriodNumber = 2, PeriodName = "Evening Period 2", Shift = "Evening Shift", StartTime = "04:05 PM", EndTime = "05:05 PM", DurationMinutes = 60, BranchName = "All Branches", IsBreak = false, Status = "Active" },
+        new() { PeriodNumber = 3, PeriodName = "Tea Break", Shift = "Evening Shift", StartTime = "05:05 PM", EndTime = "05:25 PM", DurationMinutes = 20, BranchName = "All Branches", IsBreak = true, Status = "Active" },
+        new() { PeriodNumber = 4, PeriodName = "Evening Period 3 (Doubt Clearing)", Shift = "Evening Shift", StartTime = "05:25 PM", EndTime = "06:45 PM", DurationMinutes = 80, BranchName = "All Branches", IsBreak = false, Status = "Active" }
+    };
+
+    // Filtered lists
+    private List<BranchDto> FilteredBranches => _branches.Where(b =>
+        string.IsNullOrWhiteSpace(_searchBranch) ||
+        b.Name.Contains(_searchBranch, StringComparison.OrdinalIgnoreCase) ||
+        b.Code.Contains(_searchBranch, StringComparison.OrdinalIgnoreCase) ||
+        b.Address.Contains(_searchBranch, StringComparison.OrdinalIgnoreCase)
+    ).ToList();
+
+    private List<SubjectDto> FilteredSubjects => _subjects.Where(s =>
+        (string.IsNullOrWhiteSpace(_searchSubject) || s.Name.Contains(_searchSubject, StringComparison.OrdinalIgnoreCase) || s.Code.Contains(_searchSubject, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrWhiteSpace(_filterStream) || s.Stream == _filterStream)
+    ).ToList();
+
+    private List<FacultySubjectAssignmentDto> FilteredAssignments => _assignments.Where(a =>
+        string.IsNullOrWhiteSpace(_searchFaculty) ||
+        a.FacultyName.Contains(_searchFaculty, StringComparison.OrdinalIgnoreCase) ||
+        a.SubjectName.Contains(_searchFaculty, StringComparison.OrdinalIgnoreCase) ||
+        a.BatchName.Contains(_searchFaculty, StringComparison.OrdinalIgnoreCase)
+    ).ToList();
+
+    private List<PeriodTimingDto> FilteredPeriods => _periods.Where(p => p.Shift == _selectedShift).ToList();
+
+    // Modal Triggers
+    private void OpenAddBranchModal()
+    {
+        _newBranch = new BranchDto { Status = "Active" };
+        _showAddBranchModal = true;
+    }
+
+    private void SaveBranch()
+    {
+        if (string.IsNullOrWhiteSpace(_newBranch.Name)) return;
+        _newBranch.Id = Guid.NewGuid();
+        _branches.Add(_newBranch);
+        _showAddBranchModal = false;
+    }
+
+    private void OpenAddSubjectModal()
+    {
+        _newSubject = new SubjectDto { Status = "Active", Stream = "Science", WeeklyHours = 6 };
+        _showAddSubjectModal = true;
+    }
+
+    private void SaveSubject()
+    {
+        if (string.IsNullOrWhiteSpace(_newSubject.Name)) return;
+        _newSubject.Id = Guid.NewGuid();
+        _subjects.Add(_newSubject);
+        _showAddSubjectModal = false;
+    }
+
+    private void OpenAddAssignmentModal()
+    {
+        _newAssignment = new FacultySubjectAssignmentDto
+        {
+            FacultyName = "Dr. Priya Sharma",
+            BranchName = "Main Campus — Malviya Nagar",
+            SubjectName = "Mathematics",
+            BatchName = "Class 10 — Maths",
+            HoursPerWeek = 5,
+            IsPrimary = true
+        };
+        _showAddAssignmentModal = true;
+    }
+
+    private void SaveAssignment()
+    {
+        if (string.IsNullOrWhiteSpace(_newAssignment.FacultyName)) return;
+        _newAssignment.Id = Guid.NewGuid();
+        _assignments.Add(_newAssignment);
+        _showAddAssignmentModal = false;
+    }
+
+    private void OpenAddPeriodModal()
+    {
+        _newPeriod = new PeriodTimingDto
+        {
+            PeriodNumber = FilteredPeriods.Count + 1,
+            Shift = _selectedShift,
+            DurationMinutes = 50,
+            BranchName = "All Branches",
+            Status = "Active"
+        };
+        _showAddPeriodModal = true;
+    }
+
+    private void SavePeriod()
+    {
+        if (string.IsNullOrWhiteSpace(_newPeriod.PeriodName)) return;
+        _newPeriod.Id = Guid.NewGuid();
+        _periods.Add(_newPeriod);
+        _showAddPeriodModal = false;
+    }
+}

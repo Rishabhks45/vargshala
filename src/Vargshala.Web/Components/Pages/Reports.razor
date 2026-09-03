@@ -1,0 +1,133 @@
+@page "/reports"
+@rendermode InteractiveServer
+
+<PageTitle>Reports & Analytics | Vargshala</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Reports & Analytics</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Comprehensive insights into students, attendance, fees, and academic performance.</p>
+        </div>
+        <button type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] transition-all shadow-2xs cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Export All Reports</span>
+        </button>
+    </div>
+
+    <!-- Report Category Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        @foreach (var report in _reportCards)
+        {
+            <div class="card-surface p-5 space-y-4 hover:shadow-md transition-all duration-200 border border-tealborder cursor-pointer group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br @report.GradientClass text-white flex items-center justify-center shadow-md shrink-0">
+                        @((MarkupString)report.IconSvg)
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#009488] transition-colors">@report.Title</h3>
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">@report.Subtitle</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50/80 dark:bg-[#18262c] rounded-xl border border-slate-100 dark:border-slate-800 text-center text-xs">
+                    <div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">@report.Metric1Label</p>
+                        <p class="font-extrabold text-slate-800 dark:text-white">@report.Metric1Value</p>
+                    </div>
+                    <div class="border-l border-slate-200/80 dark:border-slate-700">
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">@report.Metric2Label</p>
+                        <p class="font-extrabold @report.Metric2Color">@report.Metric2Value</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Enrollment Trend -->
+        <div class="card-surface p-5 space-y-4">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-white">Student Enrollment Trend</h3>
+            <div class="space-y-2">
+                @foreach (var month in _enrollmentData)
+                {
+                    <div class="flex items-center gap-3">
+                        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 w-12 shrink-0">@month.Month</span>
+                        <div class="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-[#009488] to-[#00796b] transition-all duration-700" style="width: @(month.Percent)%"></div>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 w-8 text-right">@month.Count</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Fee Collection Trend -->
+        <div class="card-surface p-5 space-y-4">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-white">Monthly Fee Collection</h3>
+            <div class="space-y-2">
+                @foreach (var month in _feeData)
+                {
+                    <div class="flex items-center gap-3">
+                        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 w-12 shrink-0">@month.Month</span>
+                        <div class="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-700" style="width: @(month.Percent)%"></div>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 w-14 text-right">₹@month.Amount</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Overview -->
+    <div class="card-surface p-5 space-y-4">
+        <h3 class="text-sm font-bold text-slate-800 dark:text-white">Batch-wise Attendance Rates</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @foreach (var batch in _attendanceRates)
+            {
+                <div class="p-4 bg-slate-50/80 dark:bg-[#18262c] rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">@batch.Name</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-2xl font-extrabold @(batch.Rate >= 90 ? "text-emerald-600 dark:text-emerald-400" : batch.Rate >= 75 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")">@batch.Rate%</span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 mb-1">attendance</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full @(batch.Rate >= 90 ? "bg-emerald-500" : batch.Rate >= 75 ? "bg-amber-500" : "bg-rose-500")" style="width: @(batch.Rate)%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly List<ReportCard> _reportCards = new()
+    {
+        new("Student Report", "Enrollment & demographics", "from-[#009488] to-[#00796b]", "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0'/></svg>", "Total", "1,248", "Growth", "+12.5%", "text-emerald-600 dark:text-emerald-400"),
+        new("Attendance Report", "Daily & monthly stats", "from-blue-500 to-blue-600", "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/></svg>", "Avg Rate", "92%", "This Week", "94%", "text-blue-600 dark:text-blue-400"),
+        new("Fees Report", "Collection & dues", "from-emerald-500 to-emerald-600", "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z'/></svg>", "Collected", "₹28L", "Pending", "₹4.2L", "text-amber-600 dark:text-amber-400"),
+        new("Exam Report", "Scores & analytics", "from-purple-500 to-purple-600", "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'/></svg>", "Avg Score", "74%", "Top Batch", "JEE", "text-purple-600 dark:text-purple-400")
+    };
+
+    private readonly List<(string Month, int Count, int Percent)> _enrollmentData = new()
+    {
+        ("Apr", 1120, 70), ("May", 1148, 75), ("Jun", 1175, 78), ("Jul", 1200, 82), ("Aug", 1230, 88), ("Sep", 1248, 92)
+    };
+
+    private readonly List<(string Month, string Amount, int Percent)> _feeData = new()
+    {
+        ("Apr", "4.2L", 65), ("May", "5.1L", 78), ("Jun", "4.8L", 72), ("Jul", "5.5L", 85), ("Aug", "5.8L", 90), ("Sep", "3.2L", 50)
+    };
+
+    private readonly List<(string Name, int Rate)> _attendanceRates = new()
+    {
+        ("Class 10 — Maths", 94), ("Class 10 — Science", 91), ("Class 12 — Physics", 88), ("Class 12 — Chemistry", 86),
+        ("Class 12 — Biology", 92), ("IIT-JEE Morning", 96), ("NEET Evening", 89), ("Class 11 — Foundation", 73)
+    };
+
+    public record ReportCard(string Title, string Subtitle, string GradientClass, string IconSvg, string Metric1Label, string Metric1Value, string Metric2Label, string Metric2Value, string Metric2Color);
+}

@@ -1,0 +1,1601 @@
+@page "/exams"
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Badges
+@inject IWebHostEnvironment WebHostEnvironment
+@rendermode InteractiveServer
+
+<PageTitle>Exam & Quizzes | Vargshala</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Exam & Quizzes</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Create, schedule, and manage multi-section quizzes with category time allocation and diagram/image support.
+            </p>
+        </div>
+        <button type="button" @onclick="OpenCreateDrawerAsync"
+                class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+            <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </span>
+            <span>Create Quiz</span>
+        </button>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Quizzes</p>
+                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_exams.Count</h3>
+            </div>
+        </div>
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Upcoming (Editable)</p>
+                <h3 class="text-lg font-extrabold text-blue-600 dark:text-blue-400">@_exams.Count(e => e.Status == "Upcoming")</h3>
+            </div>
+        </div>
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Completed (Locked)</p>
+                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">@_exams.Count(e => e.Status == "Completed")</h3>
+            </div>
+        </div>
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Avg Performance</p>
+                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">76%</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="card-surface p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <!-- Search Input with Search Button on Left -->
+        <div class="flex items-center gap-2 flex-1 w-full max-w-md">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </span>
+                <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="Search quiz by title, batch, or subject..."
+                       class="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white transition-all placeholder-slate-400 dark:placeholder-slate-500" />
+                @if (!string.IsNullOrEmpty(_searchQuery))
+                {
+                    <button type="button" @onclick="() => _searchQuery = string.Empty" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                }
+            </div>
+            <button type="button" 
+                    class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5 active:scale-95">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <span>Search</span>
+            </button>
+        </div>
+
+        <!-- Both Dropdowns on the Right -->
+        <div class="flex items-center gap-2.5 sm:justify-end">
+            <CustomSelect @bind-Value="_filterStatus" Options="_statusOptions" Placeholder="All Status" />
+            <CustomSelect @bind-Value="_filterBatch" Options="_batchOptions" Placeholder="All Batches" />
+        </div>
+    </div>
+
+    <!-- Exam Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        @foreach (var exam in FilteredExams)
+        {
+            <div class="card-surface p-5 space-y-3.5 hover:shadow-md transition-all duration-200 border border-tealborder flex flex-col justify-between">
+                <div>
+                    <!-- Header: Title + Status -->
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white truncate cursor-pointer hover:text-[#009488]"
+                                @onclick="() => PreviewExam(exam)">
+                                @exam.Title
+                            </h3>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">@exam.BatchName</p>
+                        </div>
+                        @if (exam.Status == "Upcoming")
+                        { <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">Upcoming</span> }
+                        else if (exam.Status == "Live")
+                        { <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 animate-pulse shrink-0">● Live</span> }
+                        else
+                        { <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0">Completed</span> }
+                    </div>
+
+                    <!-- Category / Section Badges -->
+                    <div class="flex flex-wrap gap-1 mt-2.5">
+                        @foreach (var cat in exam.Categories)
+                        {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-teal-50 dark:bg-teal-950/80 text-[#00796b] dark:text-teal-300 border border-teal-200/60 dark:border-teal-900">
+                                @cat
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Metrics -->
+                    <div class="grid grid-cols-3 gap-2 p-3 bg-slate-50/80 dark:bg-[#18262c] rounded-xl border border-slate-100 dark:border-slate-800 text-center text-xs">
+                        <div>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Questions</p>
+                            <p class="font-extrabold text-slate-800 dark:text-white">@exam.TotalQuestions</p>
+                        </div>
+                        <div class="border-x border-slate-200/80 dark:border-slate-700">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Duration</p>
+                            <p class="font-extrabold text-slate-800 dark:text-white">@exam.Duration min</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Max Marks</p>
+                            <p class="font-extrabold text-slate-800 dark:text-white">@exam.MaxMarks</p>
+                        </div>
+                    </div>
+
+                    <!-- Date & Actions: Upcoming is Editable, Completed is Locked -->
+                    <div class="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span class="font-medium">@exam.ScheduledDate</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @onclick="() => PreviewExam(exam)"
+                                    class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-[#009488] transition-colors cursor-pointer">
+                                View
+                            </button>
+                            @if (exam.Status == "Upcoming")
+                            {
+                                <!-- Upcoming quiz is editable -->
+                                <button type="button" @onclick="() => OpenEditDrawerAsync(exam)"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/80 text-[#00796b] dark:text-teal-300 font-bold text-xs border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors cursor-pointer"
+                                        title="Edit this upcoming quiz">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    <span>Edit</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <!-- Completed quiz is locked (not editable) -->
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-semibold select-none"
+                                      title="Completed exam cannot be modified">
+                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    <span>Locked</span>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- SIDEBAR DRAWER: CREATE / EDIT QUIZ WITH EDITABLE SECTIONS & QUESTION TIMINGS & IMAGES -->
+<!-- ========================================================================= -->
+@if (_showCreateDrawer)
+{
+    <!-- Backdrop Overlay -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseCreateDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-amber-400 p-1 flex items-center justify-center shadow-md shrink-0">
+                    <img src="images/plant-books.png" alt="Vargshala" class="w-full h-full object-contain" />
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>@(_editingExam == null ? "Create Multi-Section Quiz" : $"Edit Quiz: {_editingExam.Title}")</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Configure sections, question timings (min 1 min), and diagram images for questions & options.
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseCreateDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Scrollable Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-5 no-scrollbar select-text text-slate-800 dark:text-slate-100">
+            
+            <!-- Section 1: Basic Quiz Metadata -->
+            <div class="space-y-3 p-4 bg-slate-50 dark:bg-[#18262c] rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">1. Quiz General Setup</span>
+                    <span class="text-[10px] text-slate-400 font-semibold">
+                        @_newQuizQuestions.Count Questions • @_newQuizQuestions.Sum(q => q.Marks) Marks • Time: @_newQuizQuestions.Sum(q => q.TimeLimitMinutes) min
+                    </span>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Quiz Title *</label>
+                    <input type="text" @bind="_newQuizTitle" placeholder="e.g. Combined Science & Math Mock Test 01"
+                           class="w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white font-bold transition-all" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Target Batch *</label>
+                        <CustomSelect @bind-Value="_newQuizBatch" Options="_batchOptions.Where(o => !string.IsNullOrEmpty(o.Value)).ToList()" Placeholder="Select Batch" Class="w-full" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                            <span>Duration (min)</span>
+                            <button type="button" @onclick="SyncDurationWithQuestions" class="text-[9px] text-[#009488] hover:underline font-bold" title="Auto-calculate from question times">
+                                Auto-Sum
+                            </button>
+                        </label>
+                        <input type="number" @bind="_newQuizDuration" min="1"
+                               class="w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none font-bold text-slate-800 dark:text-white" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Schedule Date</label>
+                        <input type="date" @bind="_newQuizDate"
+                               class="w-full px-3.5 py-2.5 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:outline-none font-semibold text-slate-800 dark:text-white" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: EDITABLE Subject Categories / Sections -->
+            <div class="space-y-3 p-4 bg-slate-50 dark:bg-[#18262c] rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-[11px] font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">
+                            2. Subject Categories / Sections (Editable)
+                        </span>
+                        <p class="text-[10px] text-slate-400">Click a category pill to filter, or click the pencil icon to rename it.</p>
+                    </div>
+                    <!-- Add new section input -->
+                    <div class="flex items-center gap-1.5">
+                        <input type="text" @bind="_customCategoryInput" placeholder="New category..." 
+                               class="px-2.5 py-1 text-[11px] bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-lg focus:border-[#009488] focus:outline-none w-28" />
+                        <button type="button" @onclick="AddCustomCategory" 
+                                class="px-2.5 py-1 bg-teal-50 dark:bg-teal-950/70 border border-teal-300 dark:border-teal-800 text-[#00796b] dark:text-teal-300 rounded-lg text-[10px] font-bold hover:bg-teal-100 transition-colors cursor-pointer">
+                            + Add
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Pills Bar with Rename & Delete Actions -->
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                    <button type="button" @onclick='() => _activeCategoryTab = "All"'
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer @(_activeCategoryTab == "All" ? "bg-[#004D40] text-white shadow-xs" : "bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100")">
+                        All Sections (@_newQuizQuestions.Count)
+                    </button>
+
+                    @foreach (var cat in _availableCategories)
+                    {
+                        var catName = cat;
+                        var count = _newQuizQuestions.Count(q => q.Category == catName);
+                        var isEditing = _renamingCategory == catName;
+
+                        if (isEditing)
+                        {
+                            <!-- Inline Rename Input -->
+                            <div class="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-teal-50 dark:bg-teal-950 border border-[#009488]">
+                                <input type="text" @bind="_renameCategoryValue" 
+                                       class="text-xs font-bold bg-white dark:bg-[#111c21] border border-teal-400 rounded px-1.5 py-0.5 w-24 text-slate-900 dark:text-white focus:outline-none" />
+                                <button type="button" @onclick="() => ConfirmRenameCategory(catName)" class="text-emerald-600 hover:text-emerald-700 p-0.5" title="Save">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <button type="button" @onclick="() => _renamingCategory = null" class="text-slate-400 hover:text-slate-600 p-0.5" title="Cancel">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all @(_activeCategoryTab == catName ? "bg-[#009488] text-white shadow-xs" : "bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100")">
+                                <span class="cursor-pointer" @onclick="() => _activeCategoryTab = catName">@catName</span>
+                                <span class="px-1.5 py-0.2 rounded-full text-[9px] @(_activeCategoryTab == catName ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400")">
+                                    @count
+                                </span>
+                                <!-- Rename Category Pen Icon -->
+                                <button type="button" @onclick="() => StartRenameCategory(catName)" 
+                                        class="p-0.5 text-slate-400 hover:text-white transition-colors cursor-pointer" title="Rename this section">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                </button>
+                                <!-- Delete Category Icon (if more than 1 category) -->
+                                @if (_availableCategories.Count > 1)
+                                {
+                                    <button type="button" @onclick="() => DeleteCategory(catName)" 
+                                            class="p-0.5 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer" title="Delete section">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Section 3: QUESTION CREATOR (STAYS AT TOP) -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">
+                            3. Create Question (Stays at Top)
+                        </span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-teal-100 dark:bg-teal-900/60 text-[#00796b] dark:text-teal-300">
+                            Composer
+                        </span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-medium">Added questions move below & auto-collapse</span>
+                </div>
+
+                <!-- Top Composer Card -->
+                <div class="p-4 bg-teal-50/40 dark:bg-[#18262c] rounded-2xl border-2 border-teal-500/40 dark:border-teal-700/60 space-y-3.5 shadow-xs relative">
+                    
+                    <!-- Top Composer Header -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-teal-200/50 dark:border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-md bg-[#009488] text-white font-bold text-[10px]">
+                                Q@(_newQuizQuestions.Count + 1)
+                            </span>
+                            <!-- Category Selector -->
+                            <select @bind="_newQuestionDraft.Category" 
+                                    class="text-[10px] font-bold bg-white dark:bg-[#142025] border border-teal-300 dark:border-teal-700 text-[#00796b] dark:text-teal-300 rounded-lg px-2 py-1 focus:outline-none">
+                                @foreach (var cat in _availableCategories)
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Timing & Difficulty & Marks -->
+                        <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                            <!-- Difficulty: Easy (1m), Medium (2m), Hard (4m) -->
+                            <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#142025] p-0.5">
+                                <button type="button" @onclick='() => SetDifficulty(_newQuestionDraft, "Easy")'
+                                        class="px-2 py-0.5 rounded text-[10px] font-bold transition-all @(_newQuestionDraft.Difficulty == "Easy" ? "bg-emerald-500 text-white" : "text-slate-500 hover:text-slate-700")">
+                                    Easy (1m)
+                                </button>
+                                <button type="button" @onclick='() => SetDifficulty(_newQuestionDraft, "Medium")'
+                                        class="px-2 py-0.5 rounded text-[10px] font-bold transition-all @(_newQuestionDraft.Difficulty == "Medium" ? "bg-amber-500 text-white" : "text-slate-500 hover:text-slate-700")">
+                                    Medium (2m)
+                                </button>
+                                <button type="button" @onclick='() => SetDifficulty(_newQuestionDraft, "Hard")'
+                                        class="px-2 py-0.5 rounded text-[10px] font-bold transition-all @(_newQuestionDraft.Difficulty == "Hard" ? "bg-rose-500 text-white" : "text-slate-500 hover:text-slate-700")">
+                                    Hard (4m)
+                                </button>
+                            </div>
+
+                            <!-- Min 1 min Time Limit -->
+                            <div class="flex items-center gap-1 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-lg">
+                                <svg class="w-3 h-3 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <input type="number" min="1" max="30" @bind="_newQuestionDraft.TimeLimitMinutes" 
+                                       class="w-8 text-center text-xs font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none" />
+                                <span class="text-[10px] text-slate-400 font-medium">min</span>
+                            </div>
+
+                            <!-- Marks -->
+                            <div class="flex items-center gap-1 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-lg">
+                                <span class="text-[10px] text-slate-400 font-medium">Marks:</span>
+                                <input type="number" @bind="_newQuestionDraft.Marks" min="1" class="w-8 text-center text-xs font-bold text-[#009488] bg-transparent border-none focus:outline-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Statement -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Question Statement *</label>
+                            <button type="button" @onclick="() => _newQuestionDraft.ShowQuestionImageInput = !_newQuestionDraft.ShowQuestionImageInput"
+                                    class="inline-flex items-center gap-1 text-[10px] font-bold text-[#009488] hover:underline cursor-pointer">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span>@(string.IsNullOrEmpty(_newQuestionDraft.QuestionImageUrl) ? "+ Add Diagram / Image" : "Edit Question Image")</span>
+                            </button>
+                        </div>
+                        <textarea @bind="_newQuestionDraft.QuestionText" @bind:event="oninput" rows="2" placeholder="Type question description, equation, or passage here..."
+                                  class="w-full px-3 py-2 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all"></textarea>
+
+                        <!-- Question Image Attachment (Upload or Link) -->
+                        @if (_newQuestionDraft.ShowQuestionImageInput || !string.IsNullOrEmpty(_newQuestionDraft.QuestionImageUrl))
+                        {
+                            <div class="p-3 bg-white dark:bg-[#142025] rounded-xl border border-teal-200 dark:border-teal-900 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="inline-flex rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                                        <button type="button" @onclick='() => _newQuestionDraft.QuestionImageMode = "upload"'
+                                                class="px-2 py-0.5 rounded font-bold transition-all @(_newQuestionDraft.QuestionImageMode == "upload" ? "bg-white dark:bg-[#142025] text-[#009488] shadow-xs" : "text-slate-500")">
+                                            📁 Upload File
+                                        </button>
+                                        <button type="button" @onclick='() => _newQuestionDraft.QuestionImageMode = "link"'
+                                                class="px-2 py-0.5 rounded font-bold transition-all @(_newQuestionDraft.QuestionImageMode == "link" ? "bg-white dark:bg-[#142025] text-[#009488] shadow-xs" : "text-slate-500")">
+                                            🔗 Web Link
+                                        </button>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(_newQuestionDraft.QuestionImageUrl))
+                                    {
+                                        <button type="button" @onclick="() => { _newQuestionDraft.QuestionImageUrl = null; _newQuestionDraft.ShowQuestionImageInput = false; }" class="text-xs text-rose-500 font-bold px-2 py-0.5 hover:bg-rose-50 rounded">
+                                            Remove
+                                        </button>
+                                    }
+                                </div>
+                                @if (_newQuestionDraft.QuestionImageMode == "upload")
+                                {
+                                    <label class="flex flex-col items-center justify-center p-2.5 border-2 border-dashed border-teal-300 dark:border-teal-800 rounded-xl bg-teal-50/30 cursor-pointer hover:bg-teal-50 text-center">
+                                        <span class="text-[10px] font-bold text-slate-700 dark:text-slate-200">Choose diagram image (PNG, JPG, SVG)</span>
+                                        <InputFile OnChange="@(e => HandleQuestionImageUpload(e, _newQuestionDraft))" accept="image/*" class="hidden" />
+                                    </label>
+                                }
+                                else
+                                {
+                                    <input type="text" @bind="_newQuestionDraft.QuestionImageUrl" placeholder="Paste Diagram / Image URL..."
+                                           class="w-full text-xs px-2.5 py-1.5 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none" />
+                                }
+                                @if (!string.IsNullOrEmpty(_newQuestionDraft.QuestionImageUrl))
+                                {
+                                    <div class="max-w-xs max-h-28 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                                        <img src="@_newQuestionDraft.QuestionImageUrl" alt="Diagram" class="w-full h-full object-contain max-h-28 bg-slate-50 dark:bg-[#18262c]" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 4 Options (A, B, C, D) with Correct Answer Marker & Option Images -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                            <span>Answer Options (Click letter to mark as Correct)</span>
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">● Correct: Option @_newQuestionDraft.CorrectOption</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <!-- Draft Option A -->
+                            <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border space-y-1 @(_newQuestionDraft.CorrectOption == "A" ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20" : "border-slate-200 dark:border-slate-700")">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @onclick='() => _newQuestionDraft.CorrectOption = "A"'
+                                            class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center shrink-0 transition-colors cursor-pointer @(_newQuestionDraft.CorrectOption == "A" ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                                        A
+                                    </button>
+                                    <input type="text" @bind="_newQuestionDraft.OptionA" placeholder="Option A text..."
+                                           class="flex-1 text-xs bg-transparent border-none focus:outline-none text-slate-800 dark:text-white" />
+                                    <button type="button" @onclick="() => _newQuestionDraft.ShowOptionAImage = !_newQuestionDraft.ShowOptionAImage" 
+                                            class="p-1 text-slate-400 hover:text-[#009488]" title="Attach image to Option A">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </button>
+                                </div>
+                                @if (_newQuestionDraft.ShowOptionAImage || !string.IsNullOrEmpty(_newQuestionDraft.OptionAImageUrl))
+                                {
+                                    <div class="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <div class="inline-flex rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionAImageMode = "upload"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionAImageMode == "upload" ? "bg-white text-[#009488]" : "text-slate-500")">Upload</button>
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionAImageMode = "link"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionAImageMode == "link" ? "bg-white text-[#009488]" : "text-slate-500")">Link</button>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionAImageUrl)) { <button type="button" @onclick="() => { _newQuestionDraft.OptionAImageUrl = null; _newQuestionDraft.ShowOptionAImage = false; }" class="text-[9px] text-rose-500 font-bold">Remove</button> }
+                                        </div>
+                                        @if (_newQuestionDraft.OptionAImageMode == "upload")
+                                        {
+                                            <label class="block text-center py-1 px-2 border border-dashed border-teal-300 rounded bg-teal-50/30 text-[9px] text-[#009488] font-bold cursor-pointer">
+                                                Choose File...
+                                                <InputFile OnChange="@(e => HandleOptionImageUpload(e, _newQuestionDraft, "A"))" accept="image/*" class="hidden" />
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <input type="text" @bind="_newQuestionDraft.OptionAImageUrl" placeholder="https://..." class="w-full text-[10px] px-2 py-0.5 bg-slate-50 border rounded focus:outline-none" />
+                                        }
+                                        @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionAImageUrl)) { <img src="@_newQuestionDraft.OptionAImageUrl" alt="Opt A" class="h-8 object-contain rounded border" /> }
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Draft Option B -->
+                            <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border space-y-1 @(_newQuestionDraft.CorrectOption == "B" ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20" : "border-slate-200 dark:border-slate-700")">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @onclick='() => _newQuestionDraft.CorrectOption = "B"'
+                                            class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center shrink-0 transition-colors cursor-pointer @(_newQuestionDraft.CorrectOption == "B" ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                                        B
+                                    </button>
+                                    <input type="text" @bind="_newQuestionDraft.OptionB" placeholder="Option B text..."
+                                           class="flex-1 text-xs bg-transparent border-none focus:outline-none text-slate-800 dark:text-white" />
+                                    <button type="button" @onclick="() => _newQuestionDraft.ShowOptionBImage = !_newQuestionDraft.ShowOptionBImage" 
+                                            class="p-1 text-slate-400 hover:text-[#009488]" title="Attach image to Option B">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </button>
+                                </div>
+                                @if (_newQuestionDraft.ShowOptionBImage || !string.IsNullOrEmpty(_newQuestionDraft.OptionBImageUrl))
+                                {
+                                    <div class="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <div class="inline-flex rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionBImageMode = "upload"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionBImageMode == "upload" ? "bg-white text-[#009488]" : "text-slate-500")">Upload</button>
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionBImageMode = "link"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionBImageMode == "link" ? "bg-white text-[#009488]" : "text-slate-500")">Link</button>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionBImageUrl)) { <button type="button" @onclick="() => { _newQuestionDraft.OptionBImageUrl = null; _newQuestionDraft.ShowOptionBImage = false; }" class="text-[9px] text-rose-500 font-bold">Remove</button> }
+                                        </div>
+                                        @if (_newQuestionDraft.OptionBImageMode == "upload")
+                                        {
+                                            <label class="block text-center py-1 px-2 border border-dashed border-teal-300 rounded bg-teal-50/30 text-[9px] text-[#009488] font-bold cursor-pointer">
+                                                Choose File...
+                                                <InputFile OnChange="@(e => HandleOptionImageUpload(e, _newQuestionDraft, "B"))" accept="image/*" class="hidden" />
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <input type="text" @bind="_newQuestionDraft.OptionBImageUrl" placeholder="https://..." class="w-full text-[10px] px-2 py-0.5 bg-slate-50 border rounded focus:outline-none" />
+                                        }
+                                        @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionBImageUrl)) { <img src="@_newQuestionDraft.OptionBImageUrl" alt="Opt B" class="h-8 object-contain rounded border" /> }
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Draft Option C -->
+                            <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border space-y-1 @(_newQuestionDraft.CorrectOption == "C" ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20" : "border-slate-200 dark:border-slate-700")">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @onclick='() => _newQuestionDraft.CorrectOption = "C"'
+                                            class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center shrink-0 transition-colors cursor-pointer @(_newQuestionDraft.CorrectOption == "C" ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                                        C
+                                    </button>
+                                    <input type="text" @bind="_newQuestionDraft.OptionC" placeholder="Option C text..."
+                                           class="flex-1 text-xs bg-transparent border-none focus:outline-none text-slate-800 dark:text-white" />
+                                    <button type="button" @onclick="() => _newQuestionDraft.ShowOptionCImage = !_newQuestionDraft.ShowOptionCImage" 
+                                            class="p-1 text-slate-400 hover:text-[#009488]" title="Attach image to Option C">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </button>
+                                </div>
+                                @if (_newQuestionDraft.ShowOptionCImage || !string.IsNullOrEmpty(_newQuestionDraft.OptionCImageUrl))
+                                {
+                                    <div class="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <div class="inline-flex rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionCImageMode = "upload"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionCImageMode == "upload" ? "bg-white text-[#009488]" : "text-slate-500")">Upload</button>
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionCImageMode = "link"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionCImageMode == "link" ? "bg-white text-[#009488]" : "text-slate-500")">Link</button>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionCImageUrl)) { <button type="button" @onclick="() => { _newQuestionDraft.OptionCImageUrl = null; _newQuestionDraft.ShowOptionCImage = false; }" class="text-[9px] text-rose-500 font-bold">Remove</button> }
+                                        </div>
+                                        @if (_newQuestionDraft.OptionCImageMode == "upload")
+                                        {
+                                            <label class="block text-center py-1 px-2 border border-dashed border-teal-300 rounded bg-teal-50/30 text-[9px] text-[#009488] font-bold cursor-pointer">
+                                                Choose File...
+                                                <InputFile OnChange="@(e => HandleOptionImageUpload(e, _newQuestionDraft, "C"))" accept="image/*" class="hidden" />
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <input type="text" @bind="_newQuestionDraft.OptionCImageUrl" placeholder="https://..." class="w-full text-[10px] px-2 py-0.5 bg-slate-50 border rounded focus:outline-none" />
+                                        }
+                                        @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionCImageUrl)) { <img src="@_newQuestionDraft.OptionCImageUrl" alt="Opt C" class="h-8 object-contain rounded border" /> }
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Draft Option D -->
+                            <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border space-y-1 @(_newQuestionDraft.CorrectOption == "D" ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-50/20" : "border-slate-200 dark:border-slate-700")">
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @onclick='() => _newQuestionDraft.CorrectOption = "D"'
+                                            class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center shrink-0 transition-colors cursor-pointer @(_newQuestionDraft.CorrectOption == "D" ? "bg-emerald-500 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                                        D
+                                    </button>
+                                    <input type="text" @bind="_newQuestionDraft.OptionD" placeholder="Option D text..."
+                                           class="flex-1 text-xs bg-transparent border-none focus:outline-none text-slate-800 dark:text-white" />
+                                    <button type="button" @onclick="() => _newQuestionDraft.ShowOptionDImage = !_newQuestionDraft.ShowOptionDImage" 
+                                            class="p-1 text-slate-400 hover:text-[#009488]" title="Attach image to Option D">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </button>
+                                </div>
+                                @if (_newQuestionDraft.ShowOptionDImage || !string.IsNullOrEmpty(_newQuestionDraft.OptionDImageUrl))
+                                {
+                                    <div class="pt-1 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <div class="inline-flex rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionDImageMode = "upload"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionDImageMode == "upload" ? "bg-white text-[#009488]" : "text-slate-500")">Upload</button>
+                                                <button type="button" @onclick='() => _newQuestionDraft.OptionDImageMode = "link"' class="px-1.5 py-0.5 rounded font-bold @(_newQuestionDraft.OptionDImageMode == "link" ? "bg-white text-[#009488]" : "text-slate-500")">Link</button>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionDImageUrl)) { <button type="button" @onclick="() => { _newQuestionDraft.OptionDImageUrl = null; _newQuestionDraft.ShowOptionDImage = false; }" class="text-[9px] text-rose-500 font-bold">Remove</button> }
+                                        </div>
+                                        @if (_newQuestionDraft.OptionDImageMode == "upload")
+                                        {
+                                            <label class="block text-center py-1 px-2 border border-dashed border-teal-300 rounded bg-teal-50/30 text-[9px] text-[#009488] font-bold cursor-pointer">
+                                                Choose File...
+                                                <InputFile OnChange="@(e => HandleOptionImageUpload(e, _newQuestionDraft, "D"))" accept="image/*" class="hidden" />
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <input type="text" @bind="_newQuestionDraft.OptionDImageUrl" placeholder="https://..." class="w-full text-[10px] px-2 py-0.5 bg-slate-50 border rounded focus:outline-none" />
+                                        }
+                                        @if (!string.IsNullOrEmpty(_newQuestionDraft.OptionDImageUrl)) { <img src="@_newQuestionDraft.OptionDImageUrl" alt="Opt D" class="h-8 object-contain rounded border" /> }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Question Button: Pushes created question below & auto-collapses it -->
+                    <div class="flex items-center justify-between pt-2 border-t border-teal-200/40 dark:border-slate-800">
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                            @if (_showAddedAlert)
+                            {
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Question added to list below!</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span>Pushes this question to list below & clears form for next</span>
+                            }
+                        </div>
+                        <button type="button" @onclick="AddDraftQuestionToList"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            <span>Add Question to Quiz (Pushes Below)</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Section 4: ADDED QUESTIONS LIST (AUTO-COLLAPSED BELOW) -->
+                <div class="space-y-3 pt-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                                Added Questions (@CurrentSectionQuestions.Count)
+                            </span>
+                            @if (_activeCategoryTab != "All")
+                            {
+                                <span class="text-[10px] text-teal-600 font-semibold">in @_activeCategoryTab</span>
+                            }
+                        </div>
+                        
+                        @if (CurrentSectionQuestions.Any())
+                        {
+                            <div class="flex items-center gap-2 text-[10px] font-bold">
+                                <button type="button" @onclick="CollapseAllQuestions" class="text-slate-500 hover:text-[#009488] cursor-pointer">
+                                    Collapse All
+                                </button>
+                                <span class="text-slate-300">|</span>
+                                <button type="button" @onclick="ExpandAllQuestions" class="text-slate-500 hover:text-[#009488] cursor-pointer">
+                                    Expand All
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    @if (!CurrentSectionQuestions.Any())
+                    {
+                        <div class="p-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-1 bg-slate-50/50 dark:bg-[#18262c]/50">
+                            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">No questions added in this list yet.</p>
+                            <p class="text-[10px] text-slate-400">Use the top composer above to create and push questions here.</p>
+                        </div>
+                    }
+
+                    @for (int i = 0; i < CurrentSectionQuestions.Count; i++)
+                    {
+                        var qIndex = i;
+                        var q = CurrentSectionQuestions[qIndex];
+
+                        <div class="rounded-2xl border transition-all duration-200 @(q.IsCollapsed ? "bg-white dark:bg-[#142025] border-slate-200 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700" : "bg-slate-50 dark:bg-[#18262c] border-teal-500/50 shadow-sm")">
+                            
+                            <!-- Question Bar / Header (Always Visible, Click to Toggle Collapse) -->
+                            <div class="flex items-center justify-between p-3.5 cursor-pointer select-none gap-2"
+                                 @onclick="() => q.IsCollapsed = !q.IsCollapsed">
+                                <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                    <span class="w-6 h-6 rounded-lg bg-[#009488] text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        Q@(qIndex + 1)
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-teal-50 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 border border-teal-200/60 dark:border-teal-900 shrink-0">
+                                        @q.Category
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-800 dark:text-white truncate">
+                                        @(string.IsNullOrWhiteSpace(q.QuestionText) ? "Untitled Question" : q.QuestionText)
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(q.QuestionImageUrl))
+                                    {
+                                        <span class="text-[10px] shrink-0" title="Contains Diagram">🖼️</span>
+                                    }
+                                </div>
+
+                                <div class="flex items-center gap-2.5 shrink-0 ml-2">
+                                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                                        Ans: @q.CorrectOption
+                                    </span>
+                                    <span class="text-[10px] font-medium text-slate-500">
+                                        ⏱ @q.TimeLimitMinutes m
+                                    </span>
+                                    <span class="text-[10px] font-bold text-[#009488]">
+                                        +@q.Marks
+                                    </span>
+                                    <!-- Toggle Chevron -->
+                                    <button type="button" class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer" title="@(q.IsCollapsed ? "Expand to Edit" : "Collapse")">
+                                        <svg class="w-4 h-4 transform transition-transform duration-200 @(q.IsCollapsed ? "" : "rotate-180")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <!-- Delete Button -->
+                                    <button type="button" @onclick:stopPropagation="true" @onclick="() => RemoveQuestion(q)"
+                                            class="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer" title="Delete Question">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Expanded Editable Body -->
+                            @if (!q.IsCollapsed)
+                            {
+                                <div class="p-4 pt-0 space-y-3.5 border-t border-slate-200/60 dark:border-slate-800 mt-1">
+                                    <!-- Timing & Difficulty for this question -->
+                                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] text-slate-400 font-medium">Category:</span>
+                                            <select @bind="q.Category" 
+                                                    class="text-[10px] font-bold bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 text-[#00796b] rounded-lg px-2 py-0.5 focus:outline-none">
+                                                @foreach (var cat in _availableCategories)
+                                                {
+                                                    <option value="@cat">@cat</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div class="flex items-center gap-2 text-[11px]">
+                                            <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#142025] p-0.5">
+                                                <button type="button" @onclick='() => SetDifficulty(q, "Easy")'
+                                                        class="px-2 py-0.5 rounded text-[10px] font-bold transition-all @(q.Difficulty == "Easy" ? "bg-emerald-500 text-white" : "text-slate-500")">Easy (1m)</button>
+                                                <button type="button" @onclick='() => SetDifficulty(q, "Medium")'
+                                                        class="px-2 py-0.5 rounded text-[10px] font-bold transition-all @(q.Difficulty == "Medium" ? "bg-amber-500 text-white" : "text-slate-500")">Med (2m)</button>
+                                                <button type="button" @onclick='() => SetDifficulty(q, "Hard")'
+                                                        class="px-2 py-0.5 rounded text-[10px] font-bold transition-all @(q.Difficulty == "Hard" ? "bg-rose-500 text-white" : "text-slate-500")">Hard (4m)</button>
+                                            </div>
+                                            <div class="flex items-center gap-1 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-lg">
+                                                <input type="number" min="1" max="30" @bind="q.TimeLimitMinutes" class="w-8 text-center text-xs font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none" />
+                                                <span class="text-[10px] text-slate-400">min</span>
+                                            </div>
+                                            <div class="flex items-center gap-1 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-lg">
+                                                <span class="text-[10px] text-slate-400">Marks:</span>
+                                                <input type="number" @bind="q.Marks" min="1" class="w-8 text-center text-xs font-bold text-[#009488] bg-transparent border-none focus:outline-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Question Statement Input -->
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-[10px] font-semibold text-slate-500">Edit Question Statement</label>
+                                            <button type="button" @onclick="() => q.ShowQuestionImageInput = !q.ShowQuestionImageInput" class="text-[10px] text-[#009488] font-bold hover:underline">
+                                                @(string.IsNullOrEmpty(q.QuestionImageUrl) ? "+ Add Diagram" : "Edit Diagram")
+                                            </button>
+                                        </div>
+                                        <textarea @bind="q.QuestionText" rows="2" class="w-full px-3 py-2 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none"></textarea>
+
+                                        @if (q.ShowQuestionImageInput || !string.IsNullOrEmpty(q.QuestionImageUrl))
+                                        {
+                                            <div class="p-2.5 bg-white dark:bg-[#142025] rounded-xl border border-teal-200 dark:border-teal-900 space-y-2">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="inline-flex rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 text-[9px]">
+                                                        <button type="button" @onclick='() => q.QuestionImageMode = "upload"' class="px-2 py-0.5 rounded font-bold @(q.QuestionImageMode == "upload" ? "bg-white text-[#009488]" : "text-slate-500")">Upload</button>
+                                                        <button type="button" @onclick='() => q.QuestionImageMode = "link"' class="px-2 py-0.5 rounded font-bold @(q.QuestionImageMode == "link" ? "bg-white text-[#009488]" : "text-slate-500")">Link</button>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(q.QuestionImageUrl))
+                                                    {
+                                                        <button type="button" @onclick="() => { q.QuestionImageUrl = null; q.ShowQuestionImageInput = false; }" class="text-xs text-rose-500 font-bold px-2">Remove</button>
+                                                    }
+                                                </div>
+                                                @if (q.QuestionImageMode == "upload")
+                                                {
+                                                    <label class="block text-center py-2 border-2 border-dashed border-teal-300 rounded-xl bg-teal-50/30 text-[10px] text-slate-700 font-bold cursor-pointer">
+                                                        Choose file...
+                                                        <InputFile OnChange="@(e => HandleQuestionImageUpload(e, q))" accept="image/*" class="hidden" />
+                                                    </label>
+                                                }
+                                                else
+                                                {
+                                                    <input type="text" @bind="q.QuestionImageUrl" placeholder="https://..." class="w-full text-xs px-2 py-1 bg-slate-50 border rounded-lg focus:outline-none" />
+                                                }
+                                                @if (!string.IsNullOrEmpty(q.QuestionImageUrl))
+                                                {
+                                                    <img src="@q.QuestionImageUrl" alt="Diagram" class="max-h-24 object-contain rounded border" />
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- 4 Options -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <!-- Opt A -->
+                                        <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border @(q.CorrectOption == "A" ? "border-emerald-500 ring-1 ring-emerald-500" : "border-slate-200 dark:border-slate-700")">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" @onclick='() => q.CorrectOption = "A"' class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center @(q.CorrectOption == "A" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600")">A</button>
+                                                <input type="text" @bind="q.OptionA" class="flex-1 text-xs bg-transparent border-none focus:outline-none" />
+                                            </div>
+                                        </div>
+                                        <!-- Opt B -->
+                                        <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border @(q.CorrectOption == "B" ? "border-emerald-500 ring-1 ring-emerald-500" : "border-slate-200 dark:border-slate-700")">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" @onclick='() => q.CorrectOption = "B"' class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center @(q.CorrectOption == "B" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600")">B</button>
+                                                <input type="text" @bind="q.OptionB" class="flex-1 text-xs bg-transparent border-none focus:outline-none" />
+                                            </div>
+                                        </div>
+                                        <!-- Opt C -->
+                                        <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border @(q.CorrectOption == "C" ? "border-emerald-500 ring-1 ring-emerald-500" : "border-slate-200 dark:border-slate-700")">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" @onclick='() => q.CorrectOption = "C"' class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center @(q.CorrectOption == "C" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600")">C</button>
+                                                <input type="text" @bind="q.OptionC" class="flex-1 text-xs bg-transparent border-none focus:outline-none" />
+                                            </div>
+                                        </div>
+                                        <!-- Opt D -->
+                                        <div class="p-2 bg-white dark:bg-[#142025] rounded-xl border @(q.CorrectOption == "D" ? "border-emerald-500 ring-1 ring-emerald-500" : "border-slate-200 dark:border-slate-700")">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" @onclick='() => q.CorrectOption = "D"' class="w-6 h-6 rounded-lg font-bold text-[10px] flex items-center justify-center @(q.CorrectOption == "D" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600")">D</button>
+                                                <input type="text" @bind="q.OptionD" class="flex-1 text-xs bg-transparent border-none focus:outline-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Done / Collapse Button -->
+                                    <div class="flex justify-end pt-1">
+                                        <button type="button" @onclick="() => q.IsCollapsed = true"
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/80 border border-teal-300 dark:border-teal-800 text-[#00796b] dark:text-teal-300 text-xs font-bold hover:bg-teal-100 transition-colors cursor-pointer">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Done / Collapse Question</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    }
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Sticky Drawer Footer -->
+        <div class="p-4 px-6 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-[#18262c] flex items-center justify-between gap-3 shrink-0">
+            <div>
+                <span class="text-xs font-bold text-slate-800 dark:text-white">@_newQuizQuestions.Count Questions</span>
+                <span class="text-[10px] text-slate-400 block font-medium">@_newQuizQuestions.Sum(q => q.Marks) Marks • Time: @_newQuizQuestions.Sum(q => q.TimeLimitMinutes) min</span>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <button type="button" 
+                        @onclick="CloseCreateDrawerAsync" 
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" 
+                        @onclick="SaveAndPublishQuiz"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>@(_editingExam == null ? "Save & Schedule Quiz" : "Update Quiz")</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Preview Quiz Questions (With Images & Timings) -->
+<!-- ========================================================================= -->
+@if (_previewExam != null)
+{
+    <Modal IsOpen="true"
+           Title="@_previewExam.Title"
+           Subtitle="@($"{_previewExam.BatchName} • {_previewExam.TotalQuestions} Questions • {_previewExam.MaxMarks} Marks • Status: {_previewExam.Status}")"
+           MaxWidth="max-w-2xl"
+           OnClose="() => _previewExam = null">
+        <ChildContent>
+            <div class="space-y-4 max-h-[65vh] overflow-y-auto no-scrollbar">
+                
+                <!-- Status Banner: Completed (Locked) or Upcoming (Editable) -->
+                <div class="p-3 rounded-xl border flex items-center justify-between text-xs @(_previewExam.Status == "Completed" ? "bg-slate-100 dark:bg-slate-800/80 border-slate-200 text-slate-600 dark:text-slate-400" : "bg-teal-50/60 dark:bg-teal-950/60 border-teal-200 text-teal-800 dark:text-teal-200")">
+                    <div class="flex items-center gap-2">
+                        @if (_previewExam.Status == "Completed")
+                        {
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            <span class="font-bold">Completed Exam (Locked — Changes are strictly disabled)</span>
+                        }
+                        else
+                        {
+                            <svg class="w-4 h-4 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <span class="font-bold">Upcoming Exam (Fully Editable)</span>
+                        }
+                    </div>
+                    @if (_previewExam.Status == "Upcoming")
+                    {
+                        <button type="button" @onclick="() => { var e = _previewExam; _previewExam = null; OpenEditDrawerAsync(e); }"
+                                class="px-3 py-1 bg-[#009488] text-white font-bold text-xs rounded-lg hover:bg-[#00796b] transition-colors cursor-pointer">
+                            Edit Quiz →
+                        </button>
+                    }
+                </div>
+
+                <!-- Sections list -->
+                <div class="flex flex-wrap gap-1.5 pb-1">
+                    @foreach (var cat in _previewExam.Categories)
+                    {
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800 text-[#00796b] dark:text-teal-300">
+                            Section: @cat
+                        </span>
+                    }
+                </div>
+
+                @if (_previewExam.Questions != null && _previewExam.Questions.Any())
+                {
+                    @for (int i = 0; i < _previewExam.Questions.Count; i++)
+                    {
+                        var item = _previewExam.Questions[i];
+                        <div class="p-3.5 bg-slate-50 dark:bg-[#18262c] rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-[#009488]">Q@(i + 1) • Section: @item.Category</span>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-500">
+                                    <span class="font-bold">⏱ @item.TimeLimitMinutes min (@item.Difficulty)</span>
+                                    <span>•</span>
+                                    <span class="font-bold text-emerald-600">+@item.Marks Marks</span>
+                                </div>
+                            </div>
+
+                            <p class="font-semibold text-slate-800 dark:text-white">@item.QuestionText</p>
+
+                            <!-- Question Image Preview if present -->
+                            @if (!string.IsNullOrEmpty(item.QuestionImageUrl))
+                            {
+                                <div class="max-w-xs max-h-36 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 my-1">
+                                    <img src="@item.QuestionImageUrl" alt="Diagram" class="w-full h-full object-contain max-h-36 bg-white dark:bg-[#142025]" />
+                                </div>
+                            }
+
+                            <!-- Options Grid with Option Images -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                                <!-- Option A -->
+                                <div class="p-2 rounded-lg @(item.CorrectOption == "A" ? "bg-emerald-50 dark:bg-emerald-950/60 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-300" : "bg-white dark:bg-[#142025] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700")">
+                                    <div class="flex items-center justify-between">
+                                        <span>A) @item.OptionA</span>
+                                        @if (item.CorrectOption == "A") { <span class="text-emerald-600">✓ Correct</span> }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.OptionAImageUrl))
+                                    {
+                                        <img src="@item.OptionAImageUrl" alt="Opt A" class="mt-1 h-12 object-contain rounded border" />
+                                    }
+                                </div>
+
+                                <!-- Option B -->
+                                <div class="p-2 rounded-lg @(item.CorrectOption == "B" ? "bg-emerald-50 dark:bg-emerald-950/60 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-300" : "bg-white dark:bg-[#142025] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700")">
+                                    <div class="flex items-center justify-between">
+                                        <span>B) @item.OptionB</span>
+                                        @if (item.CorrectOption == "B") { <span class="text-emerald-600">✓ Correct</span> }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.OptionBImageUrl))
+                                    {
+                                        <img src="@item.OptionBImageUrl" alt="Opt B" class="mt-1 h-12 object-contain rounded border" />
+                                    }
+                                </div>
+
+                                <!-- Option C -->
+                                <div class="p-2 rounded-lg @(item.CorrectOption == "C" ? "bg-emerald-50 dark:bg-emerald-950/60 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-300" : "bg-white dark:bg-[#142025] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700")">
+                                    <div class="flex items-center justify-between">
+                                        <span>C) @item.OptionC</span>
+                                        @if (item.CorrectOption == "C") { <span class="text-emerald-600">✓ Correct</span> }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.OptionCImageUrl))
+                                    {
+                                        <img src="@item.OptionCImageUrl" alt="Opt C" class="mt-1 h-12 object-contain rounded border" />
+                                    }
+                                </div>
+
+                                <!-- Option D -->
+                                <div class="p-2 rounded-lg @(item.CorrectOption == "D" ? "bg-emerald-50 dark:bg-emerald-950/60 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-300" : "bg-white dark:bg-[#142025] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700")">
+                                    <div class="flex items-center justify-between">
+                                        <span>D) @item.OptionD</span>
+                                        @if (item.CorrectOption == "D") { <span class="text-emerald-600">✓ Correct</span> }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.OptionDImageUrl))
+                                    {
+                                        <img src="@item.OptionDImageUrl" alt="Opt D" class="mt-1 h-12 object-contain rounded border" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-xs text-slate-400 text-center py-4">Standard automated question bank generated for this exam.</p>
+                }
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" @onclick="() => _previewExam = null"
+                    class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 transition-colors">
+                Close
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private string _searchQuery = string.Empty;
+    private string _filterStatus = string.Empty;
+    private string _filterBatch = string.Empty;
+
+    // Drawer State
+    private bool _showCreateDrawer = false;
+    private bool _isDrawerOpen = false;
+    private ExamItem? _editingExam = null;
+
+    // Quiz Creator State
+    private string _newQuizTitle = string.Empty;
+    private string _newQuizBatch = "Class 12 — Physics";
+    private int _newQuizDuration = 60;
+    private DateTime _newQuizDate = DateTime.Today.AddDays(3);
+    private string _activeCategoryTab = "All";
+    private string _customCategoryInput = string.Empty;
+
+    // Category renaming state
+    private string? _renamingCategory = null;
+    private string _renameCategoryValue = string.Empty;
+
+    private List<string> _availableCategories = new() { "Computer Science", "Teaching & Pedagogy", "General Knowledge", "Physics", "Mathematics" };
+    private List<QuizQuestionModel> _newQuizQuestions = new();
+
+    // Active Question Draft (stays at top of drawer)
+    private QuizQuestionModel _newQuestionDraft = new("Computer Science", "", "Option A", "Option B", "Option C", "Option D", "A", 4, 1, "Easy") { IsCollapsed = false };
+
+    private ExamItem? _previewExam;
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusOptions = new() 
+    { 
+        new("", "All Status"), 
+        new("Upcoming", "Upcoming (Editable)"), 
+        new("Live", "Live"), 
+        new("Completed", "Completed (Locked)") 
+    };
+    
+    private readonly List<CustomSelect.CustomSelectOption> _batchOptions = new() 
+    { 
+        new("", "All Batches"), 
+        new("STET Computer Science 2025", "STET Computer Science 2025"),
+        new("Class 10 — Maths", "Class 10 — Maths"), 
+        new("Class 10 — Science", "Class 10 — Science"), 
+        new("Class 12 — Physics", "Class 12 — Physics"), 
+        new("IIT-JEE Morning Batch", "IIT-JEE Morning Batch") 
+    };
+
+    private readonly List<ExamItem> _exams = new()
+    {
+        new("Physics & Chemistry Joint Test", "Class 12 — Physics", "Upcoming", "10 Sep 2026", 30, 60, 120, 0, new() { "Physics", "Chemistry" }, new() {
+            new("Physics", "What is the dimensional formula of universal gravitational constant (G)?", "[M^-1 L^3 T^-2]", "[M^1 L^2 T^-2]", "[M^-1 L^2 T^-1]", "[M^0 L^0 T^0]", "A", 4, 2, "Medium", "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=300&auto=format&fit=crop&q=60") { IsCollapsed = true },
+            new("Chemistry", "Which among the following has maximum number of lone pairs on central atom?", "XeF2", "XeF4", "XeF6", "XeO3", "A", 4, 3, "Hard") { IsCollapsed = true }
+        }),
+        new("Mathematics Weekly Quiz — Calculus", "Class 10 — Maths", "Live", "03 Sep 2026", 20, 30, 80, 0, new() { "Mathematics" }, new() {
+            new("Mathematics", "The value of lim(x->0) sin(x)/x is equal to:", "1", "0", "Infinity", "Undefined", "A", 4, 1, "Easy") { IsCollapsed = true },
+            new("Mathematics", "Derivative of sin(2x) with respect to x is:", "2 cos(2x)", "cos(2x)", "-2 cos(2x)", "-cos(2x)", "A", 4, 2, "Medium") { IsCollapsed = true }
+        }),
+        new("English & Grammar Comprehensive Assessment", "Class 10 — Science", "Completed", "28 Aug 2026", 25, 45, 100, 78, new() { "English" }, new() {
+            new("English", "Identify the passive voice: 'The chef cooked a delicious dinner.'", "A delicious dinner was cooked by the chef.", "The chef was cooking a dinner.", "A dinner has been cooked.", "Delicious dinner is cooked.", "A", 4, 1, "Easy") { IsCollapsed = true }
+        }),
+        new("JEE Full Mock 04 (PCM)", "IIT-JEE Morning Batch", "Completed", "20 Aug 2026", 75, 180, 300, 72, new() { "Physics", "Chemistry", "Mathematics" }, new())
+    };
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var jsonPath = Path.Combine(WebHostEnvironment.WebRootPath, "stet_2025_questions.json");
+            if (File.Exists(jsonPath))
+            {
+                var json = File.ReadAllText(jsonPath);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var stetQuestions = new List<QuizQuestionModel>();
+                foreach (var el in doc.RootElement.EnumerateArray())
+                {
+                    var sec = el.GetProperty("section").GetString() ?? "Computer Science";
+                    var qText = el.GetProperty("question").GetString() ?? "";
+                    var optA = el.GetProperty("optionA").GetString() ?? "";
+                    var optB = el.GetProperty("optionB").GetString() ?? "";
+                    var optC = el.GetProperty("optionC").GetString() ?? "";
+                    var optD = el.GetProperty("optionD").GetString() ?? "";
+                    var correct = el.GetProperty("correct").GetString() ?? "A";
+                    stetQuestions.Add(new QuizQuestionModel(
+                        sec, qText, optA, optB, optC, optD, correct, 1, 1, "Easy"
+                    ) { IsCollapsed = true });
+                }
+
+                if (stetQuestions.Any())
+                {
+                    _exams.Insert(0, new ExamItem(
+                        "STET Exam 2025 — Computer Science Paper II",
+                        "STET Computer Science 2025",
+                        "Upcoming",
+                        "15 Sep 2026",
+                        stetQuestions.Count,
+                        150,
+                        stetQuestions.Count,
+                        0,
+                        new() { "Computer Science", "Teaching & Pedagogy", "General Knowledge" },
+                        stetQuestions
+                    ));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading STET questions: " + ex.Message);
+        }
+    }
+
+    private List<ExamItem> FilteredExams => _exams.Where(e =>
+        (string.IsNullOrWhiteSpace(_searchQuery) ||
+         e.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         e.BatchName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         e.Categories.Any(c => c.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase))) &&
+        (string.IsNullOrWhiteSpace(_filterStatus) || e.Status == _filterStatus) &&
+        (string.IsNullOrWhiteSpace(_filterBatch) || e.BatchName == _filterBatch)
+    ).ToList();
+
+    private List<QuizQuestionModel> CurrentSectionQuestions => _activeCategoryTab == "All"
+        ? _newQuizQuestions
+        : _newQuizQuestions.Where(q => q.Category == _activeCategoryTab).ToList();
+
+    private async Task OpenCreateDrawerAsync()
+    {
+        _editingExam = null;
+        _newQuizTitle = "Science & Math Practice Quiz";
+        _newQuizBatch = "Class 12 — Physics";
+        _newQuizDuration = 45;
+        _newQuizDate = DateTime.Today.AddDays(4);
+        _activeCategoryTab = "All";
+        _renamingCategory = null;
+
+        _availableCategories = new() { "Physics", "Mathematics", "English", "Chemistry" };
+
+        _newQuestionDraft = new QuizQuestionModel("Physics", "", "Option A", "Option B", "Option C", "Option D", "A", 4, 1, "Easy") { IsCollapsed = false };
+
+        // Sample initial questions - auto-collapsed below
+        _newQuizQuestions = new()
+        {
+            new("Physics", "What is the SI unit of electric flux?", "Volt-metre (V·m)", "Newton/Coulomb", "Weber", "Tesla", "A", 4, 1, "Easy") { IsCollapsed = true },
+            new("Mathematics", "What is the value of log10(1000)?", "3", "2", "10", "100", "A", 4, 2, "Medium") { IsCollapsed = true },
+            new("English", "Choose the antonym for 'Benevolent':", "Malevolent", "Generous", "Kind", "Helpful", "A", 4, 1, "Easy") { IsCollapsed = true }
+        };
+
+        _showCreateDrawer = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task OpenEditDrawerAsync(ExamItem exam)
+    {
+        // Completed quizzes are locked and cannot be edited
+        if (exam.Status == "Completed") return;
+
+        _editingExam = exam;
+        _newQuizTitle = exam.Title;
+        _newQuizBatch = exam.BatchName;
+        _newQuizDuration = exam.Duration;
+        _newQuizDate = DateTime.TryParse(exam.ScheduledDate, out var dt) ? dt : DateTime.Today.AddDays(3);
+        _activeCategoryTab = "All";
+        _renamingCategory = null;
+
+        _availableCategories = new List<string>(exam.Categories.Any() ? exam.Categories : new() { "Physics", "Mathematics" });
+        
+        _newQuestionDraft = new QuizQuestionModel(_availableCategories.FirstOrDefault() ?? "Physics", "", "Option A", "Option B", "Option C", "Option D", "A", 4, 1, "Easy") { IsCollapsed = false };
+
+        // Load copy of questions with collapsed state
+        _newQuizQuestions = exam.Questions != null && exam.Questions.Any()
+            ? exam.Questions.Select(q => new QuizQuestionModel(
+                q.Category, q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, 
+                q.CorrectOption, q.Marks, Math.Max(1, q.TimeLimitMinutes), q.Difficulty,
+                q.QuestionImageUrl, q.OptionAImageUrl, q.OptionBImageUrl, q.OptionCImageUrl, q.OptionDImageUrl
+            ) { IsCollapsed = true }).ToList()
+            : new List<QuizQuestionModel>();
+
+        _showCreateDrawer = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseCreateDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        await Task.Delay(300);
+        _showCreateDrawer = false;
+        _editingExam = null;
+    }
+
+    private void AddCustomCategory()
+    {
+        if (!string.IsNullOrWhiteSpace(_customCategoryInput) && !_availableCategories.Contains(_customCategoryInput.Trim(), StringComparer.OrdinalIgnoreCase))
+        {
+            var trimmed = _customCategoryInput.Trim();
+            _availableCategories.Add(trimmed);
+            _activeCategoryTab = trimmed;
+            _customCategoryInput = string.Empty;
+        }
+    }
+
+    private void StartRenameCategory(string categoryName)
+    {
+        _renamingCategory = categoryName;
+        _renameCategoryValue = categoryName;
+    }
+
+    private void ConfirmRenameCategory(string oldName)
+    {
+        if (!string.IsNullOrWhiteSpace(_renameCategoryValue) && _renameCategoryValue.Trim() != oldName)
+        {
+            var newName = _renameCategoryValue.Trim();
+            var index = _availableCategories.IndexOf(oldName);
+            if (index != -1)
+            {
+                _availableCategories[index] = newName;
+            }
+
+            // Update all questions that were under this category
+            foreach (var q in _newQuizQuestions.Where(q => q.Category == oldName))
+            {
+                q.Category = newName;
+            }
+
+            if (_activeCategoryTab == oldName)
+            {
+                _activeCategoryTab = newName;
+            }
+        }
+        _renamingCategory = null;
+    }
+
+    private void DeleteCategory(string categoryName)
+    {
+        if (_availableCategories.Count <= 1) return;
+
+        _availableCategories.Remove(categoryName);
+        var fallbackCategory = _availableCategories.FirstOrDefault() ?? "General";
+
+        // Reassign existing questions in this category to fallback
+        foreach (var q in _newQuizQuestions.Where(q => q.Category == categoryName))
+        {
+            q.Category = fallbackCategory;
+        }
+
+        if (_activeCategoryTab == categoryName)
+        {
+            _activeCategoryTab = "All";
+        }
+    }
+
+    private void SetDifficulty(QuizQuestionModel q, string difficulty)
+    {
+        q.Difficulty = difficulty;
+        // Min 1 min, expend if hard
+        q.TimeLimitMinutes = difficulty switch
+        {
+            "Easy" => 1,
+            "Medium" => 2,
+            "Hard" => 4,
+            _ => 1
+        };
+    }
+
+    private void SyncDurationWithQuestions()
+    {
+        var totalQuestionMinutes = _newQuizQuestions.Sum(q => Math.Max(1, q.TimeLimitMinutes));
+        if (totalQuestionMinutes > 0)
+        {
+            _newQuizDuration = totalQuestionMinutes;
+        }
+    }
+
+    private bool _showAddedAlert = false;
+
+    private async Task AddDraftQuestionToList()
+    {
+        // If text is blank, auto-assign default title so button never fails silently
+        var text = string.IsNullOrWhiteSpace(_newQuestionDraft.QuestionText)
+            ? $"Question #{_newQuizQuestions.Count + 1}"
+            : _newQuestionDraft.QuestionText.Trim();
+
+        var category = !string.IsNullOrWhiteSpace(_newQuestionDraft.Category)
+            ? _newQuestionDraft.Category
+            : (_availableCategories.FirstOrDefault() ?? "Physics");
+
+        var created = new QuizQuestionModel(
+            category,
+            text,
+            string.IsNullOrWhiteSpace(_newQuestionDraft.OptionA) ? "Option A" : _newQuestionDraft.OptionA,
+            string.IsNullOrWhiteSpace(_newQuestionDraft.OptionB) ? "Option B" : _newQuestionDraft.OptionB,
+            string.IsNullOrWhiteSpace(_newQuestionDraft.OptionC) ? "Option C" : _newQuestionDraft.OptionC,
+            string.IsNullOrWhiteSpace(_newQuestionDraft.OptionD) ? "Option D" : _newQuestionDraft.OptionD,
+            _newQuestionDraft.CorrectOption,
+            _newQuestionDraft.Marks > 0 ? _newQuestionDraft.Marks : 4,
+            Math.Max(1, _newQuestionDraft.TimeLimitMinutes),
+            _newQuestionDraft.Difficulty,
+            _newQuestionDraft.QuestionImageUrl,
+            _newQuestionDraft.OptionAImageUrl,
+            _newQuestionDraft.OptionBImageUrl,
+            _newQuestionDraft.OptionCImageUrl,
+            _newQuestionDraft.OptionDImageUrl
+        )
+        {
+            IsCollapsed = true // Har question complete hone pe collapse ho jaye!
+        };
+
+        // Question create hone pe niche chala jaye!
+        _newQuizQuestions.Add(created);
+
+        // Make sure active category tab shows the new question
+        if (_activeCategoryTab != "All" && _activeCategoryTab != category)
+        {
+            _activeCategoryTab = category;
+        }
+
+        // Top composer stays at top and resets for next question
+        _newQuestionDraft = new QuizQuestionModel(
+            category,
+            "",
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D",
+            "A",
+            4,
+            1,
+            "Easy"
+        )
+        {
+            IsCollapsed = false
+        };
+
+        _showAddedAlert = true;
+        StateHasChanged();
+
+        _ = Task.Delay(2500).ContinueWith(_ =>
+        {
+            _showAddedAlert = false;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void CollapseAllQuestions()
+    {
+        foreach (var q in _newQuizQuestions) q.IsCollapsed = true;
+    }
+
+    private void ExpandAllQuestions()
+    {
+        foreach (var q in _newQuizQuestions) q.IsCollapsed = false;
+    }
+
+    private void AddNewQuestion()
+    {
+        var targetCategory = _activeCategoryTab == "All" ? _availableCategories.FirstOrDefault() ?? "Physics" : _activeCategoryTab;
+        _newQuizQuestions.Add(new(
+            targetCategory,
+            "",
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D",
+            "A",
+            4,
+            1, // min 1 min
+            "Easy"
+        ) { IsCollapsed = false });
+    }
+
+    private void RemoveQuestion(QuizQuestionModel q)
+    {
+        _newQuizQuestions.Remove(q);
+    }
+
+    private async Task SaveAndPublishQuiz()
+    {
+        if (string.IsNullOrWhiteSpace(_newQuizTitle)) return;
+
+        // Ensure minimum 1 min time for all questions
+        foreach (var q in _newQuizQuestions)
+        {
+            if (q.TimeLimitMinutes < 1) q.TimeLimitMinutes = 1;
+        }
+
+        var distinctCategories = _newQuizQuestions.Select(q => q.Category).Distinct().ToList();
+        if (!distinctCategories.Any()) distinctCategories.Add("General");
+
+        var questionsCopy = new List<QuizQuestionModel>(_newQuizQuestions);
+
+        if (_editingExam != null)
+        {
+            // Update existing upcoming exam
+            var index = _exams.FindIndex(e => e.Title == _editingExam.Title);
+            if (index != -1)
+            {
+                _exams[index] = new ExamItem(
+                    _newQuizTitle,
+                    _newQuizBatch,
+                    _editingExam.Status, // keep Upcoming
+                    _newQuizDate.ToString("dd MMM yyyy"),
+                    _newQuizQuestions.Count,
+                    _newQuizDuration,
+                    _newQuizQuestions.Sum(q => q.Marks),
+                    _editingExam.AvgScore,
+                    distinctCategories,
+                    questionsCopy
+                );
+            }
+        }
+        else
+        {
+            // Create new exam
+            var newExam = new ExamItem(
+                _newQuizTitle,
+                _newQuizBatch,
+                "Upcoming",
+                _newQuizDate.ToString("dd MMM yyyy"),
+                _newQuizQuestions.Count,
+                _newQuizDuration,
+                _newQuizQuestions.Sum(q => q.Marks),
+                0,
+                distinctCategories,
+                questionsCopy
+            );
+            _exams.Insert(0, newExam);
+        }
+
+        await CloseCreateDrawerAsync();
+    }
+
+    private void PreviewExam(ExamItem exam)
+    {
+        _previewExam = exam;
+    }
+
+    private async Task HandleQuestionImageUpload(InputFileChangeEventArgs e, QuizQuestionModel q)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                var format = file.ContentType;
+                if (string.IsNullOrWhiteSpace(format)) format = "image/png";
+                using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                q.QuestionImageUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+            }
+            catch { }
+        }
+    }
+
+    private async Task HandleOptionImageUpload(InputFileChangeEventArgs e, QuizQuestionModel q, string opt)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                var format = file.ContentType;
+                if (string.IsNullOrWhiteSpace(format)) format = "image/png";
+                using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var dataUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+                switch (opt)
+                {
+                    case "A": q.OptionAImageUrl = dataUrl; break;
+                    case "B": q.OptionBImageUrl = dataUrl; break;
+                    case "C": q.OptionCImageUrl = dataUrl; break;
+                    case "D": q.OptionDImageUrl = dataUrl; break;
+                }
+            }
+            catch { }
+        }
+    }
+
+    public class QuizQuestionModel
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Category { get; set; } = "Physics";
+        public string QuestionText { get; set; } = string.Empty;
+        public string? QuestionImageUrl { get; set; }
+        public bool ShowQuestionImageInput { get; set; } = false;
+        public string QuestionImageMode { get; set; } = "upload"; // "upload" or "link"
+
+        public string OptionA { get; set; } = string.Empty;
+        public string? OptionAImageUrl { get; set; }
+        public bool ShowOptionAImage { get; set; } = false;
+        public string OptionAImageMode { get; set; } = "upload";
+
+        public string OptionB { get; set; } = string.Empty;
+        public string? OptionBImageUrl { get; set; }
+        public bool ShowOptionBImage { get; set; } = false;
+        public string OptionBImageMode { get; set; } = "upload";
+
+        public string OptionC { get; set; } = string.Empty;
+        public string? OptionCImageUrl { get; set; }
+        public bool ShowOptionCImage { get; set; } = false;
+        public string OptionCImageMode { get; set; } = "upload";
+
+        public string OptionD { get; set; } = string.Empty;
+        public string? OptionDImageUrl { get; set; }
+        public bool ShowOptionDImage { get; set; } = false;
+        public string OptionDImageMode { get; set; } = "upload";
+
+        public string CorrectOption { get; set; } = "A";
+        public int Marks { get; set; } = 4;
+        public bool IsCollapsed { get; set; } = true; // Auto-collapse when completed
+        
+        // Question Timing: Minimum 1 minute, expandable if hard
+        public int TimeLimitMinutes { get; set; } = 1;
+        public string Difficulty { get; set; } = "Easy"; // Easy (1m), Medium (2m), Hard (4m)
+
+        public QuizQuestionModel(
+            string category, 
+            string text, 
+            string a, 
+            string b, 
+            string c, 
+            string d, 
+            string correct, 
+            int marks,
+            int timeMinutes = 1,
+            string difficulty = "Easy",
+            string? qImg = null,
+            string? optAImg = null,
+            string? optBImg = null,
+            string? optCImg = null,
+            string? optDImg = null)
+        {
+            Category = category;
+            QuestionText = text;
+            OptionA = a;
+            OptionB = b;
+            OptionC = c;
+            OptionD = d;
+            CorrectOption = correct;
+            Marks = marks;
+            TimeLimitMinutes = Math.Max(1, timeMinutes);
+            Difficulty = difficulty;
+            QuestionImageUrl = qImg;
+            OptionAImageUrl = optAImg;
+            OptionBImageUrl = optBImg;
+            OptionCImageUrl = optCImg;
+            OptionDImageUrl = optDImg;
+        }
+    }
+
+    public record ExamItem(
+        string Title, 
+        string BatchName, 
+        string Status, 
+        string ScheduledDate, 
+        int TotalQuestions, 
+        int Duration, 
+        int MaxMarks, 
+        int AvgScore, 
+        List<string> Categories,
+        List<QuizQuestionModel>? Questions = null
+    );
+}
