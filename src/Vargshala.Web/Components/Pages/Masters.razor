@@ -1,4 +1,5 @@
 @page "/masters"
+@attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin")]
 @using Vargshala.Contracts.Masters
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Inputs

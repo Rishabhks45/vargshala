@@ -5,11 +5,11 @@
 else
 {
     <div class="card-surface p-6">
-        <div class="flex items-center justify-between pb-4 border-b border-tealborder">
-            <h2 class="font-bold text-base text-slate-800">@Title</h2>
+        <div class="flex items-center justify-between pb-4 border-b border-tealborder dark:border-slate-800">
+            <h2 class="font-bold text-base text-slate-800 dark:text-white">@Title</h2>
             @if (!string.IsNullOrEmpty(ViewAllUrl))
             {
-                <a href="@ViewAllUrl" class="text-xs font-semibold text-brand-600 hover:underline">View All</a>
+                <a href="@ViewAllUrl" class="text-xs font-semibold text-brand-600 dark:text-teal-400 hover:underline">View All</a>
             }
         </div>
 
@@ -23,35 +23,35 @@ else
                             <div class="w-9 h-9 rounded-xl @GetBadgeBg(item.Type) flex items-center justify-center shrink-0">
                                 @if (item.Type == ActivityType.Student)
                                 {
-                                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-brand-600 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                                     </svg>
                                 }
                                 else if (item.Type == ActivityType.Assignment)
                                 {
-                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
                                 }
                                 else if (item.Type == ActivityType.Exam)
                                 {
-                                    <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-teal-600 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
                                 }
                                 else if (item.Type == ActivityType.Fee)
                                 {
-                                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 text-brand-600 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 }
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-slate-800">@item.Title</p>
-                                <p class="text-[11px] text-slate-500">@item.Subtitle</p>
+                                <p class="text-xs font-bold text-slate-800 dark:text-white">@item.Title</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">@item.Subtitle</p>
                             </div>
                         </div>
-                        <span class="text-[10px] text-slate-400 font-medium">@item.TimeAgo</span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">@item.TimeAgo</span>
                     </div>
                 }
             }
@@ -83,10 +83,10 @@ else
 
     private string GetBadgeBg(ActivityType type) => type switch
     {
-        ActivityType.Student => "bg-brand-50 text-brand-600",
-        ActivityType.Assignment => "bg-emerald-50 text-emerald-600",
-        ActivityType.Exam => "bg-teal-50 text-teal-600",
-        ActivityType.Fee => "bg-brand-50 text-brand-600",
-        _ => "bg-slate-100 text-slate-600"
+        ActivityType.Student => "bg-brand-50 text-brand-600 dark:bg-teal-950/60 dark:text-teal-300",
+        ActivityType.Assignment => "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300",
+        ActivityType.Exam => "bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-300",
+        ActivityType.Fee => "bg-brand-50 text-brand-600 dark:bg-teal-950/60 dark:text-teal-300",
+        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
     };
 }

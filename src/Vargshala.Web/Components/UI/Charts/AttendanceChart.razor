@@ -8,18 +8,18 @@ else
          @onmouseleave="HandleMouseLeaveChart">
         
         <!-- Header & Legend -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-tealborder gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-tealborder dark:border-slate-800 gap-2">
             <div>
-                <h2 class="font-bold text-base text-slate-800">@Title</h2>
-                <p class="text-[11px] text-slate-400 mt-0.5">Average attendance across all 64 batches</p>
+                <h2 class="font-bold text-base text-slate-800 dark:text-white">@Title</h2>
+                <p class="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">Average attendance across all 64 batches</p>
             </div>
             <div class="flex items-center gap-4 text-xs">
-                <span class="flex items-center gap-1.5 font-semibold text-brand-700">
+                <span class="flex items-center gap-1.5 font-semibold text-brand-700 dark:text-brand-400">
                     <span class="w-2.5 h-2.5 rounded-full bg-brand-600"></span>
                     @CurrentMonthLabel (@DisplayCurrentValue%)
                 </span>
-                <span class="flex items-center gap-1.5 text-slate-400">
-                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                <span class="flex items-center gap-1.5 text-slate-400 dark:text-slate-400">
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
                     @LastMonthLabel (@DisplayLastValue%)
                 </span>
             </div>
@@ -32,23 +32,23 @@ else
             <div class="absolute inset-0 flex flex-col justify-between text-[11px] text-slate-400 select-none pointer-events-none">
                 <div class="flex items-center gap-3">
                     <span class="w-8 text-right">100%</span>
-                    <div class="flex-1 border-b border-slate-100"></div>
+                    <div class="flex-1 border-b border-slate-100 dark:border-slate-800/80"></div>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="w-8 text-right">75%</span>
-                    <div class="flex-1 border-b border-slate-100"></div>
+                    <div class="flex-1 border-b border-slate-100 dark:border-slate-800/80"></div>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="w-8 text-right">50%</span>
-                    <div class="flex-1 border-b border-slate-100"></div>
+                    <div class="flex-1 border-b border-slate-100 dark:border-slate-800/80"></div>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="w-8 text-right">25%</span>
-                    <div class="flex-1 border-b border-slate-100"></div>
+                    <div class="flex-1 border-b border-slate-100 dark:border-slate-800/80"></div>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="w-8 text-right">0%</span>
-                    <div class="flex-1 border-b border-slate-100"></div>
+                    <div class="flex-1 border-b border-slate-100 dark:border-slate-800/80"></div>
                 </div>
             </div>
 

@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Vargshala.Application\Vargshala.Application.csproj" />
     <ProjectReference Include="..\..\src\Vargshala.Domain\Vargshala.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Vargshala.Infrastructure\Vargshala.Infrastructure.csproj" />
   </ItemGroup>
 
     

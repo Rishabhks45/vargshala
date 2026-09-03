@@ -1,31 +1,36 @@
-using Moq;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Options;
+using Moq;
 using Vargshala.Application.Abstractions.Authentication;
-using Vargshala.Application.Abstractions.Persistence;
 using Vargshala.Application.Features.Authentication.Commands.Login;
+using Vargshala.Application.Features.Authentication.Infrastructure;
+using Vargshala.Application.Settings;
+using Vargshala.Contracts.Common;
 using Vargshala.Domain.Entities;
-using Vargshala.Domain.Enums;
 
 namespace Vargshala.UnitTests.Features.Authentication;
 
 public class LoginCommandHandlerTests
 {
-    private readonly Mock<IVargshalaDbContext> _dbMock;
+    private readonly Mock<IAuthRepository> _authRepositoryMock;
     private readonly Mock<ITokenService> _tokenServiceMock;
-    private readonly Mock<IPasswordHasher> _passwordHasherMock;
+    private readonly Mock<IEncryptionService> _encryptionServiceMock;
+    private readonly IOptions<EncryptionSettings> _encryptionOptions;
     private readonly LoginCommandHandler _handler;
+    private const string MasterKey = "aU5FU1RIQY5NUzU3Q1JFVEtFWTk4NzY1NDMyMUFCQ0RFRkdISUdLTE1OTw==";
 
     public LoginCommandHandlerTests()
     {
-        _dbMock = new Mock<IVargshalaDbContext>();
+        _authRepositoryMock = new Mock<IAuthRepository>();
         _tokenServiceMock = new Mock<ITokenService>();
-        _passwordHasherMock = new Mock<IPasswordHasher>();
+        _encryptionServiceMock = new Mock<IEncryptionService>();
+        _encryptionOptions = Options.Create(new EncryptionSettings { MasterKey = MasterKey });
+
         _handler = new LoginCommandHandler(
-            _dbMock.Object,
+            _authRepositoryMock.Object,
             _tokenServiceMock.Object,
-            _passwordHasherMock.Object);
+            _encryptionServiceMock.Object,
+            _encryptionOptions);
     }
 
     [Fact]
@@ -33,13 +38,11 @@ public class LoginCommandHandlerTests
     {
         // Arrange
         var user = CreateTestUser();
-        var users = new List<User> { user }.AsQueryable();
+        _authRepositoryMock.Setup(r => r.GetUserByEmailWithOrgAsync("admin@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
 
-        var mockSet = CreateMockDbSet(users);
-        _dbMock.Setup(db => db.Users).Returns(mockSet.Object);
-
-        _passwordHasherMock.Setup(ph => ph.Verify("ValidPassword123", user.PasswordHash))
-            .Returns(true);
+        _encryptionServiceMock.Setup(es => es.Decrypt(user.PasswordHash, MasterKey))
+            .Returns("ValidPassword123");
         _tokenServiceMock.Setup(ts => ts.GenerateAccessToken(It.IsAny<User>()))
             .Returns("test-access-token");
         _tokenServiceMock.Setup(ts => ts.GenerateRefreshToken())
@@ -63,15 +66,34 @@ public class LoginCommandHandlerTests
     {
         // Arrange
         var user = CreateTestUser();
-        var users = new List<User> { user }.AsQueryable();
+        _authRepositoryMock.Setup(r => r.GetUserByEmailWithOrgAsync("admin@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
 
-        var mockSet = CreateMockDbSet(users);
-        _dbMock.Setup(db => db.Users).Returns(mockSet.Object);
-
-        _passwordHasherMock.Setup(ph => ph.Verify("WrongPassword", user.PasswordHash))
-            .Returns(false);
+        _encryptionServiceMock.Setup(es => es.Decrypt(user.PasswordHash, MasterKey))
+            .Returns("RealPassword123");
 
         var command = new LoginCommand("admin@test.com", "WrongPassword");
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Message.Should().Be("Invalid email or password.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenDecryptionThrowsException_ReturnsInvalidCredentialsFailure()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        _authRepositoryMock.Setup(r => r.GetUserByEmailWithOrgAsync("admin@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _encryptionServiceMock.Setup(es => es.Decrypt(user.PasswordHash, MasterKey))
+            .Throws(new ArgumentException("Invalid encrypted text format"));
+
+        var command = new LoginCommand("admin@test.com", "Password123");
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -85,9 +107,8 @@ public class LoginCommandHandlerTests
     public async Task Handle_WithNonExistentUser_ReturnsFailure()
     {
         // Arrange
-        var users = new List<User>().AsQueryable();
-        var mockSet = CreateMockDbSet(users);
-        _dbMock.Setup(db => db.Users).Returns(mockSet.Object);
+        _authRepositoryMock.Setup(r => r.GetUserByEmailWithOrgAsync("nonexistent@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
 
         var command = new LoginCommand("nonexistent@test.com", "AnyPassword");
 
@@ -105,10 +126,8 @@ public class LoginCommandHandlerTests
         // Arrange
         var user = CreateTestUser();
         user.IsActive = false;
-        var users = new List<User> { user }.AsQueryable();
-
-        var mockSet = CreateMockDbSet(users);
-        _dbMock.Setup(db => db.Users).Returns(mockSet.Object);
+        _authRepositoryMock.Setup(r => r.GetUserByEmailWithOrgAsync("admin@test.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
 
         var command = new LoginCommand("admin@test.com", "ValidPassword123");
 
@@ -127,8 +146,8 @@ public class LoginCommandHandlerTests
         FirstName = "Admin",
         LastName = "User",
         Email = "admin@test.com",
-        PasswordHash = "hashed-password",
-        Role = Role.OrganizationAdmin,
+        PasswordHash = "encrypted-password",
+        Role = UserRole.OrganizationAdmin,
         IsActive = true,
         IsDeleted = false,
         CreatedAt = DateTime.UtcNow,
@@ -141,82 +160,4 @@ public class LoginCommandHandlerTests
             CreatedAt = DateTime.UtcNow
         }
     };
-
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(IQueryable<T> data) where T : class
-    {
-        var mockSet = new Mock<DbSet<T>>();
-        mockSet.As<IAsyncEnumerable<T>>()
-            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(new TestAsyncEnumerator<T>(data.GetEnumerator()));
-        mockSet.As<IQueryable<T>>().Setup(m => m.Provider)
-            .Returns(new TestAsyncQueryProvider<T>(data.Provider));
-        mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
-        mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
-        mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
-        return mockSet;
-    }
-}
-
-// Async query provider helpers for mocking EF Core
-internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
-{
-    private readonly IQueryProvider _inner;
-
-    internal TestAsyncQueryProvider(IQueryProvider inner) => _inner = inner;
-
-    public IQueryable CreateQuery(System.Linq.Expressions.Expression expression)
-        => new TestAsyncEnumerable<TEntity>(expression);
-
-    public IQueryable<TElement> CreateQuery<TElement>(System.Linq.Expressions.Expression expression)
-        => new TestAsyncEnumerable<TElement>(expression);
-
-    public object? Execute(System.Linq.Expressions.Expression expression)
-        => _inner.Execute(expression);
-
-    public TResult Execute<TResult>(System.Linq.Expressions.Expression expression)
-        => _inner.Execute<TResult>(expression);
-
-    public TResult ExecuteAsync<TResult>(System.Linq.Expressions.Expression expression,
-        CancellationToken cancellationToken = default)
-    {
-        var resultType = typeof(TResult).GetGenericArguments()[0];
-        var executionResult = typeof(IQueryProvider)
-            .GetMethod(
-                name: nameof(IQueryProvider.Execute),
-                genericParameterCount: 1,
-                types: new[] { typeof(System.Linq.Expressions.Expression) })!
-            .MakeGenericMethod(resultType)
-            .Invoke(this, new object[] { expression });
-
-        return (TResult)typeof(Task).GetMethod(nameof(Task.FromResult))!
-            .MakeGenericMethod(resultType)
-            .Invoke(null, new[] { executionResult })!;
-    }
-}
-
-internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
-{
-    public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
-    public TestAsyncEnumerable(System.Linq.Expressions.Expression expression) : base(expression) { }
-
-    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-        => new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
-
-    IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
-}
-
-internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-{
-    private readonly IEnumerator<T> _inner;
-
-    public TestAsyncEnumerator(IEnumerator<T> inner) => _inner = inner;
-
-    public ValueTask DisposeAsync()
-    {
-        _inner.Dispose();
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(_inner.MoveNext());
-    public T Current => _inner.Current;
 }

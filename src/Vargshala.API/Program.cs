@@ -1,3 +1,4 @@
+using Scalar.AspNetCore;
 using Serilog;
 using Vargshala.API.Extensions;
 using Vargshala.API.Middleware;
@@ -45,7 +46,21 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Vargshala API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "Vargshala API Documentation";
+        options.DisplayRequestDuration();
+        options.EnablePersistAuthorization();
     });
+
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Vargshala API Reference")
+               .WithTheme(ScalarTheme.DeepSpace)
+               .WithOpenApiRoutePattern("/swagger/v1/swagger.json");
+    });
+
+    // Auto-redirect root "/" to "/swagger"
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
     // Seed database in development
     try

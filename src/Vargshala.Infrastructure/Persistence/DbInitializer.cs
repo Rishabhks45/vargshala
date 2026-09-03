@@ -19,14 +19,16 @@ public static class DbInitializer
 
         try
         {
-            // 1. Seed SuperAdmin (Platform Level - No Organization)
+            // 1. Seed / Update SuperAdmin (Platform Level - No Organization)
             const string superAdminEmail = "rishabh.sharma@vargshala.com";
-            var superAdminExists = await context.Users
-                .AnyAsync(u => u.Email == superAdminEmail && u.Role == UserRole.SuperAdmin);
+            var superAdmin = await context.Users
+                .FirstOrDefaultAsync(u => u.Email == superAdminEmail && u.Role == UserRole.SuperAdmin);
 
-            if (!superAdminExists)
+            var encryptedPassword = encryptionService.Encrypt("Admin@123", encryptionSettings.MasterKey);
+
+            if (superAdmin is null)
             {
-                var superAdmin = new User
+                superAdmin = new User
                 {
                     Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
                     OrganizationId = null,
@@ -34,7 +36,7 @@ public static class DbInitializer
                     LastName = "Sharma",
                     Email = superAdminEmail,
                     Mobile = "+919876543210",
-                    PasswordHash = encryptionService.Encrypt("Admin@12345", encryptionSettings.MasterKey),
+                    PasswordHash = encryptedPassword,
                     Role = UserRole.SuperAdmin,
                     EmailVerified = true,
                     MobileVerified = true,
@@ -44,6 +46,11 @@ public static class DbInitializer
 
                 context.Users.Add(superAdmin);
                 logger.LogInformation("Seeded SuperAdmin user: {Email}", superAdminEmail);
+            }
+            else
+            {
+                superAdmin.PasswordHash = encryptedPassword;
+                superAdmin.IsActive = true;
             }
 
             // 2. Seed Default Organization
@@ -73,14 +80,14 @@ public static class DbInitializer
                 logger.LogInformation("Seeded Default Organization: {OrgName} ({OrgCode})", defaultOrg.Name, defaultOrg.Code);
             }
 
-            // 3. Seed OrganizationAdmin for Default Organization
+            // 3. Seed / Update OrganizationAdmin for Default Organization
             const string orgAdminEmail = "rishabh.admin@vargshala.com";
-            var orgAdminExists = await context.Users
-                .AnyAsync(u => u.Email == orgAdminEmail && u.OrganizationId == defaultOrg.Id);
+            var orgAdmin = await context.Users
+                .FirstOrDefaultAsync(u => u.Email == orgAdminEmail && u.OrganizationId == defaultOrg.Id);
 
-            if (!orgAdminExists)
+            if (orgAdmin is null)
             {
-                var orgAdmin = new User
+                orgAdmin = new User
                 {
                     Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
                     OrganizationId = defaultOrg.Id,
@@ -88,7 +95,7 @@ public static class DbInitializer
                     LastName = "Sharma",
                     Email = orgAdminEmail,
                     Mobile = "+919876543210",
-                    PasswordHash = encryptionService.Encrypt("Admin@12345", encryptionSettings.MasterKey),
+                    PasswordHash = encryptedPassword,
                     Role = UserRole.OrganizationAdmin,
                     EmailVerified = true,
                     MobileVerified = true,
@@ -98,6 +105,11 @@ public static class DbInitializer
 
                 context.Users.Add(orgAdmin);
                 logger.LogInformation("Seeded OrganizationAdmin user: {Email}", orgAdminEmail);
+            }
+            else
+            {
+                orgAdmin.PasswordHash = encryptedPassword;
+                orgAdmin.IsActive = true;
             }
 
             await context.SaveChangesAsync();

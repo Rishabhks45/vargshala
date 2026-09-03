@@ -1,5 +1,8 @@
 @page "/login"
+@attribute [AllowAnonymous]
 @layout AuthLayout
+@using Vargshala.Web.Services
+@inject IAuthService AuthService
 @rendermode InteractiveServer
 
 <PageTitle>Sign In | Vargshala</PageTitle>
@@ -229,11 +232,7 @@
 </div>
 
 @code {
-    private readonly LoginRequest _loginModel = new()
-    {
-        Email = "rishabh.admin@vargshala.com",
-        Password = "Admin@12345"
-    };
+    private readonly LoginRequest _loginModel = new();
 
     private bool _showPassword = false;
     private bool _isLoading = false;
@@ -241,6 +240,20 @@
     private string? _successMessage;
 
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var target = Vargshala.Web.Common.RoleNavigationHelper.GetDefaultRouteForClaimsPrincipal(authState.User);
+                Navigation.NavigateTo(target, replace: true);
+            }
+        }
+    }
 
     private void TogglePasswordVisibility()
     {
@@ -255,14 +268,24 @@
 
         try
         {
-            await Task.Delay(800);
-            _successMessage = "Login successful! Redirecting to Dashboard...";
-            await Task.Delay(500);
-            Navigation.NavigateTo("/");
+            var response = await AuthService.LoginAsync(_loginModel);
+            if (response.Success)
+            {
+                _successMessage = "Login successful! Redirecting...";
+                await Task.Delay(300);
+
+                var role = response.Data?.User?.Role ?? UserRole.OrganizationAdmin;
+                var targetUrl = Vargshala.Web.Common.RoleNavigationHelper.GetDefaultRouteForRole(role);
+                Navigation.NavigateTo(targetUrl);
+            }
+            else
+            {
+                _errorMessage = response.Message ?? "Invalid email or password.";
+            }
         }
         catch (Exception ex)
         {
-            _errorMessage = "Authentication failed: " + ex.Message;
+            _errorMessage = "Authentication error: " + ex.Message;
         }
         finally
         {
