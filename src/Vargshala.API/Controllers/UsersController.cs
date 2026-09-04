@@ -95,6 +95,25 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("controlpanel/{id:guid}")]
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
+    public async Task<IActionResult> UpdateControlPanelUser(Guid id, [FromBody] UpdateUserRequest request)
+    {
+        if (id != request.Id)
+        {
+            request.Id = id;
+        }
+
+        var result = await _mediator.Send(new Vargshala.Application.Features.Users.Commands.UpdateControlPanelUser.UpdateControlPanelUserCommand(request));
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpPatch("{id:guid}/toggle-status")]
     [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
     public async Task<IActionResult> ToggleUserStatus(Guid id)

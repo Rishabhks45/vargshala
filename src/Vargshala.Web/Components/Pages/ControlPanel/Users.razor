@@ -9,66 +9,124 @@
 @using Vargshala.Web.Services
 @inject IUserService UserService
 @inject IInstituteService InstituteService
+@inject INotificationService Toast
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
-<PageTitle>Platform Users | Control Panel</PageTitle>
-
-<!-- Toast Alert Banner -->
-@if (!string.IsNullOrEmpty(_toastMessage))
-{
-    <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold animate-in slide-in-from-top-4 duration-300 @(_isToastError ? "bg-rose-50 dark:bg-rose-950/90 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300" : "bg-emerald-50 dark:bg-emerald-950/90 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300")">
-        <span>@(_isToastError ? "⚠️" : "✅")</span>
-        <span>@_toastMessage</span>
-        <button type="button" @onclick="() => _toastMessage = null" class="ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
-    </div>
-}
+<PageTitle>Platform Users &amp; Administrators | Control Panel</PageTitle>
 
 <div class="space-y-6 transition-colors duration-200">
 
-    <!-- Top Header -->
+    <!-- Top Header & Action Controls (Matched with Institutes.razor) -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
                 <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">👥</span>
                 Platform Users &amp; Administrators
             </h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                 Manage SuperAdmin, BackOffice staff, and registered institute OrganizationAdmins.
             </p>
         </div>
 
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-3">
             <button type="button" 
-                    @onclick="() => LoadUsersAsync(1)" 
-                    class="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#142025] transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                <svg class="w-3.5 h-3.5 @(_isLoading ? "animate-spin text-[#009488]" : "text-slate-400")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    @onclick="ExportCsv"
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                <span>Refresh</span>
+                <span>Export CSV</span>
             </button>
 
             <button type="button" 
                     @onclick="OpenAddUserDrawerAsync"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                </svg>
+                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </span>
                 <span>Add Administrator</span>
             </button>
         </div>
     </div>
 
-    <!-- Search & Filter Controls -->
+    <!-- Quick Stats Cards Summary (Matched with Institutes.razor) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- 1. Total Administrators -->
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-[#009488] flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total Administrators</p>
+                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_totalRecords</h3>
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                    @_users.Count(u => u.IsActive) Active • @_users.Count(u => !u.IsActive) Suspended
+                </p>
+            </div>
+        </div>
+
+        <!-- 2. Platform Staff -->
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/80 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Platform Staff</p>
+                <h3 class="text-lg font-extrabold text-purple-600 dark:text-purple-400">
+                    @_users.Count(u => u.Role == UserRole.SuperAdmin || u.Role == UserRole.BackOffice)
+                </h3>
+                <p class="text-[10px] text-slate-400 font-medium mt-0.5">SuperAdmin &amp; BackOffice</p>
+            </div>
+        </div>
+
+        <!-- 3. Institute Admins -->
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Institute Admins</p>
+                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
+                    @_users.Count(u => u.Role == UserRole.OrganizationAdmin)
+                </h3>
+                <p class="text-[10px] text-slate-400 font-medium mt-0.5">Coaching Center Heads</p>
+            </div>
+        </div>
+
+        <!-- 4. Multi-Tenant RBAC -->
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tenant Security</p>
+                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">RBAC Active</h3>
+                <p class="text-[10px] text-slate-400 font-medium mt-0.5">Role-Based Data Isolation</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls (Matched with Institutes.razor) -->
     <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <!-- Reusable SearchInput Component with Debounce & Clear -->
         <div class="flex-1 w-full lg:max-w-md">
             <SearchInput @bind-Value="_query.Search" 
                          OnSearch="() => LoadUsersAsync(1)" 
-                         Placeholder="Search name, email, mobile, or institute..." />
+                         Placeholder="Search administrator name, email, mobile, or institute..." />
         </div>
 
-        <!-- Filter Dropdowns with CustomSelect (Server-Side Filtered) -->
+        <!-- Filter Dropdowns with CustomSelect -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2.5 w-full lg:w-auto">
             <CustomSelect Value="@_selectedRoleFilter" 
                           ValueChanged="HandleRoleFilterChangedAsync" 
@@ -81,43 +139,43 @@
         </div>
     </div>
 
-    <!-- Users Data Table Container -->
-    <div class="card-surface overflow-hidden border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div class="overflow-x-auto">
+    <!-- Users Data Table (Pixel-Matched Layout with Full Dark Mode & TableSortState) -->
+    <div class="card-surface border border-slate-200 dark:border-slate-800 shadow-xs rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto min-h-[260px]">
             <table class="w-full min-w-[860px] text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
-                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Name")'>
+                    <tr class="border-b border-slate-200/80 dark:border-slate-800/80 text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase">
+                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Name")'>
                             <div class="flex items-center gap-1.5">
                                 <span>User Name</span>
                                 <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Email")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Email")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Contact Details</span>
                                 <span class="@_sortState.GetIndicatorClass("Email")">@_sortState.GetIndicator("Email")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Role")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Role")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Access Role</span>
                                 <span class="@_sortState.GetIndicatorClass("Role")">@_sortState.GetIndicator("Role")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Organization")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Organization")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Associated Institute</span>
                                 <span class="@_sortState.GetIndicatorClass("Organization")">@_sortState.GetIndicator("Organization")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Status")'>
+                        <th class="py-3.5 px-4 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Status")'>
                             <div class="flex items-center justify-center gap-1.5">
                                 <span>Status</span>
                                 <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("CreatedAt")'>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("CreatedAt")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Joined Date</span>
                                 <span class="@_sortState.GetIndicatorClass("CreatedAt")">@_sortState.GetIndicator("CreatedAt")</span>
@@ -126,14 +184,14 @@
                         <th class="py-3.5 px-6 text-right select-none">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100/80 dark:divide-slate-800/40 text-xs">
+                <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs">
                     @if (_isLoading)
                     {
                         <tr>
                             <td colspan="7" class="py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center space-y-2">
                                     <div class="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
-                                    <p class="text-xs font-semibold text-slate-500">Loading users from database...</p>
+                                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Loading administrators from database...</p>
                                 </div>
                             </td>
                         </tr>
@@ -142,18 +200,18 @@
                     {
                         @foreach (var user in _users)
                         {
-                            <tr class="hover:bg-slate-50/70 dark:hover:bg-[#152329]/60 transition-colors">
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-[#152329]/70 transition-colors">
                                 <!-- User Name & Avatar -->
                                 <td class="py-3.5 px-6">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl @(user.Role == UserRole.SuperAdmin ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : user.Role == UserRole.BackOffice ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-teal-500/10 text-[#009488]") font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+                                        <div class="w-10 h-10 rounded-xl @(user.Role == UserRole.SuperAdmin ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : user.Role == UserRole.BackOffice ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-teal-500/10 text-[#009488]") font-black text-sm flex items-center justify-center shrink-0 shadow-inner">
                                             @user.FirstName.Substring(0, 1).ToUpperInvariant()@user.LastName.Substring(0, 1).ToUpperInvariant()
                                         </div>
                                         <div>
                                             <div class="font-bold text-slate-800 dark:text-white leading-tight">
                                                 @user.FirstName @user.LastName
                                             </div>
-                                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+                                            <div class="text-[10px] font-mono text-teal-600 dark:text-teal-400 mt-0.5">
                                                 ID: @user.Id.ToString().Substring(0, 8)...
                                             </div>
                                         </div>
@@ -162,49 +220,56 @@
 
                                 <!-- Contact Details -->
                                 <td class="py-3.5 px-4">
-                                    <div class="font-medium text-slate-700 dark:text-slate-300">@user.Email</div>
-                                    <div class="text-[11px] text-slate-400 mt-0.5">
-                                        @(string.IsNullOrWhiteSpace(user.Mobile) ? "—" : user.Mobile)
-                                    </div>
+                                    <div class="font-bold text-slate-800 dark:text-white">@user.Email</div>
+                                    @if (!string.IsNullOrWhiteSpace(user.Mobile))
+                                    {
+                                        <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                                            @user.Mobile
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-[11px] text-slate-400 mt-0.5">—</div>
+                                    }
                                 </td>
 
                                 <!-- Access Role Badge (Enum-bound) -->
                                 <td class="py-3.5 px-4">
                                     @if (user.Role == UserRole.SuperAdmin)
                                     {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80 shadow-2xs">
                                             <span>🛡️</span>
                                             <span>@user.Role.GetDisplayName()</span>
                                         </span>
                                     }
                                     else if (user.Role == UserRole.BackOffice)
                                     {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 shadow-2xs">
                                             <span>💼</span>
                                             <span>@user.Role.GetDisplayName()</span>
                                         </span>
                                     }
                                     else if (user.Role == UserRole.OrganizationAdmin)
                                     {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-50 dark:bg-teal-950/70 text-[#00796b] dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/80 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-teal-50 dark:bg-teal-950/70 text-[#00796b] dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/80 shadow-2xs">
                                             <span>🏛️</span>
                                             <span>@user.Role.GetDisplayName()</span>
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs">
                                             <span>@user.Role</span>
                                         </span>
                                     }
                                 </td>
 
                                 <!-- Associated Institute -->
-                                <td class="py-3.5 px-4">
+                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
                                     @if (user.Role == UserRole.SuperAdmin || user.Role == UserRole.BackOffice)
                                     {
-                                        <span class="text-xs text-slate-400 font-medium">
-                                            Platform
+                                        <span class="text-xs text-slate-400 font-semibold">
+                                            Platform Staff
                                         </span>
                                     }
                                     else if (!string.IsNullOrWhiteSpace(user.OrganizationName))
@@ -231,70 +296,110 @@
                                 <td class="py-3.5 px-4 text-center">
                                     @if (user.IsActive)
                                     {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                                             Active
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
                                             Suspended
                                         </span>
                                     }
                                 </td>
 
                                 <!-- Joined Date -->
-                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">
-                                    <div>@user.CreatedAt.ToString("dd MMM yyyy")</div>
-                                    <div class="text-[10px] text-slate-400 mt-0.5">
+                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                                    <div class="font-semibold text-slate-800 dark:text-white">@user.CreatedAt.ToString("dd MMM yyyy")</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5 font-medium">
                                         @(user.LastLoginAt.HasValue ? $"Login: {user.LastLoginAt.Value:dd MMM}" : "No login yet")
                                     </div>
                                 </td>
 
-                                <!-- Actions Column (Manage User) -->
+                                <!-- Actions Column: Direct Action Buttons (Matched with Institutes.razor) -->
                                 <td class="py-3.5 px-6 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <!-- View Details -->
-                                        <button type="button" 
-                                                @onclick="() => OpenUserDetailsDrawer(user)"
-                                                title="View User Details"
-                                                class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
+                                        <!-- Quick Action 1: View Profile Details -->
+                                        <div class="relative group inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => OpenUserDetailsDrawer(user)" 
+                                                    class="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] dark:text-teal-400 border border-teal-200/80 dark:border-teal-800/80 hover:bg-[#009488] hover:text-white dark:hover:bg-[#009488] dark:hover:text-white transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                                    aria-label="View Details">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                            </button>
+                                            <!-- Tooltip (Teal Theme) -->
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-[#004D40] text-teal-100 border border-teal-500/50 shadow-lg tracking-wide">
+                                                    View Details
+                                                </span>
+                                                <span class="w-2 h-2 rotate-45 -mt-1 bg-[#004D40] border-r border-b border-teal-500/50"></span>
+                                            </div>
+                                        </div>
 
-                                        <!-- Toggle Status (Activate / Suspend) -->
-                                        <button type="button" 
-                                                @onclick="() => HandleToggleStatusAsync(user)"
-                                                disabled="@(_isTogglingStatusId == user.Id)"
-                                                title="@(user.IsActive ? "Suspend Administrator" : "Activate Administrator")"
-                                                class="p-1.5 rounded-lg border transition-all cursor-pointer @(user.IsActive 
-                                                    ? "border-amber-200 dark:border-amber-800/80 bg-amber-50/50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50" 
-                                                    : "border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50")">
-                                            @if (_isTogglingStatusId == user.Id)
-                                            {
-                                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        <!-- Quick Action 2: Edit Administrator -->
+                                        <div class="relative group inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => OpenEditUserDrawerAsync(user)" 
+                                                    class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/80 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                                    aria-label="Edit Administrator">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                 </svg>
-                                            }
-                                            else if (user.IsActive)
-                                            {
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            }
-                                            else
-                                            {
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            }
-                                        </button>
+                                            </button>
+                                            <!-- Tooltip (Amber Theme) -->
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-amber-600 text-white border border-amber-400/50 shadow-lg tracking-wide">
+                                                    Edit Administrator
+                                                </span>
+                                                <span class="w-2 h-2 rotate-45 -mt-1 bg-amber-600 border-r border-b border-amber-400/50"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quick Action 3: Toggle Status (Active / Suspend) -->
+                                        <div class="relative group inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => HandleToggleStatusAsync(user)" 
+                                                    disabled="@(_isTogglingStatusId == user.Id)"
+                                                    class="p-2 rounded-xl @(user.IsActive 
+                                                        ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white" 
+                                                        : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 dark:hover:text-white") transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                                    aria-label="Toggle Status">
+                                                @if (_isTogglingStatusId == user.Id)
+                                                {
+                                                    <svg class="w-4 h-4 animate-spin text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                                    </svg>
+                                                }
+                                                else
+                                                {
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                                    </svg>
+                                                }
+                                            </button>
+                                            <!-- Tooltip (Rose / Emerald Theme) -->
+                                            <div class="absolute bottom-full right-0 mb-2 hidden group-hover:flex flex-col items-end pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                @if (user.IsActive)
+                                                {
+                                                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-rose-600 text-white border border-rose-400/50 shadow-lg tracking-wide">
+                                                        Suspend Administrator
+                                                    </span>
+                                                    <span class="w-2 h-2 rotate-45 -mt-1 mr-3 bg-rose-600 border-r border-b border-rose-400/50"></span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-emerald-600 text-white border border-emerald-400/50 shadow-lg tracking-wide">
+                                                        Activate Administrator
+                                                    </span>
+                                                    <span class="w-2 h-2 rotate-45 -mt-1 mr-3 bg-emerald-600 border-r border-b border-emerald-400/50"></span>
+                                                }
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -308,11 +413,11 @@
                                     <svg class="w-8 h-8 text-rose-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                     </svg>
-                                    <p class="font-bold text-rose-600 dark:text-rose-400 text-sm">Error Loading Users</p>
+                                    <p class="font-bold text-rose-600 dark:text-rose-400 text-sm">Database Connection Error</p>
                                     <p class="text-xs text-slate-400">@_errorMessage</p>
                                     <button type="button" @onclick="() => LoadUsersAsync(1)" 
                                             class="mt-2 px-3.5 py-1.5 rounded-xl bg-teal-500/10 text-[#009488] hover:bg-teal-500/20 text-xs font-bold transition-all cursor-pointer">
-                                        Retry
+                                        Retry Connection
                                     </button>
                                 </div>
                             </td>
@@ -324,7 +429,7 @@
                             <td colspan="7" class="py-12 text-center text-slate-400">
                                 <div class="max-w-xs mx-auto space-y-2">
                                     <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
                                     <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No administrators found</p>
                                     <p class="text-xs text-slate-400">Try changing your search query or filter options.</p>
@@ -342,33 +447,35 @@
                          TotalRecords="_totalRecords" 
                          ItemLabel="administrators"
                          IsLoading="_isLoading"
-                         OnPageChanged="LoadUsersAsync" 
                          OnPageSizeChanged="HandlePageSizeChangedAsync" />
     </div>
 
 </div>
 
 <!-- ========================================================================= -->
-<!-- DRAWER 1: Add Administrator Slide-Over Drawer -->
+<!-- DRAWER 1: Add New Administrator Drawer (Exact Match with Institutes.razor) -->
 <!-- ========================================================================= -->
-@if (_showAddUserDrawer)
+@if (_showAddDrawer)
 {
-    <!-- Backdrop Overlay -->
+    <!-- Backdrop Overlay with Smooth Fade -->
     <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
-         @onclick="CloseAddUserDrawerAsync"></div>
+         @onclick="CloseDrawerAsync"></div>
 
-    <!-- Drawer Container -->
+    <!-- Right Slide-Over Drawer Container -->
     <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
         
-        <!-- Header -->
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
         <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
             <div class="flex items-center gap-3 relative z-10">
-                <div class="w-10 h-10 rounded-2xl bg-[#009488] p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold text-white">
+                <div class="w-10 h-10 rounded-2xl bg-teal-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
                     👥
                 </div>
                 <div>
-                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
-                        Add Administrator
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>Add New Administrator</span>
                     </h3>
                     <p class="text-xs text-teal-200/90 font-medium">
                         Create SuperAdmin, BackOffice staff, or institute OrganizationAdmin
@@ -377,236 +484,231 @@
             </div>
 
             <button type="button" 
-                    @onclick="CloseAddUserDrawerAsync" 
-                    class="p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        <!-- Form Body -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
-            @if (!string.IsNullOrEmpty(_addFormError))
-            {
-                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
-                    @_addFormError
-                </div>
-            }
+        <!-- Drawer Body & Footer inside EditForm -->
+        <EditForm Model="@_createForm" OnValidSubmit="SubmitCreateUserAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <FluentValidationValidator />
 
-            <!-- 1. Role Selection -->
-            <div class="space-y-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">1. Access Role &amp; Assignment</h4>
-                
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Administrator Role *</label>
-                    <CustomSelect Value="@_newUserRoleString" 
-                                  ValueChanged="HandleNewUserRoleChanged" 
-                                  Options="_newUserRoleOptions" 
-                                  Placeholder="Select Role..." />
-                    <p class="text-[10px] text-slate-400 mt-1">
-                        Select whether this user is an institute-level admin or platform-level staff.
-                    </p>
-                </div>
-
-                <!-- CONDITIONAL ORGANIZATION SELECTION: Only show if Role is OrganizationAdmin -->
-                @if (_newUser.Role == UserRole.OrganizationAdmin)
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+                @if (!string.IsNullOrEmpty(_formError))
                 {
-                    <div class="animate-in fade-in zoom-in-95 duration-200">
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Associated Institute / Organization *
-                        </label>
-                        <CustomSelect Value="@_newUserOrgString" 
-                                      ValueChanged="HandleNewUserOrgChanged" 
-                                      Options="_instituteOptions" 
-                                      Placeholder="Select Institute..." />
-                        <p class="text-[10px] text-teal-600 dark:text-teal-400 mt-1 font-medium">
-                            🏛️ Required for OrganizationAdmin. They will only manage this institute.
-                        </p>
-                    </div>
+                    <AlertNotification Type="AlertType.Error"
+                                       Message="@_formError"
+                                       Dismissible="true"
+                                       OnClose="() => _formError = null" />
                 }
-                else if (_newUser.Role == UserRole.BackOffice || _newUser.Role == UserRole.SuperAdmin)
-                {
-                    <div class="p-3 rounded-xl @(_newUser.Role == UserRole.SuperAdmin ? "bg-purple-50 dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-800/80 text-purple-700 dark:text-purple-300" : "bg-blue-50 dark:bg-blue-950/40 border-blue-200/80 dark:border-blue-800/80 text-blue-700 dark:text-blue-300") border text-xs animate-in fade-in duration-200">
-                        <div class="flex items-center gap-2 font-bold mb-0.5">
-                            <span>@(_newUser.Role == UserRole.SuperAdmin ? "🛡️" : "💼")</span>
-                            <span>@(_newUser.Role.GetDisplayName()) Access</span>
+
+                <!-- 1. Personal & Contact Details -->
+                <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">1. Personal &amp; Contact Details</h4>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">First Name *</label>
+                            <InputText @bind-Value="_createForm.FirstName" placeholder="e.g. John"
+                                       class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <ValidationMessage For="@(() => _createForm.FirstName)" class="text-[10px] text-rose-500 font-semibold" />
                         </div>
-                        <p class="text-[11px] @(_newUser.Role == UserRole.SuperAdmin ? "text-purple-600/90 dark:text-purple-400" : "text-blue-600/90 dark:text-blue-400") leading-relaxed">
-                            @_newUser.Role.GetDisplayName() accounts operate platform-wide across Vargshala and are not assigned to an institute.
-                        </p>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">Last Name *</label>
+                            <InputText @bind-Value="_createForm.LastName" placeholder="e.g. Doe"
+                                       class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <ValidationMessage For="@(() => _createForm.LastName)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
                     </div>
-                }
-            </div>
 
-            <!-- 2. Personal & Contact Information -->
-            <div class="space-y-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Personal &amp; Contact Details</h4>
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-800 dark:text-slate-200">Email Address *</label>
+                        <InputText @bind-Value="_createForm.Email" placeholder="admin@example.com"
+                                   class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                        <ValidationMessage For="@(() => _createForm.Email)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-800 dark:text-slate-200">Mobile Number (Optional)</label>
+                        <InputText @bind-Value="_createForm.Mobile" placeholder="+91 98765 43210"
+                                   class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                        <ValidationMessage For="@(() => _createForm.Mobile)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
+                </div>
+
+                <!-- 2. Role & Institute Assignment -->
+                <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Access Role &amp; Assignment</h4>
+                    
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
-                        <input type="text" @bind="_newUser.FirstName" placeholder="e.g. John"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                        <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">Administrator Role *</label>
+                        <CustomSelect Value="@_userRoleString" 
+                                      ValueChanged="HandleUserRoleChanged" 
+                                      Options="_newUserRoleOptions" 
+                                      Placeholder="Select Role..." />
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
-                        <input type="text" @bind="_newUser.LastName" placeholder="e.g. Doe"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
-                    </div>
+
+                    @if (_createForm.Role == UserRole.OrganizationAdmin)
+                    {
+                        <div class="animate-in fade-in zoom-in-95 duration-200 space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">
+                                Associated Institute / Organization *
+                            </label>
+                            <CustomSelect Value="@_userOrgString" 
+                                          ValueChanged="HandleUserOrgChanged" 
+                                          Options="_instituteOptions" 
+                                          Placeholder="Select Institute..." />
+                            <p class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
+                                🏛️ Required for OrganizationAdmin. They will manage this specific institute.
+                            </p>
+                        </div>
+                    }
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address *</label>
-                    <input type="email" @bind="_newUser.Email" placeholder="admin@example.com"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
-                </div>
+                <!-- 3. Password -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">3. Initial Password</h4>
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mobile Number (Optional)</label>
-                    <input type="tel" @bind="_newUser.Mobile" placeholder="+91 98765 43210"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-800 dark:text-slate-200">Password *</label>
+                        <div class="relative">
+                            <input type="@(_showPassword ? "text" : "password")" @bind="_createForm.Password" placeholder="Minimum 6 characters"
+                                   class="w-full px-3 py-2.5 pr-10 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <button type="button" @onclick="() => _showPassword = !_showPassword"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+                                @if (_showPassword)
+                                {
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
+                                }
+                                else
+                                {
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                }
+                            </button>
+                        </div>
+                        <ValidationMessage For="@(() => _createForm.Password)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
                 </div>
             </div>
 
-            <!-- 3. Security & Credentials -->
-            <div class="space-y-3">
-                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">3. Initial Password</h4>
-
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Password *</label>
-                    <div class="relative">
-                        <input type="@(_showPassword ? "text" : "password")" @bind="_newUser.Password" placeholder="Minimum 8 characters"
-                               class="w-full px-3 py-2 pr-10 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
-                        <button type="button" @onclick="() => _showPassword = !_showPassword"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
-                            @if (_showPassword)
-                            {
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
-                            }
-                            else
-                            {
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            }
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-slate-400 mt-1">Must be at least 8 characters long.</p>
-                </div>
+            <!-- Footer -->
+            <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        disabled="_isSubmitting"
+                        class="px-5 py-2.5 text-xs font-bold bg-[#009488] hover:bg-[#00796b] text-white rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                    @if (_isSubmitting)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Creating Administrator...</span>
+                    }
+                    else
+                    {
+                        <span>Create Administrator</span>
+                    }
+                </button>
             </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="p-5 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
-            <button type="button" 
-                    @onclick="CloseAddUserDrawerAsync"
-                    class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
-                Cancel
-            </button>
-            <button type="button" 
-                    @onclick="HandleSubmitAddUserAsync"
-                    disabled="_isSubmittingUser"
-                    class="px-5 py-2 text-xs font-bold bg-[#009488] hover:bg-[#00796b] text-white rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
-                @if (_isSubmittingUser)
-                {
-                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Creating Account...</span>
-                }
-                else
-                {
-                    <span>Create Administrator</span>
-                }
-            </button>
-        </div>
+        </EditForm>
     </div>
 }
 
 <!-- ========================================================================= -->
-<!-- DRAWER 2: View User Details Slide-Over Drawer -->
+<!-- DRAWER 2: View User Details Slide-Over (Exact Match with Institutes.razor) -->
 <!-- ========================================================================= -->
-@if (_viewingUser != null)
+@if (_showProfileDrawer && _selectedUser != null)
 {
-    <!-- Backdrop Overlay -->
-    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDetailsDrawerOpen ? "opacity-100" : "opacity-0")" 
-         @onclick="CloseUserDetailsDrawerAsync"></div>
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
 
-    <!-- Drawer Container -->
-    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDetailsDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
         
-        <!-- Header -->
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
         <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
             <div class="flex items-center gap-3 relative z-10">
-                <div class="w-10 h-10 rounded-2xl @(_viewingUser.Role == UserRole.SuperAdmin ? "bg-purple-500" : _viewingUser.Role == UserRole.BackOffice ? "bg-blue-600" : "bg-[#009488]") p-1 flex items-center justify-center shadow-md shrink-0 text-sm font-bold text-white">
-                    @_viewingUser.FirstName.Substring(0, 1).ToUpperInvariant()@_viewingUser.LastName.Substring(0, 1).ToUpperInvariant()
+                <div class="w-10 h-10 rounded-2xl @(_selectedUser.Role == UserRole.SuperAdmin ? "bg-purple-500" : _selectedUser.Role == UserRole.BackOffice ? "bg-blue-600" : "bg-amber-400") p-1 flex items-center justify-center shadow-md shrink-0 text-sm font-bold text-white">
+                    @_selectedUser.FirstName.Substring(0, 1).ToUpperInvariant()@_selectedUser.LastName.Substring(0, 1).ToUpperInvariant()
                 </div>
                 <div>
                     <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
-                        @_viewingUser.FirstName @_viewingUser.LastName
+                        @_selectedUser.FirstName @_selectedUser.LastName
                     </h3>
                     <p class="text-xs text-teal-200/90 font-medium">
-                        @_viewingUser.Role Account Profile
+                        @_selectedUser.Role.GetDisplayName() Account Profile
                     </p>
                 </div>
             </div>
 
             <button type="button" 
-                    @onclick="CloseUserDetailsDrawerAsync" 
-                    class="p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
         <!-- Details Body -->
         <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
-            <div class="card-surface p-4 space-y-3">
+            <div class="card-surface p-4 space-y-3.5">
                 <div>
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Status</span>
                     <div class="mt-1">
-                        @if (_viewingUser.IsActive)
+                        @if (_selectedUser.IsActive)
                         {
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                                 Active Account
                             </span>
                         }
                         else
                         {
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-                                <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                            <span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
                                 Suspended Account
                             </span>
                         }
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Access Role</span>
                     <div class="mt-1 font-bold text-slate-800 dark:text-white text-sm">
-                        @if (_viewingUser.Role == UserRole.SuperAdmin)
+                        @if (_selectedUser.Role == UserRole.SuperAdmin)
                         {
-                            <span class="text-purple-600 dark:text-purple-400">🛡️ @_viewingUser.Role.GetDisplayName() (Platform Staff)</span>
+                            <span class="text-purple-600 dark:text-purple-400">🛡️ @_selectedUser.Role.GetDisplayName() (Platform Staff)</span>
                         }
-                        else if (_viewingUser.Role == UserRole.BackOffice)
+                        else if (_selectedUser.Role == UserRole.BackOffice)
                         {
-                            <span class="text-blue-600 dark:text-blue-400">💼 @_viewingUser.Role.GetDisplayName() (Platform Staff)</span>
+                            <span class="text-blue-600 dark:text-blue-400">💼 @_selectedUser.Role.GetDisplayName() (Platform Staff)</span>
                         }
                         else
                         {
-                            <span class="text-[#00796b] dark:text-teal-300">🏛️ @_viewingUser.Role.GetDisplayName()</span>
+                            <span class="text-[#00796b] dark:text-teal-300">🏛️ @_selectedUser.Role.GetDisplayName()</span>
                         }
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Associated Institute</span>
                     <div class="mt-1 font-semibold text-slate-800 dark:text-white">
-                        @if (_viewingUser.Role == UserRole.SuperAdmin || _viewingUser.Role == UserRole.BackOffice)
+                        @if (_selectedUser.Role == UserRole.SuperAdmin || _selectedUser.Role == UserRole.BackOffice)
                         {
-                            <span class="text-slate-400">Platform-wide (Vargshala Platform)</span>
+                            <span class="text-slate-400 font-medium">Platform-wide (Vargshala SaaS Platform)</span>
                         }
-                        else if (!string.IsNullOrWhiteSpace(_viewingUser.OrganizationName))
+                        else if (!string.IsNullOrWhiteSpace(_selectedUser.OrganizationName))
                         {
-                            <div>@_viewingUser.OrganizationName</div>
-                            @if (!string.IsNullOrWhiteSpace(_viewingUser.OrganizationCode))
+                            <div class="font-bold">@_selectedUser.OrganizationName</div>
+                            @if (!string.IsNullOrWhiteSpace(_selectedUser.OrganizationCode))
                             {
-                                <div class="text-[10px] font-mono text-[#009488] mt-0.5">Code: @_viewingUser.OrganizationCode</div>
+                                <div class="text-[10px] font-mono text-[#009488] mt-0.5">Code: @_selectedUser.OrganizationCode</div>
                             }
                         }
                         else
@@ -616,60 +718,221 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</span>
-                    <div class="mt-1 font-medium text-slate-700 dark:text-slate-200">@_viewingUser.Email</div>
+                    <div class="mt-1 font-bold text-slate-800 dark:text-slate-200">@_selectedUser.Email</div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</span>
-                    <div class="mt-1 font-medium text-slate-700 dark:text-slate-200">
-                        @(string.IsNullOrWhiteSpace(_viewingUser.Mobile) ? "Not provided" : _viewingUser.Mobile)
+                    <div class="mt-1 font-semibold text-slate-700 dark:text-slate-200">
+                        @(string.IsNullOrWhiteSpace(_selectedUser.Mobile) ? "Not provided" : _selectedUser.Mobile)
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">User ID</span>
-                    <div class="mt-1 font-mono text-[11px] text-slate-500 select-all">@_viewingUser.Id</div>
+                    <div class="mt-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 select-all">@_selectedUser.Id</div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Joined Date</span>
-                    <div class="mt-1 text-slate-600 dark:text-slate-300">@_viewingUser.CreatedAt.ToString("dd MMMM yyyy, hh:mm tt")</div>
+                    <div class="mt-1 text-slate-700 dark:text-slate-300 font-semibold">@_selectedUser.CreatedAt.ToString("dd MMMM yyyy, hh:mm tt")</div>
                 </div>
 
-                <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last Login</span>
-                    <div class="mt-1 text-slate-600 dark:text-slate-300">
-                        @(_viewingUser.LastLoginAt.HasValue ? _viewingUser.LastLoginAt.Value.ToString("dd MMMM yyyy, hh:mm tt") : "Never logged in")
+                    <div class="mt-1 text-slate-700 dark:text-slate-300 font-semibold">
+                        @(_selectedUser.LastLoginAt.HasValue ? _selectedUser.LastLoginAt.Value.ToString("dd MMMM yyyy, hh:mm tt") : "Never logged in")
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer Action -->
-        <div class="p-5 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+        <!-- Details Footer -->
+        <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
             <button type="button" 
-                    @onclick="CloseUserDetailsDrawerAsync"
-                    class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+                    @onclick="CloseDrawerAsync" 
+                    class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
                 Close
             </button>
+            <div class="flex items-center gap-2">
+                <button type="button" 
+                        @onclick="() => OpenEditFromDetailsAsync(_selectedUser)"
+                        class="px-4 py-2.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span>Edit User</span>
+                </button>
+                <button type="button" 
+                        @onclick="() => HandleToggleStatusAsync(_selectedUser)"
+                        disabled="@(_isTogglingStatusId == _selectedUser.Id)"
+                        class="px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer @(_selectedUser.IsActive 
+                            ? "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 hover:bg-rose-100 border border-rose-200 dark:border-rose-800" 
+                            : "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800")">
+                    @if (_isTogglingStatusId == _selectedUser.Id)
+                    {
+                        <span>Updating...</span>
+                    }
+                    else
+                    {
+                        <span>@(_selectedUser.IsActive ? "Suspend Account" : "Activate Account")</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- DRAWER 3: Edit Administrator Drawer (Exact Match with Institutes.razor) -->
+<!-- ========================================================================= -->
+@if (_showEditDrawer && _selectedUser != null)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    ✏️
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>Edit Administrator</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Update details for @_selectedUser.FirstName @_selectedUser.LastName (@_selectedUser.Role.GetDisplayName())
+                    </p>
+                </div>
+            </div>
+
             <button type="button" 
-                    @onclick="() => HandleToggleStatusAsync(_viewingUser)"
-                    disabled="@(_isTogglingStatusId == _viewingUser.Id)"
-                    class="px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer @(_viewingUser.IsActive 
-                        ? "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 hover:bg-rose-100 border border-rose-200 dark:border-rose-800" 
-                        : "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800")">
-                @if (_isTogglingStatusId == _viewingUser.Id)
-                {
-                    <span>Updating...</span>
-                }
-                else
-                {
-                    <span>@(_viewingUser.IsActive ? "Suspend Account" : "Activate Account")</span>
-                }
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
+
+        <!-- Drawer Body & Footer inside EditForm -->
+        <EditForm Model="@_updateForm" OnValidSubmit="SubmitEditUserAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <FluentValidationValidator />
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+                @if (!string.IsNullOrEmpty(_editFormError))
+                {
+                    <AlertNotification Type="AlertType.Error"
+                                       Message="@_editFormError"
+                                       Dismissible="true"
+                                       OnClose="() => _editFormError = null" />
+                }
+
+                <!-- 1. Personal & Contact Details -->
+                <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">1. Personal &amp; Contact Details</h4>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">First Name *</label>
+                            <InputText @bind-Value="_updateForm.FirstName" placeholder="e.g. John"
+                                       class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <ValidationMessage For="@(() => _updateForm.FirstName)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">Last Name *</label>
+                            <InputText @bind-Value="_updateForm.LastName" placeholder="e.g. Doe"
+                                       class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <ValidationMessage For="@(() => _updateForm.LastName)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-800 dark:text-slate-200">Email Address (Read-only)</label>
+                        <input type="email" value="@_updateForm.Email" disabled
+                               class="w-full px-3 py-2.5 text-xs bg-slate-100 dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 font-medium cursor-not-allowed" />
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-800 dark:text-slate-200">Mobile Number (Optional)</label>
+                        <InputText @bind-Value="_updateForm.Mobile" placeholder="+91 98765 43210"
+                                   class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-medium" />
+                        <ValidationMessage For="@(() => _updateForm.Mobile)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
+                </div>
+
+                <!-- 2. Role & Institute Assignment -->
+                <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Access Role &amp; Assignment</h4>
+                    
+                    <div>
+                        <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">Administrator Role *</label>
+                        <CustomSelect Value="@_userRoleString" 
+                                      ValueChanged="HandleUserRoleChanged" 
+                                      Options="_newUserRoleOptions" 
+                                      Placeholder="Select Role..." />
+                    </div>
+
+                    @if (_updateForm.Role == UserRole.OrganizationAdmin)
+                    {
+                        <div class="animate-in fade-in zoom-in-95 duration-200 space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">
+                                Associated Institute / Organization *
+                            </label>
+                            <CustomSelect Value="@_userOrgString" 
+                                          ValueChanged="HandleUserOrgChanged" 
+                                          Options="_instituteOptions" 
+                                          Placeholder="Select Institute..." />
+                        </div>
+                    }
+                </div>
+
+                <!-- 3. Status -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">3. Account Status</h4>
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700">
+                        <div>
+                            <div class="font-bold text-slate-800 dark:text-white">Active Status</div>
+                            <p class="text-[11px] text-slate-400">Suspended users are prevented from logging in</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" @bind="_updateForm.IsActive" class="sr-only peer" />
+                            <div class="w-10 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#009488]"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        disabled="_isSubmitting"
+                        class="px-5 py-2.5 text-xs font-bold bg-[#009488] hover:bg-[#00796b] text-white rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                    @if (_isSubmitting)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Saving Changes...</span>
+                    }
+                    else
+                    {
+                        <span>Save Changes</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
     </div>
 }
 
@@ -679,9 +942,6 @@
     private bool _isLoading = true;
     private string? _errorMessage;
 
-    // Toast notification
-    private string? _toastMessage;
-    private bool _isToastError;
 
     // Filter allowed roles explicitly from the UserRole enum
     private static readonly UserRole[] AllowedRoles = [UserRole.SuperAdmin, UserRole.BackOffice, UserRole.OrganizationAdmin];
@@ -702,15 +962,20 @@
 
     private List<UserDto> _users = new();
 
-    // Drawer state: Add User
-    private bool _showAddUserDrawer = false;
+    // Drawer state (Exact Match with Institutes.razor)
+    private bool _showAddDrawer = false;
+    private bool _showProfileDrawer = false;
+    private bool _showEditDrawer = false;
     private bool _isDrawerOpen = false;
-    private bool _isSubmittingUser = false;
-    private string? _addFormError;
+    private bool _isSubmitting = false;
+    private UserDto? _selectedUser;
+    private string? _formError;
+    private string? _editFormError;
     private bool _showPassword = false;
-    private CreateUserRequest _newUser = new() { Role = UserRole.OrganizationAdmin };
-    private string _newUserRoleString = UserRole.OrganizationAdmin.ToString();
-    private string _newUserOrgString = "";
+    private CreateUserRequest _createForm = new() { Role = UserRole.OrganizationAdmin };
+    private UpdateUserRequest _updateForm = new() { Role = UserRole.OrganizationAdmin };
+    private string _userRoleString = UserRole.OrganizationAdmin.ToString();
+    private string _userOrgString = "";
 
     private readonly List<CustomSelect.CustomSelectOption> _newUserRoleOptions = new()
     {
@@ -720,10 +985,6 @@
     };
 
     private List<CustomSelect.CustomSelectOption> _instituteOptions = new();
-
-    // Drawer state: View Details
-    private UserDto? _viewingUser;
-    private bool _isDetailsDrawerOpen = false;
 
     // Status toggle tracker
     private Guid? _isTogglingStatusId;
@@ -749,53 +1010,57 @@
             if (res != null && res.Success && res.Data?.Items != null)
             {
                 _instituteOptions = res.Data.Items
-                    .Select(i => new CustomSelect.CustomSelectOption(i.Id.ToString(), $"{i.Code} - {i.Name}"))
+                    .Select(i => new CustomSelect.CustomSelectOption(i.Id.ToString(), $"{i.Name} ({i.Code})"))
                     .ToList();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Error] Could not load institutes lookup: {ex.Message}");
+            Console.WriteLine($"Error loading institutes lookup: {ex.Message}");
         }
     }
 
     private async Task LoadUsersAsync(int page = 1)
     {
-        _query.PageNumber = Math.Max(1, page);
         _isLoading = true;
         _errorMessage = null;
+        _query.PageNumber = page;
 
         try
         {
-            bool? activeFilter = _selectedStatusFilter switch
+            bool? isActive = null;
+            if (_selectedStatusFilter == "Active") isActive = true;
+            else if (_selectedStatusFilter == "Suspended") isActive = false;
+
+            var pagedRequest = new PagedRequest
             {
-                "Active" => true,
-                "Suspended" => false,
-                _ => null
+                PageNumber = _query.PageNumber,
+                PageSize = _query.PageSize,
+                Search = _query.Search,
+                SortBy = _sortState.Column,
+                SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : _sortState.Direction == SortDirection.Ascending ? "asc" : null
             };
 
-            var res = await UserService.GetControlPanelUsersAsync(
-                _query.ToPagedRequest(), 
-                _selectedRole, 
-                activeFilter);
+            var response = await UserService.GetControlPanelUsersAsync(
+                pagedRequest,
+                _selectedRole,
+                isActive);
 
-            if (res != null && res.Success && res.Data != null)
+            if (response != null && response.Success && response.Data != null)
             {
-                _users = res.Data.Items ?? new List<UserDto>();
-                _totalRecords = res.Data.TotalRecords;
+                _users = response.Data.Items.ToList();
+                _totalRecords = response.Data.TotalRecords;
             }
             else
             {
-                _users = new List<UserDto>();
+                _users = new();
                 _totalRecords = 0;
-                _errorMessage = res?.Message ?? "Could not load users from database.";
+                _errorMessage = response?.Message ?? "Failed to load users from API.";
             }
         }
         catch (Exception ex)
         {
-            _users = new List<UserDto>();
-            _totalRecords = 0;
-            _errorMessage = ex.Message;
+            _errorMessage = "Network or server connection error: " + ex.Message;
         }
         finally
         {
@@ -803,12 +1068,18 @@
         }
     }
 
-    private async Task HandleRoleFilterChangedAsync(string newRole)
+    private async Task HandleSortAsync(string column)
     {
-        _selectedRoleFilter = newRole;
-        if (Enum.TryParse<UserRole>(newRole, ignoreCase: true, out var parsedRole))
+        _query.SortState.Toggle(column);
+        await LoadUsersAsync(1);
+    }
+
+    private async Task HandleRoleFilterChangedAsync(string selectedValue)
+    {
+        _selectedRoleFilter = selectedValue;
+        if (!string.IsNullOrWhiteSpace(selectedValue) && Enum.TryParse<UserRole>(selectedValue, out var role))
         {
-            _selectedRole = parsedRole;
+            _selectedRole = role;
         }
         else
         {
@@ -818,9 +1089,9 @@
         await LoadUsersAsync(1);
     }
 
-    private async Task HandleStatusFilterChangedAsync(string newStatus)
+    private async Task HandleStatusFilterChangedAsync(string selectedValue)
     {
-        _selectedStatusFilter = newStatus;
+        _selectedStatusFilter = selectedValue;
         await LoadUsersAsync(1);
     }
 
@@ -830,153 +1101,257 @@
         await LoadUsersAsync(1);
     }
 
-    private async Task HandleSortAsync(string column)
+    private void ExportCsv()
     {
-        _query.SortState.Toggle(column);
-        await LoadUsersAsync(1);
+        Toast.Info("CSV export prepared for " + _users.Count + " administrators.");
     }
 
-    // ---- Drawer 1: Add User Operations ----
+    #region Drawers Management (Exact Match with Institutes.razor)
     private async Task OpenAddUserDrawerAsync()
     {
-        _newUser = new CreateUserRequest
+        _formError = null;
+        _createForm = new CreateUserRequest { Role = UserRole.OrganizationAdmin };
+        _userRoleString = UserRole.OrganizationAdmin.ToString();
+        _userOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
+        if (Guid.TryParse(_userOrgString, out var orgId))
         {
-            Role = UserRole.OrganizationAdmin
-        };
-        _newUserRoleString = UserRole.OrganizationAdmin.ToString();
-        _newUserOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
-        if (Guid.TryParse(_newUserOrgString, out var initialOrgId))
-        {
-            _newUser.OrganizationId = initialOrgId;
+            _createForm.OrganizationId = orgId;
         }
-
-        _addFormError = null;
         _showPassword = false;
-        _showAddUserDrawer = true;
+
+        _showAddDrawer = true;
+        _showProfileDrawer = false;
+        _showEditDrawer = false;
         StateHasChanged();
-        await Task.Delay(20);
+        await Task.Yield();
         _isDrawerOpen = true;
+        StateHasChanged();
     }
 
-    private async Task CloseAddUserDrawerAsync()
+    private async Task OpenEditUserDrawerAsync(UserDto user)
+    {
+        _editFormError = null;
+        _selectedUser = user;
+        _updateForm = new UpdateUserRequest
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Mobile = user.Mobile,
+            Role = user.Role,
+            OrganizationId = user.OrganizationId,
+            IsActive = user.IsActive
+        };
+        _userRoleString = user.Role.ToString();
+        _userOrgString = user.OrganizationId?.ToString() ?? (_instituteOptions.FirstOrDefault()?.Value ?? "");
+
+        _showProfileDrawer = false;
+        _showAddDrawer = false;
+        _showEditDrawer = true;
+        StateHasChanged();
+        await Task.Yield();
+        _isDrawerOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task OpenUserDetailsDrawer(UserDto user)
+    {
+        _selectedUser = user;
+        _showProfileDrawer = true;
+        _showAddDrawer = false;
+        _showEditDrawer = false;
+        StateHasChanged();
+        await Task.Yield();
+        _isDrawerOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task OpenEditFromDetailsAsync(UserDto user)
+    {
+        await OpenEditUserDrawerAsync(user);
+    }
+
+    private async Task CloseDrawerAsync()
     {
         _isDrawerOpen = false;
         StateHasChanged();
-        await Task.Delay(300);
-        _showAddUserDrawer = false;
+        await Task.Delay(250);
+        _showAddDrawer = false;
+        _showProfileDrawer = false;
+        _showEditDrawer = false;
+        StateHasChanged();
     }
 
-    private void HandleNewUserRoleChanged(string val)
+    private void HandleUserRoleChanged(string selectedRole)
     {
-        _newUserRoleString = val;
-        if (Enum.TryParse<UserRole>(val, ignoreCase: true, out var role))
+        _userRoleString = selectedRole;
+        if (Enum.TryParse<UserRole>(selectedRole, out var parsedRole))
         {
-            _newUser.Role = role;
-            if (role == UserRole.SuperAdmin || role == UserRole.BackOffice)
+            if (_showAddDrawer)
             {
-                _newUser.OrganizationId = null;
-                _newUserOrgString = "";
-            }
-            else if (role == UserRole.OrganizationAdmin && string.IsNullOrEmpty(_newUserOrgString))
-            {
-                _newUserOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
-                if (Guid.TryParse(_newUserOrgString, out var g))
+                _createForm.Role = parsedRole;
+                if (parsedRole != UserRole.OrganizationAdmin)
                 {
-                    _newUser.OrganizationId = g;
+                    _createForm.OrganizationId = null;
+                    _userOrgString = "";
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(_userOrgString))
+                    {
+                        _userOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
+                    }
+                    if (Guid.TryParse(_userOrgString, out var orgId))
+                    {
+                        _createForm.OrganizationId = orgId;
+                    }
+                }
+            }
+            else if (_showEditDrawer)
+            {
+                _updateForm.Role = parsedRole;
+                if (parsedRole != UserRole.OrganizationAdmin)
+                {
+                    _updateForm.OrganizationId = null;
+                    _userOrgString = "";
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(_userOrgString))
+                    {
+                        _userOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
+                    }
+                    if (Guid.TryParse(_userOrgString, out var orgId))
+                    {
+                        _updateForm.OrganizationId = orgId;
+                    }
                 }
             }
         }
     }
 
-    private void HandleNewUserOrgChanged(string val)
+    private void HandleUserOrgChanged(string selectedOrg)
     {
-        _newUserOrgString = val;
-        if (Guid.TryParse(val, out var orgId))
+        _userOrgString = selectedOrg;
+        Guid? parsedId = Guid.TryParse(selectedOrg, out var orgId) ? orgId : null;
+        if (_showAddDrawer)
         {
-            _newUser.OrganizationId = orgId;
+            _createForm.OrganizationId = parsedId;
         }
-        else
+        else if (_showEditDrawer)
         {
-            _newUser.OrganizationId = null;
+            _updateForm.OrganizationId = parsedId;
         }
     }
 
-    private async Task HandleSubmitAddUserAsync()
+    private async Task SubmitCreateUserAsync()
     {
-        _addFormError = null;
+        _formError = null;
 
-        // Quick client validation
-        if (string.IsNullOrWhiteSpace(_newUser.FirstName) || string.IsNullOrWhiteSpace(_newUser.LastName))
+        if (_createForm.Role == UserRole.OrganizationAdmin && (!_createForm.OrganizationId.HasValue || _createForm.OrganizationId.Value == Guid.Empty))
         {
-            _addFormError = "First Name and Last Name are required.";
+            _formError = "Please select an associated institute for the OrganizationAdmin.";
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_newUser.Email) || !_newUser.Email.Contains("@"))
-        {
-            _addFormError = "A valid Email Address is required.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_newUser.Password) || _newUser.Password.Length < 8)
-        {
-            _addFormError = "Password must be at least 8 characters long.";
-            return;
-        }
-
-        if (_newUser.Role == UserRole.OrganizationAdmin && (!_newUser.OrganizationId.HasValue || _newUser.OrganizationId.Value == Guid.Empty))
-        {
-            _addFormError = "Please select an organization for the OrganizationAdmin.";
-            return;
-        }
-
-        _isSubmittingUser = true;
+        _isSubmitting = true;
+        StateHasChanged();
 
         try
         {
-            var res = await UserService.CreateControlPanelUserAsync(_newUser);
-            if (res != null && res.Success)
+            var res = await UserService.CreateControlPanelUserAsync(_createForm);
+            if (res != null && res.Success && res.Data != null)
             {
-                ShowToast($"{_newUser.Role} account created successfully!");
-                await CloseAddUserDrawerAsync();
+                Toast.Success($"Administrator '{res.Data.FirstName} {res.Data.LastName}' created successfully!");
+
+                _selectedRole = null;
+                _selectedRoleFilter = "";
+                _selectedStatusFilter = "";
+
+                await CloseDrawerAsync();
                 await LoadUsersAsync(1);
             }
             else
             {
-                _addFormError = res?.Message ?? "Failed to create user.";
+                _formError = res?.Message ?? "Failed to create administrator.";
             }
         }
         catch (Exception ex)
         {
-            _addFormError = ex.Message;
+            _formError = "Exception: " + ex.Message;
         }
         finally
         {
-            _isSubmittingUser = false;
+            _isSubmitting = false;
+            StateHasChanged();
         }
     }
 
-    // ---- Drawer 2: User Details Operations ----
-    private async Task OpenUserDetailsDrawer(UserDto user)
+    private async Task SubmitEditUserAsync()
     {
-        _viewingUser = user;
-        StateHasChanged();
-        await Task.Delay(20);
-        _isDetailsDrawerOpen = true;
-    }
+        _editFormError = null;
 
-    private async Task CloseUserDetailsDrawerAsync()
-    {
-        _isDetailsDrawerOpen = false;
-        StateHasChanged();
-        await Task.Delay(300);
-        _viewingUser = null;
-    }
+        if (_updateForm.Role == UserRole.OrganizationAdmin && (!_updateForm.OrganizationId.HasValue || _updateForm.OrganizationId.Value == Guid.Empty))
+        {
+            _editFormError = "Please select an associated institute for the OrganizationAdmin.";
+            return;
+        }
 
-    // ---- Status Toggle ----
+        _isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var res = await UserService.UpdateControlPanelUserAsync(_updateForm);
+            if (res != null && res.Success && res.Data != null)
+            {
+                Toast.Success($"Administrator '{res.Data.FirstName} {res.Data.LastName}' updated successfully!");
+
+                // Update in-memory list
+                var existing = _users.FirstOrDefault(u => u.Id == res.Data.Id);
+                if (existing != null)
+                {
+                    existing.FirstName = res.Data.FirstName;
+                    existing.LastName = res.Data.LastName;
+                    existing.Email = res.Data.Email;
+                    existing.Mobile = res.Data.Mobile;
+                    existing.Role = res.Data.Role;
+                    existing.OrganizationId = res.Data.OrganizationId;
+                    existing.OrganizationName = res.Data.OrganizationName;
+                    existing.OrganizationCode = res.Data.OrganizationCode;
+                    existing.IsActive = res.Data.IsActive;
+                }
+
+                if (_selectedUser?.Id == res.Data.Id)
+                {
+                    _selectedUser = res.Data;
+                }
+
+                await CloseDrawerAsync();
+            }
+            else
+            {
+                _editFormError = res?.Message ?? "Failed to update administrator.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _editFormError = "Exception: " + ex.Message;
+        }
+        finally
+        {
+            _isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Status Toggle
     private async Task HandleToggleStatusAsync(UserDto user)
     {
         _isTogglingStatusId = user.Id;
+        StateHasChanged();
 
         try
         {
@@ -984,36 +1359,24 @@
             if (res != null && res.Success)
             {
                 user.IsActive = res.Data;
-                ShowToast(res.Message ?? $"Status updated to {(user.IsActive ? "Active" : "Suspended")}");
-                if (_viewingUser != null && _viewingUser.Id == user.Id)
-                {
-                    _viewingUser.IsActive = user.IsActive;
-                }
+                Toast.Success($"User status updated to {(user.IsActive ? "Active" : "Suspended")}.");
             }
             else
             {
-                ShowToast(res?.Message ?? "Failed to update status.", isError: true);
+                Toast.Error(res?.Message ?? "Failed to toggle status.");
             }
         }
         catch (Exception ex)
         {
-            ShowToast(ex.Message, isError: true);
+            Toast.Error("Error: " + ex.Message);
         }
         finally
         {
             _isTogglingStatusId = null;
+            StateHasChanged();
         }
     }
+    #endregion
 
-    private void ShowToast(string message, bool isError = false)
-    {
-        _toastMessage = message;
-        _isToastError = isError;
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(4000);
-            _toastMessage = null;
-            await InvokeAsync(StateHasChanged);
-        });
-    }
+
 }

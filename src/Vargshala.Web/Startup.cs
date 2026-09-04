@@ -7,6 +7,8 @@ using Vargshala.Web.Auth;
 using Vargshala.Web.Components;
 using Vargshala.Web.Services;
 
+
+
 namespace Vargshala.Web;
 
 public class WebUIStartup { }
@@ -66,6 +68,7 @@ public static class StartupExtensions
         #endregion
 
         #region Application Scoped Services
+        builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IInstituteService, InstituteService>();
         builder.Services.AddScoped<IUserService, UserService>();

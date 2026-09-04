@@ -89,6 +89,40 @@ public class UserService : IUserService
         }
     }
 
+    public async Task<ApiResponse<UserDto>> UpdateControlPanelUserAsync(
+        UpdateUserRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/users/controlpanel/{request.Id}", request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var errObj = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<UserDto>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (errObj != null && !string.IsNullOrWhiteSpace(errObj.Message))
+                    {
+                        return errObj;
+                    }
+                }
+                catch { }
+
+                return ApiResponse<UserDto>.FailureResponse($"Failed to update user (Status: {response.StatusCode})");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<UserDto>.FailureResponse("User update failed.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating control panel user");
+            return ApiResponse<UserDto>.FailureResponse($"Error updating user: {ex.Message}");
+        }
+    }
+
     public async Task<ApiResponse<bool>> ToggleUserStatusAsync(
         Guid userId,
         CancellationToken cancellationToken = default)

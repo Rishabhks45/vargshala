@@ -15,6 +15,10 @@ public interface IUserService
         CreateUserRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<ApiResponse<UserDto>> UpdateControlPanelUserAsync(
+        UpdateUserRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<ApiResponse<bool>> ToggleUserStatusAsync(
         Guid userId,
         CancellationToken cancellationToken = default);

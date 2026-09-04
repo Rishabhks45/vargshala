@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vargshala.Contracts.Authentication;
 using Vargshala.Contracts.Common;
 using Vargshala.Web.Auth;
 using Vargshala.Web.Common;
@@ -70,8 +71,9 @@ public class AccountController : Controller
 
         claims.Add(new Claim("access_token", token));
 
-        if (!string.IsNullOrWhiteSpace(refreshToken))
-            claims.Add(new Claim("refresh_token", refreshToken));
+        var normalizedRefreshToken = RefreshTokenNormalizer.Normalize(refreshToken);
+        if (!string.IsNullOrEmpty(normalizedRefreshToken))
+            claims.Add(new Claim("refresh_token", normalizedRefreshToken));
 
         var identity = new ClaimsIdentity(
             claims,
@@ -82,6 +84,13 @@ public class AccountController : Controller
         var expiry = rememberMe
             ? DateTimeOffset.UtcNow.AddDays(7)
             : DateTimeOffset.UtcNow.AddHours(24);
+
+        var userId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value
+                     ?? claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            JwtTokenHandler.SetUserTokens(userId, token, normalizedRefreshToken);
+        }
 
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
@@ -110,6 +119,13 @@ public class AccountController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Logout()
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst("sub")?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            JwtTokenHandler.ClearUserTokens(userId);
+        }
+
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return Redirect("/login");
     }

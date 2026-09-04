@@ -1,0 +1,61 @@
+@namespace Vargshala.Web.Components.UI.Notifications
+@implements IDisposable
+@inject INotificationService NotificationService
+
+<div class="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-4 sm:px-0"
+     aria-live="polite">
+    @foreach (var item in _notifications)
+    {
+        <div class="pointer-events-auto transition-all duration-300 animate-in slide-in-from-top-3 fade-in">
+            <AlertNotification Type="item.Type"
+                               Title="@item.Title"
+                               Message="@item.Message"
+                               Dismissible="item.Dismissible"
+                               DurationSeconds="item.DurationSeconds"
+                               OnClose="() => RemoveNotification(item.Id)" />
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<NotificationItem> _notifications = new();
+
+    protected override void OnInitialized()
+    {
+        NotificationService.OnNotificationReceived += HandleNotificationReceived;
+        NotificationService.OnNotificationDismissed += HandleNotificationDismissed;
+    }
+
+    private void HandleNotificationReceived(NotificationItem item)
+    {
+        InvokeAsync(() =>
+        {
+            _notifications.Insert(0, item);
+            StateHasChanged();
+        });
+    }
+
+    private void HandleNotificationDismissed(Guid id)
+    {
+        InvokeAsync(() =>
+        {
+            RemoveNotification(id);
+        });
+    }
+
+    private void RemoveNotification(Guid id)
+    {
+        var existing = _notifications.FirstOrDefault(x => x.Id == id);
+        if (existing != null)
+        {
+            _notifications.Remove(existing);
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        NotificationService.OnNotificationReceived -= HandleNotificationReceived;
+        NotificationService.OnNotificationDismissed -= HandleNotificationDismissed;
+    }
+}

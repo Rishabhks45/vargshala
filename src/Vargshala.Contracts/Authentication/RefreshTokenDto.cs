@@ -33,3 +33,13 @@ public class RefreshTokenResponse
     public DateTime AccessTokenExpiry { get; set; }
 }
 #endregion
+
+/// <summary>
+/// Query-string parsers treat '+' as space (application/x-www-form-urlencoded).
+/// Restore '+' before comparing or storing a refresh token from a URL or cookie.
+/// </summary>
+public static class RefreshTokenNormalizer
+{
+    public static string Normalize(string? token) =>
+        string.IsNullOrEmpty(token) ? string.Empty : token.Trim().Replace(' ', '+');
+}

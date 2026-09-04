@@ -1,0 +1,198 @@
+@namespace Vargshala.Web.Components.UI.Notifications
+@implements IDisposable
+
+@if (IsVisible && (!string.IsNullOrWhiteSpace(Message) || ChildContent != null))
+{
+    <div class="@ContainerClasses @(IsFloating ? "fixed top-5 right-5 z-50 max-w-md shadow-2xl animate-in slide-in-from-top-4 duration-300" : "w-full shadow-xs animate-in fade-in duration-200")"
+         role="alert">
+        
+        <!-- Ambient Left Accent Border -->
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl @AccentBarColor"></div>
+
+        <div class="flex items-start gap-3 pl-2">
+            <!-- Icon Badge -->
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs @IconBadgeClasses">
+                @switch (ResolvedType)
+                {
+                    case AlertType.Success:
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        break;
+
+                    case AlertType.Error:
+                    case AlertType.Failed:
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        break;
+
+                    case AlertType.Warning:
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        break;
+
+                    case AlertType.Info:
+                    default:
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        break;
+                }
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 min-w-0 pr-1">
+                @if (!string.IsNullOrWhiteSpace(Title))
+                {
+                    <h5 class="font-extrabold text-xs tracking-tight mb-0.5 @TitleTextColor">
+                        @Title
+                    </h5>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Message))
+                {
+                    <p class="text-xs font-medium leading-relaxed @MessageTextColor">
+                        @Message
+                    </p>
+                }
+
+                @if (ChildContent != null)
+                {
+                    <div class="mt-1.5 text-xs">
+                        @ChildContent
+                    </div>
+                }
+            </div>
+
+            <!-- Close / Dismiss Button -->
+            @if (Dismissible)
+            {
+                <button type="button"
+                        @onclick="CloseAsync"
+                        class="p-1 rounded-lg transition-colors cursor-pointer shrink-0 -mr-1 -mt-1 @CloseButtonClasses"
+                        aria-label="Dismiss notification">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public AlertType Type { get; set; } = AlertType.Info;
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool Dismissible { get; set; } = true;
+    [Parameter] public bool IsFloating { get; set; } = false;
+    [Parameter] public int DurationSeconds { get; set; } = 0;
+
+    [Parameter] public bool IsVisible { get; set; } = true;
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private AlertType ResolvedType => Type == AlertType.Failed ? AlertType.Error : Type;
+    private CancellationTokenSource? _autoDismissCts;
+
+    protected override void OnParametersSet()
+    {
+        if (IsVisible && DurationSeconds > 0)
+        {
+            StartAutoDismissTimer();
+        }
+    }
+
+    private void StartAutoDismissTimer()
+    {
+        _autoDismissCts?.Cancel();
+        _autoDismissCts?.Dispose();
+        _autoDismissCts = new CancellationTokenSource();
+
+        var token = _autoDismissCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(DurationSeconds), token);
+                if (!token.IsCancellationRequested)
+                {
+                    await InvokeAsync(CloseAsync);
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+    }
+
+    public async Task CloseAsync()
+    {
+        _autoDismissCts?.Cancel();
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(false);
+        await OnClose.InvokeAsync();
+        StateHasChanged();
+    }
+
+    private string ContainerClasses => ResolvedType switch
+    {
+        AlertType.Success => "p-3.5 rounded-2xl relative border bg-emerald-50/90 dark:bg-emerald-950/80 border-emerald-200/90 dark:border-emerald-800/80 backdrop-blur-xs",
+        AlertType.Error => "p-3.5 rounded-2xl relative border bg-rose-50/90 dark:bg-rose-950/80 border-rose-200/90 dark:border-rose-800/80 backdrop-blur-xs",
+        AlertType.Warning => "p-3.5 rounded-2xl relative border bg-amber-50/90 dark:bg-amber-950/80 border-amber-200/90 dark:border-amber-800/80 backdrop-blur-xs",
+        AlertType.Info => "p-3.5 rounded-2xl relative border bg-teal-50/90 dark:bg-[#102322] border-teal-200/90 dark:border-teal-800/80 backdrop-blur-xs",
+        _ => "p-3.5 rounded-2xl relative border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+    };
+
+    private string AccentBarColor => ResolvedType switch
+    {
+        AlertType.Success => "bg-emerald-500",
+        AlertType.Error => "bg-rose-500",
+        AlertType.Warning => "bg-amber-500",
+        AlertType.Info => "bg-[#009488]",
+        _ => "bg-slate-500"
+    };
+
+    private string IconBadgeClasses => ResolvedType switch
+    {
+        AlertType.Success => "bg-gradient-to-br from-emerald-500 to-teal-600 text-white",
+        AlertType.Error => "bg-gradient-to-br from-rose-500 to-red-600 text-white",
+        AlertType.Warning => "bg-gradient-to-br from-amber-400 to-amber-600 text-white",
+        AlertType.Info => "bg-gradient-to-br from-[#009488] to-[#004D40] text-white",
+        _ => "bg-slate-600 text-white"
+    };
+
+    private string TitleTextColor => ResolvedType switch
+    {
+        AlertType.Success => "text-emerald-900 dark:text-emerald-200",
+        AlertType.Error => "text-rose-900 dark:text-rose-200",
+        AlertType.Warning => "text-amber-900 dark:text-amber-200",
+        AlertType.Info => "text-teal-900 dark:text-teal-200",
+        _ => "text-slate-900 dark:text-slate-200"
+    };
+
+    private string MessageTextColor => ResolvedType switch
+    {
+        AlertType.Success => "text-emerald-800/90 dark:text-emerald-300/90",
+        AlertType.Error => "text-rose-800/90 dark:text-rose-300/90",
+        AlertType.Warning => "text-amber-800/90 dark:text-amber-300/90",
+        AlertType.Info => "text-teal-800/90 dark:text-teal-300/90",
+        _ => "text-slate-700 dark:text-slate-300"
+    };
+
+    private string CloseButtonClasses => ResolvedType switch
+    {
+        AlertType.Success => "text-emerald-500 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/40",
+        AlertType.Error => "text-rose-500 hover:text-rose-800 dark:hover:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-900/40",
+        AlertType.Warning => "text-amber-500 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40",
+        AlertType.Info => "text-teal-500 hover:text-teal-800 dark:hover:text-teal-200 hover:bg-teal-100 dark:hover:bg-teal-900/40",
+        _ => "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+    };
+
+    public void Dispose()
+    {
+        _autoDismissCts?.Cancel();
+        _autoDismissCts?.Dispose();
+    }
+}

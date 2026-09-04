@@ -37,24 +37,35 @@ public class RefreshTokenCommandHandler
 
         var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
 
-        if (user is null || user.RefreshToken != request.RefreshToken
+        if (user is null)
+        {
+            return ApiResponse<RefreshTokenResponse>.FailureResponse("User not found.");
+        }
+
+        var incomingToken = RefreshTokenNormalizer.Normalize(request.RefreshToken);
+        var storedToken = RefreshTokenNormalizer.Normalize(user.RefreshToken);
+
+        if (string.IsNullOrEmpty(storedToken)
+            || incomingToken != storedToken
             || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             return ApiResponse<RefreshTokenResponse>.FailureResponse("Invalid or expired refresh token.");
         }
 
         var newAccessToken = _tokenService.GenerateAccessToken(user);
-        var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-        user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-        await _authRepository.SaveChangesAsync(cancellationToken);
+        // In Blazor Server Interactive mode, auth cookies cannot be updated over WebSockets mid-circuit.
+        // Maintain the active refresh token for its duration (7 days), renewing the access token.
+        if (user.RefreshTokenExpiryTime < DateTime.UtcNow.AddDays(1))
+        {
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _authRepository.SaveChangesAsync(cancellationToken);
+        }
 
         return ApiResponse<RefreshTokenResponse>.SuccessResponse(new RefreshTokenResponse
         {
             AccessToken = newAccessToken,
-            RefreshToken = newRefreshToken,
+            RefreshToken = user.RefreshToken ?? string.Empty,
             AccessTokenExpiry = DateTime.UtcNow.AddMinutes(30)
         });
     }

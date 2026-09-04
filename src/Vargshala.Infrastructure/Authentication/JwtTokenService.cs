@@ -52,10 +52,12 @@ public class JwtTokenService : ITokenService
 
     public string GenerateRefreshToken()
     {
-        var randomNumber = new byte[64];
+        // Hex is URL-safe (no '+', '/', '='). Base64 refresh tokens were corrupted when
+        // login redirected to /account/signin?refreshToken=... because '+' became space.
+        var randomNumber = new byte[32];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
+        return Convert.ToHexString(randomNumber).ToLowerInvariant();
     }
 
     public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)

@@ -91,8 +91,10 @@ public class UpdateUserRequest
     public Guid Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public string? Email { get; set; }
     public string? Mobile { get; set; }
     public UserRole Role { get; set; } = UserRole.Student;
+    public Guid? OrganizationId { get; set; }
     public bool IsActive { get; set; } = true;
 }
 

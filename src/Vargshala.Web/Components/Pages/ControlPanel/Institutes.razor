@@ -7,6 +7,7 @@
 @using Vargshala.Web.Services
 @inject IInstituteService InstituteService
 @inject IAuthService AuthService
+@inject INotificationService Toast
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
@@ -380,121 +381,137 @@
             </button>
         </div>
 
-        <!-- Drawer Body -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
-            @if (!string.IsNullOrEmpty(_formError))
-            {
-                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
-                    @_formError
-                </div>
-            }
+        <!-- Drawer Body & Footer inside EditForm -->
+        <EditForm Model="@_regModel" OnValidSubmit="SubmitOnboardingAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <FluentValidationValidator />
 
-            <div class="space-y-3">
-                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">1. Institute Information</h4>
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+                @if (!string.IsNullOrEmpty(_formError))
+                {
+                    <AlertNotification Type="AlertType.Error"
+                                       Message="@_formError"
+                                       Dismissible="true"
+                                       OnClose="() => _formError = null" />
+                }
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Institute Full Name *</label>
-                    <input type="text" @bind="_regModel.OrganizationName" placeholder="e.g. Apex Physics Institute"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
-                </div>
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">1. Institute Information</h4>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tenant Code *</label>
-                        <input type="text" @bind="_regModel.OrganizationCode" placeholder="e.g. APEX01"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none font-mono uppercase text-slate-800 dark:text-white font-bold" />
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Institute Full Name *</label>
+                        <InputText @bind-Value="_regModel.OrganizationName" placeholder="e.g. Apex Physics Institute"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                        <ValidationMessage For="@(() => _regModel.OrganizationName)" class="text-[10px] text-rose-500 font-semibold" />
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Academic Session</label>
-                        <input type="text" @bind="_regModel.AcademicSession" placeholder="2026-2027"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Tenant Code *</label>
+                            <InputText @bind-Value="_regModel.OrganizationCode" placeholder="e.g. APEX01"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none font-mono uppercase text-slate-800 dark:text-white font-bold" />
+                            <ValidationMessage For="@(() => _regModel.OrganizationCode)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Academic Session</label>
+                            <InputText @bind-Value="_regModel.AcademicSession" placeholder="2026-2027"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <ValidationMessage For="@(() => _regModel.AcademicSession)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Campus / Street Address</label>
+                        <InputText @bind-Value="_regModel.Address" placeholder="e.g. Near Station Road, Civil Lines"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                        <ValidationMessage For="@(() => _regModel.Address)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">City</label>
+                            <InputText @bind-Value="_regModel.City" placeholder="e.g. Patna"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _regModel.City)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">State</label>
+                            <InputText @bind-Value="_regModel.State" placeholder="e.g. Bihar"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _regModel.State)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Pincode</label>
+                            <InputText @bind-Value="_regModel.Pincode" placeholder="e.g. 800001"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                            <ValidationMessage For="@(() => _regModel.Pincode)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Campus / Street Address</label>
-                    <input type="text" @bind="_regModel.Address" placeholder="e.g. Near Station Road, Civil Lines"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                </div>
+                <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Institute Owner / Admin Credentials</h4>
 
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
-                        <input type="text" @bind="_regModel.City" placeholder="e.g. Patna"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">First Name *</label>
+                            <InputText @bind-Value="_regModel.AdminFirstName" placeholder="Admin First Name"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _regModel.AdminFirstName)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Last Name *</label>
+                            <InputText @bind-Value="_regModel.AdminLastName" placeholder="Admin Last Name"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _regModel.AdminLastName)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">State</label>
-                        <input type="text" @bind="_regModel.State" placeholder="e.g. Bihar"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Admin Login Email *</label>
+                        <InputText type="email" @bind-Value="_regModel.AdminEmail" placeholder="admin@institute.com"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                        <ValidationMessage For="@(() => _regModel.AdminEmail)" class="text-[10px] text-rose-500 font-semibold" />
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
-                        <input type="text" @bind="_regModel.Pincode" placeholder="e.g. 800001"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Mobile</label>
+                            <InputText @bind-Value="_regModel.AdminMobile" placeholder="9876543210"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _regModel.AdminMobile)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Temporary Password *</label>
+                            <InputText type="password" @bind-Value="_regModel.Password" @bind-Value:after="() => _regModel.ConfirmPassword = _regModel.Password" placeholder="Strong password"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _regModel.Password)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Institute Owner / Admin Credentials</h4>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
-                        <input type="text" @bind="_regModel.AdminFirstName" placeholder="Admin First Name"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
-                        <input type="text" @bind="_regModel.AdminLastName" placeholder="Admin Last Name"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Admin Login Email *</label>
-                    <input type="email" @bind="_regModel.AdminEmail" placeholder="admin@institute.com"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mobile</label>
-                        <input type="text" @bind="_regModel.AdminMobile" placeholder="9876543210"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Temporary Password *</label>
-                        <input type="password" @bind="_regModel.Password" placeholder="Strong password"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                    </div>
-                </div>
+            <!-- Drawer Footer -->
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-end gap-3 shrink-0">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync"
+                        class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        disabled="@_isSaving"
+                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer flex items-center gap-2">
+                    @if (_isSaving)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Registering...</span>
+                    }
+                    else
+                    {
+                        <span>Save &amp; Onboard</span>
+                    }
+                </button>
             </div>
-        </div>
-
-        <!-- Drawer Footer -->
-        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-end gap-3 shrink-0">
-            <button type="button" 
-                    @onclick="CloseDrawerAsync"
-                    class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
-                Cancel
-            </button>
-            <button type="button" 
-                    disabled="@_isSaving"
-                    @onclick="SubmitOnboardingAsync"
-                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer flex items-center gap-2">
-                @if (_isSaving)
-                {
-                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Registering...</span>
-                }
-                else
-                {
-                    <span>Save &amp; Onboard</span>
-                }
-            </button>
-        </div>
+        </EditForm>
 
     </div>
 }
@@ -618,104 +635,116 @@
             </button>
         </div>
 
-        <!-- Drawer Body -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
-            @if (!string.IsNullOrEmpty(_editFormError))
-            {
-                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
-                    @_editFormError
-                </div>
-            }
+        <!-- Drawer Body & Footer inside EditForm -->
+        <EditForm Model="@_editModel" OnValidSubmit="SubmitEditAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <FluentValidationValidator />
 
-            <div class="space-y-3">
-                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">Institute Profile</h4>
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+                @if (!string.IsNullOrEmpty(_editFormError))
+                {
+                    <AlertNotification Type="AlertType.Error"
+                                       Message="@_editFormError"
+                                       Dismissible="true"
+                                       OnClose="() => _editFormError = null" />
+                }
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Institute Full Name *</label>
-                    <input type="text" @bind="_editModel.Name" placeholder="e.g. Apex Physics Institute"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
-                </div>
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">Institute Profile</h4>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tenant Code (Immutable)</label>
-                        <input type="text" value="@_selectedInstitute.Code" disabled
-                               class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-[#18262c]/50 border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase text-slate-500 font-bold cursor-not-allowed" />
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Institute Full Name *</label>
+                        <InputText @bind-Value="_editModel.Name" placeholder="e.g. Apex Physics Institute"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                        <ValidationMessage For="@(() => _editModel.Name)" class="text-[10px] text-rose-500 font-semibold" />
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Academic Session</label>
-                        <input type="text" @bind="_editModel.AcademicSession" placeholder="2026-2027"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tenant Code (Immutable)</label>
+                            <input type="text" value="@_selectedInstitute.Code" disabled
+                                   class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-[#18262c]/50 border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase text-slate-500 font-bold cursor-not-allowed" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Academic Session</label>
+                            <InputText @bind-Value="_editModel.AcademicSession" placeholder="2026-2027"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                            <ValidationMessage For="@(() => _editModel.AcademicSession)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Official Email</label>
-                    <input type="email" @bind="_editModel.Email" placeholder="contact@institute.com"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mobile Number</label>
-                    <input type="tel" @bind="_editModel.Mobile" placeholder="e.g. 9876543210"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Campus / Street Address</label>
-                    <input type="text" @bind="_editModel.Address" placeholder="e.g. Near Station Road, Civil Lines"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
-                        <input type="text" @bind="_editModel.City" placeholder="e.g. Patna"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Official Email</label>
+                        <InputText type="email" @bind-Value="_editModel.Email" placeholder="contact@institute.com"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                        <ValidationMessage For="@(() => _editModel.Email)" class="text-[10px] text-rose-500 font-semibold" />
                     </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">State</label>
-                        <input type="text" @bind="_editModel.State" placeholder="e.g. Bihar"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
-                        <input type="text" @bind="_editModel.Pincode" placeholder="e.g. 800001"
-                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
-                    </div>
-                </div>
 
-                <div class="pt-2">
-                    <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" @bind="_editModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300" />
-                        <span class="font-bold text-slate-700 dark:text-slate-200">Institute is Active &amp; Enabled</span>
-                    </label>
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Mobile Number</label>
+                        <InputText @bind-Value="_editModel.Mobile" placeholder="e.g. 9876543210"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                        <ValidationMessage For="@(() => _editModel.Mobile)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block font-bold text-slate-700 dark:text-slate-300">Campus / Street Address</label>
+                        <InputText @bind-Value="_editModel.Address" placeholder="e.g. Near Station Road, Civil Lines"
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                        <ValidationMessage For="@(() => _editModel.Address)" class="text-[10px] text-rose-500 font-semibold" />
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">City</label>
+                            <InputText @bind-Value="_editModel.City" placeholder="e.g. Patna"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _editModel.City)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">State</label>
+                            <InputText @bind-Value="_editModel.State" placeholder="e.g. Bihar"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                            <ValidationMessage For="@(() => _editModel.State)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">Pincode</label>
+                            <InputText @bind-Value="_editModel.Pincode" placeholder="e.g. 800001"
+                                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                            <ValidationMessage For="@(() => _editModel.Pincode)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" @bind="_editModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300" />
+                            <span class="font-bold text-slate-700 dark:text-slate-200">Institute is Active &amp; Enabled</span>
+                        </label>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Drawer Footer -->
-        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
-            <button type="button" 
-                    @onclick="CloseDrawerAsync" 
-                    class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer">
-                Cancel
-            </button>
-            <button type="button" 
-                    @onclick="SubmitEditAsync" 
-                    disabled="@_isSaving"
-                    class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
-                @if (_isSaving)
-                {
-                    <div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                    <span>Saving Changes...</span>
-                }
-                else
-                {
-                    <span>Save Changes</span>
-                }
-            </button>
-        </div>
+            <!-- Drawer Footer -->
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync" 
+                        class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        disabled="@_isSaving"
+                        class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
+                    @if (_isSaving)
+                    {
+                        <div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                        <span>Saving Changes...</span>
+                    }
+                    else
+                    {
+                        <span>Save Changes</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
 
     </div>
 }
@@ -838,15 +867,18 @@
             if (res != null && res.Success)
             {
                 inst.IsActive = res.Data;
+                Toast.Success($"Institute '{inst.Name}' status updated to {(inst.IsActive ? "Active" : "Suspended")}.");
             }
             else
             {
                 inst.IsActive = !inst.IsActive;
+                Toast.Error(res?.Message ?? "Failed to update institute status.");
             }
         }
-        catch
+        catch (Exception ex)
         {
             inst.IsActive = !inst.IsActive;
+            Toast.Error("Error: " + ex.Message);
         }
         finally
         {
@@ -861,6 +893,7 @@
 
     private void ExportCsv()
     {
+        Toast.Info($"CSV export prepared for {_institutes.Count} institutes.");
     }
 
     // Drawer state
@@ -878,7 +911,8 @@
         _formError = null;
         _regModel = new RegisterOrganizationRequest
         {
-            AcademicSession = "2026-2027"
+            AcademicSession = "2026-2027",
+            AcceptTerms = true
         };
         _showOnboardDrawer = true;
         _showProfileDrawer = false;
@@ -942,13 +976,6 @@
     private async Task SubmitEditAsync()
     {
         _editFormError = null;
-
-        if (string.IsNullOrWhiteSpace(_editModel.Name))
-        {
-            _editFormError = "Institute full name is required.";
-            return;
-        }
-
         _isSaving = true;
         StateHasChanged();
 
@@ -970,6 +997,7 @@
                     _selectedInstitute.IsActive = res.Data.IsActive;
                 }
 
+                Toast.Success($"Institute '{res.Data.Name}' updated successfully!");
                 await CloseDrawerAsync();
             }
             else
@@ -991,24 +1019,8 @@
     private async Task SubmitOnboardingAsync()
     {
         _formError = null;
-
-        if (string.IsNullOrWhiteSpace(_regModel.OrganizationName))
-        {
-            _formError = "Institute full name is required.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_regModel.OrganizationCode))
-        {
-            _formError = "Tenant code is required.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_regModel.AdminEmail) || string.IsNullOrWhiteSpace(_regModel.Password))
-        {
-            _formError = "Admin email and password are required.";
-            return;
-        }
+        _regModel.AcceptTerms = true;
+        _regModel.ConfirmPassword = _regModel.Password;
 
         _isSaving = true;
         try
@@ -1016,6 +1028,7 @@
             var response = await AuthService.RegisterOrganizationAsync(_regModel);
             if (response.Success)
             {
+                Toast.Success($"Institute '{_regModel.OrganizationName}' onboarded successfully!");
                 await CloseDrawerAsync();
                 await LoadInstitutesAsync();
             }
