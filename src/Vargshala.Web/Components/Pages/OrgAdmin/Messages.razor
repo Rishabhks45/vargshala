@@ -342,6 +342,7 @@
                             <textarea @bind="_messageInput"
                                       @bind:event="oninput"
                                       @onkeydown="HandleKeyPress"
+                                      @onkeydown:preventDefault="_preventEnterDefault"
                                       placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
                                       rows="2"
                                       class="w-full text-xs text-slate-900 dark:text-white font-medium placeholder-slate-500 focus:outline-none resize-none bg-transparent max-h-32"></textarea>
@@ -701,9 +702,19 @@
     private void SimulateAttachment() => _pendingAttachmentName = "Physics_Problem_Set.pdf";
     private void DownloadAttachment(string fileName) { }
 
+    private bool _preventEnterDefault = false;
+
     private void HandleKeyPress(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !e.ShiftKey) SendMessage();
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            _preventEnterDefault = true;
+            SendMessage();
+        }
+        else
+        {
+            _preventEnterDefault = false;
+        }
     }
 
     private void SendMessage()
@@ -730,6 +741,7 @@
         _selectedConversation.LastMessageTime = DateTime.Now.ToString("hh:mm tt");
         _messageInput = string.Empty;
         _pendingAttachmentName = null;
+        StateHasChanged();
     }
 
     private void OpenCreateChannelModal()

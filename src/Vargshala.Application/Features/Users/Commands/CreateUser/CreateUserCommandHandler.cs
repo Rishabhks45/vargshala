@@ -37,10 +37,10 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
             return ApiResponse<UserDto>.FailureResponse("You must belong to an organization to create users.");
         }
 
-        // Prevent creating SuperAdmin or OrganizationAdmin through this endpoint
-        if (request.Role is UserRole.SuperAdmin)
+        // Prevent creating SuperAdmin or BackOffice through this endpoint
+        if (request.Role is UserRole.SuperAdmin or UserRole.BackOffice)
         {
-            return ApiResponse<UserDto>.FailureResponse("Cannot create a SuperAdmin user through this endpoint.");
+            return ApiResponse<UserDto>.FailureResponse("Cannot create a platform administrator through this endpoint.");
         }
 
         // Check for duplicate email within the organization

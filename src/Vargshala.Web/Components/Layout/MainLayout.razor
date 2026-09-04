@@ -50,7 +50,7 @@
                         <Authorized>
                             @{
                                 var orgName = context.User.FindFirst("OrganizationName")?.Value;
-                                var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "User";
+                                var role = RoleNavigationHelper.GetRoleDisplayName(context.User);
                             }
                             <p class="text-[11px] text-teal-200/90 font-medium truncate flex items-center gap-1.5">
                                 @if (!string.IsNullOrWhiteSpace(orgName))
@@ -101,7 +101,7 @@
                         @{
                             var user = context.User;
                             var name = user.Identity?.Name ?? "User";
-                            var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Admin";
+                            var role = RoleNavigationHelper.GetRoleDisplayName(user);
                             var email = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
                             var orgName = user.FindFirst("OrganizationName")?.Value;
                             var nameParts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -217,6 +217,7 @@
             "controlpanel/logs" => "Logs",
             "controlpanel/health" => "Health",
             "controlpanel/email-templates" or "controlpanel/templates" => "Email Templates",
+            "controlpanel/users" => "Users",
 
             "student" or "student/home" => "Home",
             "student/study-material" => "Study Material",

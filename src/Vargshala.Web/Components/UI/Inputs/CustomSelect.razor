@@ -16,7 +16,7 @@
     @if (_isOpen)
     {
         <div class="fixed inset-0 z-40" @onclick="Close"></div>
-        <div class="absolute left-0 sm:left-auto right-0 top-full mt-1.5 w-full min-w-[180px] bg-white dark:bg-[#111c21] rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
+        <div class="absolute @DropdownPositionClass w-full @MenuWidthClass bg-white dark:bg-[#111c21] rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
             <div class="space-y-0.5">
                 @foreach (var opt in Options)
                 {
@@ -44,8 +44,26 @@
     [Parameter] public List<CustomSelectOption> Options { get; set; } = new();
     [Parameter] public string Placeholder { get; set; } = "Select option...";
     [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public bool DropUp { get; set; } = false;
+    [Parameter] public string Align { get; set; } = "auto";
+    [Parameter] public string MenuWidthClass { get; set; } = "min-w-[160px]";
 
     private bool _isOpen = false;
+
+    private string DropdownPositionClass
+    {
+        get
+        {
+            var vertical = DropUp ? "bottom-full mb-1.5" : "top-full mt-1.5";
+            var horizontal = Align switch
+            {
+                "left" => "left-0 right-auto",
+                "right" => "right-0 left-auto",
+                _ => "left-0 sm:left-auto right-0"
+            };
+            return $"{vertical} {horizontal}";
+        }
+    }
 
     private string SelectedLabel
     {

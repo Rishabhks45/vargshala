@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vargshala.Application.Features.Organizations.Queries.GetOrganization;
+using Vargshala.Contracts.Common;
 
 namespace Vargshala.API.Controllers;
 
@@ -31,10 +32,10 @@ public class OrganizationsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "SuperAdmin,1001")]
-    public async Task<IActionResult> GetAllInstitutes()
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
+    public async Task<IActionResult> GetAllInstitutes([FromQuery] PagedRequest request)
     {
-        var result = await _mediator.Send(new Vargshala.Application.Features.Organizations.Queries.GetAllInstitutes.GetAllInstitutesQuery());
+        var result = await _mediator.Send(new Vargshala.Application.Features.Organizations.Queries.GetAllInstitutes.GetAllInstitutesQuery(request));
         return Ok(result);
     }
 

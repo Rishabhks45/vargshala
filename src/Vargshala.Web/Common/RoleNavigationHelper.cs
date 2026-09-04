@@ -10,6 +10,7 @@ public static class RoleNavigationHelper
         return role switch
         {
             UserRole.SuperAdmin => "/controlpanel/platform",
+            UserRole.BackOffice => "/controlpanel/platform",
             UserRole.OrganizationAdmin => "/",
             UserRole.Teacher => "/attendance",
             UserRole.Student => "/student/home",
@@ -24,7 +25,8 @@ public static class RoleNavigationHelper
             return "/login";
         }
 
-        if (principal.IsInRole("SuperAdmin") || principal.IsInRole("1001"))
+        if (principal.IsInRole("SuperAdmin") || principal.IsInRole("1001") ||
+            principal.IsInRole("BackOffice") || principal.IsInRole("1002"))
         {
             return "/controlpanel/platform";
         }
@@ -59,5 +61,34 @@ public static class RoleNavigationHelper
         }
 
         return "/";
+    }
+
+    public static string GetRoleDisplayName(ClaimsPrincipal? principal)
+    {
+        if (principal?.Identity?.IsAuthenticated != true)
+        {
+            return "User";
+        }
+
+        var roleStr = principal.FindFirst(ClaimTypes.Role)?.Value 
+                   ?? principal.FindFirst("role")?.Value 
+                   ?? principal.FindFirst("Role")?.Value;
+
+        if (string.IsNullOrWhiteSpace(roleStr))
+        {
+            return "User";
+        }
+
+        if (Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var role))
+        {
+            return role.GetDisplayName();
+        }
+
+        if (int.TryParse(roleStr, out var roleInt) && Enum.IsDefined(typeof(UserRole), roleInt))
+        {
+            return ((UserRole)roleInt).GetDisplayName();
+        }
+
+        return roleStr;
     }
 }

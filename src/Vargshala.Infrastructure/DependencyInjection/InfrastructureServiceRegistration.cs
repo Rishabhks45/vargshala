@@ -38,6 +38,11 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<ICurrentUser, CurrentUser>();
 
+        // Repositories
+        services.AddScoped<Vargshala.Application.Features.Organizations.Infrastructure.IOrganizationRepository, Vargshala.Infrastructure.Persistence.Repositories.OrganizationRepository>();
+        services.AddScoped<Vargshala.Application.Features.Users.Infrastructure.IUserRepository, Vargshala.Infrastructure.Persistence.Repositories.UserRepository>();
+        services.AddScoped<Vargshala.Application.Features.Authentication.Infrastructure.IAuthRepository, Vargshala.Infrastructure.Persistence.Repositories.AuthRepository>();
+
         // HttpContextAccessor (needed by CurrentUser)
         services.AddHttpContextAccessor();
 

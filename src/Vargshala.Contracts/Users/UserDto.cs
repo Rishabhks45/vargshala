@@ -22,6 +22,8 @@ public class UserDto
     public DateTime CreatedAt { get; set; }
     public Guid? UpdatedBy { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? OrganizationName { get; set; }
+    public string? OrganizationCode { get; set; }
 }
 #endregion
 

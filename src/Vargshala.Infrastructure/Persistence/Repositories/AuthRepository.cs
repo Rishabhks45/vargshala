@@ -1,31 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Authentication.Infrastructure;
 using Vargshala.Domain.Entities;
 
-namespace Vargshala.Application.Features.Authentication.Infrastructure;
-
-public interface IAuthRepository
-{
-    Task<User?> GetUserByEmailWithOrgAsync(string email, CancellationToken cancellationToken = default);
-    Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Organization?> GetOrganizationByCodeAsync(string code, CancellationToken cancellationToken = default);
-    Task<bool> OrganizationCodeExistsAsync(string code, CancellationToken cancellationToken = default);
-    Task<bool> UserEmailExistsAsync(string email, CancellationToken cancellationToken = default);
-    Task<bool> UserEmailExistsInOrgAsync(string email, Guid organizationId, CancellationToken cancellationToken = default);
-    Task AddOrganizationAsync(Organization organization, CancellationToken cancellationToken = default);
-    Task AddUserAsync(User user, CancellationToken cancellationToken = default);
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-}
+namespace Vargshala.Infrastructure.Persistence.Repositories;
 
 public class AuthRepository : IAuthRepository
 {
+    #region Fields & Constructor
     private readonly IVargshalaDbContext _db;
 
     public AuthRepository(IVargshalaDbContext db)
     {
         _db = db;
     }
+    #endregion
 
+    #region Query Methods
     public async Task<User?> GetUserByEmailWithOrgAsync(string email, CancellationToken cancellationToken = default)
     {
         return await _db.Users
@@ -62,7 +53,9 @@ public class AuthRepository : IAuthRepository
         return await _db.Users
             .AnyAsync(u => u.Email == email && u.OrganizationId == organizationId && !u.IsDeleted, cancellationToken);
     }
+    #endregion
 
+    #region Command Methods
     public async Task AddOrganizationAsync(Organization organization, CancellationToken cancellationToken = default)
     {
         await _db.Organizations.AddAsync(organization, cancellationToken);
@@ -77,4 +70,5 @@ public class AuthRepository : IAuthRepository
     {
         return await _db.SaveChangesAsync(cancellationToken);
     }
+    #endregion
 }

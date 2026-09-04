@@ -54,4 +54,58 @@ public class UsersController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("controlpanel")]
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
+    public async Task<IActionResult> GetControlPanelUsers(
+        [FromQuery] PagedRequest request,
+        [FromQuery] UserRole? role = null,
+        [FromQuery] bool? isActive = null)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Users.Queries.GetControlPanelUsers.GetControlPanelUsersQuery(request, role, isActive));
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("controlpanel")]
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
+    public async Task<IActionResult> CreateControlPanelUser([FromBody] CreateUserRequest request)
+    {
+        var command = new Vargshala.Application.Features.Users.Commands.CreateControlPanelUser.CreateControlPanelUserCommand(
+            request.FirstName,
+            request.LastName,
+            request.Email ?? string.Empty,
+            request.Mobile,
+            request.Password,
+            request.Role,
+            request.OrganizationId);
+
+        var result = await _mediator.Send(command);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPatch("{id:guid}/toggle-status")]
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
+    public async Task<IActionResult> ToggleUserStatus(Guid id)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Users.Commands.ToggleUserStatus.ToggleUserStatusCommand(id));
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

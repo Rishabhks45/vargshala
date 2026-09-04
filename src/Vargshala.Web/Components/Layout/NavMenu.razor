@@ -24,8 +24,8 @@
     <!-- Navigation Menu Items (Compact - Hidden Scrollbar) -->
     <nav class="flex-1 px-2.5 py-2 space-y-0.5 overflow-y-auto overflow-x-hidden no-scrollbar relative z-10 select-none" style="scrollbar-width: none; -ms-overflow-style: none;">
         
-        <!-- SuperAdmin Platform Navigation Menu (6 Items) -->
-        <AuthorizeView Roles="SuperAdmin" Context="superAdminNavContext">
+        <!-- SuperAdmin & BackOffice Platform Navigation Menu (6 Items) -->
+        <AuthorizeView Roles="SuperAdmin,BackOffice" Context="superAdminNavContext">
             <Authorized>
                 <!-- 1. Platform -->
                 <NavLink class="@GetNavLinkClass()" 
@@ -52,6 +52,20 @@
                     @if (!IsCollapsed)
                     {
                         <span class="truncate">Institutes</span>
+                    }
+                </NavLink>
+
+                <!-- Users (OrgAdmin & BackOffice) -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="controlpanel/users" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Users" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Users</span>
                     }
                 </NavLink>
 

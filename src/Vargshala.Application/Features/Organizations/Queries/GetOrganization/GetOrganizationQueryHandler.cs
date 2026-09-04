@@ -10,6 +10,7 @@ namespace Vargshala.Application.Features.Organizations.Queries.GetOrganization;
 public class GetOrganizationQueryHandler
     : IRequestHandler<GetOrganizationQuery, ApiResponse<OrganizationDto>>
 {
+    #region Fields & Constructor
     private readonly IOrganizationRepository _organizationRepository;
     private readonly ICurrentUser _currentUser;
 
@@ -18,7 +19,9 @@ public class GetOrganizationQueryHandler
         _organizationRepository = organizationRepository;
         _currentUser = currentUser;
     }
+    #endregion
 
+    #region Query Handler
     public async Task<ApiResponse<OrganizationDto>> Handle(
         GetOrganizationQuery request,
         CancellationToken cancellationToken)
@@ -39,4 +42,5 @@ public class GetOrganizationQueryHandler
 
         return ApiResponse<OrganizationDto>.SuccessResponse(dto);
     }
+    #endregion
 }

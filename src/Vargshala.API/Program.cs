@@ -62,15 +62,6 @@ if (app.Environment.IsDevelopment())
     // Auto-redirect root "/" to "/swagger"
     app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
-    // Seed database in development
-    try
-    {
-        await Vargshala.Infrastructure.Persistence.DbInitializer.SeedAsync(app.Services);
-    }
-    catch (Exception ex)
-    {
-        Log.Warning(ex, "Could not auto-seed database on startup. Ensure PostgreSQL is running.");
-    }
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

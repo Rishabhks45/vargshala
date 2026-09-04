@@ -1,48 +1,40 @@
 using Mapster;
 using MediatR;
-using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Features.Users.Infrastructure;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Users;
 
-namespace Vargshala.Application.Features.Users.Queries.GetUsers;
+namespace Vargshala.Application.Features.Users.Queries.GetControlPanelUsers;
 
-public class GetUsersQueryHandler
-    : IRequestHandler<GetUsersQuery, ApiResponse<PagedResponse<UserDto>>>
+public class GetControlPanelUsersQueryHandler
+    : IRequestHandler<GetControlPanelUsersQuery, ApiResponse<PagedResponse<UserDto>>>
 {
     private readonly IUserRepository _userRepository;
-    private readonly ICurrentUser _currentUser;
 
-    public GetUsersQueryHandler(IUserRepository userRepository, ICurrentUser currentUser)
+    public GetControlPanelUsersQueryHandler(IUserRepository userRepository)
     {
         _userRepository = userRepository;
-        _currentUser = currentUser;
     }
 
     public async Task<ApiResponse<PagedResponse<UserDto>>> Handle(
-        GetUsersQuery request,
+        GetControlPanelUsersQuery request,
         CancellationToken cancellationToken)
     {
-        if (_currentUser.OrganizationId is null)
-        {
-            return ApiResponse<PagedResponse<UserDto>>.FailureResponse(
-                "No organization associated with this user.");
-        }
-
         var pagedRequest = request.Request ?? new PagedRequest();
 
-        var (users, totalRecords) = await _userRepository.GetPagedByOrgAsync(
-            _currentUser.OrganizationId.Value, pagedRequest, cancellationToken);
+        var (users, totalRecords) = await _userRepository.GetControlPanelUsersPagedAsync(
+            pagedRequest, request.Role, request.IsActive, cancellationToken);
 
         var dtos = users.Select(u =>
         {
             var dto = u.Adapt<UserDto>();
             dto.Role = u.Role;
+            dto.OrganizationName = u.Organization?.Name;
+            dto.OrganizationCode = u.Organization?.Code;
             return dto;
         }).ToList();
 
         var response = PagedResponse<UserDto>.Create(dtos, totalRecords, pagedRequest.PageNumber, pagedRequest.PageSize);
-
         return ApiResponse<PagedResponse<UserDto>>.SuccessResponse(response);
     }
 }
