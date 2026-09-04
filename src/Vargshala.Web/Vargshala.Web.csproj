@@ -8,6 +8,7 @@
     <ProjectReference Include="..\Vargshala.Contracts\Vargshala.Contracts.csproj" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
 
   <!-- Auto-compile Tailwind CSS on dotnet build -->

@@ -24,6 +24,8 @@ public class User : BaseEntity
     public bool MobileVerified { get; set; }
 
     public DateTime? LastLoginAt { get; set; }
+    
+    public string? ProfilePictureUrl { get; set; }
 
     // Refresh Token
     public string? RefreshToken { get; set; }

@@ -1,0 +1,24 @@
+@page "/student/study-material"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+
+<PageTitle>Study Material | Student Portal</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Study Material & Notes</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Access lecture notes, PDFs, syllabus, and study resources shared by your teachers.</p>
+        </div>
+    </div>
+
+    <div class="p-8 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs text-center space-y-3">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-teal-500/10 text-[#009488] flex items-center justify-center text-2xl font-bold">
+            📁
+        </div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white">Batch Study Materials</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Your enrolled batches' notes, presentations, and reference documents will appear here.
+        </p>
+    </div>
+</div>

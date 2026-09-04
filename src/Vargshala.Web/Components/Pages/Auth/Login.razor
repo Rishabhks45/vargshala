@@ -190,7 +190,7 @@
 
                 <!-- Remember Me Checkbox -->
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="rememberMe" class="w-3.5 h-3.5 rounded text-[#009488] bg-[#00382E] border-teal-600 focus:ring-[#009488]" />
+                    <input type="checkbox" id="rememberMe" @bind="_rememberMe" class="w-3.5 h-3.5 rounded text-[#009488] bg-[#00382E] border-teal-600 focus:ring-[#009488]" />
                     <label for="rememberMe" class="text-[11px] text-teal-200/90 cursor-pointer">
                         Remember this device for 30 days
                     </label>
@@ -233,6 +233,7 @@
 
 @code {
     private readonly LoginRequest _loginModel = new();
+    private bool _rememberMe = true;
 
     private bool _showPassword = false;
     private bool _isLoading = false;
@@ -269,14 +270,22 @@
         try
         {
             var response = await AuthService.LoginAsync(_loginModel);
-            if (response.Success)
+            if (response.Success && response.Data is not null)
             {
                 _successMessage = "Login successful! Redirecting...";
-                await Task.Delay(300);
+                await Task.Delay(200);
 
-                var role = response.Data?.User?.Role ?? UserRole.OrganizationAdmin;
+                var login = response.Data;
+                var role = login.User?.Role ?? UserRole.OrganizationAdmin;
                 var targetUrl = Vargshala.Web.Common.RoleNavigationHelper.GetDefaultRouteForRole(role);
-                Navigation.NavigateTo(targetUrl);
+
+                var signInUrl = $"/account/signin?token={Uri.EscapeDataString(login.AccessToken)}" +
+                                $"&refreshToken={Uri.EscapeDataString(login.RefreshToken ?? string.Empty)}" +
+                                $"&rememberMe={_rememberMe.ToString().ToLowerInvariant()}" +
+                                $"&orgName={Uri.EscapeDataString(login.User?.OrganizationName ?? string.Empty)}" +
+                                $"&returnUrl={Uri.EscapeDataString(targetUrl)}";
+
+                Navigation.NavigateTo(signInUrl, forceLoad: true);
             }
             else
             {

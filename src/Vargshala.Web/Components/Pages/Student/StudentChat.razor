@@ -1,0 +1,24 @@
+@page "/student/chat"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+
+<PageTitle>Chat | Student Portal</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Messages & Faculty Chat</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Direct message teachers and institute staff for questions and doubts.</p>
+        </div>
+    </div>
+
+    <div class="p-8 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs text-center space-y-3">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-teal-500/10 text-[#009488] flex items-center justify-center text-2xl font-bold">
+            💬
+        </div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white">Batch & Faculty Conversations</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Direct real-time chat with your teachers and institute staff will appear here.
+        </p>
+    </div>
+</div>

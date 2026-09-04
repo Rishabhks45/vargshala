@@ -1,5 +1,9 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
 using Vargshala.Contracts.Students;
+using Vargshala.Web.Auth;
 using Vargshala.Web.Components;
 using Vargshala.Web.Services;
 
@@ -9,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+
 // Register FluentValidation Validators
 builder.Services.AddValidatorsFromAssemblyContaining<StudentDtoValidator>();
 
@@ -16,28 +23,29 @@ builder.Services.AddValidatorsFromAssemblyContaining<StudentDtoValidator>();
 builder.Services.AddHttpClient("VargshalaApi", (sp, client) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    var baseUrl = config["ApiBaseUrl"] ?? "http://localhost:5101";
+    var baseUrl = config["ApiBaseUrl"] ?? "https://localhost:7288";
     client.BaseAddress = new Uri(baseUrl);
 });
 
-// Authentication & Authorization Services
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
-})
-.AddCookie(options =>
-{
-    options.LoginPath = "/login";
-    options.AccessDeniedPath = "/login";
-});
+// Authentication & Authorization Services (Cookie-First Zero Blink)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "Vargshala.AuthCookie";
+        options.LoginPath = "/login";
+        options.LogoutPath = "/account/logout";
+        options.AccessDeniedPath = "/login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+    });
 
-builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<CustomAuthenticationStateProvider>();
-builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(sp => 
-    sp.GetRequiredService<CustomAuthenticationStateProvider>());
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+builder.Services.AddScoped<TokenValidator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IInstituteService, InstituteService>();
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 
 var app = builder.Build();
 
@@ -45,7 +53,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
@@ -56,6 +63,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

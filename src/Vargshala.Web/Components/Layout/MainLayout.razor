@@ -12,7 +12,7 @@
     <div class="flex flex-col flex-1 h-screen max-h-screen min-w-0 bg-[#004D40] overflow-hidden">
         
         <!-- Deep Teal Top Header -->
-        <header class="h-16 shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 bg-[#004D40] text-white border-b border-teal-700/50 shadow-sm">
+        <header class="h-16 shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 bg-[#004D40] text-white border-none">
             
             <!-- Left: Sidebar Toggle + Dynamic Page Title & Organization Name -->
             <div class="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -202,11 +202,32 @@
     private string GetCurrentPageTitle()
     {
         var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri).ToLowerInvariant();
-        var segment = relativePath.Split('?')[0].Split('/')[0];
+        var cleanPath = relativePath.Split('?')[0].Trim('/');
 
-        return segment switch
+        return cleanPath switch
         {
             "" => "Dashboard",
+            "controlpanel" or "controlpanel/platform" => "Platform",
+            "controlpanel/institutes" => "Institutes",
+            "controlpanel/subscriptions" => "Subscriptions",
+            "controlpanel/coupons" => "Coupons & Discounts",
+            "controlpanel/payment-logs" or "controlpanel/payments" => "Payment Logs",
+            "controlpanel/tenants" => "Institutes",
+            "controlpanel/push" => "Push",
+            "controlpanel/logs" => "Logs",
+            "controlpanel/health" => "Health",
+            "controlpanel/email-templates" or "controlpanel/templates" => "Email Templates",
+
+            "student" or "student/home" => "Home",
+            "student/study-material" => "Study Material",
+            "student/tasks" => "Tasks",
+            "student/quizzes" => "Quizzes",
+            "student/progress" => "Progress",
+            "student/report-card" => "Report Card",
+            "student/fees" => "Fees",
+            "student/chat" => "Chat",
+            "student/events" => "Events",
+
             "students" => "Students Directory",
             "teachers" => "Teachers & Faculty",
             "batches" => "Classes & Batches",
@@ -222,7 +243,9 @@
             "messages" => "Messages & Chat",
             "events" => "Events & Calendar",
             "settings" => "Institute Settings",
-            _ => "Dashboard"
+            "contact" => "Contact Support",
+            _ => cleanPath.StartsWith("controlpanel") ? "Platform" :
+                 cleanPath.StartsWith("student") ? "Student Portal" : "Dashboard"
         };
     }
 

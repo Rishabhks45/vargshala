@@ -8,18 +8,15 @@ namespace Vargshala.Web.Services;
 public class AuthService : IAuthService
 {
     private readonly HttpClient _httpClient;
-    private readonly CustomAuthenticationStateProvider _authStateProvider;
     private readonly NavigationManager _navigation;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IHttpClientFactory httpClientFactory,
-        CustomAuthenticationStateProvider authStateProvider,
         NavigationManager navigation,
         ILogger<AuthService> logger)
     {
         _httpClient = httpClientFactory.CreateClient("VargshalaApi");
-        _authStateProvider = authStateProvider;
         _navigation = navigation;
         _logger = logger;
     }
@@ -35,11 +32,6 @@ public class AuthService : IAuthService
             
             if (result is not null)
             {
-                if (result.Success && result.Data is not null)
-                {
-                    await _authStateProvider.MarkUserAsAuthenticatedAsync(result.Data);
-                }
-
                 return result;
             }
 
@@ -68,11 +60,6 @@ public class AuthService : IAuthService
 
             if (result is not null)
             {
-                if (result.Success && result.Data is not null)
-                {
-                    await _authStateProvider.MarkUserAsAuthenticatedAsync(result.Data);
-                }
-
                 return result;
             }
 
@@ -90,14 +77,14 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task LogoutAsync()
+    public Task LogoutAsync()
     {
-        await _authStateProvider.MarkUserAsLoggedOutAsync();
-        _navigation.NavigateTo("/login", replace: true);
+        _navigation.NavigateTo("/account/logout", forceLoad: true);
+        return Task.CompletedTask;
     }
 
     public UserInfo? GetCurrentUser()
     {
-        return _authStateProvider.CurrentUser;
+        return null;
     }
 }

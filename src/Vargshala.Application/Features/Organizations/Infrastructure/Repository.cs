@@ -12,6 +12,8 @@ public interface IOrganizationRepository
     Task AddAsync(Organization organization, CancellationToken cancellationToken = default);
     void Update(Organization organization);
     void Delete(Organization organization);
+    Task<List<Organization>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Organization?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 
@@ -22,6 +24,21 @@ public class OrganizationRepository : IOrganizationRepository
     public OrganizationRepository(IVargshalaDbContext db)
     {
         _db = db;
+    }
+
+    public async Task<List<Organization>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _db.Organizations
+            .AsNoTracking()
+            .Where(o => !o.IsDeleted)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Organization?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _db.Organizations
+            .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted, cancellationToken);
     }
 
     public async Task<Organization?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

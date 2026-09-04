@@ -1,0 +1,24 @@
+@page "/student/events"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+
+<PageTitle>Events | Student Portal</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Institute Calendar & Events</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Upcoming workshops, holiday notices, and examination dates.</p>
+        </div>
+    </div>
+
+    <div class="p-8 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs text-center space-y-3">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl font-bold">
+            📅
+        </div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white">Scheduled Institute Events</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Upcoming holidays, parent-teacher meetings, and special workshops will appear here.
+        </p>
+    </div>
+</div>

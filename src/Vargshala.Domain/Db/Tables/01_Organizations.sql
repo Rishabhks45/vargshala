@@ -1,37 +1,41 @@
--- ============================================================================
--- Table: Organizations
--- Description: Core multi-tenant organization entity for coaching/institutes
--- ============================================================================
+-- Table: public.Organizations
 
-CREATE TABLE IF NOT EXISTS "Organizations" (
-    "Id"                 UUID                     NOT NULL,
-    "Name"               VARCHAR(200)             NOT NULL,
-    "Code"               VARCHAR(50)              NOT NULL,
-    "LogoUrl"            VARCHAR(500)             NULL,
-    "Email"              VARCHAR(150)             NULL,
-    "Mobile"             VARCHAR(20)              NULL,
-    "Address"            VARCHAR(500)             NULL,
-    "City"               VARCHAR(100)             NULL,
-    "State"              VARCHAR(100)             NULL,
-    "Pincode"            VARCHAR(10)              NULL,
-    "AcademicSession"    VARCHAR(20)              NULL,
+-- DROP TABLE IF EXISTS public."Organizations";
 
-    -- Status & Audit Fields (BaseEntity)
-    "IsActive"           BOOLEAN                  NOT NULL DEFAULT TRUE,
-    "CreatedBy"          UUID                     NULL,
-    "CreatedAt"          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "UpdatedBy"          UUID                     NULL,
-    "UpdatedAt"          TIMESTAMP WITH TIME ZONE NULL,
-
-    -- Soft Delete (BaseEntity)
-    "IsDeleted"          BOOLEAN                  NOT NULL DEFAULT FALSE,
-    "DeletedBy"          UUID                     NULL,
-    "DeletedAt"          TIMESTAMP WITH TIME ZONE NULL,
-
+CREATE TABLE IF NOT EXISTS public."Organizations"
+(
+    "Id" uuid NOT NULL,
+    "Name" character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    "Code" character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    "LogoUrl" character varying(500) COLLATE pg_catalog."default",
+    "Email" character varying(150) COLLATE pg_catalog."default",
+    "Mobile" character varying(20) COLLATE pg_catalog."default",
+    "Address" character varying(500) COLLATE pg_catalog."default",
+    "City" character varying(100) COLLATE pg_catalog."default",
+    "State" character varying(100) COLLATE pg_catalog."default",
+    "Pincode" character varying(10) COLLATE pg_catalog."default",
+    "AcademicSession" character varying(20) COLLATE pg_catalog."default",
+    "IsActive" boolean NOT NULL,
+    "CreatedBy" uuid,
+    "CreatedAt" timestamp with time zone NOT NULL,
+    "UpdatedBy" uuid,
+    "UpdatedAt" timestamp with time zone,
+    "IsDeleted" boolean NOT NULL,
+    "DeletedBy" uuid,
+    "DeletedAt" timestamp with time zone,
     CONSTRAINT "PK_Organizations" PRIMARY KEY ("Id")
-);
+)
 
--- Unique Organization Code (ignoring soft-deleted records)
-CREATE UNIQUE INDEX IF NOT EXISTS "IX_Organizations_Code" 
-    ON "Organizations" ("Code") 
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."Organizations"
+    OWNER to postgres;
+-- Index: IX_Organizations_Code
+
+-- DROP INDEX IF EXISTS public."IX_Organizations_Code";
+
+CREATE UNIQUE INDEX IF NOT EXISTS "IX_Organizations_Code"
+    ON public."Organizations" USING btree
+    ("Code" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default
     WHERE "IsDeleted" = false;

@@ -1,9 +1,12 @@
 @page "/"
 @attribute [Authorize]
+@inject NavigationManager Navigation
 
 <PageTitle>Dashboard | Vargshala</PageTitle>
 
-<div class="space-y-6">
+<AuthorizeView Roles="OrganizationAdmin,Teacher" Context="coachDashboardContext">
+    <Authorized>
+        <div class="space-y-6">
     
     <!-- Top Dashboard Action Bar with DateRangePicker & Coral Button -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -134,7 +137,9 @@
         </div>
     </div>
 
-</div>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @code {
     private readonly List<RecentActivitiesCard.ActivityItemModel> _recentActivities = new()
@@ -168,6 +173,30 @@
             Type = RecentActivitiesCard.ActivityType.Fee
         }
     };
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            var authState = await AuthStateTask;
+            var user = authState.User;
+
+            if (user.IsInRole("SuperAdmin") || user.IsInRole("1001"))
+            {
+                Navigation.NavigateTo("controlpanel/platform", replace: true);
+                return;
+            }
+
+            if (user.IsInRole("Student") || user.IsInRole("3"))
+            {
+                Navigation.NavigateTo("student/home", replace: true);
+                return;
+            }
+        }
+    }
 
     private void HandleExport()
     {

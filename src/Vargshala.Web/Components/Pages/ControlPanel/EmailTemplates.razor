@@ -1,0 +1,871 @@
+@page "/controlpanel/email-templates"
+@page "/controlpanel/templates"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
+@using Vargshala.Contracts.EmailTemplates
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Services
+@inject IEmailTemplateService TemplateService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>System Email Templates | Control Panel</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Top Header & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">✉️</span>
+                System Email Templates
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Configure automated transactional emails, onboarding announcements, security alerts, and subscription receipts.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="button" 
+                    @onclick="OpenCreateDrawer"
+                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </span>
+                <span>New Email Template</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Banner -->
+    @if (!string.IsNullOrEmpty(_notificationMessage))
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3 text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in duration-200">
+            <div class="flex items-center gap-2">
+                <span>✅</span>
+                <span class="font-semibold">@_notificationMessage</span>
+            </div>
+            <button type="button" @onclick="() => _notificationMessage = null" class="text-emerald-500 hover:text-emerald-700 cursor-pointer font-bold">✕</button>
+        </div>
+    }
+
+    <!-- 4 KPI Summary Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Templates</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_templates.Count</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center text-lg font-bold">
+                    📋
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active &amp; Live</p>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-1">@_templates.Count(t => t.IsActive)</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-lg font-bold">
+                    ⚡
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Billing &amp; Invoicing</p>
+                    <h3 class="text-2xl font-black text-indigo-600 mt-1">@_templates.Count(t => t.Category == "Billing")</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                    💳
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Auth &amp; Security</p>
+                    <h3 class="text-2xl font-black text-purple-600 mt-1">@_templates.Count(t => t.Category == "Auth & Security")</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-lg font-bold">
+                    🛡️
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Category Filters Bar -->
+    <div class="card-surface p-3.5 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div class="relative w-full md:w-80">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" 
+                   @bind="_searchTerm" 
+                   @bind:event="oninput" 
+                   placeholder="Search template name, code, subject..." 
+                   class="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#009488]" />
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <div class="w-44">
+                <CustomSelect
+                              Value="@_selectedCategoryFilter"
+                              ValueChanged="@(val => _selectedCategoryFilter = val)"
+                              Options="@_categoryFilterOptions"
+                              Placeholder="All Categories" />
+            </div>
+
+            <div class="w-36">
+                <CustomSelect
+                              Value="@_selectedStatusFilter"
+                              ValueChanged="@(val => _selectedStatusFilter = val)"
+                              Options="@_statusFilterOptions"
+                              Placeholder="All Status" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Templates Data Table -->
+    <div class="card-surface border border-tealborder shadow-xs">
+        <div class="overflow-x-auto min-h-[260px]">
+            <table class="w-full min-w-[760px] text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
+                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Name")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Template &amp; System Code</span>
+                                <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Category")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Category</span>
+                                <span class="@_sortState.GetIndicatorClass("Category")">@_sortState.GetIndicator("Category")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4">Subject Line</th>
+                        <th class="py-3.5 px-4">Dynamic Variables</th>
+                        <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                    @if (_isLoading)
+                    {
+                        @for (int i = 0; i < 4; i++)
+                        {
+                            <tr class="animate-pulse">
+                                <td class="py-4 px-6"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-48 mb-1"></div><div class="h-3 bg-slate-100 dark:bg-slate-800/60 rounded w-24"></div></td>
+                                <td class="py-4 px-4"><div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-full w-20"></div></td>
+                                <td class="py-4 px-4"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-40"></div></td>
+                                <td class="py-4 px-4"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32"></div></td>
+                                <td class="py-4 px-4 text-center"><div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-full w-14 mx-auto"></div></td>
+                                <td class="py-4 px-6 text-right"><div class="h-6 bg-slate-200 dark:bg-slate-800 rounded w-16 ml-auto"></div></td>
+                            </tr>
+                        }
+                    }
+                    else if (FilteredTemplates.Any())
+                    {
+                        @foreach (var tpl in FilteredTemplates)
+                        {
+                            <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors group">
+                                <td class="py-3.5 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] flex items-center justify-center font-bold text-sm shrink-0 border border-teal-200 dark:border-teal-800/60">
+                                            @GetCategoryIcon(tpl.Category)
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#009488] transition-colors">
+                                                @tpl.Name
+                                            </span>
+                                            <div class="text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                                                @tpl.Code
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold @GetCategoryBadgeClass(tpl.Category)">
+                                        @tpl.Category
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-200 max-w-xs truncate" title="@tpl.Subject">
+                                    @tpl.Subject
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="flex flex-wrap gap-1 max-w-xs">
+                                        @foreach (var ph in tpl.AvailablePlaceholders.Take(3))
+                                        {
+                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-300">
+                                                @ph
+                                            </span>
+                                        }
+                                        @if (tpl.AvailablePlaceholders.Count > 3)
+                                        {
+                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-400">
+                                                +@(tpl.AvailablePlaceholders.Count - 3)
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4 text-center">
+                                    <button type="button" 
+                                            @onclick="() => ToggleStatusAsync(tpl)"
+                                            title="Click to toggle status"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold cursor-pointer transition-all @(tpl.IsActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800")">
+                                        <span class="w-1.5 h-1.5 rounded-full @(tpl.IsActive ? "bg-emerald-500 animate-pulse" : "bg-rose-500")"></span>
+                                        @(tpl.IsActive ? "Active" : "Disabled")
+                                    </button>
+                                </td>
+                                <td class="py-3.5 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <!-- Action 1: Live Preview -->
+                                        <button type="button" 
+                                                @onclick="() => OpenPreviewDrawer(tpl)"
+                                                title="Preview Email Layout"
+                                                class="p-2 rounded-xl text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Action 2: Edit Template -->
+                                        <button type="button" 
+                                                @onclick="() => OpenEditDrawer(tpl)"
+                                                title="Edit Template"
+                                                class="p-2 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Action 3: Send Test Email -->
+                                        <button type="button" 
+                                                @onclick="() => OpenTestEmailModal(tpl)"
+                                                title="Dispatch Test Email"
+                                                class="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-400">
+                                <div class="text-4xl mb-2">✉️</div>
+                                <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">No email templates found matching filters.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Create / Edit Template Slide-Over -->
+<!-- ========================================================================= -->
+@if (_showEditDrawer)
+{
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    @(_isCreating ? "➕" : "✏️")
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        @(_isCreating ? "New Email Template" : $"Edit: {_editModel.Name}")
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Configure layout, dynamic tokens, and dispatch criteria
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" @onclick="CloseDrawerAsync" class="p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            @if (!string.IsNullOrEmpty(_formError))
+            {
+                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+                    @_formError
+                </div>
+            }
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">System Code *</label>
+                    <input type="text" @bind="_editModel.Code" disabled="@(!_isCreating)" placeholder="e.g. WELCOME_ONBOARDING"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase font-bold text-slate-800 dark:text-white focus:outline-none focus:border-[#009488] disabled:opacity-60 disabled:cursor-not-allowed" />
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category *</label>
+                    <CustomSelect
+                                  Value="@_editModel.Category"
+                                  ValueChanged="@(val => _editModel.Category = val)"
+                                  Options="@_modalCategoryOptions" />
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Template Display Name *</label>
+                <input type="text" @bind="_editModel.Name" placeholder="e.g. Institute Onboarding Welcome"
+                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+            </div>
+
+            <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Subject Line *</label>
+                <input type="text" @bind="_editModel.Subject" placeholder="e.g. Welcome to Vargshala, {{InstituteName}}!"
+                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+            </div>
+
+            <!-- Available Placeholders Chips -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="font-bold text-slate-700 dark:text-slate-300">Available Placeholders (Click to insert)</label>
+                    <span class="text-[11px] text-teal-600 dark:text-teal-400 font-semibold">Dynamic tokens</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80">
+                    @foreach (var token in _standardTokens)
+                    {
+                        <button type="button" 
+                                @onclick="() => InsertToken(token)"
+                                class="px-2 py-1 rounded-lg bg-white dark:bg-[#111c21] hover:bg-teal-50 dark:hover:bg-teal-950/50 text-slate-700 dark:text-slate-200 text-[11px] font-mono border border-slate-200 dark:border-slate-700 hover:border-[#009488] transition-all cursor-pointer shadow-2xs">
+                            + @token
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- HTML Body Editor -->
+            <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">HTML Email Content *</label>
+                <textarea @bind="_editModel.BodyHtml" rows="12" placeholder="<html><body>...</body></html>"
+                          class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#009488] resize-y"></textarea>
+            </div>
+
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" @bind="_editModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300" />
+                    <span class="font-bold text-slate-700 dark:text-slate-200">Enable and mark as active template</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
+            <button type="button" @onclick="CloseDrawerAsync" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" @onclick="SaveTemplateAsync" disabled="@_isSaving" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
+                @if (_isSaving)
+                {
+                    <div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <span>Save Template</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Live Email Preview Slide-Over -->
+<!-- ========================================================================= -->
+@if (_showPreviewDrawer && _previewTemplate != null)
+{
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-teal-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    👁️
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        Email Preview: @_previewTemplate.Name
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium truncate max-w-xs">
+                        Subject: @_previewTemplate.Subject
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 relative z-10">
+                <!-- Device View Toggle -->
+                <button type="button" 
+                        @onclick="() => _isMobilePreview = !_isMobilePreview"
+                        class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>@(_isMobilePreview ? "📱 Mobile" : "💻 Desktop")</span>
+                </button>
+
+                <button type="button" @onclick="CloseDrawerAsync" class="p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Preview Body Container -->
+        <div class="flex-1 overflow-y-auto p-6 bg-slate-100 dark:bg-[#0d1518] flex items-start justify-center">
+            <div class="transition-all duration-300 @(_isMobilePreview ? "w-[360px] rounded-3xl border-8 border-slate-800 shadow-2xl overflow-hidden bg-white" : "w-full rounded-2xl shadow-md bg-white overflow-hidden")">
+                <!-- Mock Email Client Chrome Bar -->
+                <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 text-xs text-slate-600 flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-[11px] text-slate-400">
+                        <span>From: <strong>no-reply@vargshala.com</strong></span>
+                        <span>Now</span>
+                    </div>
+                    <div class="font-bold text-slate-800 text-xs truncate">
+                        Subject: @GetInterpolatedSubject(_previewTemplate)
+                    </div>
+                </div>
+
+                <!-- Live Rendered HTML -->
+                <div class="p-4 bg-white text-slate-800 text-sm overflow-x-auto">
+                    @((MarkupString)GetInterpolatedHtml(_previewTemplate))
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="() => OpenEditDrawer(_previewTemplate)"
+                    class="px-4 py-2.5 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+                <span>✏️</span>
+                <span>Edit This Template</span>
+            </button>
+            <button type="button" @onclick="CloseDrawerAsync" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                Close Preview
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Send Test Email -->
+<!-- ========================================================================= -->
+@if (_showTestModal && _testTargetTemplate != null)
+{
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-[#111c21] rounded-3xl shadow-2xl border border-tealborder p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">✉️</span>
+                    <h3 class="text-base font-extrabold text-slate-800 dark:text-white">Send Test Email</h3>
+                </div>
+                <button type="button" @onclick="() => _showTestModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+            </div>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                Dispatch a live preview of <strong>@_testTargetTemplate.Name</strong> with sample dynamic placeholders.
+            </p>
+
+            <div>
+                <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">Recipient Email Address</label>
+                <input type="email" @bind="_testRecipientEmail" placeholder="admin@mycoaching.com"
+                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+            </div>
+
+            <div class="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-[11px] text-teal-700 dark:text-teal-300">
+                Tokens like <code class="font-bold font-mono">{{InstituteName}}</code> will be populated with sample demo values.
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button type="button" @onclick="() => _showTestModal = false" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" @onclick="DispatchTestEmailAsync" disabled="@_isSendingTest" class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold cursor-pointer disabled:opacity-50">
+                    @(_isSendingTest ? "Dispatching..." : "Send Test Now →")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<EmailTemplateDto> _templates = new();
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+    private bool _isSendingTest = false;
+    private string _searchTerm = "";
+    private string _selectedCategoryFilter = "";
+    private string _selectedStatusFilter = "";
+    private string? _notificationMessage;
+    private string? _formError;
+
+    private readonly TableSortState _sortState = new();
+
+    // Drawer state
+    private bool _showEditDrawer = false;
+    private bool _showPreviewDrawer = false;
+    private bool _isDrawerOpen = false;
+    private bool _isCreating = false;
+    private bool _isMobilePreview = false;
+
+    // Test Modal
+    private bool _showTestModal = false;
+    private EmailTemplateDto? _testTargetTemplate;
+    private string _testRecipientEmail = "admin@example.com";
+
+    // Edit Model
+    private EmailTemplateDto _editModel = new();
+    private EmailTemplateDto? _previewTemplate;
+
+    private readonly List<string> _standardTokens = new()
+    {
+        "{{InstituteName}}",
+        "{{OwnerName}}",
+        "{{TenantCode}}",
+        "{{LoginUrl}}",
+        "{{SupportEmail}}",
+        "{{ResetUrl}}",
+        "{{InvoiceNumber}}",
+        "{{PlanName}}",
+        "{{AmountPaid}}",
+        "{{NextBillingDate}}",
+        "{{DaysRemaining}}"
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _categoryFilterOptions = new()
+    {
+        new("", "All Categories"),
+        new("Onboarding", "Onboarding"),
+        new("Auth & Security", "Auth & Security"),
+        new("Billing", "Billing & Invoicing"),
+        new("System", "System Notices")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _modalCategoryOptions = new()
+    {
+        new("Onboarding", "Onboarding"),
+        new("Auth & Security", "Auth & Security"),
+        new("Billing", "Billing & Invoicing"),
+        new("System", "System Notices")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Status"),
+        new("Active", "Active Only"),
+        new("Disabled", "Disabled Only")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplatesAsync();
+    }
+
+    private async Task LoadTemplatesAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+        _templates = await TemplateService.GetAllTemplatesAsync();
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private IEnumerable<EmailTemplateDto> FilteredTemplates
+    {
+        get
+        {
+            var query = _templates.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                var term = _searchTerm.Trim().ToLowerInvariant();
+                query = query.Where(t => 
+                    t.Name.ToLowerInvariant().Contains(term) ||
+                    t.Code.ToLowerInvariant().Contains(term) ||
+                    t.Subject.ToLowerInvariant().Contains(term));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedCategoryFilter))
+            {
+                query = query.Where(t => t.Category == _selectedCategoryFilter);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedStatusFilter))
+            {
+                bool active = _selectedStatusFilter == "Active";
+                query = query.Where(t => t.IsActive == active);
+            }
+
+            if (_sortState.IsSorted)
+            {
+                query = _sortState.Column switch
+                {
+                    "Name" => _sortState.Direction == SortDirection.Ascending
+                        ? query.OrderBy(t => t.Name)
+                        : query.OrderByDescending(t => t.Name),
+                    "Category" => _sortState.Direction == SortDirection.Ascending
+                        ? query.OrderBy(t => t.Category)
+                        : query.OrderByDescending(t => t.Category),
+                    _ => query
+                };
+            }
+
+            return query;
+        }
+    }
+
+    private void OpenCreateDrawer()
+    {
+        _isCreating = true;
+        _formError = null;
+        _editModel = new EmailTemplateDto
+        {
+            Category = "Onboarding",
+            IsActive = true,
+            AvailablePlaceholders = new List<string>(_standardTokens.Take(5))
+        };
+        _showPreviewDrawer = false;
+        _showEditDrawer = true;
+        StateHasChanged();
+        Task.Run(async () =>
+        {
+            await Task.Yield();
+            _isDrawerOpen = true;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void OpenEditDrawer(EmailTemplateDto tpl)
+    {
+        _isCreating = false;
+        _formError = null;
+        _editModel = new EmailTemplateDto
+        {
+            Id = tpl.Id,
+            Code = tpl.Code,
+            Name = tpl.Name,
+            Category = tpl.Category,
+            Subject = tpl.Subject,
+            BodyHtml = tpl.BodyHtml,
+            Description = tpl.Description,
+            AvailablePlaceholders = new List<string>(tpl.AvailablePlaceholders),
+            IsActive = tpl.IsActive
+        };
+        _showPreviewDrawer = false;
+        _showEditDrawer = true;
+        StateHasChanged();
+        Task.Run(async () =>
+        {
+            await Task.Yield();
+            _isDrawerOpen = true;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void OpenPreviewDrawer(EmailTemplateDto tpl)
+    {
+        _previewTemplate = tpl;
+        _showEditDrawer = false;
+        _showPreviewDrawer = true;
+        StateHasChanged();
+        Task.Run(async () =>
+        {
+            await Task.Yield();
+            _isDrawerOpen = true;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(250);
+        _showEditDrawer = false;
+        _showPreviewDrawer = false;
+        StateHasChanged();
+    }
+
+    private void InsertToken(string token)
+    {
+        _editModel.BodyHtml += " " + token;
+        if (!_editModel.AvailablePlaceholders.Contains(token))
+        {
+            _editModel.AvailablePlaceholders.Add(token);
+        }
+    }
+
+    private async Task SaveTemplateAsync()
+    {
+        _formError = null;
+
+        if (string.IsNullOrWhiteSpace(_editModel.Name) || string.IsNullOrWhiteSpace(_editModel.Subject) || string.IsNullOrWhiteSpace(_editModel.BodyHtml))
+        {
+            _formError = "Name, subject line, and HTML content are required.";
+            return;
+        }
+
+        _isSaving = true;
+        StateHasChanged();
+
+        if (_isCreating)
+        {
+            var req = new CreateEmailTemplateRequest
+            {
+                Code = _editModel.Code,
+                Name = _editModel.Name,
+                Category = _editModel.Category,
+                Subject = _editModel.Subject,
+                BodyHtml = _editModel.BodyHtml,
+                Description = _editModel.Description,
+                AvailablePlaceholders = _editModel.AvailablePlaceholders,
+                IsActive = _editModel.IsActive
+            };
+            var res = await TemplateService.CreateTemplateAsync(req);
+            if (res.Success)
+            {
+                _notificationMessage = $"Template '{_editModel.Name}' created successfully.";
+                await LoadTemplatesAsync();
+                await CloseDrawerAsync();
+            }
+            else
+            {
+                _formError = res.Message;
+            }
+        }
+        else
+        {
+            var req = new UpdateEmailTemplateRequest
+            {
+                Id = _editModel.Id,
+                Name = _editModel.Name,
+                Category = _editModel.Category,
+                Subject = _editModel.Subject,
+                BodyHtml = _editModel.BodyHtml,
+                Description = _editModel.Description,
+                AvailablePlaceholders = _editModel.AvailablePlaceholders,
+                IsActive = _editModel.IsActive
+            };
+            var res = await TemplateService.UpdateTemplateAsync(req);
+            if (res.Success)
+            {
+                _notificationMessage = $"Template '{_editModel.Name}' updated successfully.";
+                await LoadTemplatesAsync();
+                await CloseDrawerAsync();
+            }
+            else
+            {
+                _formError = res.Message;
+            }
+        }
+
+        _isSaving = false;
+        StateHasChanged();
+    }
+
+    private async Task ToggleStatusAsync(EmailTemplateDto tpl)
+    {
+        var res = await TemplateService.ToggleTemplateStatusAsync(tpl.Id);
+        if (res.Success)
+        {
+            tpl.IsActive = res.Data;
+            _notificationMessage = $"Template '{tpl.Name}' status updated to {(tpl.IsActive ? "Active" : "Disabled")}.";
+            StateHasChanged();
+        }
+    }
+
+    private void OpenTestEmailModal(EmailTemplateDto tpl)
+    {
+        _testTargetTemplate = tpl;
+        _showTestModal = true;
+    }
+
+    private async Task DispatchTestEmailAsync()
+    {
+        if (_testTargetTemplate == null) return;
+        _isSendingTest = true;
+        StateHasChanged();
+
+        var res = await TemplateService.SendTestEmailAsync(new SendTestEmailRequest
+        {
+            TemplateId = _testTargetTemplate.Id,
+            RecipientEmail = _testRecipientEmail
+        });
+
+        _isSendingTest = false;
+        _showTestModal = false;
+        _notificationMessage = res.Success ? res.Message : res.Message;
+        StateHasChanged();
+    }
+
+    private string GetInterpolatedSubject(EmailTemplateDto tpl)
+    {
+        return tpl.Subject
+            .Replace("{{InstituteName}}", "Apex Physics Institute")
+            .Replace("{{RecipientName}}", "Dr. Rajesh Verma")
+            .Replace("{{InvoiceNumber}}", "INV-2026-084")
+            .Replace("{{DaysRemaining}}", "3");
+    }
+
+    private string GetInterpolatedHtml(EmailTemplateDto tpl)
+    {
+        return tpl.BodyHtml
+            .Replace("{{InstituteName}}", "Apex Physics Institute")
+            .Replace("{{OwnerName}}", "Dr. Rajesh Verma")
+            .Replace("{{TenantCode}}", "APEX-PATNA")
+            .Replace("{{LoginUrl}}", "https://vargshala.com/login")
+            .Replace("{{SupportEmail}}", "support@vargshala.com")
+            .Replace("{{RecipientName}}", "Dr. Rajesh Verma")
+            .Replace("{{ResetUrl}}", "https://vargshala.com/reset-password?token=sample123")
+            .Replace("{{ExpiryMinutes}}", "30")
+            .Replace("{{InvoiceNumber}}", "INV-2026-084")
+            .Replace("{{PlanName}}", "Pro Coaching Tier (Annual)")
+            .Replace("{{AmountPaid}}", "14,999")
+            .Replace("{{NextBillingDate}}", "04 September 2027")
+            .Replace("{{InvoiceDownloadUrl}}", "#")
+            .Replace("{{DaysRemaining}}", "3")
+            .Replace("{{UpgradeUrl}}", "https://vargshala.com/pricing")
+            .Replace("{{StudentCount}}", "148");
+    }
+
+    private string GetCategoryIcon(string category) => category switch
+    {
+        "Onboarding" => "🏛️",
+        "Auth & Security" => "🛡️",
+        "Billing" => "💳",
+        _ => "✉️"
+    };
+
+    private string GetCategoryBadgeClass(string category) => category switch
+    {
+        "Onboarding" => "bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800",
+        "Auth & Security" => "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
+        "Billing" => "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800",
+        _ => "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+    };
+}

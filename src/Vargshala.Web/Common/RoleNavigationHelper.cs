@@ -9,10 +9,10 @@ public static class RoleNavigationHelper
     {
         return role switch
         {
-            UserRole.SuperAdmin => "/",
+            UserRole.SuperAdmin => "/controlpanel/platform",
             UserRole.OrganizationAdmin => "/",
             UserRole.Teacher => "/attendance",
-            UserRole.Student => "/study-material",
+            UserRole.Student => "/student/home",
             _ => "/"
         };
     }
@@ -24,10 +24,38 @@ public static class RoleNavigationHelper
             return "/login";
         }
 
-        var roleStr = principal.FindFirst(ClaimTypes.Role)?.Value;
+        if (principal.IsInRole("SuperAdmin") || principal.IsInRole("1001"))
+        {
+            return "/controlpanel/platform";
+        }
+
+        if (principal.IsInRole("Student") || principal.IsInRole("3"))
+        {
+            return "/student/home";
+        }
+
+        if (principal.IsInRole("Teacher") || principal.IsInRole("2"))
+        {
+            return "/attendance";
+        }
+
+        if (principal.IsInRole("OrganizationAdmin") || principal.IsInRole("1"))
+        {
+            return "/";
+        }
+
+        var roleStr = principal.FindFirst(ClaimTypes.Role)?.Value 
+                   ?? principal.FindFirst("role")?.Value 
+                   ?? principal.FindFirst("Role")?.Value;
+
         if (Enum.TryParse<UserRole>(roleStr, ignoreCase: true, out var role))
         {
             return GetDefaultRouteForRole(role);
+        }
+
+        if (int.TryParse(roleStr, out var roleInt) && Enum.IsDefined(typeof(UserRole), roleInt))
+        {
+            return GetDefaultRouteForRole((UserRole)roleInt);
         }
 
         return "/";

@@ -1,0 +1,1060 @@
+@page "/controlpanel/institutes"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
+@using Vargshala.Contracts.Authentication
+@using Vargshala.Contracts.Organizations
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Services
+@inject IInstituteService InstituteService
+@inject IAuthService AuthService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Institutes &amp; Tenant Management | Control Panel</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Top Header & Action Controls (Matched with Students.razor) -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">🏛️</span>
+                Institutes &amp; Tenant Management
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Manage registered coaching centers, multi-tenant isolation, user quotas, and live database tenants.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="OpenOnboardDrawerAsync"
+                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </span>
+                <span>Onboard Institute</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Summary (Exact Structure from Students.razor) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Institutes</p>
+                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_institutes.Count</h3>
+                <p class="text-[10px] text-emerald-600 font-semibold mt-0.5">@_institutes.Count(i => i.IsActive) Active • @_institutes.Count(i => !i.IsActive) Suspended</p>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Enrolled Students</p>
+                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">@_institutes.Sum(i => i.StudentCount).ToString("N0")</h3>
+                <p class="text-[10px] text-slate-400 font-medium mt-0.5">Across all coaching batches</p>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/80 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Faculty &amp; Teachers</p>
+                <h3 class="text-lg font-extrabold text-purple-600 dark:text-purple-400">@_institutes.Sum(i => i.TeacherCount).ToString("N0")</h3>
+                <p class="text-[10px] text-slate-400 font-medium mt-0.5">Active educators</p>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Tenant Isolation</p>
+                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">100% Secure</h3>
+                <p class="text-[10px] text-slate-400 font-medium mt-0.5">PostgreSQL 18 Multi-Tenant</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls (Exact Students.razor Component Layout) -->
+    <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <!-- Search Input with Clear Button -->
+        <div class="relative flex-1 w-full lg:max-w-md">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </span>
+            <input type="text" 
+                   @bind="_searchTerm" 
+                   @bind:event="oninput"
+                   placeholder="Search institute name, code, city, or owner..." 
+                   class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white transition-all placeholder-slate-400 dark:placeholder-slate-500" />
+            @if (!string.IsNullOrEmpty(_searchTerm))
+            {
+                <button type="button" @onclick="() => _searchTerm = string.Empty" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            }
+        </div>
+
+        <!-- Filter Dropdowns with CustomSelect -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2.5 w-full lg:w-auto">
+            <CustomSelect @bind-Value="_selectedPlanFilter" Options="_planFilterOptions" Placeholder="All Plans" />
+            <CustomSelect @bind-Value="_selectedStatusFilter" Options="_statusFilterOptions" Placeholder="All Status" />
+        </div>
+    </div>
+
+    <!-- Institutes Data Table (Pixel-Matched Layout with Full Dark Mode & TableSortState) -->
+    <div class="card-surface border border-tealborder shadow-xs">
+        <div class="overflow-x-auto min-h-[260px]">
+            <table class="w-full min-w-[760px] text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
+                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Name")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Institute &amp; Code</span>
+                                <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Owner")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Contact / Owner</span>
+                                <span class="@_sortState.GetIndicatorClass("Owner")">@_sortState.GetIndicator("Owner")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("City")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Location</span>
+                                <span class="@_sortState.GetIndicatorClass("City")">@_sortState.GetIndicator("City")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Students")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Students / Faculty</span>
+                                <span class="@_sortState.GetIndicatorClass("Students")">@_sortState.GetIndicator("Students")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Plan")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>SaaS Plan</span>
+                                <span class="@_sortState.GetIndicatorClass("Plan")">@_sortState.GetIndicator("Plan")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100/80 dark:divide-slate-800/40 text-xs">
+                    @if (_isLoading)
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="flex flex-col items-center justify-center space-y-2">
+                                    <div class="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
+                                    <p class="text-xs font-semibold text-slate-500">Loading institutes from database...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else if (FilteredInstitutes.Any())
+                    {
+                        @foreach (var inst in FilteredInstitutes)
+                        {
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-[#152329]/60 transition-colors">
+                                <!-- Institute Name & Code -->
+                                <td class="py-3.5 px-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] font-black text-sm flex items-center justify-center shrink-0 shadow-inner">
+                                            @inst.Name.Substring(0, 1).ToUpperInvariant()
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-slate-800 dark:text-white leading-tight">@inst.Name</div>
+                                            <div class="text-[10px] font-mono text-teal-600 dark:text-teal-400 mt-0.5">CODE: @inst.Code • ID: @inst.Id.ToString().Substring(0, 8)...</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Contact / Owner -->
+                                <td class="py-3.5 px-4">
+                                    <div class="font-bold text-slate-800 dark:text-white">@inst.OwnerName</div>
+                                    <div class="text-[11px] text-slate-400">@inst.Email</div>
+                                    @if (!string.IsNullOrWhiteSpace(inst.Mobile))
+                                    {
+                                        <div class="text-[10px] font-mono text-slate-400">@inst.Mobile</div>
+                                    }
+                                </td>
+
+                                <!-- Location -->
+                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                                    <div class="font-semibold text-slate-800 dark:text-white">@inst.City</div>
+                                    <div class="text-[11px] text-slate-400">@inst.State</div>
+                                </td>
+
+                                <!-- Students / Teachers Count -->
+                                <td class="py-3.5 px-4">
+                                    <div class="font-bold text-slate-800 dark:text-white">@inst.StudentCount Students</div>
+                                    <div class="text-[10px] text-teal-600 dark:text-teal-400 font-medium">@inst.TeacherCount Teachers • @inst.TotalUsersCount Total Users</div>
+                                </td>
+
+                                <!-- SaaS Plan Badge -->
+                                <td class="py-3.5 px-4">
+                                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold @GetPlanBadgeClass(inst.Plan) border">
+                                        @inst.Plan
+                                    </span>
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td class="py-3.5 px-4 text-center">
+                                    @if (inst.IsActive)
+                                    {
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                                            Suspended
+                                        </span>
+                                    }
+                                </td>
+
+                                 <!-- Actions Column: Direct Action Buttons -->
+                                 <td class="py-3.5 px-6 text-right">
+                                     <div class="flex items-center justify-end gap-1">
+                                         <!-- Quick Action 1: View Profile Details -->
+                                         <button type="button" 
+                                                 @onclick="() => OpenProfileDrawer(inst)" 
+                                                 title="View Details"
+                                                 class="p-2 rounded-xl text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/50 transition-all cursor-pointer inline-flex items-center justify-center"
+                                                 aria-label="View Details">
+                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                             </svg>
+                                         </button>
+
+                                         <!-- Quick Action 2: Edit Institute -->
+                                         <button type="button" 
+                                                 @onclick="() => OpenEditDrawerAsync(inst)" 
+                                                 title="Edit Institute"
+                                                 class="p-2 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all cursor-pointer inline-flex items-center justify-center"
+                                                 aria-label="Edit Institute">
+                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                             </svg>
+                                         </button>
+
+                                         <!-- Quick Action 3: Login As Admin (Impersonate) -->
+                                         <button type="button" 
+                                                 @onclick="() => ImpersonateInstitute(inst)" 
+                                                 title="Login As Admin (Impersonate)"
+                                                 class="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer inline-flex items-center justify-center"
+                                                 aria-label="Login As Admin">
+                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                             </svg>
+                                         </button>
+
+                                         <!-- Quick Action 3: Toggle Status (Active / Suspend) -->
+                                         <button type="button" 
+                                                 @onclick="() => ToggleInstituteStatusAsync(inst)" 
+                                                 title="@(inst.IsActive ? "Suspend Institute" : "Activate Institute")"
+                                                 class="p-2 rounded-xl @(inst.IsActive ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50" : "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/50") transition-all cursor-pointer inline-flex items-center justify-center"
+                                                 aria-label="Toggle Status">
+                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                             </svg>
+                                         </button>
+                                     </div>
+                                 </td>
+                            </tr>
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <svg class="w-8 h-8 text-rose-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <p class="font-bold text-rose-600 dark:text-rose-400 text-sm">Database Connection Error</p>
+                                    <p class="text-xs text-slate-400">@_errorMessage</p>
+                                    <button type="button" @onclick="LoadInstitutesAsync" 
+                                            class="mt-2 px-3.5 py-1.5 rounded-xl bg-teal-500/10 text-[#009488] hover:bg-teal-500/20 text-xs font-bold transition-all cursor-pointer">
+                                        Retry Connection
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No institutes found</p>
+                                    <p class="text-xs text-slate-400">Try changing your search query or filter options.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table Footer / Pagination (Exact Students.razor Footer) -->
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div>
+                Showing <span class="font-bold text-slate-800 dark:text-white">1-@FilteredInstitutes.Count()</span> of <span class="font-bold text-slate-800 dark:text-white">@_institutes.Count</span> institutes
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-400 dark:text-slate-500 disabled:opacity-40" disabled>
+                    Previous
+                </button>
+                <button type="button" class="w-8 h-8 rounded-lg bg-[#009488] text-white font-bold flex items-center justify-center">
+                    1
+                </button>
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1f3037]">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Onboard New Institute Slide-Over (Exact Match with Students.razor) -->
+<!-- ========================================================================= -->
+@if (_showOnboardDrawer)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-amber-400 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    🏛️
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>Onboard New Institute</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Create multi-tenant educational organization &amp; admin account
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            @if (!string.IsNullOrEmpty(_formError))
+            {
+                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+                    @_formError
+                </div>
+            }
+
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">1. Institute Information</h4>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Institute Full Name *</label>
+                    <input type="text" @bind="_regModel.OrganizationName" placeholder="e.g. Apex Physics Institute"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tenant Code *</label>
+                        <input type="text" @bind="_regModel.OrganizationCode" placeholder="e.g. APEX01"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none font-mono uppercase text-slate-800 dark:text-white font-bold" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Academic Session</label>
+                        <input type="text" @bind="_regModel.AcademicSession" placeholder="2026-2027"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Campus / Street Address</label>
+                    <input type="text" @bind="_regModel.Address" placeholder="e.g. Near Station Road, Civil Lines"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
+                        <input type="text" @bind="_regModel.City" placeholder="e.g. Patna"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">State</label>
+                        <input type="text" @bind="_regModel.State" placeholder="e.g. Bihar"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
+                        <input type="text" @bind="_regModel.Pincode" placeholder="e.g. 800001"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Institute Owner / Admin Credentials</h4>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">First Name *</label>
+                        <input type="text" @bind="_regModel.AdminFirstName" placeholder="Admin First Name"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Last Name *</label>
+                        <input type="text" @bind="_regModel.AdminLastName" placeholder="Admin Last Name"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Admin Login Email *</label>
+                    <input type="email" @bind="_regModel.AdminEmail" placeholder="admin@institute.com"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mobile</label>
+                        <input type="text" @bind="_regModel.AdminMobile" placeholder="9876543210"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Temporary Password *</label>
+                        <input type="password" @bind="_regModel.Password" placeholder="Strong password"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseDrawerAsync"
+                    class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    disabled="@_isSaving"
+                    @onclick="SubmitOnboardingAsync"
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer flex items-center gap-2">
+                @if (_isSaving)
+                {
+                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Registering...</span>
+                }
+                else
+                {
+                    <span>Save &amp; Onboard</span>
+                }
+            </button>
+        </div>
+
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Institute Profile Details Viewer (Exact Match with Students.razor) -->
+<!-- ========================================================================= -->
+@if (_showProfileDrawer && _selectedInstitute != null)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-teal-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    🏛️
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>@_selectedInstitute.Name</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Tenant Code: @_selectedInstitute.Code
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            <div class="card-surface p-4 space-y-2.5">
+                <div class="flex justify-between items-center"><span class="text-slate-400">Organization GUID:</span> <span class="font-mono text-[11px] font-bold text-[#009488]">@_selectedInstitute.Id</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Institute Code:</span> <span class="font-mono font-bold text-slate-800 dark:text-white">@_selectedInstitute.Code</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Primary Contact:</span> <span class="font-bold text-slate-800 dark:text-white">@_selectedInstitute.OwnerName</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Email:</span> <span class="text-slate-700 dark:text-slate-200">@_selectedInstitute.Email</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Mobile:</span> <span class="text-slate-700 dark:text-slate-200 font-mono">@_selectedInstitute.Mobile</span></div>
+                @if (!string.IsNullOrWhiteSpace(_selectedInstitute.Address))
+                {
+                    <div class="flex justify-between items-center"><span class="text-slate-400">Address:</span> <span class="text-slate-700 dark:text-slate-200 text-right max-w-xs truncate">@_selectedInstitute.Address</span></div>
+                }
+                <div class="flex justify-between items-center"><span class="text-slate-400">City / State:</span> <span class="text-slate-700 dark:text-slate-200">@_selectedInstitute.City, @_selectedInstitute.State @(!string.IsNullOrWhiteSpace(_selectedInstitute.Pincode) ? $"({_selectedInstitute.Pincode})" : "")</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Academic Session:</span> <span class="font-semibold text-slate-700 dark:text-slate-200">@_selectedInstitute.AcademicSession</span></div>
+                <div class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800"><span class="text-slate-400">Enrolled Students:</span> <span class="font-extrabold text-emerald-600">@_selectedInstitute.StudentCount Students</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Active Teachers:</span> <span class="font-extrabold text-purple-600">@_selectedInstitute.TeacherCount Teachers</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Status:</span> <span class="font-bold @(_selectedInstitute.IsActive ? "text-emerald-600" : "text-rose-600")">@(_selectedInstitute.IsActive ? "Active" : "Suspended")</span></div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-2">
+                <button type="button" 
+                        @onclick="() => ImpersonateInstitute(_selectedInstitute)"
+                        class="px-3.5 py-2.5 rounded-xl bg-teal-500/10 text-[#009488] hover:bg-teal-500/20 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>🎭</span>
+                    <span>Login As Admin</span>
+                </button>
+                <button type="button" 
+                        @onclick="() => OpenEditDrawerAsync(_selectedInstitute)"
+                        class="px-3.5 py-2.5 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>✏️</span>
+                    <span>Edit</span>
+                </button>
+            </div>
+            <button type="button" 
+                    @onclick="CloseDrawerAsync"
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                Close
+            </button>
+        </div>
+
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Edit Institute Slide-Over (Exact Match with Students.razor) -->
+<!-- ========================================================================= -->
+@if (_showEditDrawer && _selectedInstitute != null)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    ✏️
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>Edit Institute</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Update details for @_selectedInstitute.Name (@_selectedInstitute.Code)
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            @if (!string.IsNullOrEmpty(_editFormError))
+            {
+                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+                    @_editFormError
+                </div>
+            }
+
+            <div class="space-y-3">
+                <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">Institute Profile</h4>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Institute Full Name *</label>
+                    <input type="text" @bind="_editModel.Name" placeholder="e.g. Apex Physics Institute"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tenant Code (Immutable)</label>
+                        <input type="text" value="@_selectedInstitute.Code" disabled
+                               class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-[#18262c]/50 border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase text-slate-500 font-bold cursor-not-allowed" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Academic Session</label>
+                        <input type="text" @bind="_editModel.AcademicSession" placeholder="2026-2027"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-medium" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Official Email</label>
+                    <input type="email" @bind="_editModel.Email" placeholder="contact@institute.com"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Mobile Number</label>
+                    <input type="tel" @bind="_editModel.Mobile" placeholder="e.g. 9876543210"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Campus / Street Address</label>
+                    <input type="text" @bind="_editModel.Address" placeholder="e.g. Near Station Road, Civil Lines"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
+                        <input type="text" @bind="_editModel.City" placeholder="e.g. Patna"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">State</label>
+                        <input type="text" @bind="_editModel.State" placeholder="e.g. Bihar"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
+                        <input type="text" @bind="_editModel.Pincode" placeholder="e.g. 800001"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white font-mono" />
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" @bind="_editModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300" />
+                        <span class="font-bold text-slate-700 dark:text-slate-200">Institute is Active &amp; Enabled</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="SubmitEditAsync" 
+                    disabled="@_isSaving"
+                    class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
+                @if (_isSaving)
+                {
+                    <div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                    <span>Saving Changes...</span>
+                }
+                else
+                {
+                    <span>Save Changes</span>
+                }
+            </button>
+        </div>
+
+    </div>
+}
+
+@code {
+    private string _searchTerm = "";
+    private string _selectedPlanFilter = "";
+    private string _selectedStatusFilter = "";
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+    private string? _formError;
+    private string? _errorMessage;
+
+    private readonly TableSortState _sortState = new();
+
+    private readonly List<CustomSelect.CustomSelectOption> _planFilterOptions = new()
+    {
+        new("", "All Plans"),
+        new("Standard", "Standard"),
+        new("Pro Institute", "Pro Institute"),
+        new("Enterprise", "Enterprise"),
+        new("Free Trial", "Free Trial")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Status"),
+        new("Active", "Active Only"),
+        new("Suspended", "Suspended Only")
+    };
+
+    private List<InstituteSummaryDto> _institutes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInstitutesAsync();
+    }
+
+    private async Task LoadInstitutesAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var res = await InstituteService.GetAllInstitutesAsync();
+            if (res != null && res.Success && res.Data != null)
+            {
+                _institutes = res.Data;
+            }
+            else
+            {
+                _institutes = new List<InstituteSummaryDto>();
+                _errorMessage = res?.Message ?? "Could not load institutes from database.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _institutes = new List<InstituteSummaryDto>();
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private IEnumerable<InstituteSummaryDto> FilteredInstitutes
+    {
+        get
+        {
+            var query = _institutes.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                query = query.Where(i =>
+                    (i.Name?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (i.Code?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (i.City?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (i.OwnerName?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (i.Email?.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedPlanFilter))
+            {
+                query = query.Where(i => i.Plan.Equals(_selectedPlanFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedStatusFilter))
+            {
+                if (_selectedStatusFilter == "Active") query = query.Where(i => i.IsActive);
+                else if (_selectedStatusFilter == "Suspended") query = query.Where(i => !i.IsActive);
+            }
+
+            if (_sortState.IsSorted)
+            {
+                var isAsc = _sortState.Direction == SortDirection.Ascending;
+                query = _sortState.Column switch
+                {
+                    "Name" => isAsc ? query.OrderBy(i => i.Name) : query.OrderByDescending(i => i.Name),
+                    "Owner" => isAsc ? query.OrderBy(i => i.OwnerName) : query.OrderByDescending(i => i.OwnerName),
+                    "City" => isAsc ? query.OrderBy(i => i.City) : query.OrderByDescending(i => i.City),
+                    "Students" => isAsc ? query.OrderBy(i => i.StudentCount) : query.OrderByDescending(i => i.StudentCount),
+                    "Plan" => isAsc ? query.OrderBy(i => i.Plan) : query.OrderByDescending(i => i.Plan),
+                    _ => query
+                };
+            }
+
+            return query.ToList();
+        }
+    }
+
+    private string GetPlanBadgeClass(string plan) => plan switch
+    {
+        "Pro Institute" => "bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+        "Enterprise" => "bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+        "Free Trial" => "bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        _ => "bg-teal-50 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800"
+    };
+
+    private async Task ToggleInstituteStatusAsync(InstituteSummaryDto inst)
+    {
+        inst.IsActive = !inst.IsActive;
+        StateHasChanged();
+
+        try
+        {
+            var res = await InstituteService.ToggleInstituteStatusAsync(inst.Id);
+            if (res != null && res.Success)
+            {
+                inst.IsActive = res.Data;
+            }
+            else
+            {
+                inst.IsActive = !inst.IsActive;
+            }
+        }
+        catch
+        {
+            inst.IsActive = !inst.IsActive;
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void ImpersonateInstitute(InstituteSummaryDto inst)
+    {
+        Nav.NavigateTo("/");
+    }
+
+    private void ExportCsv()
+    {
+    }
+
+    // Drawer state
+    private bool _showOnboardDrawer = false;
+    private bool _showProfileDrawer = false;
+    private bool _showEditDrawer = false;
+    private bool _isDrawerOpen = false;
+    private InstituteSummaryDto? _selectedInstitute;
+    private RegisterOrganizationRequest _regModel = new();
+    private UpdateOrganizationRequest _editModel = new();
+    private string? _editFormError;
+
+    private async Task OpenOnboardDrawerAsync()
+    {
+        _formError = null;
+        _regModel = new RegisterOrganizationRequest
+        {
+            AcademicSession = "2026-2027"
+        };
+        _showOnboardDrawer = true;
+        _showProfileDrawer = false;
+        _showEditDrawer = false;
+        StateHasChanged();
+        await Task.Yield();
+        _isDrawerOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task OpenProfileDrawer(InstituteSummaryDto inst)
+    {
+        _selectedInstitute = inst;
+        _showProfileDrawer = true;
+        _showOnboardDrawer = false;
+        _showEditDrawer = false;
+        StateHasChanged();
+        await Task.Yield();
+        _isDrawerOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task OpenEditDrawerAsync(InstituteSummaryDto inst)
+    {
+        _editFormError = null;
+        _selectedInstitute = inst;
+        _editModel = new UpdateOrganizationRequest
+        {
+            Id = inst.Id,
+            Name = inst.Name,
+            Email = inst.Email,
+            Mobile = inst.Mobile,
+            Address = inst.Address,
+            City = inst.City,
+            State = inst.State,
+            Pincode = inst.Pincode,
+            AcademicSession = inst.AcademicSession,
+            LogoUrl = inst.LogoUrl,
+            IsActive = inst.IsActive
+        };
+        _showProfileDrawer = false;
+        _showOnboardDrawer = false;
+        _showEditDrawer = true;
+        StateHasChanged();
+        await Task.Yield();
+        _isDrawerOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(250);
+        _showOnboardDrawer = false;
+        _showProfileDrawer = false;
+        _showEditDrawer = false;
+        StateHasChanged();
+    }
+
+    private async Task SubmitEditAsync()
+    {
+        _editFormError = null;
+
+        if (string.IsNullOrWhiteSpace(_editModel.Name))
+        {
+            _editFormError = "Institute full name is required.";
+            return;
+        }
+
+        _isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            var res = await InstituteService.UpdateInstituteAsync(_editModel);
+            if (res != null && res.Success && res.Data != null)
+            {
+                if (_selectedInstitute != null)
+                {
+                    _selectedInstitute.Name = res.Data.Name;
+                    _selectedInstitute.Email = res.Data.Email;
+                    _selectedInstitute.Mobile = res.Data.Mobile;
+                    _selectedInstitute.Address = res.Data.Address;
+                    _selectedInstitute.City = res.Data.City;
+                    _selectedInstitute.State = res.Data.State;
+                    _selectedInstitute.Pincode = res.Data.Pincode;
+                    _selectedInstitute.AcademicSession = res.Data.AcademicSession;
+                    _selectedInstitute.IsActive = res.Data.IsActive;
+                }
+
+                await CloseDrawerAsync();
+            }
+            else
+            {
+                _editFormError = res?.Message ?? "Failed to update institute.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _editFormError = ex.Message;
+        }
+        finally
+        {
+            _isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitOnboardingAsync()
+    {
+        _formError = null;
+
+        if (string.IsNullOrWhiteSpace(_regModel.OrganizationName))
+        {
+            _formError = "Institute full name is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_regModel.OrganizationCode))
+        {
+            _formError = "Tenant code is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_regModel.AdminEmail) || string.IsNullOrWhiteSpace(_regModel.Password))
+        {
+            _formError = "Admin email and password are required.";
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var response = await AuthService.RegisterOrganizationAsync(_regModel);
+            if (response.Success)
+            {
+                await CloseDrawerAsync();
+                await LoadInstitutesAsync();
+            }
+            else
+            {
+                _formError = response.Message ?? "Failed to onboard institute.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _formError = ex.Message;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

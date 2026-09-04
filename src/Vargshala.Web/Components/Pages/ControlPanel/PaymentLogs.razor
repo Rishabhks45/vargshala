@@ -1,0 +1,527 @@
+@page "/controlpanel/payment-logs"
+@page "/controlpanel/payments"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@rendermode InteractiveServer
+
+<PageTitle>Payment Logs &amp; Gateway Transactions | Control Panel</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+
+    <!-- Top Header & Action Controls (Matched with Students.razor) -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">💳</span>
+                Payment Logs &amp; Gateway Transactions
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Real-time audit of Razorpay, UPI, credit card transactions, webhook events, and settlement logs.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="SyncGatewayLogs"
+                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
+                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white @(_isSyncing ? "animate-spin" : "group-hover:rotate-180") transition-transform duration-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                </span>
+                <span>Sync Webhooks</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Summary (Exact Structure from Students.razor) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Volume (30d)</p>
+                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">₹2,14,800</h3>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Success Rate</p>
+                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">97.8%</h3>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/80 text-rose-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Failed / Dropoffs</p>
+                <h3 class="text-lg font-extrabold text-rose-600 dark:text-rose-400">@_payments.Count(p => p.Status == "Failed")</h3>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Settlement Cycle</p>
+                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">T + 1 Days</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls (Exact Students.razor Component Layout) -->
+    <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <!-- Search Input with Clear Button -->
+        <div class="relative flex-1 w-full lg:max-w-md">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </span>
+            <input type="text" 
+                   @bind="_searchQuery" 
+                   @bind:event="oninput"
+                   placeholder="Search Payment ID, Order ID, institute or email..." 
+                   class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white transition-all placeholder-slate-400 dark:placeholder-slate-500 font-mono" />
+            @if (!string.IsNullOrEmpty(_searchQuery))
+            {
+                <button type="button" @onclick="() => _searchQuery = string.Empty" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            }
+        </div>
+
+        <!-- Filter Dropdowns with CustomSelect -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2.5 w-full lg:w-auto">
+            <CustomSelect @bind-Value="_selectedMethod" Options="_methodFilterOptions" Placeholder="All Payment Methods" />
+            <CustomSelect @bind-Value="_selectedStatus" Options="_statusFilterOptions" Placeholder="All Status" />
+        </div>
+    </div>
+
+    <!-- Payments Data Table (Pixel-Matched Layout with Full Dark Mode & TableSortState) -->
+    <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px] text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
+                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("PaymentId")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Payment / Order ID</span>
+                                <span class="@_sortState.GetIndicatorClass("PaymentId")">@_sortState.GetIndicator("PaymentId")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Institute")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Coaching Institute</span>
+                                <span class="@_sortState.GetIndicatorClass("Institute")">@_sortState.GetIndicator("Institute")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Amount")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Amount</span>
+                                <span class="@_sortState.GetIndicatorClass("Amount")">@_sortState.GetIndicator("Amount")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Method")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Method</span>
+                                <span class="@_sortState.GetIndicatorClass("Method")">@_sortState.GetIndicator("Method")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Time")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Time (IST)</span>
+                                <span class="@_sortState.GetIndicatorClass("Time")">@_sortState.GetIndicator("Time")</span>
+                            </div>
+                        </th>
+                        <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100/80 dark:divide-slate-800/40 text-xs">
+                    @if (FilteredPayments.Any())
+                    {
+                        @foreach (var p in FilteredPayments)
+                        {
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-[#152329]/60 transition-colors">
+                                <!-- Payment ID & Order ID -->
+                                <td class="py-3.5 px-6 font-mono">
+                                    <div class="font-bold text-slate-800 dark:text-white">@p.PaymentId</div>
+                                    <div class="text-[10px] text-slate-400">@p.OrderId</div>
+                                </td>
+
+                                <!-- Institute & Payer Email -->
+                                <td class="py-3.5 px-4">
+                                    <div class="font-bold text-slate-800 dark:text-white">@p.InstituteName</div>
+                                    <div class="text-[11px] text-slate-400">@p.PayerEmail</div>
+                                </td>
+
+                                <!-- Amount -->
+                                <td class="py-3.5 px-4 font-black text-sm text-slate-800 dark:text-white">
+                                    ₹@p.Amount.ToString("N0")
+                                </td>
+
+                                <!-- Method Badge -->
+                                <td class="py-3.5 px-4">
+                                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-[#18262c] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                        @p.Method
+                                    </span>
+                                </td>
+
+                                <!-- Timestamp -->
+                                <td class="py-3.5 px-4 font-mono text-slate-500 text-[11px]">
+                                    @p.Timestamp
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td class="py-3.5 px-4 text-center">
+                                    @if (p.Status == "Captured" || p.Status == "Success")
+                                    {
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                                            Captured
+                                        </span>
+                                    }
+                                    else if (p.Status == "Failed")
+                                    {
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800" title="@p.FailureReason">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                                            Failed
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800">
+                                            Refunded
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Action Menu (Dropdown exact like Students.razor) -->
+                                <td class="py-3.5 px-6 text-right relative">
+                                    <div class="inline-block text-left">
+                                        <button type="button" 
+                                                @onclick="() => ToggleMenu(p.PaymentId)" 
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4 font-extrabold" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M6 10a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4z"/>
+                                            </svg>
+                                        </button>
+
+                                        @if (_activeMenuPaymentId == p.PaymentId)
+                                        {
+                                            <div class="fixed inset-0 z-30" @onclick="() => _activeMenuPaymentId = null"></div>
+                                            <div class="absolute right-0 top-full mt-1 w-48 rounded-2xl bg-white dark:bg-[#111c21] shadow-2xl border border-slate-200/90 dark:border-slate-800 py-2 z-40 text-left animate-in fade-in zoom-in-95 duration-150 select-none">
+                                                <button type="button" 
+                                                        @onclick="() => OpenDetailDrawer(p)"
+                                                        class="w-full px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#18262c] flex items-center gap-2.5 transition-colors cursor-pointer">
+                                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    <span>View Gateway Details</span>
+                                                </button>
+                                                <button type="button" 
+                                                        @onclick="() => CopyPaymentId(p.PaymentId)"
+                                                        class="w-full px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#18262c] flex items-center gap-2.5 transition-colors cursor-pointer">
+                                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                                    <span>Copy Payment ID</span>
+                                                </button>
+                                                <div class="my-1.5 border-t border-slate-100 dark:border-slate-800"></div>
+                                                <button type="button" 
+                                                        @onclick="() => DownloadReceipt(p)"
+                                                        class="w-full px-4 py-2 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-teal-50/80 dark:hover:bg-teal-950/50 flex items-center gap-2.5 transition-colors cursor-pointer">
+                                                    <svg class="w-3.5 h-3.5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span>Download Receipt</span>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No transactions found</p>
+                                    <p class="text-xs text-slate-400">Try changing your search query or filter options.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table Footer / Pagination (Exact Students.razor Footer) -->
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div>
+                Showing <span class="font-bold text-slate-800 dark:text-white">1-@FilteredPayments.Count</span> of <span class="font-bold text-slate-800 dark:text-white">@_payments.Count</span> transactions
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-400 dark:text-slate-500 disabled:opacity-40" disabled>
+                    Previous
+                </button>
+                <button type="button" class="w-8 h-8 rounded-lg bg-[#009488] text-white font-bold flex items-center justify-center">
+                    1
+                </button>
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1f3037]">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Transaction Gateway Details (Exact Match with Students.razor) -->
+<!-- ========================================================================= -->
+@if (_showDetailDrawer && _selectedPayment != null)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-amber-400 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
+                    🧾
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5 font-mono">
+                        <span>@_selectedPayment.PaymentId</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Razorpay Gateway Transaction Details
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            <div class="card-surface p-4 space-y-2.5">
+                <div class="flex justify-between items-center"><span class="text-slate-400">Payment ID:</span> <span class="font-mono font-bold text-[#009488]">@_selectedPayment.PaymentId</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Order ID:</span> <span class="font-mono text-slate-700 dark:text-slate-200">@_selectedPayment.OrderId</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Institute Name:</span> <span class="font-bold text-slate-800 dark:text-white">@_selectedPayment.InstituteName</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Billing Email:</span> <span class="text-slate-700 dark:text-slate-200">@_selectedPayment.PayerEmail</span></div>
+                <div class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800"><span class="text-slate-400">Amount Charged:</span> <span class="font-black text-lg text-emerald-600">₹@_selectedPayment.Amount.ToString("N0")</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Payment Channel:</span> <span class="font-semibold text-slate-700 dark:text-slate-200">@_selectedPayment.Method</span></div>
+                <div class="flex justify-between items-center"><span class="text-slate-400">Gateway Status:</span> <span class="font-bold text-emerald-600">@_selectedPayment.Status</span></div>
+                @if (!string.IsNullOrWhiteSpace(_selectedPayment.FailureReason))
+                {
+                    <div class="flex justify-between items-center text-rose-500 pt-2 border-t border-rose-100 dark:border-rose-950/60">
+                        <span class="text-slate-400">Error Description:</span>
+                        <span class="font-bold">@_selectedPayment.FailureReason</span>
+                    </div>
+                }
+            </div>
+
+            <!-- JSON Payload Viewer -->
+            <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700 dark:text-slate-300">Raw Gateway Webhook Event</label>
+                <div class="p-3.5 rounded-2xl bg-slate-900 text-teal-300 font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-800">
+<pre>{
+  "event": "payment.captured",
+  "payment_id": "@_selectedPayment.PaymentId",
+  "order_id": "@_selectedPayment.OrderId",
+  "amount": @(_selectedPayment.Amount * 100),
+  "currency": "INR",
+  "status": "@_selectedPayment.Status.ToLowerInvariant()",
+  "method": "@_selectedPayment.Method"
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseDrawerAsync"
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                Close Window
+            </button>
+        </div>
+
+    </div>
+}
+
+@code {
+    private string _searchQuery = "";
+    private string _selectedMethod = "";
+    private string _selectedStatus = "";
+    private string? _activeMenuPaymentId;
+    private bool _isSyncing = false;
+
+    private readonly TableSortState _sortState = new();
+
+    private readonly List<CustomSelect.CustomSelectOption> _methodFilterOptions = new()
+    {
+        new("", "All Payment Methods"),
+        new("UPI", "UPI / QR Code"),
+        new("Card", "Credit / Debit Card"),
+        new("NetBanking", "NetBanking")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Status"),
+        new("Captured", "Captured / Success"),
+        new("Failed", "Failed Only"),
+        new("Refunded", "Refunded Only")
+    };
+
+    public record PaymentTransaction(
+        string Timestamp,
+        string PaymentId,
+        string OrderId,
+        string InstituteName,
+        string PayerEmail,
+        decimal Amount,
+        string Method,
+        string Status,
+        string? FailureReason = null);
+
+    private List<PaymentTransaction> _payments = new()
+    {
+        new("03 Sep 18:42", "pay_Pz928341", "order_Oz109283", "Brillent Coaching Center", "bcc@gmail.com", 2499, "UPI (Google Pay)", "Captured"),
+        new("03 Sep 15:10", "pay_Pz928340", "order_Oz109282", "Apex Physics Academy", "rajesh@apex.com", 999, "Card (HDFC Visa)", "Captured"),
+        new("03 Sep 11:24", "pay_Pz928339", "order_Oz109281", "Target Career Point", "info@targetcp.in", 999, "UPI (PhonePe)", "Failed", "User canceled payment on UPI app"),
+        new("02 Sep 20:15", "pay_Pz928338", "order_Oz109280", "Gravity IIT & Medical Prep", "contact@gravity.edu", 5999, "NetBanking (SBI)", "Captured"),
+        new("02 Sep 14:02", "pay_Pz928337", "order_Oz109279", "Success Point Coaching", "sunil@successpoint.org", 999, "UPI (Paytm)", "Captured"),
+        new("01 Sep 09:30", "pay_Pz928336", "order_Oz109278", "Modern Vidyamandir", "admin@vidyamandir.in", 2499, "Card (ICICI Master)", "Refunded", "Accidental double-charge resolved")
+    };
+
+    private List<PaymentTransaction> FilteredPayments
+    {
+        get
+        {
+            var query = _payments.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                query = query.Where(p => p.PaymentId.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                         p.OrderId.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                         p.InstituteName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                         p.PayerEmail.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedMethod))
+            {
+                query = query.Where(p => p.Method.Contains(_selectedMethod, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedStatus))
+            {
+                query = query.Where(p => p.Status.Equals(_selectedStatus, StringComparison.OrdinalIgnoreCase) ||
+                                         (_selectedStatus == "Captured" && p.Status == "Success"));
+            }
+
+            if (_sortState.IsSorted)
+            {
+                var isAsc = _sortState.Direction == SortDirection.Ascending;
+                query = _sortState.Column switch
+                {
+                    "PaymentId" => isAsc ? query.OrderBy(p => p.PaymentId) : query.OrderByDescending(p => p.PaymentId),
+                    "Institute" => isAsc ? query.OrderBy(p => p.InstituteName) : query.OrderByDescending(p => p.InstituteName),
+                    "Amount" => isAsc ? query.OrderBy(p => p.Amount) : query.OrderByDescending(p => p.Amount),
+                    "Method" => isAsc ? query.OrderBy(p => p.Method) : query.OrderByDescending(p => p.Method),
+                    "Time" => isAsc ? query.OrderBy(p => p.Timestamp) : query.OrderByDescending(p => p.Timestamp),
+                    _ => query
+                };
+            }
+
+            return query.ToList();
+        }
+    }
+
+    private void ToggleMenu(string paymentId)
+    {
+        _activeMenuPaymentId = _activeMenuPaymentId == paymentId ? null : paymentId;
+    }
+
+    private void CopyPaymentId(string paymentId)
+    {
+        _activeMenuPaymentId = null;
+    }
+
+    private void DownloadReceipt(PaymentTransaction p)
+    {
+        _activeMenuPaymentId = null;
+    }
+
+    private void ExportCsv()
+    {
+    }
+
+    private async Task SyncGatewayLogs()
+    {
+        _isSyncing = true;
+        await Task.Delay(400);
+        _isSyncing = false;
+    }
+
+    // Drawer state
+    private bool _showDetailDrawer = false;
+    private bool _isDrawerOpen = false;
+    private PaymentTransaction? _selectedPayment;
+
+    private async Task OpenDetailDrawer(PaymentTransaction p)
+    {
+        _activeMenuPaymentId = null;
+        _selectedPayment = p;
+        _showDetailDrawer = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        await Task.Delay(300);
+        _showDetailDrawer = false;
+    }
+}

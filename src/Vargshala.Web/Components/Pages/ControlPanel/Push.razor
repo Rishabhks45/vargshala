@@ -1,0 +1,209 @@
+@page "/controlpanel/push"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
+@rendermode InteractiveServer
+
+<PageTitle>Push Alerts &amp; Broadcasts - Control Panel</PageTitle>
+
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">🔔</span>
+                Platform Broadcast Center
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Dispatch platform-wide alerts, scheduled maintenance warnings, and mobile push notifications.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 border border-emerald-500/20">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Push Gateway: Connected
+            </span>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total Alerts Dispatched</span>
+            <div class="text-2xl font-black text-slate-800 dark:text-white mt-1">142</div>
+            <span class="text-[10px] text-teal-600 font-medium">98.9% delivery rate</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Active Mobile Tokens</span>
+            <div class="text-2xl font-black text-slate-800 dark:text-white mt-1">3,420</div>
+            <span class="text-[10px] text-emerald-600 font-medium">Android &amp; iOS devices</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Target Read / Open Rate</span>
+            <div class="text-2xl font-black text-slate-800 dark:text-white mt-1">68.4%</div>
+            <span class="text-[10px] text-indigo-600 font-medium">High priority notices</span>
+        </div>
+    </div>
+
+    <!-- Main Grid: Composer on Left, History on Right -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Broadcast Composer (5 cols) -->
+        <div class="lg:col-span-5 p-6 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs space-y-4">
+            <h2 class="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <span>✉️</span> Compose New Broadcast
+            </h2>
+
+            @if (_broadcastSent)
+            {
+                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                    ✓ Broadcast sent successfully to @_sentAudience target users!
+                </div>
+            }
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Audience</label>
+                    <select @bind="_targetAudience" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none">
+                        <option value="All Users">All Platform Users (Admins, Teachers, Students)</option>
+                        <option value="Institute Admins">Institute Owners &amp; Admins Only</option>
+                        <option value="Teachers">Faculty &amp; Teachers Only</option>
+                        <option value="Students">Enrolled Students &amp; Parents</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Severity &amp; Type</label>
+                    <select @bind="_severity" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none">
+                        <option value="Info">General Information (Blue)</option>
+                        <option value="Update">New Feature Update (Teal)</option>
+                        <option value="Warning">System Maintenance (Amber)</option>
+                        <option value="Critical">Urgent Service Alert (Rose)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Notification Title</label>
+                    <input type="text" @bind="_title" placeholder="e.g. Scheduled System Maintenance"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none" />
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Message Body</label>
+                    <textarea rows="4" @bind="_message" placeholder="Type notification message here..."
+                              class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-600 dark:text-slate-300">
+                        <input type="checkbox" @bind="_sendMobilePush" class="rounded text-[#009488]" />
+                        <span>Send Mobile Push</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-600 dark:text-slate-300">
+                        <input type="checkbox" @bind="_sendInAppBanner" class="rounded text-[#009488]" />
+                        <span>In-App Banner</span>
+                    </label>
+                </div>
+
+                <button @onclick="SendBroadcast"
+                        disabled="@(string.IsNullOrWhiteSpace(_title) || string.IsNullOrWhiteSpace(_message))"
+                        class="w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white font-bold hover:from-[#00a89a] hover:to-[#00897b] transition-all disabled:opacity-50 shadow-md">
+                    Send Broadcast Now 🚀
+                </button>
+            </div>
+        </div>
+
+        <!-- Broadcast History (7 cols) -->
+        <div class="lg:col-span-7 p-6 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs space-y-4">
+            <h2 class="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-between">
+                <span>Recent Platform Broadcasts</span>
+                <span class="text-xs font-semibold text-slate-400">Last 30 Days</span>
+            </h2>
+
+            <div class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                @foreach (var item in _history)
+                {
+                    <div class="py-3.5 space-y-1.5 first:pt-0 last:pb-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold @GetSeverityClass(item.Severity)">
+                                    @item.Severity
+                                </span>
+                                <span class="font-bold text-slate-800 dark:text-white">@item.Title</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-mono">@item.DeliveredAt</span>
+                        </div>
+
+                        <p class="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                            @item.Body
+                        </p>
+
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                            <span>Audience: <strong class="text-slate-600 dark:text-slate-300">@item.Audience</strong></span>
+                            <span>Delivered: <strong class="text-emerald-600 dark:text-emerald-400">@item.DeliveredCount</strong> • Open: <strong>@item.OpenRate</strong></span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    private string _targetAudience = "All Users";
+    private string _severity = "Info";
+    private string _title = "";
+    private string _message = "";
+    private bool _sendMobilePush = true;
+    private bool _sendInAppBanner = true;
+    private bool _broadcastSent = false;
+    private string _sentAudience = "";
+
+    public record BroadcastRecord(
+        string Title,
+        string Body,
+        string Severity,
+        string Audience,
+        string DeliveredAt,
+        int DeliveredCount,
+        string OpenRate);
+
+    private List<BroadcastRecord> _history = new()
+    {
+        new("Scheduled Server Upgrade", "Vargshala platform will undergo scheduled maintenance on Sunday from 02:00 AM to 03:30 AM IST.", "Warning", "All Users", "Yesterday, 06:30 PM", 3420, "76.4%"),
+        new("New Feature: Online Exam Timer", "Teachers can now set per-question and section-wise time limits for quizzes.", "Update", "Teachers", "01 Sep 2026", 142, "82.1%"),
+        new("August Subscription Invoices Generated", "Monthly invoices for all coaching institutes have been generated and sent to billing contacts.", "Info", "Institute Admins", "28 Aug 2026", 94, "91.5%")
+    };
+
+    private string GetSeverityClass(string severity) => severity switch
+    {
+        "Warning" => "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        "Critical" => "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+        "Update" => "bg-teal-500/10 text-[#009488]",
+        _ => "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+    };
+
+    private async Task SendBroadcast()
+    {
+        if (string.IsNullOrWhiteSpace(_title) || string.IsNullOrWhiteSpace(_message)) return;
+
+        _history.Insert(0, new BroadcastRecord(
+            _title,
+            _message,
+            _severity,
+            _targetAudience,
+            "Just now",
+            _targetAudience == "All Users" ? 3420 : 180,
+            "0%"));
+
+        _sentAudience = _targetAudience;
+        _broadcastSent = true;
+        _title = "";
+        _message = "";
+
+        await Task.Delay(4000);
+        _broadcastSent = false;
+    }
+}

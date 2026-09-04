@@ -16,6 +16,7 @@ public class UserDto
     public bool EmailVerified { get; set; }
     public bool MobileVerified { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? ProfilePictureUrl { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
