@@ -17,7 +17,10 @@ public enum UserRole
     Teacher = 2,
 
     [Display(Name = "Student")]
-    Student = 3
+    Student = 3,
+
+    [Display(Name = "Branch Admin")]
+    BranchAdmin = 4
 }
 
 public static class RoleNames
@@ -27,6 +30,7 @@ public static class RoleNames
     public const string OrganizationAdmin = nameof(UserRole.OrganizationAdmin);
     public const string Teacher = nameof(UserRole.Teacher);
     public const string Student = nameof(UserRole.Student);
+    public const string BranchAdmin = nameof(UserRole.BranchAdmin);
 }
 
 public static class UserRoleExtensions
@@ -36,6 +40,7 @@ public static class UserRoleExtensions
         UserRole.SuperAdmin => "Super Admin",
         UserRole.BackOffice => "BackOffice Staff",
         UserRole.OrganizationAdmin => "Institute Admin",
+        UserRole.BranchAdmin => "Branch Admin",
         UserRole.Teacher => "Teacher",
         UserRole.Student => "Student",
         _ => role.ToString()

@@ -1,66 +1,84 @@
 @page "/controlpanel/email-templates"
 @page "/controlpanel/templates"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
+@using Vargshala.Contracts.Common
 @using Vargshala.Contracts.EmailTemplates
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Notifications
+@using Vargshala.Web.Components.UI.Pagination
 @using Vargshala.Web.Services
 @inject IEmailTemplateService TemplateService
+@inject INotificationService Toast
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
 <PageTitle>System Email Templates | Control Panel</PageTitle>
 
-<div class="space-y-6 transition-colors duration-200">
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
 
     <!-- Top Header & Actions -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">✉️</span>
-                System Email Templates
-            </h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Configure automated transactional emails, onboarding announcements, security alerts, and subscription receipts.
-            </p>
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    System Email Templates
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage transactional emails, automated receipts, password recoveries, and system notification templates
+                </p>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <button type="button" 
-                    @onclick="OpenCreateDrawer"
-                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </span>
-                <span>New Email Template</span>
+        <div class="flex items-center gap-2.5">
+            <button type="button" @onclick="OpenCreateDrawer"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span>New Template</span>
             </button>
         </div>
     </div>
 
-    <!-- Alert / Toast Banner -->
-    @if (!string.IsNullOrEmpty(_notificationMessage))
+    <!-- Live Page Alert Notification -->
+    @if (!string.IsNullOrEmpty(_notificationMessage) || !string.IsNullOrEmpty(_errorMessage))
     {
-        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3 text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in duration-200">
-            <div class="flex items-center gap-2">
-                <span>✅</span>
-                <span class="font-semibold">@_notificationMessage</span>
-            </div>
-            <button type="button" @onclick="() => _notificationMessage = null" class="text-emerald-500 hover:text-emerald-700 cursor-pointer font-bold">✕</button>
+        <div class="shrink-0 space-y-2">
+            @if (!string.IsNullOrEmpty(_notificationMessage))
+            {
+                <AlertNotification Type="AlertType.Success"
+                                   Message="@_notificationMessage"
+                                   Dismissible="true"
+                                   OnClose="() => _notificationMessage = null" />
+            }
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <AlertNotification Type="AlertType.Error"
+                                   Message="@_errorMessage"
+                                   Dismissible="true"
+                                   OnClose="() => _errorMessage = null" />
+            }
         </div>
     }
 
     <!-- 4 KPI Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Templates</p>
-                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_templates.Count</h3>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center text-lg font-bold">
-                    📋
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                    </svg>
                 </div>
             </div>
         </div>
@@ -71,8 +89,10 @@
                     <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active &amp; Live</p>
                     <h3 class="text-2xl font-black text-emerald-600 mt-1">@_templates.Count(t => t.IsActive)</h3>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-lg font-bold">
-                    ⚡
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
                 </div>
             </div>
         </div>
@@ -83,8 +103,10 @@
                     <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Billing &amp; Invoicing</p>
                     <h3 class="text-2xl font-black text-indigo-600 mt-1">@_templates.Count(t => t.Category == "Billing")</h3>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-lg font-bold">
-                    💳
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                    </svg>
                 </div>
             </div>
         </div>
@@ -95,22 +117,25 @@
                     <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Auth &amp; Security</p>
                     <h3 class="text-2xl font-black text-purple-600 mt-1">@_templates.Count(t => t.Category == "Auth & Security")</h3>
                 </div>
-                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-lg font-bold">
-                    🛡️
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Search & Category Filters Bar -->
-    <div class="card-surface p-3.5 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
         <div class="relative w-full md:w-80">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input type="text" 
-                   @bind="_searchTerm" 
+                   @bind="_query.Search" 
                    @bind:event="oninput" 
+                   @bind:after="() => LoadTemplatesAsync(1)"
                    placeholder="Search template name, code, subject..." 
                    class="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#009488]" />
         </div>
@@ -119,7 +144,7 @@
             <div class="w-44">
                 <CustomSelect
                               Value="@_selectedCategoryFilter"
-                              ValueChanged="@(val => _selectedCategoryFilter = val)"
+                              ValueChanged="OnCategoryFilterChanged"
                               Options="@_categoryFilterOptions"
                               Placeholder="All Categories" />
             </div>
@@ -127,124 +152,124 @@
             <div class="w-36">
                 <CustomSelect
                               Value="@_selectedStatusFilter"
-                              ValueChanged="@(val => _selectedStatusFilter = val)"
+                              ValueChanged="OnStatusFilterChanged"
                               Options="@_statusFilterOptions"
                               Placeholder="All Status" />
             </div>
         </div>
     </div>
 
-    <!-- Email Templates Data Table -->
-    <div class="card-surface border border-tealborder shadow-xs">
-        <div class="overflow-x-auto min-h-[260px]">
-            <table class="w-full min-w-[760px] text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
-                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Name")'>
+    <!-- Email Templates Data Table (Fits screen height, internal scrolling with hidden scrollbar) -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        <div class="flex-1 min-h-0 overflow-auto scrollbar-hidden">
+            <table class="w-full min-w-[760px] text-left border-collapse table-fixed">
+                <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                    <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                        <th class="w-[28%] py-2 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("name")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Template &amp; System Code</span>
-                                <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
+                                <span class="@_sortState.GetIndicatorClass("name")">@_sortState.GetIndicator("name")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Category")'>
+                        <th class="w-[14%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("category")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Category</span>
-                                <span class="@_sortState.GetIndicatorClass("Category")">@_sortState.GetIndicator("Category")</span>
+                                <span class="@_sortState.GetIndicatorClass("category")">@_sortState.GetIndicator("category")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4">Subject Line</th>
-                        <th class="py-3.5 px-4">Dynamic Variables</th>
-                        <th class="py-3.5 px-4 text-center">Status</th>
-                        <th class="py-3.5 px-6 text-right">Actions</th>
+                        <th class="w-[14%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("role")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Role</span>
+                                <span class="@_sortState.GetIndicatorClass("role")">@_sortState.GetIndicator("role")</span>
+                            </div>
+                        </th>
+                        <th class="w-[26%] py-2 px-3 select-none">Subject Line</th>
+                        <th class="w-[10%] py-2 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("status")'>
+                            <div class="flex items-center justify-center gap-1.5">
+                                <span>Status</span>
+                                <span class="@_sortState.GetIndicatorClass("status")">@_sortState.GetIndicator("status")</span>
+                            </div>
+                        </th>
+                        <th class="w-[8%] py-2 px-5 text-right select-none">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                    @if (_isLoading)
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs @(_isLoading && _templates.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                    @if (_isLoading && !_templates.Any())
                     {
-                        @for (int i = 0; i < 4; i++)
-                        {
-                            <tr class="animate-pulse">
-                                <td class="py-4 px-6"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-48 mb-1"></div><div class="h-3 bg-slate-100 dark:bg-slate-800/60 rounded w-24"></div></td>
-                                <td class="py-4 px-4"><div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-full w-20"></div></td>
-                                <td class="py-4 px-4"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-40"></div></td>
-                                <td class="py-4 px-4"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32"></div></td>
-                                <td class="py-4 px-4 text-center"><div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-full w-14 mx-auto"></div></td>
-                                <td class="py-4 px-6 text-right"><div class="h-6 bg-slate-200 dark:bg-slate-800 rounded w-16 ml-auto"></div></td>
-                            </tr>
-                        }
+                        <TableSkeletonRows Columns="6" Rows="8" />
                     }
-                    else if (FilteredTemplates.Any())
+                    else if (_templates.Any())
                     {
-                        @foreach (var tpl in FilteredTemplates)
+                        @foreach (var tpl in _templates)
                         {
                             <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors group">
-                                <td class="py-3.5 px-6">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] flex items-center justify-center font-bold text-sm shrink-0 border border-teal-200 dark:border-teal-800/60">
-                                            @GetCategoryIcon(tpl.Category)
+                                <td class="py-1.5 px-5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] flex items-center justify-center font-bold text-xs shrink-0 border border-teal-200 dark:border-teal-800/60">
+                                            @switch (tpl.Category)
+                                            {
+                                                case "Onboarding":
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                                                    </svg>
+                                                    break;
+                                                case "Auth & Security":
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                                                    </svg>
+                                                    break;
+                                                case "Billing":
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                                                    </svg>
+                                                    break;
+                                                default:
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                                    </svg>
+                                                    break;
+                                            }
                                         </div>
-                                        <div>
-                                            <span class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#009488] transition-colors">
+                                        <div class="min-w-0">
+                                            <span class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#009488] transition-colors leading-tight truncate block">
                                                 @tpl.Name
                                             </span>
-                                            <div class="text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                                            <div class="text-[10px] font-mono text-slate-400 dark:text-slate-500 leading-none mt-0.5">
                                                 @tpl.Code
                                             </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold @GetCategoryBadgeClass(tpl.Category)">
+                                <td class="py-1.5 px-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold @GetCategoryBadgeClass(tpl.Category)">
                                         @tpl.Category
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-200 max-w-xs truncate" title="@tpl.Subject">
+                                <td class="py-1.5 px-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold @GetRoleBadgeClass(tpl.TargetRole)">
+                                        @(tpl.TargetRole?.GetDisplayName() ?? "All Roles")
+                                    </span>
+                                </td>
+                                <td class="py-1.5 px-3 font-medium text-slate-700 dark:text-slate-200 max-w-xs truncate text-xs" title="@tpl.Subject">
                                     @tpl.Subject
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    <div class="flex flex-wrap gap-1 max-w-xs">
-                                        @foreach (var ph in tpl.AvailablePlaceholders.Take(3))
-                                        {
-                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-300">
-                                                @ph
-                                            </span>
-                                        }
-                                        @if (tpl.AvailablePlaceholders.Count > 3)
-                                        {
-                                            <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-400">
-                                                +@(tpl.AvailablePlaceholders.Count - 3)
-                                            </span>
-                                        }
-                                    </div>
-                                </td>
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-1.5 px-3 text-center">
                                     <button type="button" 
                                             @onclick="() => ToggleStatusAsync(tpl)"
                                             title="Click to toggle status"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold cursor-pointer transition-all @(tpl.IsActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800")">
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all @(tpl.IsActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800")">
                                         <span class="w-1.5 h-1.5 rounded-full @(tpl.IsActive ? "bg-emerald-500 animate-pulse" : "bg-rose-500")"></span>
                                         @(tpl.IsActive ? "Active" : "Disabled")
                                     </button>
                                 </td>
-                                <td class="py-3.5 px-6 text-right">
+                                <td class="py-1.5 px-5 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <!-- Action 1: Live Preview -->
-                                        <button type="button" 
-                                                @onclick="() => OpenPreviewDrawer(tpl)"
-                                                title="Preview Email Layout"
-                                                class="p-2 rounded-xl text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                            </svg>
-                                        </button>
-
-                                        <!-- Action 2: Edit Template -->
+                                        <!-- Action 1: Edit Template -->
                                         <button type="button" 
                                                 @onclick="() => OpenEditDrawer(tpl)"
                                                 title="Edit Template"
-                                                class="p-2 rounded-xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                class="p-1 rounded-md text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                             </svg>
                                         </button>
@@ -253,8 +278,8 @@
                                         <button type="button" 
                                                 @onclick="() => OpenTestEmailModal(tpl)"
                                                 title="Dispatch Test Email"
-                                                class="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                class="p-1 rounded-md text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                             </svg>
                                         </button>
@@ -267,13 +292,28 @@
                     {
                         <tr>
                             <td colspan="6" class="py-12 text-center text-slate-400">
-                                <div class="text-4xl mb-2">✉️</div>
+                                <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-[#009488] flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                    </svg>
+                                </div>
                                 <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">No email templates found matching filters.</p>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Reusable Server-Side Table Pagination Component / Footer -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="_query.PageNumber" 
+                             PageSize="_query.PageSize" 
+                             TotalRecords="_totalRecords" 
+                             ItemLabel="templates"
+                             IsLoading="_isLoading"
+                             OnPageChanged="HandlePageChangedAsync" 
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
         </div>
     </div>
 </div>
@@ -286,12 +326,23 @@
     <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
          @onclick="CloseDrawerAsync"></div>
 
-    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
         
         <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
             <div class="flex items-center gap-3 relative z-10">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
-                    @(_isCreating ? "➕" : "✏️")
+                <div class="w-10 h-10 rounded-2xl bg-teal-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-white">
+                    @if (_isCreating)
+                    {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                    }
                 </div>
                 <div>
                     <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
@@ -310,165 +361,210 @@
 
         <!-- Drawer Body -->
         <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
-            @if (!string.IsNullOrEmpty(_formError))
-            {
-                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-semibold">
-                    @_formError
-                </div>
-            }
+                @if (!string.IsNullOrEmpty(_formError))
+                {
+                    <AlertNotification Type="AlertType.Error"
+                                       Message="@_formError"
+                                       Dismissible="true"
+                                       OnClose="() => _formError = null" />
+                }
 
-            <div class="grid grid-cols-2 gap-3">
+                <!-- Top Row: Category, Target Role & Template Preset in 1 line -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category *</label>
+                        <CustomSelect
+                                      Value="@_editModel.Category"
+                                      ValueChanged="@OnModalCategoryChanged"
+                                      Options="@_modalCategoryOptions"
+                                      Placeholder="Select Category..." />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Role</label>
+                        <CustomSelect
+                                      Value="@_selectedModalRoleString"
+                                      ValueChanged="@OnModalRoleChanged"
+                                      Options="@_modalRoleOptions"
+                                      Placeholder="Select Target Role..." />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Template Preset *</label>
+                        <CustomSelect
+                                      Value="@_selectedModalTemplatePreset"
+                                      ValueChanged="@OnModalTemplatePresetChanged"
+                                      Options="@_modalTemplateOptions"
+                                      Placeholder="Select Template..." />
+                    </div>
+                </div>
+
+                <!-- Row 2: System Code & Display Name in 1 line -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                            <span>System Code</span>
+                            <span class="text-[10px] text-slate-400 font-normal">Read-only</span>
+                        </label>
+                        <input type="text" @bind="_editModel.Code" readonly disabled placeholder="e.g. WELCOME_ONBOARDING"
+                               class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-[#18262c]/60 border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase font-bold text-slate-500 dark:text-slate-400 focus:outline-none cursor-not-allowed select-none" />
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                            <span>Display Name</span>
+                            <span class="text-[10px] text-slate-400 font-normal">Read-only</span>
+                        </label>
+                        <input type="text" @bind="_editModel.Name" readonly disabled placeholder="e.g. Welcome & Onboarding"
+                               class="w-full px-3 py-2 text-xs bg-slate-100 dark:bg-[#18262c]/60 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-600 dark:text-slate-300 focus:outline-none cursor-not-allowed select-none" />
+                    </div>
+                </div>
+
+                <!-- Subject Line -->
                 <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">System Code *</label>
-                    <input type="text" @bind="_editModel.Code" disabled="@(!_isCreating)" placeholder="e.g. WELCOME_ONBOARDING"
-                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase font-bold text-slate-800 dark:text-white focus:outline-none focus:border-[#009488] disabled:opacity-60 disabled:cursor-not-allowed" />
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Subject Line *</label>
+                    <input type="text" @bind="_editModel.Subject" @bind:event="oninput" placeholder="e.g. Welcome to {{InstituteName}}!"
+                           class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
                 </div>
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category *</label>
-                    <CustomSelect
-                                  Value="@_editModel.Category"
-                                  ValueChanged="@(val => _editModel.Category = val)"
-                                  Options="@_modalCategoryOptions" />
-                </div>
-            </div>
 
-            <div>
-                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Template Display Name *</label>
-                <input type="text" @bind="_editModel.Name" placeholder="e.g. Institute Onboarding Welcome"
-                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
-            </div>
+                <!-- Available Placeholders Editor (Add, Delete, Click to Insert) -->
+                <div class="space-y-2 p-3 rounded-2xl bg-slate-50 dark:bg-[#142025] border border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center justify-between">
+                        <label class="font-bold text-slate-700 dark:text-slate-300">
+                            Available Placeholders
+                        </label>
+                        <span class="text-[11px] text-teal-600 dark:text-teal-400 font-semibold">
+                            @_currentTokens.Count dynamic tokens
+                        </span>
+                    </div>
 
-            <div>
-                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Subject Line *</label>
-                <input type="text" @bind="_editModel.Subject" placeholder="e.g. Welcome to Vargshala, {{InstituteName}}!"
-                       class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
-            </div>
-
-            <!-- Available Placeholders Chips -->
-            <div>
-                <div class="flex items-center justify-between mb-1.5">
-                    <label class="font-bold text-slate-700 dark:text-slate-300">Available Placeholders (Click to insert)</label>
-                    <span class="text-[11px] text-teal-600 dark:text-teal-400 font-semibold">Dynamic tokens</span>
-                </div>
-                <div class="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80">
-                    @foreach (var token in _standardTokens)
-                    {
+                    <!-- Add New Placeholder Input Bar -->
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex-1">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-slate-400 select-none text-xs">{{</span>
+                            <input type="text" 
+                                   @bind="_newCustomToken" 
+                                   @bind:event="oninput" 
+                                   @onkeydown="HandleTokenKeyDown"
+                                   placeholder="EnterTokenName"
+                                   class="w-full pl-7 pr-7 py-1.5 text-xs bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-slate-400 select-none text-xs">}}</span>
+                        </div>
                         <button type="button" 
-                                @onclick="() => InsertToken(token)"
-                                class="px-2 py-1 rounded-lg bg-white dark:bg-[#111c21] hover:bg-teal-50 dark:hover:bg-teal-950/50 text-slate-700 dark:text-slate-200 text-[11px] font-mono border border-slate-200 dark:border-slate-700 hover:border-[#009488] transition-all cursor-pointer shadow-2xs">
-                            + @token
+                                @onclick="AddCustomToken" 
+                                disabled="@(string.IsNullOrWhiteSpace(_newCustomToken))"
+                                class="px-3.5 py-1.5 rounded-xl bg-[#009488] hover:bg-[#00796b] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-xs shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <span>Add</span>
                         </button>
+                    </div>
+
+                    <!-- Chips with Click to Insert and Delete button -->
+                    <div class="flex flex-wrap gap-1.5 p-2 rounded-xl bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 min-h-[44px] items-center">
+                        @if (_currentTokens.Any())
+                        {
+                            @foreach (var token in _currentTokens)
+                            {
+                                <div class="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-lg bg-slate-50 dark:bg-[#111c21] text-slate-700 dark:text-slate-200 text-[11px] font-mono border border-slate-200 dark:border-slate-700 shadow-2xs group hover:border-[#009488] transition-all">
+                                    <button type="button" 
+                                            @onclick="() => InsertToken(token)"
+                                            title="Click to insert into HTML body"
+                                            class="cursor-pointer hover:text-[#009488] transition-colors flex items-center gap-1">
+                                        <span class="text-teal-600 font-bold">+</span>
+                                        <span>@token</span>
+                                    </button>
+                                    <button type="button" 
+                                            @onclick="() => RemoveToken(token)"
+                                            title="Delete placeholder"
+                                            class="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 p-0.5 rounded transition-colors cursor-pointer ml-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-[11px] text-slate-400 dark:text-slate-500 italic px-1">
+                                No placeholders yet. Type token name above and click "Add" or press Enter.
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- HTML Email Body Content with In-Place Code / Preview Tabs -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="font-bold text-slate-700 dark:text-slate-300">HTML Email Body Content *</label>
+                        
+                        <!-- Toggle tabs for HTML Body specifically: Code vs Preview -->
+                        <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-[11px] font-bold">
+                            <button type="button" 
+                                    @onclick='() => _bodyPreviewMode = false'
+                                    class="px-2.5 py-0.5 rounded-md transition-all cursor-pointer flex items-center gap-1 @(!_bodyPreviewMode ? "bg-white dark:bg-[#111c21] text-[#009488] shadow-2xs" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")">
+                                <span>&lt;/&gt;</span>
+                                <span>Code</span>
+                            </button>
+                            <button type="button" 
+                                    @onclick='() => _bodyPreviewMode = true'
+                                    class="px-2.5 py-0.5 rounded-md transition-all cursor-pointer flex items-center gap-1 @(_bodyPreviewMode ? "bg-white dark:bg-[#111c21] text-[#009488] shadow-2xs" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")">
+                                <span>👁️</span>
+                                <span>Preview</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!_bodyPreviewMode)
+                    {
+                        <textarea @bind="_editModel.BodyHtml" @bind:event="oninput" rows="11" placeholder="<html><body>...</body></html>"
+                                  class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#009488] resize-y"></textarea>
+                    }
+                    else
+                    {
+                        <!-- Live Preview Frame inside the Textarea location -->
+                        <div class="w-full min-h-[200px] max-h-[350px] overflow-y-auto p-3.5 bg-white border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 text-xs shadow-inner">
+                            @if (string.IsNullOrWhiteSpace(_editModel.BodyHtml))
+                            {
+                                <div class="h-32 flex flex-col items-center justify-center text-slate-400 italic text-center">
+                                    <span>No HTML content entered yet.</span>
+                                    <span class="text-[10px] mt-1 text-slate-400 font-normal">Switch to "Code" tab to write or paste your HTML.</span>
+                                </div>
+                            }
+                            else
+                            {
+                                @((MarkupString)GetLivePreviewHtml())
+                            }
+                        </div>
                     }
                 </div>
-            </div>
 
-            <!-- HTML Body Editor -->
-            <div>
-                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">HTML Email Content *</label>
-                <textarea @bind="_editModel.BodyHtml" rows="12" placeholder="<html><body>...</body></html>"
-                          class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#009488] resize-y"></textarea>
-            </div>
-
-            <div>
-                <label class="flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" @bind="_editModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300" />
-                    <span class="font-bold text-slate-700 dark:text-slate-200">Enable and mark as active template</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Drawer Footer -->
-        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
-            <button type="button" @onclick="CloseDrawerAsync" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer">
-                Cancel
-            </button>
-            <button type="button" @onclick="SaveTemplateAsync" disabled="@_isSaving" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
-                @if (_isSaving)
-                {
-                    <div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                    <span>Saving...</span>
-                }
-                else
-                {
-                    <span>Save Template</span>
-                }
-            </button>
-        </div>
-    </div>
-}
-
-<!-- ========================================================================= -->
-<!-- DRAWER: Live Email Preview Slide-Over -->
-<!-- ========================================================================= -->
-@if (_showPreviewDrawer && _previewTemplate != null)
-{
-    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
-         @onclick="CloseDrawerAsync"></div>
-
-    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
-        
-        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
-            <div class="flex items-center gap-3 relative z-10">
-                <div class="w-10 h-10 rounded-2xl bg-teal-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold">
-                    👁️
-                </div>
                 <div>
-                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
-                        Email Preview: @_previewTemplate.Name
-                    </h3>
-                    <p class="text-xs text-teal-200/90 font-medium truncate max-w-xs">
-                        Subject: @_previewTemplate.Subject
-                    </p>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" @bind="_editModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300" />
+                        <span class="font-bold text-slate-700 dark:text-slate-200">Enable and mark as active template</span>
+                    </label>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 relative z-10">
-                <!-- Device View Toggle -->
-                <button type="button" 
-                        @onclick="() => _isMobilePreview = !_isMobilePreview"
-                        class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all cursor-pointer flex items-center gap-1.5">
-                    <span>@(_isMobilePreview ? "📱 Mobile" : "💻 Desktop")</span>
+            <!-- Drawer Footer -->
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
+                <button type="button" @onclick="CloseDrawerAsync" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all cursor-pointer">
+                    Cancel
                 </button>
-
-                <button type="button" @onclick="CloseDrawerAsync" class="p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @onclick="SaveTemplateAsync" disabled="@_isSaving" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2">
+                    @if (_isSaving)
+                    {
+                        <div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>Save Template</span>
+                    }
                 </button>
             </div>
-        </div>
-
-        <!-- Preview Body Container -->
-        <div class="flex-1 overflow-y-auto p-6 bg-slate-100 dark:bg-[#0d1518] flex items-start justify-center">
-            <div class="transition-all duration-300 @(_isMobilePreview ? "w-[360px] rounded-3xl border-8 border-slate-800 shadow-2xl overflow-hidden bg-white" : "w-full rounded-2xl shadow-md bg-white overflow-hidden")">
-                <!-- Mock Email Client Chrome Bar -->
-                <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 text-xs text-slate-600 flex flex-col gap-1">
-                    <div class="flex justify-between items-center text-[11px] text-slate-400">
-                        <span>From: <strong>no-reply@vargshala.com</strong></span>
-                        <span>Now</span>
-                    </div>
-                    <div class="font-bold text-slate-800 text-xs truncate">
-                        Subject: @GetInterpolatedSubject(_previewTemplate)
-                    </div>
-                </div>
-
-                <!-- Live Rendered HTML -->
-                <div class="p-4 bg-white text-slate-800 text-sm overflow-x-auto">
-                    @((MarkupString)GetInterpolatedHtml(_previewTemplate))
-                </div>
-            </div>
-        </div>
-
-        <!-- Preview Drawer Footer -->
-        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#142025] flex items-center justify-between gap-3 shrink-0">
-            <button type="button" 
-                    @onclick="() => OpenEditDrawer(_previewTemplate)"
-                    class="px-4 py-2.5 rounded-xl bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
-                <span>✏️</span>
-                <span>Edit This Template</span>
-            </button>
-            <button type="button" @onclick="CloseDrawerAsync" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
-                Close Preview
-            </button>
-        </div>
     </div>
 }
 
@@ -481,7 +577,11 @@
         <div class="w-full max-w-md bg-white dark:bg-[#111c21] rounded-3xl shadow-2xl border border-tealborder p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
-                    <span class="text-xl">✉️</span>
+                    <span class="w-8 h-8 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                        </svg>
+                    </span>
                     <h3 class="text-base font-extrabold text-slate-800 dark:text-white">Send Test Email</h3>
                 </div>
                 <button type="button" @onclick="() => _showTestModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
@@ -514,142 +614,282 @@
 }
 
 @code {
+    private readonly TableQueryState _query = new();
+    private TableSortState _sortState => _query.SortState;
+    private int _totalRecords = 0;
     private List<EmailTemplateDto> _templates = new();
+
     private bool _isLoading = true;
     private bool _isSaving = false;
     private bool _isSendingTest = false;
-    private string _searchTerm = "";
     private string _selectedCategoryFilter = "";
     private string _selectedStatusFilter = "";
     private string? _notificationMessage;
+    private string? _errorMessage;
     private string? _formError;
-
-    private readonly TableSortState _sortState = new();
 
     // Drawer state
     private bool _showEditDrawer = false;
-    private bool _showPreviewDrawer = false;
     private bool _isDrawerOpen = false;
     private bool _isCreating = false;
-    private bool _isMobilePreview = false;
+    private bool _bodyPreviewMode = false;
 
     // Test Modal
     private bool _showTestModal = false;
     private EmailTemplateDto? _testTargetTemplate;
-    private string _testRecipientEmail = "admin@example.com";
+    private string _testRecipientEmail = "";
 
     // Edit Model
     private EmailTemplateDto _editModel = new();
-    private EmailTemplateDto? _previewTemplate;
 
-    private readonly List<string> _standardTokens = new()
-    {
-        "{{InstituteName}}",
-        "{{OwnerName}}",
-        "{{TenantCode}}",
-        "{{LoginUrl}}",
-        "{{SupportEmail}}",
-        "{{ResetUrl}}",
-        "{{InvoiceNumber}}",
-        "{{PlanName}}",
-        "{{AmountPaid}}",
-        "{{NextBillingDate}}",
-        "{{DaysRemaining}}"
-    };
+    private List<CustomSelect.CustomSelectOption> _categoryFilterOptions = new();
+    private List<CustomSelect.CustomSelectOption> _modalCategoryOptions = new();
+    private string _selectedModalRoleString = "";
+    private string _selectedModalTemplatePreset = "";
 
-    private readonly List<CustomSelect.CustomSelectOption> _categoryFilterOptions = new()
-    {
-        new("", "All Categories"),
-        new("Onboarding", "Onboarding"),
-        new("Auth & Security", "Auth & Security"),
-        new("Billing", "Billing & Invoicing"),
-        new("System", "System Notices")
-    };
+    private List<CustomSelect.CustomSelectOption> _modalRoleOptions = new();
+    private List<CustomSelect.CustomSelectOption> _modalTemplateOptions = new();
+    private List<string> _currentTokens = new();
 
-    private readonly List<CustomSelect.CustomSelectOption> _modalCategoryOptions = new()
-    {
-        new("Onboarding", "Onboarding"),
-        new("Auth & Security", "Auth & Security"),
-        new("Billing", "Billing & Invoicing"),
-        new("System", "System Notices")
-    };
-
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Status"),
-        new("Active", "Active Only"),
-        new("Disabled", "Disabled Only")
-    };
+    private List<CustomSelect.CustomSelectOption> _statusFilterOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTemplatesAsync();
+        InitializeDropdownOptions();
+        await LoadTemplatesAsync(1);
     }
 
-    private async Task LoadTemplatesAsync()
+    private void InitializeDropdownOptions()
     {
-        _isLoading = true;
-        StateHasChanged();
-        _templates = await TemplateService.GetAllTemplatesAsync();
-        _isLoading = false;
-        StateHasChanged();
-    }
-
-    private IEnumerable<EmailTemplateDto> FilteredTemplates
-    {
-        get
+        _categoryFilterOptions = new List<CustomSelect.CustomSelectOption>
         {
-            var query = _templates.AsEnumerable();
-
-            if (!string.IsNullOrWhiteSpace(_searchTerm))
-            {
-                var term = _searchTerm.Trim().ToLowerInvariant();
-                query = query.Where(t => 
-                    t.Name.ToLowerInvariant().Contains(term) ||
-                    t.Code.ToLowerInvariant().Contains(term) ||
-                    t.Subject.ToLowerInvariant().Contains(term));
-            }
-
-            if (!string.IsNullOrWhiteSpace(_selectedCategoryFilter))
-            {
-                query = query.Where(t => t.Category == _selectedCategoryFilter);
-            }
-
-            if (!string.IsNullOrWhiteSpace(_selectedStatusFilter))
-            {
-                bool active = _selectedStatusFilter == "Active";
-                query = query.Where(t => t.IsActive == active);
-            }
-
-            if (_sortState.IsSorted)
-            {
-                query = _sortState.Column switch
-                {
-                    "Name" => _sortState.Direction == SortDirection.Ascending
-                        ? query.OrderBy(t => t.Name)
-                        : query.OrderByDescending(t => t.Name),
-                    "Category" => _sortState.Direction == SortDirection.Ascending
-                        ? query.OrderBy(t => t.Category)
-                        : query.OrderByDescending(t => t.Category),
-                    _ => query
-                };
-            }
-
-            return query;
+            new("", "All Categories")
+        };
+        foreach (EmailTemplateCategory cat in Enum.GetValues<EmailTemplateCategory>())
+        {
+            _categoryFilterOptions.Add(new(cat.ToString(), cat.GetDisplayName()));
         }
+
+        _modalCategoryOptions = new List<CustomSelect.CustomSelectOption>
+        {
+            new("", "Select Category...")
+        };
+        foreach (EmailTemplateCategory cat in Enum.GetValues<EmailTemplateCategory>())
+        {
+            _modalCategoryOptions.Add(new(cat.GetDisplayName(), cat.GetDisplayName()));
+        }
+
+        _modalRoleOptions = new List<CustomSelect.CustomSelectOption>
+        {
+            new("", "Select Target Role (Audience)...")
+        };
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            _modalRoleOptions.Add(new(((int)role).ToString(), role.GetDisplayName()));
+        }
+
+        _statusFilterOptions = new List<CustomSelect.CustomSelectOption>
+        {
+            new("", "All Status"),
+            new("Active", "Active Only"),
+            new("Disabled", "Disabled Only")
+        };
+
+        UpdateModalTemplateOptions();
+    }
+
+    private async Task LoadTemplatesAsync(int page = 1)
+    {
+        _query.PageNumber = Math.Max(1, page);
+        _isLoading = true;
+        try
+        {
+            EmailTemplateCategory? category = null;
+            if (!string.IsNullOrWhiteSpace(_selectedCategoryFilter) &&
+                Enum.TryParse<EmailTemplateCategory>(_selectedCategoryFilter, out var cat))
+            {
+                category = cat;
+            }
+
+            bool? isActive = _selectedStatusFilter == "Active" ? true : _selectedStatusFilter == "Disabled" ? false : null;
+
+            var res = await TemplateService.GetTemplatesPagedAsync(_query.ToPagedRequest(), category, isActive);
+            if (res != null && res.Success && res.Data != null)
+            {
+                _templates = res.Data.Items ?? new List<EmailTemplateDto>();
+                _totalRecords = res.Data.TotalRecords;
+                _errorMessage = null;
+            }
+            else
+            {
+                _templates = new();
+                _totalRecords = 0;
+                var errorMsg = res?.Message ?? "Failed to load email templates.";
+                _errorMessage = errorMsg;
+                if (errorMsg.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
+                {
+                    Toast.Error("Your session has expired or you are unauthorized. Please sign in again.", "Unauthorized");
+                }
+                else
+                {
+                    Toast.Error(errorMsg, "Error");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _templates = new();
+            _totalRecords = 0;
+            var errorMsg = ex.Message;
+            _errorMessage = "Failed to load email templates: " + errorMsg;
+            Toast.Error(errorMsg, "Error");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OnCategoryFilterChanged(string val)
+    {
+        _selectedCategoryFilter = val;
+        await LoadTemplatesAsync(1);
+    }
+
+    private async Task OnStatusFilterChanged(string val)
+    {
+        _selectedStatusFilter = val;
+        await LoadTemplatesAsync(1);
+    }
+
+    private async Task HandleSortAsync(string column)
+    {
+        _query.SortState.Toggle(column);
+        await LoadTemplatesAsync(1);
+    }
+
+    private async Task HandlePageChangedAsync(int newPage)
+    {
+        await LoadTemplatesAsync(newPage);
+    }
+
+    private async Task HandlePageSizeChangedAsync(int newSize)
+    {
+        _query.PageSize = newSize;
+        await LoadTemplatesAsync(1);
+    }
+
+    private void OnModalCategoryChanged(string newCategory)
+    {
+        _editModel.Category = newCategory;
+        StateHasChanged();
+    }
+
+    private void OnModalRoleChanged(string roleVal)
+    {
+        _selectedModalRoleString = roleVal;
+        if (int.TryParse(roleVal, out var intVal) && Enum.IsDefined(typeof(UserRole), (UserRole)intVal))
+        {
+            _editModel.TargetRole = (UserRole)intVal;
+        }
+        else
+        {
+            _editModel.TargetRole = null;
+        }
+        StateHasChanged();
+    }
+
+    private void OnModalTemplatePresetChanged(string presetCode)
+    {
+        _selectedModalTemplatePreset = presetCode;
+        ApplyTemplatePreset(presetCode);
+        StateHasChanged();
+    }
+
+    private void UpdateModalTemplateOptions()
+    {
+        _modalTemplateOptions = new List<CustomSelect.CustomSelectOption>
+        {
+            new("", "Select Template Preset...")
+        };
+        foreach (EmailTemplateName e in Enum.GetValues<EmailTemplateName>())
+        {
+            _modalTemplateOptions.Add(new(e.ToString(), e.GetDisplayName()));
+        }
+    }
+
+    private void ApplyTemplatePreset(string presetCode)
+    {
+        if (string.IsNullOrWhiteSpace(presetCode))
+        {
+            _editModel.Name = "";
+            _editModel.Code = "";
+            _editModel.Subject = "";
+            _editModel.BodyHtml = "";
+            _editModel.Description = "";
+            _currentTokens = new List<string>();
+            _editModel.AvailablePlaceholders = new List<string>(_currentTokens);
+            return;
+        }
+
+        var matched = EmailTemplateNameExtensions.FromSystemCodeOrDisplayName(presetCode);
+        if (matched.HasValue)
+        {
+            var enumVal = matched.Value;
+            _editModel.Name = enumVal.GetDisplayName();
+            _editModel.Code = enumVal.ToSystemCode();
+
+            // Load existing template data from database if already present
+            var existing = _templates.FirstOrDefault(t => 
+                t.Code.Equals(_editModel.Code, StringComparison.OrdinalIgnoreCase) ||
+                t.Code.Equals(enumVal.GetDefaultCode(), StringComparison.OrdinalIgnoreCase) ||
+                t.Name.Equals(_editModel.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
+            {
+                _editModel.Subject = existing.Subject;
+                _editModel.BodyHtml = existing.BodyHtml;
+                _editModel.Description = existing.Description;
+                _currentTokens = existing.AvailablePlaceholders != null 
+                    ? new List<string>(existing.AvailablePlaceholders) 
+                    : new List<string>();
+            }
+            else
+            {
+                _editModel.Subject = "";
+                _editModel.BodyHtml = "";
+                _editModel.Description = "";
+                _currentTokens = new List<string>();
+            }
+
+            _editModel.AvailablePlaceholders = new List<string>(_currentTokens);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editModel.Name))
+            _editModel.Name = presetCode;
+        _editModel.Code = EmailTemplateNameExtensions.ToSystemCode(_editModel.Name);
+        _currentTokens = new List<string>();
+        _editModel.AvailablePlaceholders = new List<string>(_currentTokens);
     }
 
     private void OpenCreateDrawer()
     {
         _isCreating = true;
+        _bodyPreviewMode = false;
         _formError = null;
+        _errorMessage = null;
+        _notificationMessage = null;
         _editModel = new EmailTemplateDto
         {
-            Category = "Onboarding",
-            IsActive = true,
-            AvailablePlaceholders = new List<string>(_standardTokens.Take(5))
+            Category = "",
+            IsActive = true
         };
-        _showPreviewDrawer = false;
+        _selectedModalRoleString = "";
+        _selectedModalTemplatePreset = "";
+        _currentTokens = new List<string>();
+        UpdateModalTemplateOptions();
+
         _showEditDrawer = true;
         StateHasChanged();
         Task.Run(async () =>
@@ -663,35 +903,34 @@
     private void OpenEditDrawer(EmailTemplateDto tpl)
     {
         _isCreating = false;
+        _bodyPreviewMode = false;
         _formError = null;
+        _errorMessage = null;
+        _notificationMessage = null;
         _editModel = new EmailTemplateDto
         {
             Id = tpl.Id,
             Code = tpl.Code,
             Name = tpl.Name,
             Category = tpl.Category,
+            TargetRole = tpl.TargetRole,
             Subject = tpl.Subject,
             BodyHtml = tpl.BodyHtml,
             Description = tpl.Description,
             AvailablePlaceholders = new List<string>(tpl.AvailablePlaceholders),
             IsActive = tpl.IsActive
         };
-        _showPreviewDrawer = false;
-        _showEditDrawer = true;
-        StateHasChanged();
-        Task.Run(async () =>
-        {
-            await Task.Yield();
-            _isDrawerOpen = true;
-            await InvokeAsync(StateHasChanged);
-        });
-    }
+        _selectedModalRoleString = tpl.TargetRole.HasValue ? ((int)tpl.TargetRole.Value).ToString() : "";
+        UpdateModalTemplateOptions();
+        
+        var matched = EmailTemplateNameExtensions.FromSystemCodeOrDisplayName(tpl.Code) 
+                      ?? EmailTemplateNameExtensions.FromSystemCodeOrDisplayName(tpl.Name);
+        _selectedModalTemplatePreset = matched.HasValue ? matched.Value.ToString() : "";
+        _currentTokens = tpl.AvailablePlaceholders != null && tpl.AvailablePlaceholders.Count > 0 
+            ? new List<string>(tpl.AvailablePlaceholders) 
+            : new List<string>();
 
-    private void OpenPreviewDrawer(EmailTemplateDto tpl)
-    {
-        _previewTemplate = tpl;
-        _showEditDrawer = false;
-        _showPreviewDrawer = true;
+        _showEditDrawer = true;
         StateHasChanged();
         Task.Run(async () =>
         {
@@ -707,8 +946,43 @@
         StateHasChanged();
         await Task.Delay(250);
         _showEditDrawer = false;
-        _showPreviewDrawer = false;
         StateHasChanged();
+    }
+
+    private string _newCustomToken = "";
+
+    private void AddCustomToken()
+    {
+        if (string.IsNullOrWhiteSpace(_newCustomToken)) return;
+
+        var token = _newCustomToken.Trim();
+        token = token.Trim('{', '}').Trim();
+        if (string.IsNullOrWhiteSpace(token)) return;
+
+        var formatted = "{{" + token + "}}";
+        if (!_currentTokens.Any(t => t.Equals(formatted, StringComparison.OrdinalIgnoreCase)))
+        {
+            _currentTokens.Add(formatted);
+            if (!_editModel.AvailablePlaceholders.Any(t => t.Equals(formatted, StringComparison.OrdinalIgnoreCase)))
+            {
+                _editModel.AvailablePlaceholders.Add(formatted);
+            }
+        }
+        _newCustomToken = "";
+    }
+
+    private void HandleTokenKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            AddCustomToken();
+        }
+    }
+
+    private void RemoveToken(string token)
+    {
+        _currentTokens.RemoveAll(t => t.Equals(token, StringComparison.OrdinalIgnoreCase));
+        _editModel.AvailablePlaceholders.RemoveAll(t => t.Equals(token, StringComparison.OrdinalIgnoreCase));
     }
 
     private void InsertToken(string token)
@@ -740,6 +1014,7 @@
                 Code = _editModel.Code,
                 Name = _editModel.Name,
                 Category = _editModel.Category,
+                TargetRole = _editModel.TargetRole,
                 Subject = _editModel.Subject,
                 BodyHtml = _editModel.BodyHtml,
                 Description = _editModel.Description,
@@ -765,6 +1040,7 @@
                 Id = _editModel.Id,
                 Name = _editModel.Name,
                 Category = _editModel.Category,
+                TargetRole = _editModel.TargetRole,
                 Subject = _editModel.Subject,
                 BodyHtml = _editModel.BodyHtml,
                 Description = _editModel.Description,
@@ -794,7 +1070,14 @@
         if (res.Success)
         {
             tpl.IsActive = res.Data;
+            _errorMessage = null;
             _notificationMessage = $"Template '{tpl.Name}' status updated to {(tpl.IsActive ? "Active" : "Disabled")}.";
+            StateHasChanged();
+        }
+        else
+        {
+            _errorMessage = res.Message ?? "Failed to update template status.";
+            Toast.Error(_errorMessage, "Error");
             StateHasChanged();
         }
     }
@@ -819,47 +1102,71 @@
 
         _isSendingTest = false;
         _showTestModal = false;
-        _notificationMessage = res.Success ? res.Message : res.Message;
+        if (res.Success)
+        {
+            Toast.Success(res.Message ?? "Email dispatched successfully.", "Email Dispatched");
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to dispatch email.", "Dispatch Failed");
+        }
         StateHasChanged();
     }
 
-    private string GetInterpolatedSubject(EmailTemplateDto tpl)
+    private string GetLivePreviewHtml()
     {
-        return tpl.Subject
-            .Replace("{{InstituteName}}", "Apex Physics Institute")
-            .Replace("{{RecipientName}}", "Dr. Rajesh Verma")
-            .Replace("{{InvoiceNumber}}", "INV-2026-084")
-            .Replace("{{DaysRemaining}}", "3");
+        if (string.IsNullOrWhiteSpace(_editModel.BodyHtml))
+        {
+            return "<div style='text-align:center; padding: 40px 20px; color:#94a3b8; font-family:sans-serif;'><p style='font-size:13px; font-weight:700;'>No HTML content entered yet.</p><p style='font-size:11px; margin-top:4px;'>Switch to the <strong>Editor</strong> tab to type or paste your email template HTML.</p></div>";
+        }
+
+        return ReplaceSampleTokens(_editModel.BodyHtml);
     }
 
-    private string GetInterpolatedHtml(EmailTemplateDto tpl)
+    private string ReplaceSampleTokens(string text)
     {
-        return tpl.BodyHtml
-            .Replace("{{InstituteName}}", "Apex Physics Institute")
-            .Replace("{{OwnerName}}", "Dr. Rajesh Verma")
-            .Replace("{{TenantCode}}", "APEX-PATNA")
-            .Replace("{{LoginUrl}}", "https://vargshala.com/login")
-            .Replace("{{SupportEmail}}", "support@vargshala.com")
-            .Replace("{{RecipientName}}", "Dr. Rajesh Verma")
-            .Replace("{{ResetUrl}}", "https://vargshala.com/reset-password?token=sample123")
-            .Replace("{{ExpiryMinutes}}", "30")
-            .Replace("{{InvoiceNumber}}", "INV-2026-084")
-            .Replace("{{PlanName}}", "Pro Coaching Tier (Annual)")
-            .Replace("{{AmountPaid}}", "14,999")
-            .Replace("{{NextBillingDate}}", "04 September 2027")
-            .Replace("{{InvoiceDownloadUrl}}", "#")
-            .Replace("{{DaysRemaining}}", "3")
-            .Replace("{{UpgradeUrl}}", "https://vargshala.com/pricing")
-            .Replace("{{StudentCount}}", "148");
-    }
+        if (string.IsNullOrEmpty(text)) return "";
 
-    private string GetCategoryIcon(string category) => category switch
-    {
-        "Onboarding" => "🏛️",
-        "Auth & Security" => "🛡️",
-        "Billing" => "💳",
-        _ => "✉️"
-    };
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "{{StudentName}}", "Rahul Sharma" },
+            { "{{FirstName}}", "Rahul" },
+            { "{{LastName}}", "Sharma" },
+            { "{{TeacherName}}", "Dr. A. K. Verma" },
+            { "{{AdminName}}", "Vargshala SuperAdmin" },
+            { "{{InstituteName}}", "Apex Coaching Academy" },
+            { "{{Email}}", "rahul.sharma@example.com" },
+            { "{{Mobile}}", "+91 98765 43210" },
+            { "{{OtpCode}}", "582914" },
+            { "{{TemporaryPassword}}", "P@ssw0rd!2026" },
+            { "{{VerificationLink}}", "https://vargshala.com/auth/verify?token=sample_token_xyz" },
+            { "{{ResetLink}}", "https://vargshala.com/auth/reset-password?token=sample_reset_xyz" },
+            { "{{LoginUrl}}", "https://vargshala.com/login" },
+            { "{{InvoiceNumber}}", "INV-2026-0042" },
+            { "{{Amount}}", "₹4,999" },
+            { "{{PlanName}}", "Annual Pro SaaS" },
+            { "{{DueDate}}", DateTime.UtcNow.AddDays(7).ToString("dd MMM yyyy") },
+            { "{{Date}}", DateTime.UtcNow.ToString("dd MMM yyyy") },
+            { "{{BatchName}}", "Class XII - JEE Advanced Morning Batch" },
+            { "{{ExamTitle}}", "Physics Weekly Mock Test #4" }
+        };
+
+        foreach (var kvp in map)
+        {
+            text = text.Replace(kvp.Key, kvp.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        foreach (var token in _currentTokens)
+        {
+            if (text.Contains(token, StringComparison.OrdinalIgnoreCase))
+            {
+                var clean = token.Trim('{', '}');
+                text = text.Replace(token, $"[{clean}]", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        return text;
+    }
 
     private string GetCategoryBadgeClass(string category) => category switch
     {
@@ -867,5 +1174,14 @@
         "Auth & Security" => "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
         "Billing" => "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800",
         _ => "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+    };
+
+    private string GetRoleBadgeClass(UserRole? role) => role switch
+    {
+        UserRole.SuperAdmin => "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
+        UserRole.OrganizationAdmin => "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
+        UserRole.Teacher => "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800",
+        UserRole.Student => "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
+        _ => "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
     };
 }

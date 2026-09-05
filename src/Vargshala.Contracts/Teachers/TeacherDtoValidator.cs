@@ -9,25 +9,32 @@ public class TeacherDtoValidator : AbstractValidator<TeacherDto>
         RuleLevelCascadeMode = CascadeMode.Stop;
         ClassLevelCascadeMode = CascadeMode.Stop;
 
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Full Name is required.")
-            .MaximumLength(100).WithMessage("Full Name cannot exceed 100 characters.");
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required.")
+            .MaximumLength(100).WithMessage("First name cannot exceed 100 characters.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required.")
+            .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters.");
 
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email address is required.")
-            .EmailAddress().WithMessage("Enter a valid email address.");
+            .EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email))
+            .WithMessage("Enter a valid email address.")
+            .MaximumLength(150).WithMessage("Email cannot exceed 150 characters.");
 
-        RuleFor(x => x.Phone)
-            .NotEmpty().WithMessage("Phone number is required.")
-            .Matches(@"^[+]?[\d\s-]{10,15}$").WithMessage("Enter a valid phone number (minimum 10 digits).");
+        RuleFor(x => x.Mobile)
+            .MaximumLength(20).WithMessage("Mobile cannot exceed 20 characters.");
+
+        RuleFor(x => x.EmployeeCode)
+            .MaximumLength(50).WithMessage("Employee code cannot exceed 50 characters.");
+
+        RuleFor(x => x.Department)
+            .MaximumLength(100).WithMessage("Department cannot exceed 100 characters.");
 
         RuleFor(x => x.Designation)
-            .NotEmpty().WithMessage("Designation is required.");
+            .MaximumLength(100).WithMessage("Designation cannot exceed 100 characters.");
 
-        RuleFor(x => x.Subject)
-            .NotEmpty().WithMessage("Primary subject is required.");
-
-        RuleFor(x => x.Qualification)
-            .NotEmpty().WithMessage("Qualification is required.");
+        RuleFor(x => x.AadharNumber)
+            .MaximumLength(20).WithMessage("Aadhar number cannot exceed 20 characters.");
     }
 }

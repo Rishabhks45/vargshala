@@ -65,6 +65,27 @@ public class RegisterOrganizationCommandHandler
             CreatedAt = DateTime.UtcNow
         };
 
+        // Create Main Branch automatically for this new organization
+        var mainBranch = new Branch
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organization.Id,
+            Name = "Main Branch",
+            Code = "MAIN",
+            LogoUrl = request.LogoUrl,
+            Email = request.Email,
+            Mobile = request.Mobile,
+            Address = request.Address,
+            City = request.City,
+            State = request.State,
+            Pincode = request.Pincode,
+            Country = "India",
+            IsMainBranch = true,
+            UseBranchName = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
         // Create admin user
         var refreshToken = _tokenService.GenerateRefreshToken();
         var adminUser = new User
@@ -84,8 +105,20 @@ public class RegisterOrganizationCommandHandler
             LastLoginAt = DateTime.UtcNow
         };
 
+        // Map the Organization Admin user with the Main Branch access
+        var userBranchAccess = new UserBranchAccess
+        {
+            Id = Guid.NewGuid(),
+            UserId = adminUser.Id,
+            BranchId = mainBranch.Id,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
         await _authRepository.AddOrganizationAsync(organization, cancellationToken);
+        await _authRepository.AddBranchAsync(mainBranch, cancellationToken);
         await _authRepository.AddUserAsync(adminUser, cancellationToken);
+        await _authRepository.AddUserBranchAccessAsync(userBranchAccess, cancellationToken);
         await _authRepository.SaveChangesAsync(cancellationToken);
 
         var accessToken = _tokenService.GenerateAccessToken(adminUser);
@@ -104,7 +137,9 @@ public class RegisterOrganizationCommandHandler
                 Email = adminUser.Email,
                 Role = adminUser.Role,
                 OrganizationId = organization.Id,
-                OrganizationName = organization.Name
+                OrganizationName = organization.Name,
+                CurrentBranchId = mainBranch.Id,
+                CurrentBranchName = mainBranch.Name
             }
         };
 

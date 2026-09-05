@@ -46,5 +46,7 @@ public class UserInfo
     public UserRole Role { get; set; } = UserRole.Student;
     public Guid? OrganizationId { get; set; }
     public string? OrganizationName { get; set; }
+    public Guid? CurrentBranchId { get; set; }
+    public string? CurrentBranchName { get; set; }
 }
 #endregion

@@ -91,6 +91,19 @@
 }
 
 @layer components {
+  /* Hide Scrollbar Utility (Scrollable without visible bar) */
+  .scrollbar-hidden,
+  .no-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  .scrollbar-hidden::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
   /* Theme 4 Card Surface (Light & Dark) */
   .card-surface {
     background-color: #ffffff;
@@ -108,6 +121,12 @@
   /* Skeleton Shimmer Animation */
   .skeleton-shimmer {
     background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer-anim 1.5s infinite;
+  }
+
+  .dark .skeleton-shimmer {
+    background: linear-gradient(90deg, #18262c 25%, #22353e 50%, #18262c 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer-anim 1.5s infinite;
   }
@@ -226,15 +245,30 @@
     animation: drawerSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* Utility to completely hide scrollbar while keeping scroll functionality */
-  .no-scrollbar::-webkit-scrollbar {
+  /* Universal Drawer Scroller Hidden & Utility to completely hide scrollbar while keeping scroll functionality */
+  .no-scrollbar,
+  .scrollbar-hidden,
+  div[class*="fixed inset-y-0 right-0"],
+  div[class*="fixed inset-y-0 right-0"] * {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-hidden::-webkit-scrollbar,
+  div[class*="fixed inset-y-0 right-0"]::-webkit-scrollbar,
+  div[class*="fixed inset-y-0 right-0"] *::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
   }
-  .no-scrollbar {
-    -ms-overflow-style: none !important;
-    scrollbar-width: none !important;
+
+  @keyframes toast-progress {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
   }
 }
 
@@ -259,7 +293,10 @@ select:focus-visible,
 [type="password"]:focus-visible,
 [type="tel"]:focus-visible,
 [type="number"]:focus-visible,
-[type="search"]:focus-visible {
+[type="search"]:focus-visible,
+.custom-select-trigger:focus-visible,
+.custom-select-trigger:active,
+.custom-select-trigger.is-open {
   outline: none !important;
   border-color: #9333ea !important;
   box-shadow: none !important;
@@ -269,6 +306,22 @@ select:focus-visible,
   --tw-shadow: 0 0 #0000 !important;
   --tw-ring-color: transparent !important;
   --tw-ring-offset-color: transparent !important;
+}
+
+.custom-select-trigger {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.custom-select-trigger:focus,
+.custom-select-trigger:focus-visible {
+  outline: none !important;
+}
+
+.custom-select-trigger:active,
+.custom-select-trigger.is-open {
+  border-color: #9333ea !important;
+  transition: none !important;
 }
 
 input, textarea, select {

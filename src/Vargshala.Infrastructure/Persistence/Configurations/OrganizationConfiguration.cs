@@ -21,7 +21,7 @@ public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
             .HasMaxLength(50);
 
         builder.Property(o => o.LogoUrl)
-            .HasMaxLength(500);
+            .HasColumnType("text");
 
         builder.Property(o => o.Email)
             .HasMaxLength(150);

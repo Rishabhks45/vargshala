@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vargshala.Application.Features.Users.Commands.ChangePassword;
 using Vargshala.Application.Features.Users.Commands.CreateUser;
+using Vargshala.Application.Features.Users.Commands.UpdateMyProfile;
 using Vargshala.Application.Features.Users.Queries.GetUsers;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Users;
@@ -18,6 +20,45 @@ public class UsersController : ControllerBase
     public UsersController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyProfile()
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Users.Queries.GetMyProfile.GetMyProfileQuery());
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateMyProfileRequest request)
+    {
+        var result = await _mediator.Send(new UpdateMyProfileCommand(request));
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("me/change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var result = await _mediator.Send(new ChangePasswordCommand(request));
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
     }
 
     [HttpPost]

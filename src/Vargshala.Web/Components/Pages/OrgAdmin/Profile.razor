@@ -1,0 +1,1024 @@
+@page "/profile"
+@attribute [Authorize]
+@using Cropper.Blazor.Components
+@using Cropper.Blazor.Models
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Users
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Validation
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Skeletons
+@using Vargshala.Web.Services
+@inject IUserService UserService
+@inject INotificationService Toast
+@inject IFileUploadService FileUploadService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>My Profile | Vargshala</PageTitle>
+
+@if (_isLoading && _profile == null)
+{
+    <ProfileSkeleton />
+}
+else
+{
+<div class="flex-1 min-h-0 h-full overflow-y-auto scrollbar-hidden space-y-5 transition-colors duration-200 pb-20">
+
+    <!-- Breadcrumb & Top Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shadow-[#004D40]/20 shrink-0">
+                <svg class="w-5 h-5 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    My Profile
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage your personal information, photo and account preferences.
+                </p>
+            </div>
+        </div>
+
+        <!--  -->
+    </div>
+
+    <!-- Profile Hero Card -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#004D40] via-[#00695C] to-[#009488] text-white p-5 shadow-lg shadow-[#004D40]/15">
+        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute right-20 top-2 w-32 h-32 bg-teal-300/10 rounded-full blur-xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Avatar with Hover Actions -->
+                <div class="relative group">
+                    <div class="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm border-2 border-white/20 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                        @if (!string.IsNullOrWhiteSpace(_profile?.ProfilePictureUrl))
+                        {
+                            <img src="@_profile.ProfilePictureUrl" alt="Profile" class="w-full h-full object-cover" />
+                        }
+                        else
+                        {
+                            <span class="text-xl font-black tracking-wider text-teal-100">
+                                @_initials
+                            </span>
+                        }
+                    </div>
+
+                    <!-- Hover Overlay: Change (Camera) and Remove (Trash) buttons -->
+                    <div class="absolute inset-0 rounded-2xl bg-black/55 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-all duration-200">
+                        <label for="profile-photo-upload"
+                               class="w-7 h-7 rounded-xl bg-white/25 hover:bg-white/40 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm"
+                               title="Upload/Change Photo">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </label>
+                        @if (!string.IsNullOrWhiteSpace(_profile?.ProfilePictureUrl))
+                        {
+                            <button type="button"
+                                    @onclick="RemoveProfilePhotoAsync"
+                                    disabled="@_isSaving"
+                                    class="w-7 h-7 rounded-xl bg-rose-500/85 hover:bg-rose-600 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm disabled:opacity-50"
+                                    title="Remove Photo">
+                                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        }
+                    </div>
+
+                    <InputFile id="profile-photo-upload" OnChange="HandleProfilePhotoSelected" class="hidden" accept="image/*" />
+                </div>
+
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-base font-extrabold tracking-tight text-white">
+                            @_fullName
+                        </h2>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white backdrop-blur-xs border border-white/30">
+                            @_roleDisplay
+                        </span>
+                        @if (_profile?.IsActive == true)
+                        {
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400/20 text-emerald-200 border border-emerald-300/30">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> Active
+                            </span>
+                        }
+                    </div>
+                    <p class="text-xs text-teal-100/80 mt-0.5 font-medium flex items-center gap-3 flex-wrap">
+                        @if (!string.IsNullOrWhiteSpace(_profile?.Email))
+                        {
+                            <span class="flex items-center gap-1">
+                                <svg class="w-3 h-3 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                @_profile.Email
+                            </span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_profile?.OrganizationName) && _profile?.Role == UserRole.OrganizationAdmin)
+                        {
+                            <span class="text-teal-300/50">•</span>
+                            <span class="flex items-center gap-1">
+                                <svg class="w-3 h-3 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                @_profile.OrganizationName
+                            </span>
+                        }
+                        @if (_profile?.LastLoginAt.HasValue == true)
+                        {
+                            <span class="text-teal-300/50">•</span>
+                            <span class="flex items-center gap-1">
+                                <svg class="w-3 h-3 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Last login: @_profile.LastLoginAt.Value.ToLocalTime().ToString("dd MMM, hh:mm tt")
+                            </span>
+                        }
+                    </p>
+                </div>
+            </div>
+
+            <!-- Member Since Pill -->
+            <div class="flex items-center gap-2 self-start md:self-auto bg-black/15 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/10 text-[11px] text-teal-100">
+                <svg class="w-3.5 h-3.5 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Member since: @(_profile?.CreatedAt.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- Left Sidebar: Quick Info Cards -->
+        <div class="lg:col-span-4 space-y-4">
+
+            <!-- Account Status Card -->
+            <div class="bg-white dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+                <h3 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    Account Status
+                </h3>
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Email</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold @(_profile?.EmailVerified == true ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30" : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30")">
+                            @if (_profile?.EmailVerified == true)
+                            {
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Verified</span>
+                            }
+                            else
+                            {
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Unverified</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Mobile</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold @(_profile?.MobileVerified == true ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30" : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30")">
+                            @if (_profile?.MobileVerified == true)
+                            {
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span>Verified</span>
+                            }
+                            else
+                            {
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Unverified</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Status</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold @(_profile?.IsActive == true ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30" : "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30")">
+                            <span class="w-1.5 h-1.5 rounded-full @(_profile?.IsActive == true ? "bg-emerald-400" : "bg-red-400")"></span>
+                            @(_profile?.IsActive == true ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Card (OrgAdmin Only) -->
+            @if (_profile?.Role == UserRole.OrganizationAdmin && !string.IsNullOrWhiteSpace(_profile?.OrganizationName))
+            {
+                <div class="bg-white dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+                    <h3 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Organization
+                    </h3>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                            @(GetInitials(_profile.OrganizationName))
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-slate-800 dark:text-white truncate">@_profile.OrganizationName</p>
+                            @if (!string.IsNullOrWhiteSpace(_profile.OrganizationCode))
+                            {
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">@_profile.OrganizationCode</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Quick Actions (OrgAdmin Only) -->
+            @if (_profile?.Role == UserRole.OrganizationAdmin)
+            {
+                <div class="bg-white dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+                    <h3 class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Quick Actions
+                    </h3>
+                    <div class="space-y-1.5">
+                        <a href="settings"
+                           class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Institute Settings
+                            </div>
+                            <svg class="w-3.5 h-3.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right: Collapsible Accordion Sections -->
+        <div class="lg:col-span-8 space-y-4">
+
+            <!-- Personal Information Section (Collapsible Accordion) -->
+            <div class="bg-white dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-all duration-200">
+                <button type="button"
+                        @onclick="TogglePersonalSection"
+                        class="w-full px-5 py-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors text-left select-none @(_isPersonalOpen ? "border-b border-slate-100 dark:border-slate-800" : "")">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-[#009488] flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 dark:text-white leading-tight">Personal Information</h3>
+                            <p class="text-[11px] text-slate-400 font-medium">Update your name, contact and personal details</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-transform duration-200 @(_isPersonalOpen ? "rotate-180 bg-[#009488]/10 text-[#009488] dark:text-teal-400" : "")">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </span>
+                    </div>
+                </button>
+
+                @if (_isPersonalOpen)
+                {
+                    <EditForm Model="@_updateModel" OnValidSubmit="SaveProfileAsync" class="p-5 space-y-4">
+                        <FluentValidationValidator />
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">First Name</label>
+                                <InputText @bind-Value="_updateModel.FirstName"
+                                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0f1f25] border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#009488]/30 focus:border-[#009488] outline-none transition-all" />
+                                <ValidationMessage For="@(() => _updateModel.FirstName)" class="text-[10px] text-rose-500 mt-0.5" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Last Name</label>
+                                <InputText @bind-Value="_updateModel.LastName"
+                                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0f1f25] border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#009488]/30 focus:border-[#009488] outline-none transition-all" />
+                                <ValidationMessage For="@(() => _updateModel.LastName)" class="text-[10px] text-rose-500 mt-0.5" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Email Address</label>
+                                <div class="relative">
+                                    <input type="text" value="@(_profile?.Email)" disabled
+                                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-[#0a171d] border border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed pr-10" />
+                                    <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                                        @if (_profile?.EmailVerified == true)
+                                        {
+                                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        }
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Email cannot be changed. Contact support.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Mobile Number</label>
+                                <InputText @bind-Value="_updateModel.Mobile"
+                                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0f1f25] border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#009488]/30 focus:border-[#009488] outline-none transition-all"
+                                           placeholder="+91 9876543210" />
+                                <ValidationMessage For="@(() => _updateModel.Mobile)" class="text-[10px] text-rose-500 mt-0.5" />
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit"
+                                    disabled="@_isSaving"
+                                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+                                @if (_isSaving)
+                                {
+                                    <svg class="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span>Save Profile Info</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+
+            <!-- Change Password Section (Collapsible Accordion) -->
+            <div class="bg-white dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-all duration-200">
+                <button type="button"
+                        @onclick="TogglePasswordSection"
+                        class="w-full px-5 py-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors text-left select-none @(_isPasswordOpen ? "border-b border-slate-100 dark:border-slate-800" : "")">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-[#009488] flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 dark:text-white leading-tight">Change Password</h3>
+                            <p class="text-[11px] text-slate-400 font-medium">Manage your security credentials and login password</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-transform duration-200 @(_isPasswordOpen ? "rotate-180 bg-[#009488]/10 text-[#009488] dark:text-teal-400" : "")">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </span>
+                    </div>
+                </button>
+
+                @if (_isPasswordOpen)
+                {
+                    <EditForm Model="@_passwordModel" OnValidSubmit="UpdatePasswordAsync" class="p-5 space-y-4">
+                        <FluentValidationValidator />
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Current Password</label>
+                                <div class="relative">
+                                    <input type="@(_showCurrentPassword ? "text" : "password")" @bind="_passwordModel.CurrentPassword"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-50 dark:bg-[#0f1f25] border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#009488]/30 focus:border-[#009488] outline-none transition-all"
+                                           placeholder="••••••••" />
+                                    <button type="button" @onclick="() => _showCurrentPassword = !_showCurrentPassword"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            @if (_showCurrentPassword)
+                                            {
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                            }
+                                            else
+                                            {
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            }
+                                        </svg>
+                                    </button>
+                                </div>
+                                <ValidationMessage For="@(() => _passwordModel.CurrentPassword)" class="text-[10px] text-rose-500 mt-0.5" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">New Password</label>
+                                <div class="relative">
+                                    <input type="@(_showNewPassword ? "text" : "password")" @bind="_passwordModel.NewPassword"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-50 dark:bg-[#0f1f25] border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#009488]/30 focus:border-[#009488] outline-none transition-all"
+                                           placeholder="••••••••" />
+                                    <button type="button" @onclick="() => _showNewPassword = !_showNewPassword"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            @if (_showNewPassword)
+                                            {
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                            }
+                                            else
+                                            {
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            }
+                                        </svg>
+                                    </button>
+                                </div>
+                                <ValidationMessage For="@(() => _passwordModel.NewPassword)" class="text-[10px] text-rose-500 mt-0.5" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Confirm Password</label>
+                                <div class="relative">
+                                    <input type="@(_showConfirmPassword ? "text" : "password")" @bind="_passwordModel.ConfirmPassword"
+                                           class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-50 dark:bg-[#0f1f25] border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-[#009488]/30 focus:border-[#009488] outline-none transition-all"
+                                           placeholder="••••••••" />
+                                    <button type="button" @onclick="() => _showConfirmPassword = !_showConfirmPassword"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            @if (_showConfirmPassword)
+                                            {
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                            }
+                                            else
+                                            {
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            }
+                                        </svg>
+                                    </button>
+                                </div>
+                                <ValidationMessage For="@(() => _passwordModel.ConfirmPassword)" class="text-[10px] text-rose-500 mt-0.5" />
+                            </div>
+                        </div>
+
+                        <!-- Password Requirements -->
+                        <div class="bg-slate-50 dark:bg-[#0f1f25] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Password Requirements</p>
+                            <div class="grid grid-cols-2 gap-1">
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                                    <svg class="w-2.5 h-2.5 @(_passwordModel.NewPassword?.Length >= 6 ? "text-emerald-500" : "text-slate-300 dark:text-slate-600")" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                                    Minimum 6 characters
+                                </span>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                                    <svg class="w-2.5 h-2.5 @(!string.IsNullOrEmpty(_passwordModel.NewPassword) && _passwordModel.NewPassword == _passwordModel.ConfirmPassword ? "text-emerald-500" : "text-slate-300 dark:text-slate-600")" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                                    Passwords match
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit"
+                                    disabled="@_isChangingPassword"
+                                    class="px-4 py-2 rounded-xl bg-[#004D40] hover:bg-[#00382E] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
+                                @if (_isChangingPassword)
+                                {
+                                    <svg class="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Updating...</span>
+                                }
+                                else
+                                {
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                    <span>Update Password</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+
+            <!-- Activity & Metadata Section -->
+            <div class="bg-white dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <h3 class="text-sm font-extrabold text-slate-800 dark:text-white">Account Metadata</h3>
+                </div>
+
+                <div class="p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-slate-50 dark:bg-[#0f1f25] rounded-xl p-3 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">User ID</p>
+                                <p class="text-xs font-mono text-slate-600 dark:text-slate-300 truncate" title="@_profile?.Id">
+                                    @(_profile?.Id.ToString().Substring(0, Math.Min(8, _profile?.Id.ToString().Length ?? 0)) ?? "—")…
+                                </p>
+                            </div>
+                            <button type="button" @onclick="CopyUserIdAsync"
+                                    class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                                    title="Copy User ID">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            </button>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-[#0f1f25] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Role</p>
+                            <p class="text-xs font-bold text-[#009488]">@_roleDisplay</p>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-[#0f1f25] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Created</p>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">@(_profile?.CreatedAt.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</p>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-[#0f1f25] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Last Updated</p>
+                            <p class="text-xs text-slate-600 dark:text-slate-300">@(_profile?.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "Never")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+}
+
+<!-- ================================================================= -->
+<!-- Compact Cropper Modal (max-w-md)                                   -->
+<!-- ================================================================= -->
+@if (_isCropperModalOpen)
+{
+    <Modal IsOpen="@_isCropperModalOpen"
+           Title="Crop Profile Photo"
+           Subtitle="Scale and position your avatar (1:1 Square)"
+           MaxWidth="max-w-md"
+           OnClose="CloseCropperModal">
+
+        <IconTemplate>
+            <div class="w-9 h-9 rounded-xl bg-teal-500/20 backdrop-blur-sm border border-teal-300/30 flex items-center justify-center text-teal-100 shrink-0">
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+        </IconTemplate>
+
+        <ChildContent>
+            <div class="space-y-3">
+                <!-- Compact Cropper Canvas Viewport -->
+                <div class="relative w-full h-56 sm:h-60 bg-slate-950 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-800 shadow-inner">
+                    @if (!string.IsNullOrEmpty(_cropperImageSrc))
+                    {
+                        <CropperComponent @ref="_cropper"
+                                          Src="@_cropperImageSrc"
+                                          Options="_cropperOptions"
+                                          Class="max-h-full max-w-full" />
+                    }
+                </div>
+
+                <!-- Cropper Interactive Control Toolbar (Compact) -->
+                <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center gap-1">
+                        <button type="button"
+                                @onclick="ZoomIn"
+                                class="p-1.5 rounded-lg bg-white dark:bg-[#101b20] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center shadow-2xs cursor-pointer"
+                                title="Zoom In (+10%)">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
+                        </button>
+
+                        <button type="button"
+                                @onclick="ZoomOut"
+                                class="p-1.5 rounded-lg bg-white dark:bg-[#101b20] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center shadow-2xs cursor-pointer"
+                                title="Zoom Out (-10%)">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 10h6"/></svg>
+                        </button>
+
+                        <button type="button"
+                                @onclick="RotateLeft"
+                                class="p-1.5 rounded-lg bg-white dark:bg-[#101b20] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center shadow-2xs cursor-pointer"
+                                title="Rotate -90°">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                        </button>
+
+                        <button type="button"
+                                @onclick="RotateRight"
+                                class="p-1.5 rounded-lg bg-white dark:bg-[#101b20] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center shadow-2xs cursor-pointer"
+                                title="Rotate +90°">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"/></svg>
+                        </button>
+
+                        <button type="button"
+                                @onclick="ResetCrop"
+                                class="p-1.5 rounded-lg bg-white dark:bg-[#101b20] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center shadow-2xs cursor-pointer"
+                                title="Reset Crop">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#009488]"></span>
+                        <span>1:1 Square</span>
+                    </div>
+                </div>
+            </div>
+        </ChildContent>
+
+        <FooterTemplate>
+            <button type="button"
+                    @onclick="CloseCropperModal"
+                    class="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                Cancel
+            </button>
+
+            <button type="button"
+                    @onclick="ApplyCroppedPhotoAsync"
+                    disabled="@_isCropping"
+                    class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/25 flex items-center gap-2 cursor-pointer disabled:opacity-60">
+                @if (_isCropping)
+                {
+                    <svg class="animate-spin -ml-0.5 mr-1 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Processing Crop...</span>
+                }
+                else
+                {
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Crop &amp; Apply Photo</span>
+                }
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private UserDto? _profile;
+    private UpdateMyProfileRequest _updateModel = new();
+    private ChangePasswordRequest _passwordModel = new();
+
+    private string _fullName = "Loading...";
+    private string _initials = "..";
+    private string _roleDisplay = "User";
+
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+    private bool _isChangingPassword = false;
+
+    // Accordion states: Personal details open by default, Password closed by default
+    private bool _isPersonalOpen = true;
+    private bool _isPasswordOpen = false;
+
+    // Password visibility states
+    private bool _showCurrentPassword = false;
+    private bool _showNewPassword = false;
+    private bool _showConfirmPassword = false;
+
+    // Cropper State
+    private CropperComponent? _cropper;
+    private bool _isCropperModalOpen = false;
+    private bool _isCropping = false;
+    private string _cropperImageSrc = string.Empty;
+
+    private readonly Options _cropperOptions = new()
+    {
+        AspectRatio = 1m,
+        ViewMode = ViewMode.Vm1,
+        DragMode = "move",
+        AutoCropArea = 0.85m,
+        Restore = true,
+        Modal = true,
+        Guides = true,
+        Highlight = true,
+        CropBoxMovable = true,
+        CropBoxResizable = true,
+        ToggleDragModeOnDblclick = false,
+        Zoomable = true,
+        Rotatable = true,
+        Scalable = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfileAsync();
+    }
+
+    private void TogglePersonalSection()
+    {
+        _isPersonalOpen = !_isPersonalOpen;
+        if (_isPersonalOpen)
+        {
+            _isPasswordOpen = false;
+        }
+    }
+
+    private void TogglePasswordSection()
+    {
+        _isPasswordOpen = !_isPasswordOpen;
+        if (_isPasswordOpen)
+        {
+            _isPersonalOpen = false;
+        }
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        _isLoading = true;
+        // await Task.Delay(2000); //Intentionally preserved for user's skeleton test
+        try
+        {
+            var res = await UserService.GetMyProfileAsync();
+            if (res.Success && res.Data != null)
+            {
+                _profile = res.Data;
+                _fullName = $"{_profile.FirstName} {_profile.LastName}".Trim();
+                _initials = GetInitials(_fullName);
+                _roleDisplay = GetRoleDisplayName(_profile.Role);
+
+                _updateModel.FirstName = _profile.FirstName;
+                _updateModel.LastName = _profile.LastName;
+                _updateModel.Mobile = _profile.Mobile;
+                _updateModel.ProfilePictureUrl = _profile.ProfilePictureUrl;
+            }
+            else
+            {
+                Toast.Warning(res.Message ?? "Unable to load profile data.", "Profile Warning");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to fetch profile: " + ex.Message, "Error");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_updateModel.FirstName))
+        {
+            Toast.Error("First name is required.", "Validation Error");
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var res = await UserService.UpdateMyProfileAsync(_updateModel);
+            if (res.Success && res.Data != null)
+            {
+                _profile = res.Data;
+                _fullName = $"{_profile.FirstName} {_profile.LastName}".Trim();
+                _initials = GetInitials(_fullName);
+                _roleDisplay = GetRoleDisplayName(_profile.Role);
+
+                _updateModel.FirstName = _profile.FirstName;
+                _updateModel.LastName = _profile.LastName;
+                _updateModel.Mobile = _profile.Mobile;
+                _updateModel.ProfilePictureUrl = _profile.ProfilePictureUrl;
+
+                Toast.Success("Profile updated successfully!", "Profile Saved");
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to save profile changes.", "Save Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to save profile: " + ex.Message, "Error");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task ReloadProfileAsync()
+    {
+        await LoadProfileAsync();
+        Toast.Info("Profile data refreshed.", "Refreshed");
+    }
+
+    #region Cropper & Photo Methods
+    private async Task HandleProfilePhotoSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null) return;
+
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                Toast.Error("Selected image must be under 5 MB.", "File Too Large");
+                return;
+            }
+
+            var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!allowedTypes.Contains(file.ContentType))
+            {
+                Toast.Error("Only JPEG, PNG, or WebP images are allowed.", "Invalid File Format");
+                return;
+            }
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            _cropperImageSrc = $"data:{file.ContentType};base64,{base64}";
+
+            _isCropperModalOpen = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to load image: " + ex.Message, "Upload Error");
+        }
+    }
+
+    private void CloseCropperModal()
+    {
+        _isCropperModalOpen = false;
+        _cropperImageSrc = string.Empty;
+    }
+
+    private void ZoomIn() => _cropper?.Zoom(0.1m);
+    private void ZoomOut() => _cropper?.Zoom(-0.1m);
+    private void RotateLeft() => _cropper?.Rotate(-90m);
+    private void RotateRight() => _cropper?.Rotate(90m);
+    private void ResetCrop() => _cropper?.Reset();
+
+    private async Task ApplyCroppedPhotoAsync()
+    {
+        if (_cropper == null) return;
+
+        _isCropping = true;
+        try
+        {
+            var cropOptions = new GetCroppedCanvasOptions
+            {
+                Width = 320,
+                Height = 320,
+                ImageSmoothingEnabled = true,
+                ImageSmoothingQuality = "high"
+            };
+
+            var imageReceiver = await _cropper.GetCroppedCanvasDataInBackgroundAsync(cropOptions, "image/jpeg", 0.92f);
+            using var stream = await imageReceiver.GetImageChunkStreamAsync();
+            var bytes = stream.ToArray();
+            // Delete old profile picture if it exists in uploads
+            if (!string.IsNullOrWhiteSpace(_profile?.ProfilePictureUrl) && _profile.ProfilePictureUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            {
+                await FileUploadService.DeleteFileAsync(_profile.ProfilePictureUrl);
+            }
+
+            var photoUrl = await FileUploadService.HandleFileUploadInByteAsync(bytes, "profile", ".jpg");
+
+            if (!string.IsNullOrWhiteSpace(photoUrl))
+            {
+                if (_profile != null)
+                {
+                    _profile.ProfilePictureUrl = photoUrl;
+                }
+                _updateModel.ProfilePictureUrl = photoUrl;
+
+                CloseCropperModal();
+                Toast.Success("Photo updated successfully! Click 'Save Changes' to persist.", "Photo Ready");
+            }
+            else
+            {
+                Toast.Error("Failed to save cropped image. Please try again.", "Crop Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to crop photo: " + ex.Message, "Crop Error");
+        }
+        finally
+        {
+            _isCropping = false;
+        }
+    }
+
+    private async Task RemoveProfilePhotoAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_profile?.ProfilePictureUrl) && _profile.ProfilePictureUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            await FileUploadService.DeleteFileAsync(_profile.ProfilePictureUrl);
+        }
+
+        if (_profile != null)
+        {
+            _profile.ProfilePictureUrl = null;
+        }
+        _updateModel.ProfilePictureUrl = string.Empty;
+
+        _isSaving = true;
+        try
+        {
+            var res = await UserService.UpdateMyProfileAsync(_updateModel);
+            if (res.Success && res.Data != null)
+            {
+                _profile = res.Data;
+                _fullName = $"{_profile.FirstName} {_profile.LastName}".Trim();
+                _initials = GetInitials(_fullName);
+                _roleDisplay = GetRoleDisplayName(_profile.Role);
+
+                _updateModel.FirstName = _profile.FirstName;
+                _updateModel.LastName = _profile.LastName;
+                _updateModel.Mobile = _profile.Mobile;
+                _updateModel.ProfilePictureUrl = _profile.ProfilePictureUrl;
+
+                Toast.Success("Profile photo removed successfully!", "Photo Removed");
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to remove photo.", "Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to remove photo: " + ex.Message, "Error");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+    #endregion
+
+    #region Password Update
+    private async Task UpdatePasswordAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_passwordModel.CurrentPassword))
+        {
+            Toast.Error("Please enter your current password.", "Password Error");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_passwordModel.NewPassword) || _passwordModel.NewPassword.Length < 6)
+        {
+            Toast.Error("New password must be at least 6 characters.", "Password Error");
+            return;
+        }
+
+        if (_passwordModel.NewPassword != _passwordModel.ConfirmPassword)
+        {
+            Toast.Error("New password and confirmation do not match.", "Password Error");
+            return;
+        }
+
+        _isChangingPassword = true;
+        try
+        {
+            var res = await UserService.ChangePasswordAsync(_passwordModel);
+            if (res.Success)
+            {
+                _passwordModel = new ChangePasswordRequest();
+                Toast.Success("Your password has been changed successfully!", "Password Changed");
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to change password.", "Password Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to update password: " + ex.Message, "Password Error");
+        }
+        finally
+        {
+            _isChangingPassword = false;
+        }
+    }
+    #endregion
+
+    #region Helpers
+    private async Task CopyUserIdAsync()
+    {
+        if (_profile == null) return;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _profile.Id.ToString());
+            Toast.Success("User ID copied to clipboard!", "Copied");
+        }
+        catch
+        {
+            Toast.Info(_profile.Id.ToString(), "User ID");
+        }
+    }
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "VS";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0].Length >= 2 ? parts[0].Substring(0, 2).ToUpper() : parts[0].ToUpper();
+        return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+    }
+
+    private static string GetRoleDisplayName(UserRole role) => role switch
+    {
+        UserRole.SuperAdmin => "Super Admin",
+        UserRole.BackOffice => "Back Office",
+        UserRole.OrganizationAdmin => "Institute Admin",
+        UserRole.Teacher => "Faculty / Teacher",
+        UserRole.Student => "Student",
+        _ => role.ToString()
+    };
+    #endregion
+}

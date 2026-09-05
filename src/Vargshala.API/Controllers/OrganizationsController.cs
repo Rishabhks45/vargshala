@@ -53,7 +53,7 @@ public class OrganizationsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "SuperAdmin,1001")]
+    [Authorize(Roles = "SuperAdmin,OrganizationAdmin,1001,1003")]
     public async Task<IActionResult> UpdateInstitute(Guid id, [FromBody] Vargshala.Contracts.Organizations.UpdateOrganizationRequest request)
     {
         if (id != request.Id)

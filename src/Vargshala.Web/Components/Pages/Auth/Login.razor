@@ -3,6 +3,7 @@
 @layout AuthLayout
 @using Vargshala.Web.Services
 @inject IAuthService AuthService
+@inject INotificationService NotificationService
 @rendermode InteractiveServer
 
 <PageTitle>Sign In | Vargshala</PageTitle>
@@ -108,21 +109,6 @@
             <!-- Login Form -->
             <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3.5 my-auto py-2">
                 <FluentValidationValidator />
-
-                @if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <AlertNotification Type="AlertType.Error"
-                                       Message="@_errorMessage"
-                                       Dismissible="true"
-                                       OnClose="() => _errorMessage = null" />
-                }
-
-                @if (!string.IsNullOrEmpty(_successMessage))
-                {
-                    <AlertNotification Type="AlertType.Success"
-                                       Message="@_successMessage"
-                                       Dismissible="false" />
-                }
 
                 <!-- Email Input -->
                 <div class="space-y-1">
@@ -232,8 +218,6 @@
 
     private bool _showPassword = false;
     private bool _isLoading = false;
-    private string? _errorMessage;
-    private string? _successMessage;
 
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
@@ -259,15 +243,13 @@
     private async Task HandleLogin()
     {
         _isLoading = true;
-        _errorMessage = null;
-        _successMessage = null;
 
         try
         {
             var response = await AuthService.LoginAsync(_loginModel);
             if (response.Success && response.Data is not null)
             {
-                _successMessage = "Login successful! Redirecting...";
+                NotificationService.Success("Login successful! Redirecting...", "Welcome");
                 await Task.Delay(200);
 
                 var login = response.Data;
@@ -278,18 +260,20 @@
                                 $"&refreshToken={Uri.EscapeDataString(login.RefreshToken ?? string.Empty)}" +
                                 $"&rememberMe={_rememberMe.ToString().ToLowerInvariant()}" +
                                 $"&orgName={Uri.EscapeDataString(login.User?.OrganizationName ?? string.Empty)}" +
+                                $"&branchId={Uri.EscapeDataString(login.User?.CurrentBranchId?.ToString() ?? string.Empty)}" +
+                                $"&branchName={Uri.EscapeDataString(login.User?.CurrentBranchName ?? string.Empty)}" +
                                 $"&returnUrl={Uri.EscapeDataString(targetUrl)}";
 
                 Navigation.NavigateTo(signInUrl, forceLoad: true);
             }
             else
             {
-                _errorMessage = response.Message ?? "Invalid email or password.";
+                NotificationService.Error(response.Message ?? "Invalid email or password.", "Login Failed");
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = "Authentication error: " + ex.Message;
+            NotificationService.Error("Authentication error: " + ex.Message, "Error");
         }
         finally
         {

@@ -30,6 +30,8 @@ public class AccountController : Controller
         [FromQuery] string? refreshToken,
         [FromQuery] bool rememberMe = false,
         [FromQuery] string? orgName = null,
+        [FromQuery] string? branchId = null,
+        [FromQuery] string? branchName = null,
         [FromQuery] string? returnUrl = null)
     {
         if (string.IsNullOrWhiteSpace(token))
@@ -67,6 +69,17 @@ public class AccountController : Controller
         if (!string.IsNullOrWhiteSpace(orgName) && !claims.Any(c => c.Type == "OrganizationName"))
         {
             claims.Add(new Claim("OrganizationName", orgName));
+        }
+
+        // Add current branch info if provided
+        if (!string.IsNullOrWhiteSpace(branchId) && !claims.Any(c => c.Type == "BranchId"))
+        {
+            claims.Add(new Claim("BranchId", branchId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(branchName) && !claims.Any(c => c.Type == "BranchName"))
+        {
+            claims.Add(new Claim("BranchName", branchName));
         }
 
         claims.Add(new Claim("access_token", token));

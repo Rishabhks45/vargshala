@@ -15,24 +15,30 @@
 
 <PageTitle>Platform Users &amp; Administrators | Control Panel</PageTitle>
 
-<div class="space-y-6 transition-colors duration-200">
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
 
-    <!-- Top Header & Action Controls (Matched with Institutes.razor) -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">👥</span>
-                Platform Users &amp; Administrators
-            </h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-                Manage SuperAdmin, BackOffice staff, and registered institute OrganizationAdmins.
-            </p>
+    <!-- Top Header & Action Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Platform Users &amp; Administrators
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage SuperAdmin, BackOffice staff, and registered institute OrganizationAdmins.
+                </p>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
             <button type="button" 
                     @onclick="ExportCsv"
-                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer">
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -41,177 +47,180 @@
 
             <button type="button" 
                     @onclick="OpenAddUserDrawerAsync"
-                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </span>
-                <span>Add Administrator</span>
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                <span>New Administrator</span>
             </button>
         </div>
     </div>
 
-    <!-- Quick Stats Cards Summary (Matched with Institutes.razor) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Quick Stats Cards Summary (Matched with EmailTemplates.razor) -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
         <!-- 1. Total Administrators -->
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-[#009488] flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total Administrators</p>
-                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_totalRecords</h3>
-                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
-                    @_users.Count(u => u.IsActive) Active • @_users.Count(u => !u.IsActive) Suspended
-                </p>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Administrators</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        @_users.Count(u => u.IsActive) Active • @_users.Count(u => !u.IsActive) Suspended
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
         <!-- 2. Platform Staff -->
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/80 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Platform Staff</p>
-                <h3 class="text-lg font-extrabold text-purple-600 dark:text-purple-400">
-                    @_users.Count(u => u.Role == UserRole.SuperAdmin || u.Role == UserRole.BackOffice)
-                </h3>
-                <p class="text-[10px] text-slate-400 font-medium mt-0.5">SuperAdmin &amp; BackOffice</p>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Platform Staff</p>
+                    <h3 class="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
+                        @_users.Count(u => u.Role == UserRole.SuperAdmin || u.Role == UserRole.BackOffice)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">SuperAdmin &amp; BackOffice</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
         <!-- 3. Institute Admins -->
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Institute Admins</p>
-                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">
-                    @_users.Count(u => u.Role == UserRole.OrganizationAdmin)
-                </h3>
-                <p class="text-[10px] text-slate-400 font-medium mt-0.5">Coaching Center Heads</p>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Institute Admins</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                        @_users.Count(u => u.Role == UserRole.OrganizationAdmin)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Coaching Center Heads</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
         <!-- 4. Multi-Tenant RBAC -->
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tenant Security</p>
-                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">RBAC Active</h3>
-                <p class="text-[10px] text-slate-400 font-medium mt-0.5">Role-Based Data Isolation</p>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tenant Security</p>
+                    <h3 class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">RBAC Active</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Role-Based Data Isolation</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Search & Filter Controls (Matched with Institutes.razor) -->
-    <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+    <!-- Search & Filter Controls (Matched with EmailTemplates.razor) -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
         <!-- Reusable SearchInput Component with Debounce & Clear -->
-        <div class="flex-1 w-full lg:max-w-md">
+        <div class="relative w-full md:w-80">
             <SearchInput @bind-Value="_query.Search" 
                          OnSearch="() => LoadUsersAsync(1)" 
                          Placeholder="Search administrator name, email, mobile, or institute..." />
         </div>
 
         <!-- Filter Dropdowns with CustomSelect -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2.5 w-full lg:w-auto">
-            <CustomSelect Value="@_selectedRoleFilter" 
-                          ValueChanged="HandleRoleFilterChangedAsync" 
-                          Options="_roleFilterOptions" 
-                          Placeholder="All Roles" />
-            <CustomSelect Value="@_selectedStatusFilter" 
-                          ValueChanged="HandleStatusFilterChangedAsync" 
-                          Options="_statusFilterOptions" 
-                          Placeholder="All Status" />
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <div class="w-44">
+                <CustomSelect Value="@_selectedRoleFilter" 
+                              ValueChanged="HandleRoleFilterChangedAsync" 
+                              Options="_roleFilterOptions" 
+                              Placeholder="All Roles" />
+            </div>
+            <div class="w-36">
+                <CustomSelect Value="@_selectedStatusFilter" 
+                              ValueChanged="HandleStatusFilterChangedAsync" 
+                              Options="_statusFilterOptions" 
+                              Placeholder="All Status" />
+            </div>
         </div>
     </div>
 
-    <!-- Users Data Table (Pixel-Matched Layout with Full Dark Mode & TableSortState) -->
-    <div class="card-surface border border-slate-200 dark:border-slate-800 shadow-xs rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto min-h-[260px]">
-            <table class="w-full min-w-[860px] text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-200/80 dark:border-slate-800/80 text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase">
-                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Name")'>
+    <!-- Users Data Table (Fits screen height, internal scrolling with hidden scrollbar) -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        <div class="flex-1 min-h-0 overflow-auto scrollbar-hidden">
+            <table class="w-full min-w-[860px] text-left border-collapse table-fixed">
+                <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                    <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                        <th class="w-[24%] py-2 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Name")'>
                             <div class="flex items-center gap-1.5">
                                 <span>User Name</span>
                                 <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Email")'>
+                        <th class="w-[20%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Email")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Contact Details</span>
                                 <span class="@_sortState.GetIndicatorClass("Email")">@_sortState.GetIndicator("Email")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Role")'>
+                        <th class="w-[13%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Role")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Access Role</span>
                                 <span class="@_sortState.GetIndicatorClass("Role")">@_sortState.GetIndicator("Role")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Organization")'>
+                        <th class="w-[16%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Organization")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Associated Institute</span>
                                 <span class="@_sortState.GetIndicatorClass("Organization")">@_sortState.GetIndicator("Organization")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("Status")'>
+                        <th class="w-[9%] py-2 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Status")'>
                             <div class="flex items-center justify-center gap-1.5">
                                 <span>Status</span>
                                 <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors group" @onclick='() => HandleSortAsync("CreatedAt")'>
+                        <th class="w-[11%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("CreatedAt")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Joined Date</span>
                                 <span class="@_sortState.GetIndicatorClass("CreatedAt")">@_sortState.GetIndicator("CreatedAt")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-6 text-right select-none">Actions</th>
+                        <th class="w-[7%] py-2 px-5 text-right select-none">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs">
-                    @if (_isLoading)
+                <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _users.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                    @if (_isLoading && !_users.Any())
                     {
-                        <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400">
-                                <div class="flex flex-col items-center justify-center space-y-2">
-                                    <div class="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
-                                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Loading administrators from database...</p>
-                                </div>
-                            </td>
-                        </tr>
+                        <TableSkeletonRows Columns="7" Rows="8" />
                     }
                     else if (_users.Any())
                     {
                         @foreach (var user in _users)
                         {
-                            <tr class="hover:bg-slate-50/80 dark:hover:bg-[#152329]/70 transition-colors">
+                            <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors group">
                                 <!-- User Name & Avatar -->
-                                <td class="py-3.5 px-6">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl @(user.Role == UserRole.SuperAdmin ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : user.Role == UserRole.BackOffice ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-teal-500/10 text-[#009488]") font-black text-sm flex items-center justify-center shrink-0 shadow-inner">
+                                <td class="py-1.5 px-5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg @(user.Role == UserRole.SuperAdmin ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : user.Role == UserRole.BackOffice ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-teal-500/10 text-[#009488]") font-black text-xs flex items-center justify-center shrink-0 shadow-inner">
                                             @user.FirstName.Substring(0, 1).ToUpperInvariant()@user.LastName.Substring(0, 1).ToUpperInvariant()
                                         </div>
-                                        <div>
-                                            <div class="font-bold text-slate-800 dark:text-white leading-tight">
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-slate-800 dark:text-white leading-tight truncate">
                                                 @user.FirstName @user.LastName
                                             </div>
-                                            <div class="text-[10px] font-mono text-teal-600 dark:text-teal-400 mt-0.5">
+                                            <div class="text-[10px] font-mono text-teal-600 dark:text-teal-400 leading-none mt-0.5">
                                                 ID: @user.Id.ToString().Substring(0, 8)...
                                             </div>
                                         </div>
@@ -219,68 +228,68 @@
                                 </td>
 
                                 <!-- Contact Details -->
-                                <td class="py-3.5 px-4">
-                                    <div class="font-bold text-slate-800 dark:text-white">@user.Email</div>
+                                <td class="py-1.5 px-3">
+                                    <div class="font-semibold text-slate-800 dark:text-white leading-tight truncate">@user.Email</div>
                                     @if (!string.IsNullOrWhiteSpace(user.Mobile))
                                     {
-                                        <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                                        <div class="text-[10px] font-mono text-slate-500 dark:text-slate-400 leading-none mt-0.5">
                                             @user.Mobile
                                         </div>
                                     }
                                     else
                                     {
-                                        <div class="text-[11px] text-slate-400 mt-0.5">—</div>
+                                        <div class="text-[10px] text-slate-400 leading-none mt-0.5">—</div>
                                     }
                                 </td>
 
                                 <!-- Access Role Badge (Enum-bound) -->
-                                <td class="py-3.5 px-4">
+                                <td class="py-1.5 px-3">
                                     @if (user.Role == UserRole.SuperAdmin)
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80">
                                             <span>🛡️</span>
                                             <span>@user.Role.GetDisplayName()</span>
                                         </span>
                                     }
                                     else if (user.Role == UserRole.BackOffice)
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80">
                                             <span>💼</span>
                                             <span>@user.Role.GetDisplayName()</span>
                                         </span>
                                     }
                                     else if (user.Role == UserRole.OrganizationAdmin)
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-teal-50 dark:bg-teal-950/70 text-[#00796b] dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/80 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/70 text-[#00796b] dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/80">
                                             <span>🏛️</span>
                                             <span>@user.Role.GetDisplayName()</span>
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                             <span>@user.Role</span>
                                         </span>
                                     }
                                 </td>
 
                                 <!-- Associated Institute -->
-                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                                <td class="py-1.5 px-3 text-slate-600 dark:text-slate-300">
                                     @if (user.Role == UserRole.SuperAdmin || user.Role == UserRole.BackOffice)
                                     {
-                                        <span class="text-xs text-slate-400 font-semibold">
+                                        <span class="text-[11px] text-slate-400 font-medium">
                                             Platform Staff
                                         </span>
                                     }
                                     else if (!string.IsNullOrWhiteSpace(user.OrganizationName))
                                     {
                                         <div>
-                                            <div class="font-bold text-slate-800 dark:text-white leading-tight">
+                                            <div class="font-semibold text-slate-800 dark:text-white leading-tight truncate">
                                                 @user.OrganizationName
                                             </div>
                                             @if (!string.IsNullOrWhiteSpace(user.OrganizationCode))
                                             {
-                                                <span class="inline-block mt-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded bg-teal-50 dark:bg-teal-950/50 text-[#009488] border border-teal-200 dark:border-teal-800">
+                                                <span class="inline-block mt-0.5 px-1.5 py-0 text-[9px] font-mono font-semibold rounded bg-teal-50 dark:bg-teal-950/50 text-[#009488] border border-teal-200 dark:border-teal-800">
                                                     @user.OrganizationCode
                                                 </span>
                                             }
@@ -293,51 +302,51 @@
                                 </td>
 
                                 <!-- Status Badge -->
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-1.5 px-3 text-center">
                                     @if (user.IsActive)
                                     {
-                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
                                             Active
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1"></span>
                                             Suspended
                                         </span>
                                     }
                                 </td>
 
                                 <!-- Joined Date -->
-                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
-                                    <div class="font-semibold text-slate-800 dark:text-white">@user.CreatedAt.ToString("dd MMM yyyy")</div>
-                                    <div class="text-[10px] text-slate-400 mt-0.5 font-medium">
+                                <td class="py-1.5 px-3 text-slate-600 dark:text-slate-300">
+                                    <div class="font-semibold text-slate-800 dark:text-white leading-tight">@user.CreatedAt.ToString("dd MMM yyyy")</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5 leading-none">
                                         @(user.LastLoginAt.HasValue ? $"Login: {user.LastLoginAt.Value:dd MMM}" : "No login yet")
                                     </div>
                                 </td>
 
                                 <!-- Actions Column: Direct Action Buttons (Matched with Institutes.razor) -->
-                                <td class="py-3.5 px-6 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
+                                <td class="py-1.5 px-5 text-right">
+                                    <div class="flex items-center justify-end gap-1">
                                         <!-- Quick Action 1: View Profile Details -->
                                         <div class="relative group inline-flex items-center justify-center">
                                             <button type="button" 
                                                     @onclick="() => OpenUserDetailsDrawer(user)" 
-                                                    class="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] dark:text-teal-400 border border-teal-200/80 dark:border-teal-800/80 hover:bg-[#009488] hover:text-white dark:hover:bg-[#009488] dark:hover:text-white transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                                    class="p-1 text-[#009488] dark:text-teal-400 hover:text-[#00796b] dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-md transition-all cursor-pointer inline-flex items-center justify-center"
                                                     aria-label="View Details">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                                 </svg>
                                             </button>
                                             <!-- Tooltip (Teal Theme) -->
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
-                                                <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-[#004D40] text-teal-100 border border-teal-500/50 shadow-lg tracking-wide">
+                                                <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-[#004D40] text-teal-100 border border-teal-500/50 shadow-lg tracking-wide">
                                                     View Details
                                                 </span>
-                                                <span class="w-2 h-2 rotate-45 -mt-1 bg-[#004D40] border-r border-b border-teal-500/50"></span>
+                                                <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#004D40] border-r border-b border-teal-500/50"></span>
                                             </div>
                                         </div>
 
@@ -345,18 +354,18 @@
                                         <div class="relative group inline-flex items-center justify-center">
                                             <button type="button" 
                                                     @onclick="() => OpenEditUserDrawerAsync(user)" 
-                                                    class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/80 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                                    class="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-md transition-all cursor-pointer inline-flex items-center justify-center"
                                                     aria-label="Edit Administrator">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                                 </svg>
                                             </button>
                                             <!-- Tooltip (Amber Theme) -->
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
-                                                <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-amber-600 text-white border border-amber-400/50 shadow-lg tracking-wide">
+                                                <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-amber-600 text-white border border-amber-400/50 shadow-lg tracking-wide">
                                                     Edit Administrator
                                                 </span>
-                                                <span class="w-2 h-2 rotate-45 -mt-1 bg-amber-600 border-r border-b border-amber-400/50"></span>
+                                                <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-amber-600 border-r border-b border-amber-400/50"></span>
                                             </div>
                                         </div>
 
@@ -365,19 +374,19 @@
                                             <button type="button" 
                                                     @onclick="() => HandleToggleStatusAsync(user)" 
                                                     disabled="@(_isTogglingStatusId == user.Id)"
-                                                    class="p-2 rounded-xl @(user.IsActive 
-                                                        ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/80 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white" 
-                                                        : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-600 dark:hover:text-white") transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                                    class="p-1 @(user.IsActive 
+                                                        ? "text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40" 
+                                                        : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40") rounded-md transition-all cursor-pointer inline-flex items-center justify-center"
                                                     aria-label="Toggle Status">
                                                 @if (_isTogglingStatusId == user.Id)
                                                 {
-                                                    <svg class="w-4 h-4 animate-spin text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-3.5 h-3.5 animate-spin text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                                     </svg>
                                                 }
                                                 else
                                                 {
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                                                     </svg>
                                                 }
@@ -386,17 +395,17 @@
                                             <div class="absolute bottom-full right-0 mb-2 hidden group-hover:flex flex-col items-end pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
                                                 @if (user.IsActive)
                                                 {
-                                                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-rose-600 text-white border border-rose-400/50 shadow-lg tracking-wide">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-600 text-white border border-rose-400/50 shadow-lg tracking-wide">
                                                         Suspend Administrator
                                                     </span>
-                                                    <span class="w-2 h-2 rotate-45 -mt-1 mr-3 bg-rose-600 border-r border-b border-rose-400/50"></span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 mr-2 bg-rose-600 border-r border-b border-rose-400/50"></span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-emerald-600 text-white border border-emerald-400/50 shadow-lg tracking-wide">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-emerald-600 text-white border border-emerald-400/50 shadow-lg tracking-wide">
                                                         Activate Administrator
                                                     </span>
-                                                    <span class="w-2 h-2 rotate-45 -mt-1 mr-3 bg-emerald-600 border-r border-b border-emerald-400/50"></span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 mr-2 bg-emerald-600 border-r border-b border-emerald-400/50"></span>
                                                 }
                                             </div>
                                         </div>
@@ -404,24 +413,6 @@
                                 </td>
                             </tr>
                         }
-                    }
-                    else if (!string.IsNullOrWhiteSpace(_errorMessage))
-                    {
-                        <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400">
-                                <div class="max-w-xs mx-auto space-y-2">
-                                    <svg class="w-8 h-8 text-rose-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                    </svg>
-                                    <p class="font-bold text-rose-600 dark:text-rose-400 text-sm">Database Connection Error</p>
-                                    <p class="text-xs text-slate-400">@_errorMessage</p>
-                                    <button type="button" @onclick="() => LoadUsersAsync(1)" 
-                                            class="mt-2 px-3.5 py-1.5 rounded-xl bg-teal-500/10 text-[#009488] hover:bg-teal-500/20 text-xs font-bold transition-all cursor-pointer">
-                                        Retry Connection
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
                     }
                     else
                     {
@@ -442,12 +433,14 @@
         </div>
 
         <!-- Reusable Server-Side Table Pagination Component -->
-        <TablePagination PageNumber="_query.PageNumber" 
-                         PageSize="_query.PageSize" 
-                         TotalRecords="_totalRecords" 
-                         ItemLabel="administrators"
-                         IsLoading="_isLoading"
-                         OnPageSizeChanged="HandlePageSizeChangedAsync" />
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="_query.PageNumber" 
+                             PageSize="_query.PageSize" 
+                             TotalRecords="_totalRecords" 
+                             ItemLabel="administrators"
+                             IsLoading="_isLoading"
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
+        </div>
     </div>
 
 </div>
@@ -494,7 +487,7 @@
         <EditForm Model="@_createForm" OnValidSubmit="SubmitCreateUserAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
             <FluentValidationValidator />
 
-            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 text-xs" style="scrollbar-width: none; -ms-overflow-style: none;">
                 @if (!string.IsNullOrEmpty(_formError))
                 {
                     <AlertNotification Type="AlertType.Error"
@@ -541,28 +534,36 @@
                 <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                     <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Access Role &amp; Assignment</h4>
                     
-                    <div>
-                        <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">Administrator Role *</label>
-                        <CustomSelect Value="@_userRoleString" 
-                                      ValueChanged="HandleUserRoleChanged" 
-                                      Options="_newUserRoleOptions" 
-                                      Placeholder="Select Role..." />
+                    <div class="grid @(_createForm.Role == UserRole.OrganizationAdmin && !string.IsNullOrEmpty(_userRoleString) ? "grid-cols-2" : "grid-cols-1") gap-3 items-start">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">Administrator Role *</label>
+                            <CustomSelect Value="@_userRoleString" 
+                                          ValueChanged="HandleUserRoleChanged" 
+                                          Options="_newUserRoleOptions" 
+                                          Placeholder="Select Role..." 
+                                          Class="w-full" />
+                        </div>
+
+                        @if (_createForm.Role == UserRole.OrganizationAdmin && !string.IsNullOrEmpty(_userRoleString))
+                        {
+                            <div class="animate-in fade-in zoom-in-95 duration-200 space-y-1">
+                                <label class="block font-bold text-slate-800 dark:text-slate-200">
+                                    Associated Institute *
+                                </label>
+                                <CustomSelect Value="@_userOrgString" 
+                                              ValueChanged="HandleUserOrgChanged" 
+                                              Options="_instituteOptions" 
+                                              Placeholder="Select Institute..." 
+                                              Class="w-full" />
+                            </div>
+                        }
                     </div>
 
-                    @if (_createForm.Role == UserRole.OrganizationAdmin)
+                    @if (_createForm.Role == UserRole.OrganizationAdmin && !string.IsNullOrEmpty(_userRoleString))
                     {
-                        <div class="animate-in fade-in zoom-in-95 duration-200 space-y-1">
-                            <label class="block font-bold text-slate-800 dark:text-slate-200">
-                                Associated Institute / Organization *
-                            </label>
-                            <CustomSelect Value="@_userOrgString" 
-                                          ValueChanged="HandleUserOrgChanged" 
-                                          Options="_instituteOptions" 
-                                          Placeholder="Select Institute..." />
-                            <p class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
-                                🏛️ Required for OrganizationAdmin. They will manage this specific institute.
-                            </p>
-                        </div>
+                        <p class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
+                            🏛️ Required for OrganizationAdmin. They will manage this specific institute.
+                        </p>
                     }
                 </div>
 
@@ -600,7 +601,7 @@
                     Cancel
                 </button>
                 <button type="submit" 
-                        disabled="_isSubmitting"
+                        disabled="@_isSubmitting"
                         class="px-5 py-2.5 text-xs font-bold bg-[#009488] hover:bg-[#00796b] text-white rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
                     @if (_isSubmitting)
                     {
@@ -627,7 +628,7 @@
          @onclick="CloseDrawerAsync"></div>
 
     <!-- Right Slide-Over Drawer Container -->
-    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
         
         <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
         <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
@@ -656,7 +657,7 @@
         </div>
 
         <!-- Details Body -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 text-xs" style="scrollbar-width: none; -ms-overflow-style: none;">
             <div class="card-surface p-4 space-y-3.5">
                 <div>
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Status</span>
@@ -827,7 +828,7 @@
         <EditForm Model="@_updateForm" OnValidSubmit="SubmitEditUserAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
             <FluentValidationValidator />
 
-            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 text-xs" style="scrollbar-width: none; -ms-overflow-style: none;">
                 @if (!string.IsNullOrEmpty(_editFormError))
                 {
                     <AlertNotification Type="AlertType.Error"
@@ -873,25 +874,36 @@
                 <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                     <h4 class="text-xs font-black text-[#009488] uppercase tracking-wider">2. Access Role &amp; Assignment</h4>
                     
-                    <div>
-                        <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">Administrator Role *</label>
-                        <CustomSelect Value="@_userRoleString" 
-                                      ValueChanged="HandleUserRoleChanged" 
-                                      Options="_newUserRoleOptions" 
-                                      Placeholder="Select Role..." />
+                    <div class="grid @(_updateForm.Role == UserRole.OrganizationAdmin && !string.IsNullOrEmpty(_userRoleString) ? "grid-cols-2" : "grid-cols-1") gap-3 items-start">
+                        <div class="space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-slate-200">Administrator Role *</label>
+                            <CustomSelect Value="@_userRoleString" 
+                                          ValueChanged="HandleUserRoleChanged" 
+                                          Options="_newUserRoleOptions" 
+                                          Placeholder="Select Role..." 
+                                          Class="w-full" />
+                        </div>
+
+                        @if (_updateForm.Role == UserRole.OrganizationAdmin && !string.IsNullOrEmpty(_userRoleString))
+                        {
+                            <div class="animate-in fade-in zoom-in-95 duration-200 space-y-1">
+                                <label class="block font-bold text-slate-800 dark:text-slate-200">
+                                    Associated Institute *
+                                </label>
+                                <CustomSelect Value="@_userOrgString" 
+                                              ValueChanged="HandleUserOrgChanged" 
+                                              Options="_instituteOptions" 
+                                              Placeholder="Select Institute..." 
+                                              Class="w-full" />
+                            </div>
+                        }
                     </div>
 
-                    @if (_updateForm.Role == UserRole.OrganizationAdmin)
+                    @if (_updateForm.Role == UserRole.OrganizationAdmin && !string.IsNullOrEmpty(_userRoleString))
                     {
-                        <div class="animate-in fade-in zoom-in-95 duration-200 space-y-1">
-                            <label class="block font-bold text-slate-800 dark:text-slate-200">
-                                Associated Institute / Organization *
-                            </label>
-                            <CustomSelect Value="@_userOrgString" 
-                                          ValueChanged="HandleUserOrgChanged" 
-                                          Options="_instituteOptions" 
-                                          Placeholder="Select Institute..." />
-                        </div>
+                        <p class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
+                            🏛️ Required for OrganizationAdmin. They will manage this specific institute.
+                        </p>
                     }
                 </div>
 
@@ -919,7 +931,7 @@
                     Cancel
                 </button>
                 <button type="submit" 
-                        disabled="_isSubmitting"
+                        disabled="@_isSubmitting"
                         class="px-5 py-2.5 text-xs font-bold bg-[#009488] hover:bg-[#00796b] text-white rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
                     @if (_isSubmitting)
                     {
@@ -940,7 +952,6 @@
     private readonly TableQueryState _query = new();
     private int _totalRecords = 0;
     private bool _isLoading = true;
-    private string? _errorMessage;
 
 
     // Filter allowed roles explicitly from the UserRole enum
@@ -972,13 +983,14 @@
     private string? _formError;
     private string? _editFormError;
     private bool _showPassword = false;
-    private CreateUserRequest _createForm = new() { Role = UserRole.OrganizationAdmin };
-    private UpdateUserRequest _updateForm = new() { Role = UserRole.OrganizationAdmin };
-    private string _userRoleString = UserRole.OrganizationAdmin.ToString();
+    private CreateUserRequest _createForm = new();
+    private UpdateUserRequest _updateForm = new();
+    private string _userRoleString = "";
     private string _userOrgString = "";
 
     private readonly List<CustomSelect.CustomSelectOption> _newUserRoleOptions = new()
     {
+        new("", "Select Role..."),
         new(UserRole.OrganizationAdmin.ToString(), UserRole.OrganizationAdmin.GetDisplayName()),
         new(UserRole.BackOffice.ToString(), UserRole.BackOffice.GetDisplayName()),
         new(UserRole.SuperAdmin.ToString(), UserRole.SuperAdmin.GetDisplayName())
@@ -1012,6 +1024,7 @@
                 _instituteOptions = res.Data.Items
                     .Select(i => new CustomSelect.CustomSelectOption(i.Id.ToString(), $"{i.Name} ({i.Code})"))
                     .ToList();
+                _instituteOptions.Insert(0, new CustomSelect.CustomSelectOption("", "Select Institute..."));
             }
         }
         catch (Exception ex)
@@ -1023,7 +1036,6 @@
     private async Task LoadUsersAsync(int page = 1)
     {
         _isLoading = true;
-        _errorMessage = null;
         _query.PageNumber = page;
 
         try
@@ -1055,12 +1067,22 @@
             {
                 _users = new();
                 _totalRecords = 0;
-                _errorMessage = response?.Message ?? "Failed to load users from API.";
+                var errorMsg = response?.Message ?? "Failed to load users from API.";
+                if (errorMsg.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
+                {
+                    Toast.Error("Your session has expired or you are unauthorized. Please sign in again.", "Unauthorized");
+                }
+                else
+                {
+                    Toast.Error(errorMsg, "Error");
+                }
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = "Network or server connection error: " + ex.Message;
+            _users = new();
+            _totalRecords = 0;
+            Toast.Error("Network or server connection error: " + ex.Message, "Connection Error");
         }
         finally
         {
@@ -1110,20 +1132,16 @@
     private async Task OpenAddUserDrawerAsync()
     {
         _formError = null;
-        _createForm = new CreateUserRequest { Role = UserRole.OrganizationAdmin };
-        _userRoleString = UserRole.OrganizationAdmin.ToString();
-        _userOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
-        if (Guid.TryParse(_userOrgString, out var orgId))
-        {
-            _createForm.OrganizationId = orgId;
-        }
+        _createForm = new CreateUserRequest();
+        _userRoleString = "";
+        _userOrgString = "";
         _showPassword = false;
 
         _showAddDrawer = true;
         _showProfileDrawer = false;
         _showEditDrawer = false;
         StateHasChanged();
-        await Task.Yield();
+        await Task.Delay(50);
         _isDrawerOpen = true;
         StateHasChanged();
     }
@@ -1144,13 +1162,13 @@
             IsActive = user.IsActive
         };
         _userRoleString = user.Role.ToString();
-        _userOrgString = user.OrganizationId?.ToString() ?? (_instituteOptions.FirstOrDefault()?.Value ?? "");
+        _userOrgString = user.OrganizationId?.ToString() ?? "";
 
         _showProfileDrawer = false;
         _showAddDrawer = false;
         _showEditDrawer = true;
         StateHasChanged();
-        await Task.Yield();
+        await Task.Delay(50);
         _isDrawerOpen = true;
         StateHasChanged();
     }
@@ -1162,7 +1180,7 @@
         _showAddDrawer = false;
         _showEditDrawer = false;
         StateHasChanged();
-        await Task.Yield();
+        await Task.Delay(50);
         _isDrawerOpen = true;
         StateHasChanged();
     }
@@ -1176,7 +1194,7 @@
     {
         _isDrawerOpen = false;
         StateHasChanged();
-        await Task.Delay(250);
+        await Task.Delay(300);
         _showAddDrawer = false;
         _showProfileDrawer = false;
         _showEditDrawer = false;
@@ -1191,22 +1209,8 @@
             if (_showAddDrawer)
             {
                 _createForm.Role = parsedRole;
-                if (parsedRole != UserRole.OrganizationAdmin)
-                {
-                    _createForm.OrganizationId = null;
-                    _userOrgString = "";
-                }
-                else
-                {
-                    if (string.IsNullOrEmpty(_userOrgString))
-                    {
-                        _userOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
-                    }
-                    if (Guid.TryParse(_userOrgString, out var orgId))
-                    {
-                        _createForm.OrganizationId = orgId;
-                    }
-                }
+                _createForm.OrganizationId = null;
+                _userOrgString = "";
             }
             else if (_showEditDrawer)
             {
@@ -1218,15 +1222,21 @@
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(_userOrgString))
-                    {
-                        _userOrgString = _instituteOptions.FirstOrDefault()?.Value ?? "";
-                    }
-                    if (Guid.TryParse(_userOrgString, out var orgId))
-                    {
-                        _updateForm.OrganizationId = orgId;
-                    }
+                    _userOrgString = _updateForm.OrganizationId?.ToString() ?? "";
                 }
+            }
+        }
+        else
+        {
+            if (_showAddDrawer)
+            {
+                _createForm.OrganizationId = null;
+                _userOrgString = "";
+            }
+            else if (_showEditDrawer)
+            {
+                _updateForm.OrganizationId = null;
+                _userOrgString = "";
             }
         }
     }
@@ -1248,6 +1258,12 @@
     private async Task SubmitCreateUserAsync()
     {
         _formError = null;
+
+        if (string.IsNullOrEmpty(_userRoleString) || !Enum.TryParse<UserRole>(_userRoleString, out _))
+        {
+            _formError = "Please select an administrator role.";
+            return;
+        }
 
         if (_createForm.Role == UserRole.OrganizationAdmin && (!_createForm.OrganizationId.HasValue || _createForm.OrganizationId.Value == Guid.Empty))
         {
@@ -1291,6 +1307,12 @@
     private async Task SubmitEditUserAsync()
     {
         _editFormError = null;
+
+        if (string.IsNullOrEmpty(_userRoleString) || !Enum.TryParse<UserRole>(_userRoleString, out _))
+        {
+            _editFormError = "Please select an administrator role.";
+            return;
+        }
 
         if (_updateForm.Role == UserRole.OrganizationAdmin && (!_updateForm.OrganizationId.HasValue || _updateForm.OrganizationId.Value == Guid.Empty))
         {

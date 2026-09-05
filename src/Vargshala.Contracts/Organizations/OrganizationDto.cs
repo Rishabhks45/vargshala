@@ -55,8 +55,6 @@ public class CreateOrganizationRequestValidator : AbstractValidator<CreateOrgani
             .MaximumLength(50).WithMessage("Organization code cannot exceed 50 characters.")
             .Matches(@"^[A-Za-z0-9\-_]+$").WithMessage("Code can only contain alphanumeric characters, hyphens or underscores.");
 
-        RuleFor(x => x.LogoUrl)
-            .MaximumLength(500).WithMessage("Logo URL cannot exceed 500 characters.");
 
         RuleFor(x => x.Email)
             .MaximumLength(150).WithMessage("Email cannot exceed 150 characters.")
@@ -131,8 +129,6 @@ public class UpdateOrganizationRequestValidator : AbstractValidator<UpdateOrgani
             .NotEmpty().WithMessage("Organization name is required.")
             .MaximumLength(200).WithMessage("Organization name cannot exceed 200 characters.");
 
-        RuleFor(x => x.LogoUrl)
-            .MaximumLength(500).WithMessage("Logo URL cannot exceed 500 characters.");
 
         RuleFor(x => x.Email)
             .MaximumLength(150).WithMessage("Email cannot exceed 150 characters.")

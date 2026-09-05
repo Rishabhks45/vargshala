@@ -12,6 +12,12 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
 
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<Teacher> Teachers => Set<Teacher>();
+    public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<UserBranchAccess> UserBranchAccesses => Set<UserBranchAccess>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,6 +28,11 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
         // Global query filter for soft delete
         modelBuilder.Entity<Organization>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<EmailTemplate>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Coupon>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Student>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Teacher>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Branch>().HasQueryFilter(e => !e.IsDeleted);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

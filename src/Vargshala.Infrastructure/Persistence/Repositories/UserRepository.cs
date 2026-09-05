@@ -56,6 +56,14 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
     }
 
+    public async Task<User?> GetByIdWithOrgAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _db.Users
+            .AsNoTracking()
+            .Include(u => u.Organization)
+            .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
+    }
+
     public async Task<User?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _db.Users

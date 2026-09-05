@@ -13,6 +13,8 @@ public interface IAuthRepository
     Task<bool> UserEmailExistsInOrgAsync(string email, Guid organizationId, CancellationToken cancellationToken = default);
     Task AddOrganizationAsync(Organization organization, CancellationToken cancellationToken = default);
     Task AddUserAsync(User user, CancellationToken cancellationToken = default);
+    Task AddBranchAsync(Branch branch, CancellationToken cancellationToken = default);
+    Task AddUserBranchAccessAsync(UserBranchAccess access, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 #endregion

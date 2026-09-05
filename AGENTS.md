@@ -26,6 +26,12 @@ Welcome to **Vargshala** — a Multi-tenant Coaching & Educational Institute Man
 - **Validation Standard**: Use **FluentValidation** (`AbstractValidator<T>`) with `CascadeMode.Stop` to prevent stacked validation errors.
 - **Table Sorting**: Use reusable `TableSortState` (`Vargshala.Web.Common`) with 3-state cycle (`▲` ➔ `▼` ➔ `↕`).
 - **Dropdowns**: ALWAYS use `<CustomSelect>` instead of native OS `<select>` elements to prevent blue browser highlights.
+- **Gold Standard Reference Implementation (MANDATORY)**: ALWAYS use [`src/Vargshala.Web/Components/Pages/ControlPanel/Users.razor`](file:///d:/vargshala.com/src/Vargshala.Web/Components/Pages/ControlPanel/Users.razor) and [`src/Vargshala.Application/Features/Users`](file:///d:/vargshala.com/src/Vargshala.Application/Features/Users) as the gold standard reference for all Razor pages, data tables, and backend feature architectures:
+  - **No Blinking on Sort/Filter**: KPI summary cards must display values directly (e.g. `@_totalRecords`, `@_items.Count(...)`). NEVER use `@(_isLoading ? "..." : ...)` in stat cards, as toggling loading text causes aggressive full-page layout shift and blinking.
+  - **No Table Header Blinking**: Use `table-fixed` with explicit percentage column widths on all `<th>` headers. Render `<TableSkeletonRows>` ONLY on initial load (`@if (_isLoading && !_items.Any())`). During sort/page updates, keep existing rows with `@(_isLoading && _items.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")` so the thead and column widths NEVER shift, jump, or blink.
+  - **Standard Sorting Flow**: Use `HandleSortAsync(string column)` with `_query.SortState.Toggle(column); await LoadDataAsync(1);` and standard PascalCase column names.
+  - **Standard PagedRequest**: Build `PagedRequest` following `Users.razor` (`SortBy = _sortState.Column`, `SortDirection = desc/asc/null`).
+  - **Feature Architecture**: All features must strictly replicate the `Users` pattern: `I{Feature}Repository` in `Application/Features/{Feature}/Infrastructure/`, EF Core implementation in `Infrastructure/Persistence/Repositories/{Feature}Repository.cs`, scoped DI in `InfrastructureServiceRegistration.cs`, and handlers injecting only the repository.
 - **Tailwind Compilation**: In `src/Vargshala.Web`, compile using: `& ".\tailwindcss.exe" -i ".\Styles\app.css" -o ".\wwwroot\app.css" --minify`.
 
 ---

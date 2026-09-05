@@ -7,6 +7,7 @@ namespace Vargshala.Application.Features.Users.Infrastructure;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<User?> GetByIdWithOrgAsync(Guid id, CancellationToken cancellationToken = default);
     Task<User?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default);
     Task<User?> GetByEmailAndOrgAsync(string email, Guid organizationId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAndOrgAsync(string email, Guid organizationId, CancellationToken cancellationToken = default);

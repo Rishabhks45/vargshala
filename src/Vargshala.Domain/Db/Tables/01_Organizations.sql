@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public."Organizations"
     "Id" uuid NOT NULL,
     "Name" character varying(200) COLLATE pg_catalog."default" NOT NULL,
     "Code" character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    "LogoUrl" character varying(500) COLLATE pg_catalog."default",
+    "LogoUrl" text COLLATE pg_catalog."default",
     "Email" character varying(150) COLLATE pg_catalog."default",
     "Mobile" character varying(20) COLLATE pg_catalog."default",
     "Address" character varying(500) COLLATE pg_catalog."default",

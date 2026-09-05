@@ -1,0 +1,59 @@
+@namespace Vargshala.Web.Components.UI.Skeletons
+
+@for (int r = 0; r < Rows; r++)
+{
+    <tr class="animate-pulse border-b border-slate-100/80 dark:border-slate-800/40">
+        @for (int c = 0; c < Columns; c++)
+        {
+            var isFirst = c == 0;
+            var isLast = c == Columns - 1;
+            var isCenter = (Columns >= 6 && c == Columns - 2);
+
+            <td class="py-1.5 @(isFirst ? "px-5" : isLast ? "px-5 text-right" : isCenter ? "px-3 text-center" : "px-3")">
+                @if (isFirst)
+                {
+                    <!-- Compact Avatar + Title + Subtitle -->
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+                        <div class="space-y-1 flex-1 min-w-0">
+                            <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded @(r % 2 == 0 ? "w-28" : "w-36")"></div>
+                            <div class="h-2 bg-slate-100 dark:bg-slate-800/60 rounded @(r % 2 == 0 ? "w-20" : "w-16")"></div>
+                        </div>
+                    </div>
+                }
+                else if (isLast)
+                {
+                    <!-- Action buttons placeholder -->
+                    <div class="flex items-center justify-end gap-1.5">
+                        <div class="w-6 h-6 rounded-md bg-slate-200 dark:bg-slate-800"></div>
+                        <div class="w-6 h-6 rounded-md bg-slate-200 dark:bg-slate-800"></div>
+                        <div class="w-6 h-6 rounded-md bg-slate-200 dark:bg-slate-800"></div>
+                    </div>
+                }
+                else if (isCenter)
+                {
+                    <!-- Status pill badge placeholder -->
+                    <div class="h-4.5 bg-slate-200 dark:bg-slate-800 rounded-full w-14 mx-auto"></div>
+                }
+                else if (c % 2 == 1)
+                {
+                    <!-- Two lines of text -->
+                    <div class="space-y-1">
+                        <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded @(r % 2 == 0 ? "w-24" : "w-20")"></div>
+                        <div class="h-2 bg-slate-100 dark:bg-slate-800/60 rounded @(r % 2 == 0 ? "w-16" : "w-12")"></div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Single line of text / badge -->
+                    <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded @(r % 3 == 0 ? "w-16" : "w-20")"></div>
+                }
+            </td>
+        }
+    </tr>
+}
+
+@code {
+    [Parameter] public int Columns { get; set; } = 7;
+    [Parameter] public int Rows { get; set; } = 6;
+}

@@ -136,3 +136,63 @@ public class UpdateUserResponse
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 #endregion
+
+#region Update My Profile
+public class UpdateMyProfileRequest
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Mobile { get; set; }
+    public string? ProfilePictureUrl { get; set; }
+}
+
+public class UpdateMyProfileRequestValidator : AbstractValidator<UpdateMyProfileRequest>
+{
+    public UpdateMyProfileRequestValidator()
+    {
+        ClassLevelCascadeMode = CascadeMode.Stop;
+        RuleLevelCascadeMode = CascadeMode.Stop;
+
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required.")
+            .MaximumLength(100).WithMessage("First name cannot exceed 100 characters.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required.")
+            .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters.");
+
+        RuleFor(x => x.Mobile)
+            .MaximumLength(20).WithMessage("Mobile number cannot exceed 20 characters.");
+    }
+}
+#endregion
+
+#region Change Password
+public class ChangePasswordRequest
+{
+    public string CurrentPassword { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
+}
+
+public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
+{
+    public ChangePasswordRequestValidator()
+    {
+        ClassLevelCascadeMode = CascadeMode.Stop;
+        RuleLevelCascadeMode = CascadeMode.Stop;
+
+        RuleFor(x => x.CurrentPassword)
+            .NotEmpty().WithMessage("Current password is required.");
+
+        RuleFor(x => x.NewPassword)
+            .NotEmpty().WithMessage("New password is required.")
+            .MinimumLength(6).WithMessage("New password must be at least 6 characters.");
+
+        RuleFor(x => x.ConfirmPassword)
+            .NotEmpty().WithMessage("Confirm password is required.")
+            .Equal(x => x.NewPassword).WithMessage("New password and confirmation do not match.");
+    }
+}
+#endregion
+

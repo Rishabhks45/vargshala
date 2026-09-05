@@ -21,6 +21,8 @@ public class AuthRepository : IAuthRepository
     {
         return await _db.Users
             .Include(u => u.Organization)
+            .Include(u => u.UserBranchAccesses.Where(uba => uba.IsActive))
+                .ThenInclude(uba => uba.Branch)
             .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted, cancellationToken);
     }
 
@@ -64,6 +66,16 @@ public class AuthRepository : IAuthRepository
     public async Task AddUserAsync(User user, CancellationToken cancellationToken = default)
     {
         await _db.Users.AddAsync(user, cancellationToken);
+    }
+
+    public async Task AddBranchAsync(Branch branch, CancellationToken cancellationToken = default)
+    {
+        await _db.Branches.AddAsync(branch, cancellationToken);
+    }
+
+    public async Task AddUserBranchAccessAsync(UserBranchAccess access, CancellationToken cancellationToken = default)
+    {
+        await _db.UserBranchAccesses.AddAsync(access, cancellationToken);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

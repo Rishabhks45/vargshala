@@ -22,6 +22,10 @@ public static class ApplicationServiceRegistration
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
+        // Helpers & Code Generators
+        services.AddScoped<Vargshala.Application.Features.OrgAdmin.Students.Helpers.IStudentCodeGenerator, Vargshala.Application.Features.OrgAdmin.Students.Helpers.StudentCodeGenerator>();
+        services.AddScoped<Vargshala.Application.Features.OrgAdmin.Teachers.Helpers.IEmployeeCodeGenerator, Vargshala.Application.Features.OrgAdmin.Teachers.Helpers.EmployeeCodeGenerator>();
+
         return services;
     }
 }

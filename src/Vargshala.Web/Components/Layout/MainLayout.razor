@@ -2,6 +2,7 @@
 @inherits LayoutComponentBase
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
+@inject IUserService UserService
 
 <div class="flex h-screen max-h-screen w-screen overflow-hidden bg-[#004D40] font-sans text-slate-800 antialiased select-none">
     
@@ -53,12 +54,18 @@
                         <Authorized>
                             @{
                                 var orgName = context.User.FindFirst("OrganizationName")?.Value;
+                                var branchName = context.User.FindFirst("BranchName")?.Value;
                                 var role = RoleNavigationHelper.GetRoleDisplayName(context.User);
                             }
                             <p class="text-[11px] text-teal-200/90 font-medium truncate flex items-center gap-1.5">
                                 @if (!string.IsNullOrWhiteSpace(orgName))
                                 {
                                     <span class="font-bold text-white">@orgName</span>
+                                    <span class="text-teal-400/80">•</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(branchName))
+                                {
+                                    <span class="text-teal-200 font-medium">@branchName</span>
                                     <span class="text-teal-400/80">•</span>
                                 }
                                 <span class="text-amber-300 font-semibold text-[10px]">@role</span>
@@ -103,10 +110,23 @@
                     <Authorized>
                         @{
                             var user = context.User;
-                            var name = user.Identity?.Name ?? "User";
-                            var role = RoleNavigationHelper.GetRoleDisplayName(user);
-                            var email = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-                            var orgName = user.FindFirst("OrganizationName")?.Value;
+                            var profile = UserService.CurrentProfile;
+                            var name = profile != null && !string.IsNullOrWhiteSpace(profile.FirstName)
+                                ? $"{profile.FirstName} {profile.LastName}".Trim()
+                                : user.Identity?.Name ?? "User";
+                            var role = profile != null
+                                ? profile.Role.GetDisplayName()
+                                : RoleNavigationHelper.GetRoleDisplayName(user);
+                            var email = profile?.Email ?? user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                            var orgName = profile?.OrganizationName ?? user.FindFirst("OrganizationName")?.Value;
+                            var roleStr = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                                       ?? user.FindFirst("role")?.Value 
+                                       ?? user.FindFirst("Role")?.Value;
+                            var isOrgAdmin = (profile != null && profile.Role == UserRole.OrganizationAdmin)
+                                          || user.IsInRole("OrganizationAdmin") || user.IsInRole("1") 
+                                          || string.Equals(roleStr, "OrganizationAdmin", StringComparison.OrdinalIgnoreCase) 
+                                          || roleStr == "1";
+                            var avatarUrl = profile?.ProfilePictureUrl;
                             var nameParts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                             var initials = nameParts.Length > 0 
                                 ? string.Concat(nameParts.Take(2).Select(w => char.ToUpperInvariant(w[0]))) 
@@ -114,57 +134,101 @@
                         }
                         <div class="relative">
                             <button type="button" @onclick="ToggleUserMenu"
-                                    class="flex items-center gap-2 pl-2 py-1 rounded-2xl hover:bg-white/10 cursor-pointer transition-all select-none border border-teal-600/40 bg-[#00382E]/60">
-                                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#009488] to-[#00796b] text-white border border-teal-300/40 overflow-hidden shrink-0 flex items-center justify-center font-bold text-xs shadow-sm">
-                                    @initials
+                                    class="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1.5 rounded-xl hover:bg-white/10 active:scale-95 cursor-pointer transition-all select-none border border-transparent hover:border-white/15">
+                                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#009488] to-[#00796b] text-white overflow-hidden shrink-0 flex items-center justify-center font-bold text-xs shadow-sm ring-1 ring-white/20">
+                                    @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                    {
+                                        <img src="@avatarUrl" alt="Avatar" class="w-full h-full object-cover" />
+                                    }
+                                    else
+                                    {
+                                        @initials
+                                    }
                                 </div>
-                                <div class="hidden md:block text-left pr-1">
+                                <div class="hidden md:block text-left">
                                     <p class="text-xs font-bold text-white leading-tight">@name</p>
-                                    <p class="text-[10px] text-teal-200">@role</p>
+                                    <p class="text-[10px] text-teal-200 font-medium">@role</p>
                                 </div>
-                                <svg class="w-3.5 h-3.5 text-teal-300/70 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                <svg class="w-3.5 h-3.5 text-teal-200 hidden md:block transition-transform duration-200 @(_userMenuOpen ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
 
                             @if (_userMenuOpen)
                             {
                                 <div class="fixed inset-0 z-40" @onclick="() => _userMenuOpen = false"></div>
-                                <div class="absolute right-0 top-full mt-2 w-60 rounded-2xl bg-[#00382E] border border-teal-600/60 shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-left">
-                                    <div class="px-3 py-2 border-b border-teal-800/80 mb-1.5">
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <div class="w-7 h-7 rounded-lg bg-teal-500/20 text-[#2DD4BF] flex items-center justify-center font-bold text-xs">
-                                                @initials
+                                <div class="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-[#00382E] border border-teal-600/50 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 text-left backdrop-blur-md">
+                                    <!-- User Header Info -->
+                                    <div class="p-2.5 rounded-xl bg-[#004D40]/50 border border-teal-700/50 mb-1.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#009488] to-[#00796b] text-white overflow-hidden flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0 ring-1 ring-white/20">
+                                                @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                                {
+                                                    <img src="@avatarUrl" alt="Avatar" class="w-full h-full object-cover" />
+                                                }
+                                                else
+                                                {
+                                                    @initials
+                                                }
                                             </div>
-                                            <div class="min-w-0">
-                                                <p class="text-xs font-bold text-white truncate">@name</p>
-                                                <span class="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-[#004D40] text-amber-300 border border-teal-600/40">
-                                                    @role
-                                                </span>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs font-black text-white truncate" title="@name">@name</p>
+                                                <div class="flex items-center gap-1.5 mt-0.5">
+                                                    <span class="inline-block px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-[#002820] text-teal-300 border border-teal-500/30">
+                                                        @role
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
+
                                         @if (!string.IsNullOrWhiteSpace(email))
                                         {
-                                            <p class="text-[10px] text-teal-300/80 truncate font-mono">@email</p>
+                                            <p class="text-[10px] text-teal-200/80 truncate font-mono mt-2 pt-2 border-t border-teal-700/40" title="@email">
+                                                @email
+                                            </p>
                                         }
-                                        @if (!string.IsNullOrWhiteSpace(orgName))
+
+                                        @if (isOrgAdmin && !string.IsNullOrWhiteSpace(orgName))
                                         {
-                                            <p class="text-[10px] text-teal-200 truncate mt-1 flex items-center gap-1 font-semibold">
-                                                <span>🏛️</span>
+                                            <p class="text-[10px] text-teal-100 truncate mt-1 flex items-center gap-1.5 font-semibold" title="@orgName">
+                                                <span class="text-teal-300">🏛️</span>
                                                 <span class="truncate">@orgName</span>
                                             </p>
                                         }
                                     </div>
 
-                                    <a href="settings" @onclick="() => _userMenuOpen = false"
-                                       class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-teal-100 hover:bg-teal-700/40 flex items-center gap-2 transition-colors">
-                                        <svg class="w-4 h-4 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
-                                        <span>Institute Settings</span>
-                                    </a>
+                                    <!-- Navigation Links -->
+                                    <div class="space-y-0.5">
+                                        <!-- My Profile Link -->
+                                        <a href="profile" @onclick="() => _userMenuOpen = false"
+                                           class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-teal-100 hover:bg-teal-700/40 hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>My Profile</span>
+                                        </a>
 
+                                        <!-- Institute Settings Link (ONLY FOR ORG ADMIN) -->
+                                        @if (isOrgAdmin)
+                                        {
+                                            <a href="settings" @onclick="() => _userMenuOpen = false"
+                                               class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-teal-100 hover:bg-teal-700/40 hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer">
+                                                <svg class="w-4 h-4 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                                </svg>
+                                                <span>Institute Settings</span>
+                                            </a>
+                                        }
+                                    </div>
+
+                                    <div class="my-1 border-t border-teal-800/80"></div>
+
+                                    <!-- Sign Out Button -->
                                     <button type="button" @onclick="HandleSignOut"
-                                            class="w-full mt-1 px-3 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-950/60 hover:text-rose-200 flex items-center gap-2 cursor-pointer transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                            class="w-full px-3 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-950/60 hover:text-rose-200 flex items-center gap-2.5 cursor-pointer transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                        </svg>
                                         <span>Sign Out</span>
                                     </button>
                                 </div>
@@ -181,8 +245,8 @@
             </div>
         </header>
 
-        <!-- Only Scrollable Area: Page Body Canvas (20px Curved Top-Left Radius) -->
-        <main class="flex-1 bg-[#F4F9F8] dark:bg-[#0c1417] text-slate-800 dark:text-slate-100 rounded-tl-[20px] p-6 overflow-y-auto min-h-0 shadow-inner select-text transition-colors duration-200">
+        <!-- Page Body Canvas (20px Curved Top-Left Radius, Fits Screen Height) -->
+        <main class="flex-1 flex flex-col bg-[#F4F9F8] dark:bg-[#0c1417] text-slate-800 dark:text-slate-100 rounded-tl-[20px] p-6 overflow-hidden min-h-0 shadow-inner select-text transition-colors duration-200 scrollbar-hidden">
             @Body
         </main>
     </div>
@@ -192,9 +256,26 @@
     private bool _sidebarCollapsed = false;
     private bool _userMenuOpen = false;
 
-    protected override void OnInitialized()
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        UserService.OnProfileUpdated += HandleProfileUpdated;
+
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            if (authState.User.Identity?.IsAuthenticated == true && UserService.CurrentProfile == null)
+            {
+                await UserService.GetMyProfileAsync();
+            }
+        }
+    }
+
+    private void HandleProfileUpdated(UserDto updatedProfile)
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -234,6 +315,7 @@
 
             "students" => "Students Directory",
             "teachers" => "Teachers & Faculty",
+            "branches" => "Branch Management",
             "batches" => "Classes & Batches",
             "attendance" => "Attendance Register",
             "exams" => "Exams & Quizzes",
@@ -264,5 +346,6 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
+        UserService.OnProfileUpdated -= HandleProfileUpdated;
     }
 }

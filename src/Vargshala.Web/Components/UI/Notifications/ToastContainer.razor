@@ -2,11 +2,11 @@
 @implements IDisposable
 @inject INotificationService NotificationService
 
-<div class="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-4 sm:px-0"
+<div class="fixed @PositionClass z-50 flex flex-col gap-2.5 max-w-[340px] sm:max-w-[360px] w-full pointer-events-none px-3 sm:px-0"
      aria-live="polite">
     @foreach (var item in _notifications)
     {
-        <div class="pointer-events-auto transition-all duration-300 animate-in slide-in-from-top-3 fade-in">
+        <div class="pointer-events-auto transition-all duration-300 animate-in slide-in-from-top-4 fade-in shadow-lg shadow-emerald-950/10 rounded-xl">
             <AlertNotification Type="item.Type"
                                Title="@item.Title"
                                Message="@item.Message"
@@ -18,6 +18,8 @@
 </div>
 
 @code {
+    [Parameter] public string PositionClass { get; set; } = "top-20 right-5 sm:right-6";
+
     private readonly List<NotificationItem> _notifications = new();
 
     protected override void OnInitialized()

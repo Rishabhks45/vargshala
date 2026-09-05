@@ -53,7 +53,7 @@ public class TableSortState
     {
         if (Column == column && Direction != SortDirection.None)
             return "text-[#009488] font-bold text-[11px]";
-        return "text-slate-300 group-hover:text-slate-400 text-[10px]";
+        return "text-slate-300 group-hover:text-slate-400 text-[11px] font-bold";
     }
 
     public void Reset()

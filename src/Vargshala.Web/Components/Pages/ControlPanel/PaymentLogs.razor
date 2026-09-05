@@ -283,18 +283,18 @@
         </div>
 
         <!-- Table Footer / Pagination (Exact Students.razor Footer) -->
-        <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <div>
+        <div class="px-4 py-1.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 select-none">
+            <div class="text-[11px] leading-tight">
                 Showing <span class="font-bold text-slate-800 dark:text-white">1-@FilteredPayments.Count</span> of <span class="font-bold text-slate-800 dark:text-white">@_payments.Count</span> transactions
             </div>
-            <div class="flex items-center gap-1.5">
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-400 dark:text-slate-500 disabled:opacity-40" disabled>
+            <div class="flex items-center gap-1">
+                <button type="button" class="px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-400 dark:text-slate-500 text-[11px] font-semibold disabled:opacity-40 leading-none" disabled>
                     Previous
                 </button>
-                <button type="button" class="w-8 h-8 rounded-lg bg-[#009488] text-white font-bold flex items-center justify-center">
+                <button type="button" class="px-2.5 py-1 rounded-md bg-[#009488] text-white font-bold text-[11px] flex items-center justify-center shadow-xs leading-none">
                     1
                 </button>
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1f3037]">
+                <button type="button" class="px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-50 dark:hover:bg-[#1f3037] leading-none">
                     Next
                 </button>
             </div>

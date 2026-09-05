@@ -1,13 +1,14 @@
+using Cropper.Blazor.Extensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
+using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Students;
 using Vargshala.Web.Auth;
+using Vargshala.Web.Common;
 using Vargshala.Web.Components;
 using Vargshala.Web.Services;
-
-
 
 namespace Vargshala.Web;
 
@@ -20,7 +21,11 @@ public static class StartupExtensions
     {
         #region Razor Components & MVC
         builder.Services.AddRazorComponents()
-            .AddInteractiveServerComponents();
+            .AddInteractiveServerComponents()
+            .AddHubOptions(options =>
+            {
+                options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB for image data transfers
+            });
 
         builder.Services.AddControllers();
         builder.Services.AddHttpContextAccessor();
@@ -72,7 +77,13 @@ public static class StartupExtensions
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IInstituteService, InstituteService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IStudentService, StudentService>();
+        builder.Services.AddScoped<ITeacherService, TeacherService>();
+        builder.Services.AddScoped<IBranchService, BranchService>();
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+        builder.Services.AddScoped<ICouponService, CouponService>();
+        builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+        builder.Services.AddCropper();
         #endregion
     }
     #endregion
@@ -98,8 +109,24 @@ public static class StartupExtensions
         #endregion
 
         #region Endpoints & Razor Components
+        app.UseStaticFiles();
         app.MapStaticAssets();
         app.MapControllers();
+
+        // Stream uploaded media from API to Web UI
+        app.MapGet("/uploads/{folder}/{fileName}", async (string folder, string fileName, IHttpClientFactory httpClientFactory) =>
+        {
+            var client = httpClientFactory.CreateClient("VargshalaApi.Anonymous");
+            var response = await client.GetAsync($"uploads/{folder}/{fileName}");
+            if (!response.IsSuccessStatusCode)
+            {
+                return Results.NotFound();
+            }
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+            var stream = await response.Content.ReadAsStreamAsync();
+            return Results.Stream(stream, contentType);
+        });
+
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
         #endregion

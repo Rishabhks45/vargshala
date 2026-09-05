@@ -102,4 +102,34 @@ public class InstituteService : IInstituteService
             return ApiResponse<OrganizationDto>.FailureResponse(ex.Message);
         }
     }
+
+    public async Task<ApiResponse<OrganizationDto>> GetMyOrganizationAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/v1/organizations/me", cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse<OrganizationDto>>(cancellationToken: cancellationToken);
+                if (result != null && result.Success)
+                {
+                    return result;
+                }
+            }
+
+            var errResponse = await response.Content.ReadFromJsonAsync<ApiResponse<OrganizationDto>>(cancellationToken: cancellationToken);
+            return errResponse ?? ApiResponse<OrganizationDto>.FailureResponse($"Failed to fetch organization (status code {(int)response.StatusCode}).");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Could not reach API server for GetMyOrganization.");
+            return ApiResponse<OrganizationDto>.FailureResponse("Unable to reach backend API server.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in GetMyOrganizationAsync");
+            return ApiResponse<OrganizationDto>.FailureResponse(ex.Message);
+        }
+    }
 }

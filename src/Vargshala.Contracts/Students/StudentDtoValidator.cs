@@ -9,31 +9,47 @@ public class StudentDtoValidator : AbstractValidator<StudentDto>
         RuleLevelCascadeMode = CascadeMode.Stop;
         ClassLevelCascadeMode = CascadeMode.Stop;
 
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Full Name is required.")
-            .MaximumLength(100).WithMessage("Full Name cannot exceed 100 characters.");
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required.")
+            .MaximumLength(100).WithMessage("First name cannot exceed 100 characters.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required.")
+            .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters.");
+
+        RuleFor(x => x.Email)
+            .EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email))
+            .WithMessage("Enter a valid email address.")
+            .MaximumLength(150).WithMessage("Email cannot exceed 150 characters.");
+
+        RuleFor(x => x.Mobile)
+            .MaximumLength(20).WithMessage("Mobile cannot exceed 20 characters.");
+
+        RuleFor(x => x.StudentCode)
+            .MaximumLength(50).WithMessage("Student code cannot exceed 50 characters.");
 
         RuleFor(x => x.RollNumber)
-            .NotEmpty().WithMessage("Roll Number is required.")
-            .MaximumLength(30).WithMessage("Roll Number cannot exceed 30 characters.");
+            .MaximumLength(50).WithMessage("Roll number cannot exceed 50 characters.");
 
-        RuleFor(x => x.BatchName)
-            .NotEmpty().WithMessage("Batch assignment is required.");
+        RuleFor(x => x.ClassName)
+            .MaximumLength(100).WithMessage("Class name cannot exceed 100 characters.");
 
-        RuleFor(x => x.Phone)
-            .NotEmpty().WithMessage("Phone number is required.")
-            .Matches(@"^[+]?[\d\s-]{10,15}$").WithMessage("Enter a valid phone number (minimum 10 digits).");
+        RuleFor(x => x.Section)
+            .MaximumLength(50).WithMessage("Section cannot exceed 50 characters.");
 
-        RuleFor(x => x.ParentName)
-            .NotEmpty().WithMessage("Parent / Guardian name is required.")
-            .MaximumLength(100).WithMessage("Parent name cannot exceed 100 characters.");
+        RuleFor(x => x.FatherName)
+            .MaximumLength(150).WithMessage("Father name cannot exceed 150 characters.");
 
-        RuleFor(x => x.TotalFee)
-            .GreaterThanOrEqualTo(0).WithMessage("Total course fee cannot be negative.");
+        RuleFor(x => x.MotherName)
+            .MaximumLength(150).WithMessage("Mother name cannot exceed 150 characters.");
 
-        RuleFor(x => x.PaidFee)
-            .GreaterThanOrEqualTo(0).WithMessage("Paid amount cannot be negative.")
-            .Must((student, paid) => paid <= student.TotalFee)
-            .WithMessage("Paid amount cannot exceed total course fee.");
+        RuleFor(x => x.FatherMobile)
+            .MaximumLength(20).WithMessage("Father mobile cannot exceed 20 characters.");
+
+        RuleFor(x => x.EmergencyContactMobile)
+            .MaximumLength(20).WithMessage("Emergency contact mobile cannot exceed 20 characters.");
+
+        RuleFor(x => x.AadharNumber)
+            .MaximumLength(20).WithMessage("Aadhar number cannot exceed 20 characters.");
     }
 }

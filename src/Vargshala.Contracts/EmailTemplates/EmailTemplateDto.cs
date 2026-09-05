@@ -1,4 +1,5 @@
 using FluentValidation;
+using Vargshala.Contracts.Common;
 
 namespace Vargshala.Contracts.EmailTemplates;
 
@@ -6,8 +7,16 @@ public class EmailTemplateDto
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Code { get; set; } = string.Empty;
+    public EmailTemplateName? TemplateType { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Category { get; set; } = "Onboarding";
+    public UserRole? TargetRole { get; set; }
+    public string? TargetRoleName
+    {
+        get => _targetRoleName ?? TargetRole?.GetDisplayName();
+        set => _targetRoleName = value;
+    }
+    private string? _targetRoleName;
     public string Subject { get; set; } = string.Empty;
     public string BodyHtml { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -20,8 +29,10 @@ public class EmailTemplateDto
 public class CreateEmailTemplateRequest
 {
     public string Code { get; set; } = string.Empty;
+    public EmailTemplateName? TemplateType { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Category { get; set; } = "Onboarding";
+    public UserRole? TargetRole { get; set; }
     public string Subject { get; set; } = string.Empty;
     public string BodyHtml { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -61,7 +72,9 @@ public class UpdateEmailTemplateRequest
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public EmailTemplateName? TemplateType { get; set; }
     public string Category { get; set; } = "Onboarding";
+    public UserRole? TargetRole { get; set; }
     public string Subject { get; set; } = string.Empty;
     public string BodyHtml { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -98,3 +111,32 @@ public class SendTestEmailRequest
     public string RecipientEmail { get; set; } = string.Empty;
     public Dictionary<string, string> SampleValues { get; set; } = new();
 }
+
+public class SendCustomEmailRequest
+{
+    public string To { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string HtmlBody { get; set; } = string.Empty;
+    public string? From { get; set; }
+}
+
+public class SendCustomEmailRequestValidator : AbstractValidator<SendCustomEmailRequest>
+{
+    public SendCustomEmailRequestValidator()
+    {
+        ClassLevelCascadeMode = CascadeMode.Stop;
+        RuleLevelCascadeMode = CascadeMode.Stop;
+
+        RuleFor(x => x.To)
+            .NotEmpty().WithMessage("Recipient email address is required.")
+            .EmailAddress().WithMessage("A valid email address is required.");
+
+        RuleFor(x => x.Subject)
+            .NotEmpty().WithMessage("Email subject is required.")
+            .MaximumLength(200).WithMessage("Subject cannot exceed 200 characters.");
+
+        RuleFor(x => x.HtmlBody)
+            .NotEmpty().WithMessage("Email content is required.");
+    }
+}
+

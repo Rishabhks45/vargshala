@@ -3,11 +3,22 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vargshala.Application.Abstractions.Authentication;
 using Vargshala.Application.Abstractions.CurrentUser;
+using Vargshala.Application.Abstractions.Email;
 using Vargshala.Application.Abstractions.Persistence;
 using Vargshala.Application.Settings;
 using Vargshala.Infrastructure.Authentication;
 using Vargshala.Infrastructure.Persistence;
 using Vargshala.Infrastructure.Services;
+using Vargshala.Infrastructure.Settings;
+using Vargshala.Application.Features.Organizations.Infrastructure;
+using Vargshala.Application.Features.Users.Infrastructure;
+using Vargshala.Application.Features.OrgAdmin.Students.Infrastructure;
+using Vargshala.Application.Features.OrgAdmin.Teachers.Infrastructure;
+using Vargshala.Application.Features.OrgAdmin.Branches.Infrastructure;
+using Vargshala.Application.Features.Authentication.Infrastructure;
+using Vargshala.Application.Features.Coupons.Infrastructure;
+using Vargshala.Application.Features.Emails.Infrastructure;
+using Vargshala.Infrastructure.Persistence.Repositories;
 
 namespace Vargshala.Infrastructure.DependencyInjection;
 
@@ -39,12 +50,25 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ICurrentUser, CurrentUser>();
 
         // Repositories
-        services.AddScoped<Vargshala.Application.Features.Organizations.Infrastructure.IOrganizationRepository, Vargshala.Infrastructure.Persistence.Repositories.OrganizationRepository>();
-        services.AddScoped<Vargshala.Application.Features.Users.Infrastructure.IUserRepository, Vargshala.Infrastructure.Persistence.Repositories.UserRepository>();
-        services.AddScoped<Vargshala.Application.Features.Authentication.Infrastructure.IAuthRepository, Vargshala.Infrastructure.Persistence.Repositories.AuthRepository>();
+        services.AddScoped<IOrganizationRepository,OrganizationRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IStudentRepository,StudentRepository>();
+        services.AddScoped<ITeacherRepository, TeacherRepository>();
+        services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<IAuthRepository, AuthRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
 
         // HttpContextAccessor (needed by CurrentUser)
         services.AddHttpContextAccessor();
+
+        // Resend Email Settings & HTTP Client
+        services.Configure<ResendOptions>(configuration.GetSection(ResendOptions.SectionName));
+        services.AddHttpClient<IEmailService, ResendEmailService>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
 
         return services;
     }

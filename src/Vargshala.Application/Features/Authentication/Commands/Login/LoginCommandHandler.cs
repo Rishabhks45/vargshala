@@ -64,6 +64,11 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
 
         await _authRepository.SaveChangesAsync(cancellationToken);
 
+        // Resolve active primary / main branch for user session
+        var activeAccess = user.UserBranchAccesses
+            .FirstOrDefault(a => a.Branch != null && a.Branch.IsMainBranch && !a.Branch.IsDeleted)
+            ?? user.UserBranchAccesses.FirstOrDefault(a => a.Branch != null && !a.Branch.IsDeleted);
+
         var response = new LoginResponse
         {
             AccessToken = accessToken,
@@ -77,7 +82,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
                 Email = user.Email,
                 Role = user.Role,
                 OrganizationId = user.OrganizationId,
-                OrganizationName = user.Organization?.Name
+                OrganizationName = user.Organization?.Name,
+                CurrentBranchId = activeAccess?.BranchId,
+                CurrentBranchName = activeAccess?.Branch?.Name
             }
         };
 

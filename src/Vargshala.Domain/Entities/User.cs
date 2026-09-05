@@ -34,4 +34,5 @@ public class User : BaseEntity
 
     // Navigation
     public Organization? Organization { get; set; }
+    public ICollection<UserBranchAccess> UserBranchAccesses { get; set; } = new List<UserBranchAccess>();
 }

@@ -9,6 +9,15 @@ public class UserService : IUserService
     private readonly HttpClient _httpClient;
     private readonly ILogger<UserService> _logger;
 
+    public event Action<UserDto>? OnProfileUpdated;
+    public UserDto? CurrentProfile { get; private set; }
+
+    public void NotifyProfileUpdated(UserDto profile)
+    {
+        CurrentProfile = profile;
+        OnProfileUpdated?.Invoke(profile);
+    }
+
     public UserService(
         IHttpClientFactory httpClientFactory,
         ILogger<UserService> logger)
@@ -156,4 +165,106 @@ public class UserService : IUserService
             return ApiResponse<bool>.FailureResponse($"Error updating status: {ex.Message}");
         }
     }
+
+    public async Task<ApiResponse<UserDto>> GetMyProfileAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/v1/users/me", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Failed to fetch user profile. Status: {StatusCode}, Error: {Error}", response.StatusCode, errorContent);
+                return ApiResponse<UserDto>.FailureResponse($"API returned {response.StatusCode}");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken: cancellationToken);
+            if (result?.Success == true && result.Data != null)
+            {
+                CurrentProfile = result.Data;
+            }
+            return result ?? ApiResponse<UserDto>.FailureResponse("Received null response from server.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching user profile");
+            return ApiResponse<UserDto>.FailureResponse($"Error fetching profile: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<UserDto>> UpdateMyProfileAsync(
+        UpdateMyProfileRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync("api/v1/users/me", request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var errObj = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<UserDto>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (errObj != null && !string.IsNullOrWhiteSpace(errObj.Message))
+                    {
+                        return errObj;
+                    }
+                }
+                catch { }
+
+                return ApiResponse<UserDto>.FailureResponse($"Failed to update profile (Status: {response.StatusCode})");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken: cancellationToken);
+            if (result?.Success == true && result.Data != null)
+            {
+                CurrentProfile = result.Data;
+                OnProfileUpdated?.Invoke(result.Data);
+            }
+            return result ?? ApiResponse<UserDto>.FailureResponse("Profile update failed.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating user profile");
+            return ApiResponse<UserDto>.FailureResponse($"Error updating profile: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<bool>> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/users/me/change-password", request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var errObj = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<bool>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (errObj != null && !string.IsNullOrWhiteSpace(errObj.Message))
+                    {
+                        return errObj;
+                    }
+                }
+                catch { }
+
+                return ApiResponse<bool>.FailureResponse($"Failed to change password (Status: {response.StatusCode})");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<bool>.FailureResponse("Password change failed.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing user password");
+            return ApiResponse<bool>.FailureResponse($"Error changing password: {ex.Message}");
+        }
+    }
 }
+

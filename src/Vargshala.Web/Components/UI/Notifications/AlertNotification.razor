@@ -3,64 +3,79 @@
 
 @if (IsVisible && (!string.IsNullOrWhiteSpace(Message) || ChildContent != null))
 {
-    <div class="@ContainerClasses @(IsFloating ? "fixed top-5 right-5 z-50 max-w-md shadow-2xl animate-in slide-in-from-top-4 duration-300" : "w-full shadow-xs animate-in fade-in duration-200")"
+    <div class="@ContainerClasses @(IsFloating ? "fixed top-20 right-5 sm:right-6 z-50 max-w-[360px] shadow-xl animate-in slide-in-from-top-4 duration-300" : "w-full shadow-md shadow-emerald-950/5 animate-in fade-in duration-200")"
          role="alert">
         
-        <!-- Ambient Left Accent Border -->
-        <div class="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl @AccentBarColor"></div>
+        <!-- Left Solid Accent Bar -->
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 @AccentBarColor rounded-l-xl"></div>
 
-        <div class="flex items-start gap-3 pl-2">
-            <!-- Icon Badge -->
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs @IconBadgeClasses">
-                @switch (ResolvedType)
-                {
-                    case AlertType.Success:
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        break;
+        <!-- Ambient Right Wave Graphic & Floating Dots -->
+        <div class="absolute right-0 top-0 bottom-0 w-44 pointer-events-none overflow-hidden z-0">
+            <svg class="absolute right-0 top-0 h-full w-full" viewBox="0 0 200 70" fill="none" preserveAspectRatio="none">
+                <path d="M50,70 C80,45 110,55 140,25 C160,10 180,20 200,15 L200,70 Z" fill="@WaveColor1" fill-opacity="0.25" />
+                <path d="M90,70 C120,50 150,52 175,30 C185,18 195,24 200,20 L200,70 Z" fill="@WaveColor2" fill-opacity="0.35" />
+            </svg>
+            <div class="absolute top-2.5 right-12 w-2 h-2 rounded-full @DotColor1 opacity-60"></div>
+            <div class="absolute top-5 right-24 w-1 h-1 rounded-full @DotColor2 opacity-40"></div>
+        </div>
 
-                    case AlertType.Error:
-                    case AlertType.Failed:
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        break;
+        <div class="flex items-center gap-2.5 pl-1.5 w-full z-10">
+            <!-- Concentric Circle Icon Badge (Outer Soft Ring + Inner Vibrant Core) -->
+            <div class="w-9 h-9 rounded-full @OuterCircleColor flex items-center justify-center shrink-0">
+                <div class="w-6 h-6 rounded-full @InnerCircleColor flex items-center justify-center text-white shadow-xs">
+                    @switch (ResolvedType)
+                    {
+                        case AlertType.Success:
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            break;
 
-                    case AlertType.Warning:
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        break;
+                        case AlertType.Error:
+                        case AlertType.Failed:
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            break;
 
-                    case AlertType.Info:
-                    default:
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        break;
-                }
+                        case AlertType.Warning:
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            break;
+
+                        case AlertType.Info:
+                        default:
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            break;
+                    }
+                </div>
             </div>
+
+            <!-- Thin Vertical Divider Line -->
+            <div class="h-7 w-[1px] @DividerColor shrink-0"></div>
 
             <!-- Content Area -->
             <div class="flex-1 min-w-0 pr-1">
                 @if (!string.IsNullOrWhiteSpace(Title))
                 {
-                    <h5 class="font-extrabold text-xs tracking-tight mb-0.5 @TitleTextColor">
+                    <h5 class="font-extrabold text-[13px] tracking-tight @TitleTextColor leading-tight">
                         @Title
                     </h5>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(Message))
                 {
-                    <p class="text-xs font-medium leading-relaxed @MessageTextColor">
+                    <p class="text-[11px] font-medium leading-snug text-slate-700 dark:text-slate-300 mt-0.5">
                         @Message
                     </p>
                 }
 
                 @if (ChildContent != null)
                 {
-                    <div class="mt-1.5 text-xs">
+                    <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
                         @ChildContent
                     </div>
                 }
@@ -71,9 +86,9 @@
             {
                 <button type="button"
                         @onclick="CloseAsync"
-                        class="p-1 rounded-lg transition-colors cursor-pointer shrink-0 -mr-1 -mt-1 @CloseButtonClasses"
+                        class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0 -mt-1.5 -mr-1"
                         aria-label="Dismiss notification">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -138,56 +153,92 @@
 
     private string ContainerClasses => ResolvedType switch
     {
-        AlertType.Success => "p-3.5 rounded-2xl relative border bg-emerald-50/90 dark:bg-emerald-950/80 border-emerald-200/90 dark:border-emerald-800/80 backdrop-blur-xs",
-        AlertType.Error => "p-3.5 rounded-2xl relative border bg-rose-50/90 dark:bg-rose-950/80 border-rose-200/90 dark:border-rose-800/80 backdrop-blur-xs",
-        AlertType.Warning => "p-3.5 rounded-2xl relative border bg-amber-50/90 dark:bg-amber-950/80 border-amber-200/90 dark:border-amber-800/80 backdrop-blur-xs",
-        AlertType.Info => "p-3.5 rounded-2xl relative border bg-teal-50/90 dark:bg-[#102322] border-teal-200/90 dark:border-teal-800/80 backdrop-blur-xs",
-        _ => "p-3.5 rounded-2xl relative border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+        AlertType.Success => "relative overflow-hidden rounded-xl bg-gradient-to-r from-[#f0fdf9] via-[#f4fbf8] to-[#e6f7f2] dark:from-[#0d1f1c] dark:via-[#112521] dark:to-[#0f211e] border border-[#a7f3d0] dark:border-emerald-800/60 px-3.5 py-2.5 select-none",
+        AlertType.Error => "relative overflow-hidden rounded-xl bg-gradient-to-r from-[#fff1f2] via-[#fff5f6] to-[#fee2e2] dark:from-[#210d10] dark:via-[#261013] dark:to-[#220e10] border border-[#fecdd3] dark:border-rose-800/60 px-3.5 py-2.5 select-none",
+        AlertType.Warning => "relative overflow-hidden rounded-xl bg-gradient-to-r from-[#fffbeb] via-[#fefce8] to-[#fef3c7] dark:from-[#211909] dark:via-[#261e0c] dark:to-[#221b0b] border border-[#fde68a] dark:border-amber-800/60 px-3.5 py-2.5 select-none",
+        AlertType.Info => "relative overflow-hidden rounded-xl bg-gradient-to-r from-[#f0fdfa] via-[#f4fcf9] to-[#ccfbf1] dark:from-[#0b1f1e] dark:via-[#0e2523] dark:to-[#0c2120] border border-[#99f6e4] dark:border-teal-800/60 px-3.5 py-2.5 select-none",
+        _ => "relative overflow-hidden rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 select-none"
     };
 
     private string AccentBarColor => ResolvedType switch
     {
-        AlertType.Success => "bg-emerald-500",
-        AlertType.Error => "bg-rose-500",
-        AlertType.Warning => "bg-amber-500",
+        AlertType.Success => "bg-[#10b981]",
+        AlertType.Error => "bg-[#f43f5e]",
+        AlertType.Warning => "bg-[#f59e0b]",
         AlertType.Info => "bg-[#009488]",
         _ => "bg-slate-500"
     };
 
-    private string IconBadgeClasses => ResolvedType switch
+    private string OuterCircleColor => ResolvedType switch
     {
-        AlertType.Success => "bg-gradient-to-br from-emerald-500 to-teal-600 text-white",
-        AlertType.Error => "bg-gradient-to-br from-rose-500 to-red-600 text-white",
-        AlertType.Warning => "bg-gradient-to-br from-amber-400 to-amber-600 text-white",
-        AlertType.Info => "bg-gradient-to-br from-[#009488] to-[#004D40] text-white",
-        _ => "bg-slate-600 text-white"
+        AlertType.Success => "bg-[#10b981]/15 dark:bg-emerald-950/70",
+        AlertType.Error => "bg-[#f43f5e]/15 dark:bg-rose-950/70",
+        AlertType.Warning => "bg-[#f59e0b]/15 dark:bg-amber-950/70",
+        AlertType.Info => "bg-[#009488]/15 dark:bg-teal-950/70",
+        _ => "bg-slate-200 dark:bg-slate-800"
+    };
+
+    private string InnerCircleColor => ResolvedType switch
+    {
+        AlertType.Success => "bg-[#10b981]",
+        AlertType.Error => "bg-[#f43f5e]",
+        AlertType.Warning => "bg-[#f59e0b]",
+        AlertType.Info => "bg-[#009488]",
+        _ => "bg-slate-600"
+    };
+
+    private string DividerColor => ResolvedType switch
+    {
+        AlertType.Success => "bg-emerald-200/90 dark:bg-emerald-800/60",
+        AlertType.Error => "bg-rose-200/90 dark:bg-rose-800/60",
+        AlertType.Warning => "bg-amber-200/90 dark:bg-amber-800/60",
+        AlertType.Info => "bg-teal-200/90 dark:bg-teal-800/60",
+        _ => "bg-slate-200 dark:bg-slate-700"
     };
 
     private string TitleTextColor => ResolvedType switch
     {
-        AlertType.Success => "text-emerald-900 dark:text-emerald-200",
-        AlertType.Error => "text-rose-900 dark:text-rose-200",
-        AlertType.Warning => "text-amber-900 dark:text-amber-200",
-        AlertType.Info => "text-teal-900 dark:text-teal-200",
-        _ => "text-slate-900 dark:text-slate-200"
+        AlertType.Success => "text-[#065f46] dark:text-emerald-400",
+        AlertType.Error => "text-[#9f1239] dark:text-rose-400",
+        AlertType.Warning => "text-[#92400e] dark:text-amber-400",
+        AlertType.Info => "text-[#004D40] dark:text-teal-400",
+        _ => "text-slate-900 dark:text-white"
     };
 
-    private string MessageTextColor => ResolvedType switch
+    private string WaveColor1 => ResolvedType switch
     {
-        AlertType.Success => "text-emerald-800/90 dark:text-emerald-300/90",
-        AlertType.Error => "text-rose-800/90 dark:text-rose-300/90",
-        AlertType.Warning => "text-amber-800/90 dark:text-amber-300/90",
-        AlertType.Info => "text-teal-800/90 dark:text-teal-300/90",
-        _ => "text-slate-700 dark:text-slate-300"
+        AlertType.Success => "#6ee7b7",
+        AlertType.Error => "#fda4af",
+        AlertType.Warning => "#fcd34d",
+        AlertType.Info => "#5eead4",
+        _ => "#cbd5e1"
     };
 
-    private string CloseButtonClasses => ResolvedType switch
+    private string WaveColor2 => ResolvedType switch
     {
-        AlertType.Success => "text-emerald-500 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/40",
-        AlertType.Error => "text-rose-500 hover:text-rose-800 dark:hover:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-900/40",
-        AlertType.Warning => "text-amber-500 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40",
-        AlertType.Info => "text-teal-500 hover:text-teal-800 dark:hover:text-teal-200 hover:bg-teal-100 dark:hover:bg-teal-900/40",
-        _ => "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+        AlertType.Success => "#34d399",
+        AlertType.Error => "#fb7185",
+        AlertType.Warning => "#fbbf24",
+        AlertType.Info => "#2dd4bf",
+        _ => "#94a3b8"
+    };
+
+    private string DotColor1 => ResolvedType switch
+    {
+        AlertType.Success => "bg-[#6ee7b7]",
+        AlertType.Error => "bg-[#fda4af]",
+        AlertType.Warning => "bg-[#fcd34d]",
+        AlertType.Info => "bg-[#5eead4]",
+        _ => "bg-slate-300"
+    };
+
+    private string DotColor2 => ResolvedType switch
+    {
+        AlertType.Success => "bg-[#34d399]",
+        AlertType.Error => "bg-[#fb7185]",
+        AlertType.Warning => "bg-[#fbbf24]",
+        AlertType.Info => "bg-[#2dd4bf]",
+        _ => "bg-slate-400"
     };
 
     public void Dispose()

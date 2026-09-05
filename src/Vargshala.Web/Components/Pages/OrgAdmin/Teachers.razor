@@ -1,5 +1,6 @@
 @page "/teachers"
-@attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin")]
+@attribute [Authorize(Roles = "OrganizationAdmin")]
+@using Vargshala.Contracts.Common
 @using Vargshala.Contracts.Teachers
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Badges
@@ -7,27 +8,38 @@
 @using Vargshala.Web.Components.UI.Modals
 @using Vargshala.Web.Components.UI.Inputs
 @using Vargshala.Web.Components.UI.Validation
+@using Vargshala.Web.Components.UI.Pagination
+@using Vargshala.Web.Services
+@inject ITeacherService TeacherService
+@inject INotificationService Toast
 @rendermode InteractiveServer
 
-<PageTitle>Teachers & Staff | Vargshala</PageTitle>
+<PageTitle>Teachers &amp; Staff | Vargshala</PageTitle>
 
-<div class="space-y-6 transition-colors duration-200">
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
     
     <!-- Top Header & Action Controls -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
-                Teachers & Staff
-            </h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Manage teaching staff, subject assignments, batch mappings, and qualifications.
-            </p>
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Teachers &amp; Faculty
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage teaching staff, subject assignments, batch mappings, and qualifications.
+                </p>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
             <button type="button" 
                     @onclick="ExportCsv"
-                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer">
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -36,278 +48,323 @@
 
             <button type="button" 
                     @onclick="OpenAddDrawerAsync"
-                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </span>
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
                 <span>Add Teacher</span>
             </button>
         </div>
     </div>
 
-    <!-- Quick Stats Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Teachers</p>
-                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_teachers.Count</h3>
-            </div>
-        </div>
-
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Active Teachers</p>
-                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">@_teachers.Count(t => t.Status == "Active")</h3>
+    <!-- Quick Stats Cards Summary (Matched with Users.razor) -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Teachers</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        @_teachers.Count(t => t.IsActive) Active • @_teachers.Count(t => !t.IsActive) Inactive
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Subjects Covered</p>
-                <h3 class="text-lg font-extrabold text-blue-600 dark:text-blue-400">@_teachers.Select(t => t.Subject).Distinct().Count()</h3>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Faculty</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">@_teachers.Count(t => t.IsActive)</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Assigned &amp; Teaching</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/80 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
-                <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Departments</p>
+                    <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                        @_teachers.Select(t => t.Department ?? t.Subject).Where(s => !string.IsNullOrEmpty(s)).Distinct().Count()
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Active Academic Streams</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
             </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Batch Links</p>
-                <h3 class="text-lg font-extrabold text-purple-600 dark:text-purple-400">@_teachers.Sum(t => t.BatchCount)</h3>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Loaded Records</p>
+                    <h3 class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">@_teachers.Count</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Current Page View</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls (Matched with Users.razor) -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <!-- Reusable SearchInput Component with Debounce & Clear -->
+        <div class="relative w-full md:w-80">
+            <SearchInput @bind-Value="_searchQuery" 
+                         OnSearch="() => LoadTeachersAsync(1)" 
+                         Placeholder="Search teacher by name, subject, contact..." />
+        </div>
+
+        <!-- Filter Dropdowns with CustomSelect -->
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <div class="w-44">
+                <CustomSelect Value="@_selectedSubject" 
+                              ValueChanged="HandleSubjectChanged" 
+                              Options="_subjectFilterOptions" 
+                              Placeholder="All Subjects" />
+            </div>
+            <div class="w-40">
+                <CustomSelect Value="@_selectedDesignation" 
+                              ValueChanged="HandleDesignationChanged" 
+                              Options="_designationFilterOptions" 
+                              Placeholder="All Designations" />
+            </div>
+            <div class="w-36">
+                <CustomSelect Value="@_selectedStatus" 
+                              ValueChanged="HandleStatusChanged" 
+                              Options="_statusFilterOptions" 
+                              Placeholder="All Status" />
             </div>
         </div>
     </div>
 
-    <!-- Search & Filter Controls -->
-    <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <!-- Search Input -->
-        <div class="relative flex-1 w-full lg:max-w-md">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </span>
-            <input type="text" 
-                   @bind="_searchQuery" 
-                   @bind:event="oninput"
-                   placeholder="Search teacher by name, subject, phone..." 
-                   class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white transition-all placeholder-slate-400 dark:placeholder-slate-500" />
-            @if (!string.IsNullOrEmpty(_searchQuery))
-            {
-                <button type="button" @onclick="() => _searchQuery = string.Empty" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            }
-        </div>
-
-        <!-- Filter Dropdowns -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 lg:flex items-center gap-2.5 w-full lg:w-auto">
-            <CustomSelect @bind-Value="_selectedSubject" Options="_subjectFilterOptions" Placeholder="All Subjects" />
-            <CustomSelect @bind-Value="_selectedDesignation" Options="_designationFilterOptions" Placeholder="All Designations" />
-            <CustomSelect @bind-Value="_selectedStatus" Options="_statusFilterOptions" Placeholder="All Status" />
-        </div>
-    </div>
-
-    <!-- Teachers Data Table -->
-    <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[780px] text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
-                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Name")'>
+    <!-- Teachers Data Table (Fits screen height, internal scrolling with hidden scrollbar) -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        <div class="flex-1 min-h-0 overflow-auto scrollbar-hidden">
+            <table class="w-full min-w-[860px] text-left border-collapse table-fixed">
+                <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                    <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                        <th class="w-[26%] py-2 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Name")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Teacher</span>
                                 <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Subject")'>
+                        <th class="w-[18%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Subject")'>
                             <div class="flex items-center gap-1.5">
-                                <span>Subject</span>
+                                <span>Subject / Dept</span>
                                 <span class="@_sortState.GetIndicatorClass("Subject")">@_sortState.GetIndicator("Subject")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Designation")'>
+                        <th class="w-[16%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Designation")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Designation</span>
                                 <span class="@_sortState.GetIndicatorClass("Designation")">@_sortState.GetIndicator("Designation")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4">Batches</th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Contact")'>
+                        <th class="w-[16%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Mobile")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Contact</span>
-                                <span class="@_sortState.GetIndicatorClass("Contact")">@_sortState.GetIndicator("Contact")</span>
+                                <span class="@_sortState.GetIndicatorClass("Mobile")">@_sortState.GetIndicator("Mobile")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Status")'>
-                            <div class="flex items-center gap-1.5">
+                        <th class="w-[10%] py-2 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Status")'>
+                            <div class="flex items-center justify-center gap-1.5">
                                 <span>Status</span>
                                 <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
                             </div>
                         </th>
-                        <th class="py-3.5 px-6 text-right">Actions</th>
+                        <th class="w-[14%] py-2 px-5 text-right select-none">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                    @if (FilteredTeachers.Any())
+                <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _teachers.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                    @if (_isLoading && !_teachers.Any())
                     {
-                        @foreach (var teacher in FilteredTeachers)
+                        <TableSkeletonRows Columns="6" Rows="8" />
+                    }
+                    else if (_teachers.Any())
+                    {
+                        @foreach (var teacher in _teachers)
                         {
-                            <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/30 transition-colors group">
+                            <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors">
                                 
                                 <!-- Teacher: Initials Avatar + Full Name + Employee ID -->
-                                <td class="py-3.5 px-6">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                <td class="py-1.5 px-5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] font-black text-xs flex items-center justify-center shrink-0 shadow-inner">
                                             @teacher.Initials
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="font-bold text-slate-900 dark:text-white leading-snug truncate cursor-pointer hover:text-[#009488]"
-                                               @onclick="() => OpenViewProfile(teacher)">
+                                            <div class="font-bold text-slate-800 dark:text-white leading-tight truncate cursor-pointer hover:text-[#009488]"
+                                                 @onclick="() => OpenViewProfile(teacher)">
                                                 @teacher.Name
-                                            </p>
-                                            <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                                                @teacher.EmployeeId
-                                            </p>
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 font-mono leading-none mt-0.5">
+                                                @(!string.IsNullOrEmpty(teacher.EmployeeId) ? teacher.EmployeeId : "—")
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
 
                                 <!-- Subject -->
-                                <td class="py-3.5 px-4">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300">
-                                        @teacher.Subject
+                                <td class="py-1.5 px-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+                                        @(!string.IsNullOrEmpty(teacher.Subject) ? teacher.Subject : (!string.IsNullOrEmpty(teacher.Department) ? teacher.Department : "—"))
                                     </span>
                                 </td>
 
                                 <!-- Designation -->
-                                <td class="py-3.5 px-4 font-semibold text-slate-700 dark:text-slate-300">
-                                    @teacher.Designation
+                                <td class="py-1.5 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                                    @(!string.IsNullOrEmpty(teacher.Designation) ? teacher.Designation : "—")
                                 </td>
 
-                                <!-- Batches -->
-                                <td class="py-3.5 px-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        @if (teacher.Batches.Count > 0)
-                                        {
-                                            @foreach (var batch in teacher.Batches.Take(2))
-                                            {
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
-                                                    @batch
-                                                </span>
-                                            }
-                                            @if (teacher.Batches.Count > 2)
-                                            {
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800 text-[#009488]">
-                                                    +@(teacher.Batches.Count - 2)
-                                                </span>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="text-slate-400 dark:text-slate-600 text-[10px]">—</span>
-                                        }
+                                <!-- Contact Details -->
+                                <td class="py-1.5 px-3">
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200 leading-tight">
+                                        @(!string.IsNullOrEmpty(teacher.Phone) ? teacher.Phone : "—")
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5 leading-none truncate max-w-[140px]">
+                                        @(!string.IsNullOrEmpty(teacher.Email) ? teacher.Email : "—")
                                     </div>
                                 </td>
 
-                                <!-- Contact -->
-                                <td class="py-3.5 px-4">
-                                    <p class="font-semibold text-slate-800 dark:text-slate-200">
-                                        @teacher.Phone
-                                    </p>
-                                    <p class="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[140px]">
-                                        @teacher.Email
-                                    </p>
-                                </td>
-
                                 <!-- Status Badge -->
-                                <td class="py-3.5 px-4">
-                                    @if (teacher.Status == "Active")
+                                <td class="py-1.5 px-3 text-center">
+                                    @if (teacher.IsActive)
                                     {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
                                             Active
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>
                                             Inactive
                                         </span>
                                     }
                                 </td>
 
-                                <!-- Action Menu (••• Dropdown) -->
-                                <td class="py-3.5 px-6 text-right relative">
-                                    <div class="inline-block text-left">
-                                        <button type="button" 
-                                                @onclick="() => ToggleMenu(teacher.Id)" 
-                                                class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                            <svg class="w-4 h-4 font-extrabold" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M6 10a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4z"/>
-                                            </svg>
-                                        </button>
-
-                                        @if (_activeMenuTeacherId == teacher.Id)
-                                        {
-                                            <div class="fixed inset-0 z-30" @onclick="() => _activeMenuTeacherId = null"></div>
-                                            <div class="absolute right-0 top-full mt-1 w-44 rounded-2xl bg-white dark:bg-[#111c21] shadow-2xl border border-slate-200/90 dark:border-slate-800 py-2 z-40 text-left animate-in fade-in zoom-in-95 duration-150 select-none">
-                                                <button type="button" 
-                                                        @onclick="() => OpenViewProfile(teacher)"
-                                                        class="w-full px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#18262c] flex items-center gap-2.5 transition-colors cursor-pointer">
-                                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                                    <span>View profile</span>
-                                                </button>
-                                                <button type="button" 
-                                                        @onclick="() => OpenEditDrawerAsync(teacher)"
-                                                        class="w-full px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#18262c] flex items-center gap-2.5 transition-colors cursor-pointer">
-                                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                    <span>Edit</span>
-                                                </button>
-                                                <button type="button" 
-                                                        @onclick="() => OpenBatchAssignment(teacher)"
-                                                        class="w-full px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#18262c] flex items-center gap-2.5 transition-colors cursor-pointer">
-                                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
-                                                    <span>Manage Batches</span>
-                                                </button>
-                                                <div class="my-1.5 border-t border-slate-100 dark:border-slate-800"></div>
-                                                <button type="button" 
-                                                        @onclick="() => ToggleTeacherStatus(teacher)"
-                                                        class="w-full px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50/80 dark:hover:bg-rose-950/50 flex items-center gap-2.5 transition-colors cursor-pointer">
-                                                    <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                                                    <span>@(teacher.Status == "Active" ? "Deactivate" : "Activate")</span>
-                                                </button>
+                                <!-- Actions Column: Direct Action Buttons with Isolated Tooltips -->
+                                <td class="py-1.5 px-5 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        
+                                        <!-- Action 1: View Profile -->
+                                        <div class="relative group/act inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => OpenViewProfile(teacher)" 
+                                                    class="p-1.5 text-[#009488] dark:text-teal-400 hover:text-[#00796b] dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                    title="View Profile"
+                                                    aria-label="View Profile">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                            </button>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-[#004D40] text-teal-100 border border-teal-500/50 shadow-lg tracking-wide">
+                                                    View Profile
+                                                </span>
+                                                <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#004D40] border-r border-b border-teal-500/50"></span>
                                             </div>
-                                        }
+                                        </div>
+
+                                        <!-- Action 2: Edit Teacher -->
+                                        <div class="relative group/act inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => OpenEditDrawerAsync(teacher)" 
+                                                    class="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                    title="Edit Teacher"
+                                                    aria-label="Edit Teacher">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                </svg>
+                                            </button>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-amber-600 text-white border border-amber-400/50 shadow-lg tracking-wide">
+                                                    Edit Teacher
+                                                </span>
+                                                <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-amber-600 border-r border-b border-amber-400/50"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action 3: Toggle Status (Activate / Deactivate) -->
+                                        <div class="relative group/act inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => ToggleTeacherStatus(teacher)" 
+                                                    class="p-1.5 @(teacher.IsActive 
+                                                        ? "text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40" 
+                                                        : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800") rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                    title="@(teacher.IsActive ? "Deactivate" : "Activate")"
+                                                    aria-label="Toggle Status">
+                                                @if (teacher.IsActive)
+                                                {
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                }
+                                                else
+                                                {
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                                    </svg>
+                                                }
+                                            </button>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                <span class="px-2 py-0.5 text-[9px] font-extrabold rounded @(teacher.IsActive ? "bg-sky-700" : "bg-slate-700") text-white border border-white/20 shadow-lg tracking-wide">
+                                                    @(teacher.IsActive ? "Deactivate" : "Activate")
+                                                </span>
+                                                <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 @(teacher.IsActive ? "bg-sky-700" : "bg-slate-700") border-r border-b border-white/20"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action 4: Delete Teacher -->
+                                        <div class="relative group/act inline-flex items-center justify-center">
+                                            <button type="button" 
+                                                    @onclick="() => DeleteTeacherAsync(teacher.Id)" 
+                                                    class="p-1.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                    title="Delete Teacher"
+                                                    aria-label="Delete Teacher">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-600 text-white border border-rose-400/50 shadow-lg tracking-wide">
+                                                    Delete Teacher
+                                                </span>
+                                                <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-rose-600 border-r border-b border-rose-400/50"></span>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </td>
-
                             </tr>
                         }
                     }
                     else
                     {
                         <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400">
+                            <td colspan="6" class="py-12 text-center text-slate-400">
                                 <div class="max-w-xs mx-auto space-y-2">
                                     <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -322,22 +379,15 @@
             </table>
         </div>
 
-        <!-- Table Footer / Pagination -->
-        <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <div>
-                Showing <span class="font-bold text-slate-800 dark:text-white">1-@FilteredTeachers.Count</span> of <span class="font-bold text-slate-800 dark:text-white">@_teachers.Count</span> teachers
-            </div>
-            <div class="flex items-center gap-1.5">
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-400 dark:text-slate-500 disabled:opacity-40" disabled>
-                    Previous
-                </button>
-                <button type="button" class="w-8 h-8 rounded-lg bg-[#009488] text-white font-bold flex items-center justify-center">
-                    1
-                </button>
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#1f3037]">
-                    Next
-                </button>
-            </div>
+        <!-- Reusable Server-Side Table Pagination Component -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="_query.PageNumber" 
+                             PageSize="_query.PageSize" 
+                             TotalRecords="_totalRecords" 
+                             ItemLabel="teachers"
+                             IsLoading="_isLoading"
+                             OnPageChanged="LoadTeachersAsync"
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
         </div>
     </div>
 
@@ -368,14 +418,14 @@
                         <span>@(_editingTeacher == null ? "Register New Teacher" : "Edit Teacher Profile")</span>
                     </h3>
                     <p class="text-xs text-teal-200/90 font-medium">
-                        @(_editingTeacher == null ? "Add a new teaching staff member" : $"Updating records for {_editingTeacher.Name}")
+                        @(_editingTeacher == null ? "Add a new teaching staff member with complete profile" : $"Updating records for {_editingTeacher.FullName}")
                     </p>
                 </div>
             </div>
 
             <button type="button" 
                     @onclick="CloseDrawerAsync" 
-                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors"
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                     title="Close Drawer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -385,116 +435,210 @@
         <EditForm Model="@_modalModel" OnValidSubmit="SaveTeacherAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
             <FluentValidationValidator />
 
-            <!-- Drawer Scrollable Form Body -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-5 select-text text-slate-800 dark:text-slate-100">
+            <!-- Drawer Scrollable Form Body (No Scrollbar) -->
+            <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 select-text text-slate-800 dark:text-slate-100" style="scrollbar-width: none; -ms-overflow-style: none;">
                 
-                <!-- Section 1: Basic Information -->
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">
-                        <span>1. Personal Information</span>
+                <!-- Section 1: Personal Information -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>1. Personal &amp; Identity Information</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">First Name *</label>
+                            <InputText @bind-Value="_modalModel.FirstName" placeholder="e.g. Priya" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                            <ValidationMessage For="@(() => _modalModel.FirstName)" class="text-[10px] text-rose-500" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Last Name *</label>
+                            <InputText @bind-Value="_modalModel.LastName" placeholder="e.g. Sharma" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                            <ValidationMessage For="@(() => _modalModel.LastName)" class="text-[10px] text-rose-500" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
+                            <InputText @bind-Value="_modalModel.Email" placeholder="e.g. priya.sharma@vargshala.com" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                            <ValidationMessage For="@(() => _modalModel.Email)" class="text-[10px] text-rose-500" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Phone / Mobile</label>
+                            <InputText @bind-Value="_modalModel.Mobile" placeholder="+91 98765 43210" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                            <ValidationMessage For="@(() => _modalModel.Mobile)" class="text-[10px] text-rose-500" />
+                        </div>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Full Name *</label>
-                        <InputText @bind-Value="_modalModel.Name" placeholder="e.g. Dr. Priya Sharma" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
-                        <ValidationMessage For="@(() => _modalModel.Name)" class="text-[10px] text-rose-500" />
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Employee ID</label>
-                            <InputText @bind-Value="_modalModel.EmployeeId" placeholder="e.g. VM-T-001" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Qualification *</label>
-                            <CustomSelect @bind-Value="_modalModel.Qualification" Options="_drawerQualificationOptions" Placeholder="Select Qualification" Class="w-full" />
-                            <ValidationMessage For="@(() => _modalModel.Qualification)" class="text-[10px] text-rose-500" />
-                        </div>
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Aadhar Card / Gov ID</label>
+                        <InputText @bind-Value="_modalModel.AadharNumber" placeholder="12-digit UID" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
                     </div>
                 </div>
 
-                <!-- Section 2: Subject & Designation -->
-                <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">
-                        <span>2. Role & Subject</span>
+                <!-- Section 2: Professional & Role Details -->
+                <div class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>2. Employment &amp; Role Details</span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
                         <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Designation *</label>
+                            <div class="flex items-center justify-between min-h-[18px]">
+                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Employee Code / ID *</label>
+                                <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">Auto (EMP-YY00001)</span>
+                            </div>
+                            <div class="relative">
+                                <InputText @bind-Value="_modalModel.EmployeeCode" readonly placeholder="e.g. EMP-2600001" class="w-full h-10 pl-3.5 pr-8 py-2.5 text-xs bg-slate-100 dark:bg-[#111c21] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-mono font-bold cursor-not-allowed select-none focus:outline-none transition-all" />
+                                <button type="button" @onclick="RegenerateTeacherCodeAsync" title="Regenerate unique Employee Code" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-[#009488] transition-colors cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between min-h-[18px]">
+                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Joining Date</label>
+                            </div>
+                            <InputDate Type="InputDateType.Date" @bind-Value="_modalModel.JoiningDate" class="w-full h-10 px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Department</label>
+                            <CustomSelect @bind-Value="_modalModel.Department" Options="_drawerSubjectOptions" Placeholder="Select Department" Class="w-full" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Designation</label>
                             <CustomSelect @bind-Value="_modalModel.Designation" Options="_drawerDesignationOptions" Placeholder="Select Designation" Class="w-full" />
-                            <ValidationMessage For="@(() => _modalModel.Designation)" class="text-[10px] text-rose-500" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Teaching Experience (Years)</label>
+                        <InputNumber @bind-Value="_modalModel.TeachingExperienceYears" placeholder="e.g. 5" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    </div>
+                </div>
+
+                <!-- Section 3: Qualifications & Expertise -->
+                <div class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>3. Qualifications &amp; Subject</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Highest Qualification</label>
+                            <CustomSelect @bind-Value="_modalModel.HighestQualification" Options="_drawerQualificationOptions" Placeholder="Select Qualification" Class="w-full" />
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Primary Subject *</label>
-                            <CustomSelect @bind-Value="_modalModel.Subject" Options="_drawerSubjectOptions" Placeholder="Select Subject" Class="w-full" />
-                            <ValidationMessage For="@(() => _modalModel.Subject)" class="text-[10px] text-rose-500" />
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Specialization / Subject</label>
+                            <InputText @bind-Value="_modalModel.Specialization" placeholder="e.g. Pure Mathematics / Organic Chemistry" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Previous Institute / Organization</label>
+                        <InputText @bind-Value="_modalModel.PreviousInstitute" placeholder="e.g. Allen Career Institute / FIITJEE" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    </div>
+                </div>
+
+                <!-- Section 4: Address Details -->
+                <div class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>4. Residential Address</span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Street / House Address</label>
+                        <InputText @bind-Value="_modalModel.Address" placeholder="Flat / House No., Landmark, Area" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">City</label>
+                            <InputText @bind-Value="_modalModel.City" placeholder="e.g. Patna" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">State</label>
+                            <InputText @bind-Value="_modalModel.State" placeholder="e.g. Bihar" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Postal / PIN Code</label>
+                            <InputText @bind-Value="_modalModel.PostalCode" placeholder="e.g. 800001" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Country</label>
+                            <InputText @bind-Value="_modalModel.Country" placeholder="India" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 3: Contact Information -->
-                <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">
-                        <span>3. Contact Details</span>
+                <!-- Section 5: Bio & Notes -->
+                <div class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>5. Faculty Bio / Notes</span>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Email Address *</label>
-                        <InputText @bind-Value="_modalModel.Email" placeholder="e.g. priya.sharma@vargshala.com" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
-                        <ValidationMessage For="@(() => _modalModel.Email)" class="text-[10px] text-rose-500" />
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Phone Number *</label>
-                        <InputText @bind-Value="_modalModel.Phone" placeholder="+91 98765 43210" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
-                        <ValidationMessage For="@(() => _modalModel.Phone)" class="text-[10px] text-rose-500" />
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Bio / Background Description</label>
+                        <InputText @bind-Value="_modalModel.Bio" placeholder="Brief professional biography or achievements" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
                     </div>
                 </div>
 
-                <!-- Section 4: Status -->
+                <!-- Section 6: Status -->
                 <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider">
-                        <span>4. Status</span>
+                        <span>6. Account &amp; Status</span>
                     </div>
 
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Teacher Status</label>
-                        <CustomSelect @bind-Value="_modalModel.Status" Options="_drawerStatusOptions" Placeholder="Teacher Status" Class="w-full" />
+                    <div class="flex items-center gap-3">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" @bind="_modalModel.IsActive" class="rounded text-[#009488] focus:ring-teal-500" />
+                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Active Faculty Member (Allowed to manage batches, assignments &amp; attendance)</span>
+                        </label>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Drawer Sticky Footer -->
-            <div class="p-4 px-6 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-[#18262c] backdrop-blur-sm flex items-center justify-between gap-3">
+            <!-- Drawer Footer Buttons -->
+            <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
                 <button type="button" 
                         @onclick="CloseDrawerAsync" 
-                        class="px-5 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer">
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
                     Cancel
                 </button>
                 <button type="submit" 
-                        class="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/20 hover:shadow-lg hover:shadow-teal-800/30 border border-teal-400/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                    <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <span>@(_editingTeacher == null ? "Save & Register Teacher" : "Update Teacher Records")</span>
+                        disabled="@_isSaving"
+                        class="px-5 py-2.5 text-xs font-bold bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] text-white rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                    @if (_isSaving)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>@(_editingTeacher == null ? "Register Teacher" : "Update Teacher")</span>
+                    }
                 </button>
             </div>
         </EditForm>
-
     </div>
 }
 
 <!-- ========================================================================= -->
-<!-- MODAL: View Teacher Profile -->
+<!-- MODAL 2: View Teacher Profile Modal -->
 <!-- ========================================================================= -->
 @if (_selectedProfileTeacher != null)
 {
     <Modal IsOpen="true" 
            Title="Teacher Profile" 
-           Subtitle="@($"{_selectedProfileTeacher.EmployeeId} • {_selectedProfileTeacher.Subject}")" 
-           MaxWidth="max-w-md" 
+           Subtitle="@($"{_selectedProfileTeacher.Designation} • {_selectedProfileTeacher.Subject}")" 
+           MaxWidth="max-w-xl" 
            OnClose="() => _selectedProfileTeacher = null">
         <ChildContent>
             <div class="space-y-4">
@@ -503,109 +647,107 @@
                         @_selectedProfileTeacher.Initials
                     </div>
                     <div>
-                        <h4 class="text-base font-bold text-slate-900 dark:text-white">@_selectedProfileTeacher.Name</h4>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">@_selectedProfileTeacher.Designation • @_selectedProfileTeacher.Qualification</p>
-                        <div class="mt-1">
-                            <Badge Text="@_selectedProfileTeacher.Status" 
-                                   Variant="@(_selectedProfileTeacher.Status == "Active" ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" 
+                        <h4 class="text-base font-bold text-slate-900 dark:text-white">@_selectedProfileTeacher.FullName</h4>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">@_selectedProfileTeacher.EmployeeCode • @(!string.IsNullOrEmpty(_selectedProfileTeacher.HighestQualification) ? _selectedProfileTeacher.HighestQualification : _selectedProfileTeacher.Qualification)</p>
+                        <div class="mt-1 flex items-center gap-2">
+                            <Badge Text="@(_selectedProfileTeacher.IsActive ? "Active" : "Inactive")" 
+                                   Variant="@(_selectedProfileTeacher.IsActive ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" 
                                    ShowDot="true" />
+                            @if (_selectedProfileTeacher.TeachingExperienceYears.HasValue)
+                            {
+                                <span class="text-[11px] font-medium text-teal-600 dark:text-teal-400">• @_selectedProfileTeacher.TeachingExperienceYears yrs exp</span>
+                            }
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 dark:bg-[#18262c] p-3.5 rounded-2xl space-y-2.5 text-xs border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Subject</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.Subject</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Email</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.Email</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Phone</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.Phone</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Joining Date</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.JoiningDate.ToString("dd MMM yyyy")</span>
-                    </div>
-                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium text-[11px] block mb-1.5">Assigned Batches</span>
-                        <div class="flex flex-wrap gap-1.5">
-                            @foreach (var batch in _selectedProfileTeacher.Batches)
-                            {
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800 text-[#00796b] dark:text-teal-300">
-                                    @batch
-                                </span>
-                            }
-                            @if (_selectedProfileTeacher.Batches.Count == 0)
-                            {
-                                <span class="text-[11px] text-slate-400">No batches assigned yet</span>
-                            }
+                <div class="bg-slate-50 dark:bg-[#18262c] p-4 rounded-2xl space-y-2.5 text-xs border border-slate-100 dark:border-slate-800">
+                    <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Department:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.Department) ? _selectedProfileTeacher.Department : _selectedProfileTeacher.Subject)</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Designation:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.Designation</span>
                         </div>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Phone / Mobile:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.Mobile) ? _selectedProfileTeacher.Mobile : (!string.IsNullOrEmpty(_selectedProfileTeacher.Phone) ? _selectedProfileTeacher.Phone : "—"))</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Email:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.Email) ? _selectedProfileTeacher.Email : "—")</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Joining Date:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(_selectedProfileTeacher.JoiningDate?.ToString("dd MMM yyyy") ?? "—")</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Specialization:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.Specialization) ? _selectedProfileTeacher.Specialization : "—")</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_selectedProfileTeacher.Address) || !string.IsNullOrEmpty(_selectedProfileTeacher.City))
+                    {
+                        <div class="pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Address:</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.Address, @_selectedProfileTeacher.City @_selectedProfileTeacher.State @_selectedProfileTeacher.PostalCode</span>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_selectedProfileTeacher.PreviousInstitute) || !string.IsNullOrEmpty(_selectedProfileTeacher.AadharNumber))
+                    {
+                        <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                            <div>
+                                <span class="text-slate-400 dark:text-slate-500 font-medium">Prev Institute:</span>
+                                <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.PreviousInstitute) ? _selectedProfileTeacher.PreviousInstitute : "—")</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 dark:text-slate-500 font-medium">Gov ID:</span>
+                                <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.AadharNumber) ? _selectedProfileTeacher.AadharNumber : "—")</span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_selectedProfileTeacher.Bio))
+                    {
+                        <div class="pt-1">
+                            <span class="text-slate-400 dark:text-slate-500 font-medium">Bio:</span>
+                            <p class="mt-0.5 text-slate-700 dark:text-slate-300 italic">@_selectedProfileTeacher.Bio</p>
+                        </div>
+                    }
                 </div>
             </div>
         </ChildContent>
         <FooterTemplate>
             <button type="button" 
-                    @onclick="async () => { var t = _selectedProfileTeacher; _selectedProfileTeacher = null; if (t != null) await OpenEditDrawerAsync(t); }"
-                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
-                <span>Edit Profile →</span>
-            </button>
-        </FooterTemplate>
-    </Modal>
-}
-
-<!-- ========================================================================= -->
-<!-- MODAL: Batch Assignment -->
-<!-- ========================================================================= -->
-@if (_batchAssignTeacher != null)
-{
-    <Modal IsOpen="true" 
-           Title="Manage Batch Assignments" 
-           Subtitle="@($"Assign or remove batches for {_batchAssignTeacher.Name}")" 
-           MaxWidth="max-w-sm" 
-           OnClose="() => _batchAssignTeacher = null">
-        <ChildContent>
-            <div class="space-y-3">
-                <p class="text-xs text-slate-500 dark:text-slate-400">Toggle batches to assign or remove this teacher:</p>
-                @foreach (var batchOption in _allBatchNames)
-                {
-                    var isAssigned = _batchAssignTeacher.Batches.Contains(batchOption);
-                    <button type="button"
-                            @onclick="() => ToggleBatch(_batchAssignTeacher, batchOption)"
-                            class="w-full px-3.5 py-2.5 rounded-xl text-xs text-left flex items-center justify-between transition-all cursor-pointer @(isAssigned ? "bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-[#00796b] dark:text-teal-300 font-bold" : "bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1f3037]")">
-                        <span>@batchOption</span>
-                        @if (isAssigned)
-                        {
-                            <svg class="w-4 h-4 text-[#009488]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        }
-                    </button>
-                }
-            </div>
-        </ChildContent>
-        <FooterTemplate>
-            <button type="button" 
-                    @onclick="() => _batchAssignTeacher = null"
-                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
-                <span>Done</span>
+                    @onclick="() => _selectedProfileTeacher = null" 
+                    class="px-5 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                Close
             </button>
         </FooterTemplate>
     </Modal>
 }
 
 @code {
+    private readonly TableQueryState _query = new();
+    private int _totalRecords = 0;
+    private bool _isLoading = true;
+    private bool _isSaving = false;
     private string _searchQuery = string.Empty;
     private string _selectedSubject = string.Empty;
     private string _selectedDesignation = string.Empty;
     private string _selectedStatus = string.Empty;
-    private readonly TableSortState _sortState = new();
+    private TableSortState _sortState => _query.SortState;
 
-    // Filter Options
     private readonly List<CustomSelect.CustomSelectOption> _subjectFilterOptions = new()
     {
         new("", "All Subjects"),
@@ -614,9 +756,7 @@
         new("Chemistry", "Chemistry"),
         new("Biology", "Biology"),
         new("English", "English"),
-        new("Hindi", "Hindi"),
-        new("Computer Science", "Computer Science"),
-        new("Social Studies", "Social Studies")
+        new("Computer Science", "Computer Science")
     };
 
     private readonly List<CustomSelect.CustomSelectOption> _designationFilterOptions = new()
@@ -631,11 +771,10 @@
     private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
     {
         new("", "All Status"),
-        new("Active", "Active"),
-        new("Inactive", "Inactive")
+        new("Active", "Active Only"),
+        new("Inactive", "Inactive Only")
     };
 
-    // Drawer Form Options
     private readonly List<CustomSelect.CustomSelectOption> _drawerDesignationOptions = new()
     {
         new("HOD", "HOD"),
@@ -651,134 +790,213 @@
         new("Chemistry", "Chemistry"),
         new("Biology", "Biology"),
         new("English", "English"),
-        new("Hindi", "Hindi"),
-        new("Computer Science", "Computer Science"),
-        new("Social Studies", "Social Studies")
+        new("Computer Science", "Computer Science")
     };
 
     private readonly List<CustomSelect.CustomSelectOption> _drawerQualificationOptions = new()
     {
-        new("B.Ed.", "B.Ed."),
+        new("Ph.D.", "Ph.D."),
         new("M.Sc.", "M.Sc."),
         new("M.A.", "M.A."),
         new("M.Ed.", "M.Ed."),
-        new("Ph.D.", "Ph.D."),
-        new("B.Tech.", "B.Tech."),
-        new("M.Tech.", "M.Tech."),
-        new("NET/JRF", "NET/JRF")
+        new("B.Ed.", "B.Ed."),
+        new("B.Tech.", "B.Tech.")
     };
 
-    private readonly List<CustomSelect.CustomSelectOption> _drawerStatusOptions = new()
-    {
-        new("Active", "Active"),
-        new("Inactive", "Inactive")
-    };
-
-    private readonly List<string> _allBatchNames = new()
-    {
-        "Class 10 — Maths",
-        "Class 10 — Science",
-        "Class 12 — Physics",
-        "Class 12 — Chemistry",
-        "Class 12 — Biology",
-        "IIT-JEE Morning Batch",
-        "NEET Evening Batch"
-    };
-
-    // State
-    private Guid? _activeMenuTeacherId;
     private bool _showDrawer = false;
     private bool _isDrawerOpen = false;
     private TeacherDto? _editingTeacher;
     private TeacherDto _modalModel = new();
     private TeacherDto? _selectedProfileTeacher;
-    private TeacherDto? _batchAssignTeacher;
 
-    // Mock Data
-    private readonly List<TeacherDto> _teachers = new()
-    {
-        new() { Name = "Dr. Priya Sharma", EmployeeId = "VM-T-001", Email = "priya.sharma@vargshala.com", Phone = "+91 98765 43210", Designation = "HOD", Qualification = "Ph.D.", Subject = "Mathematics", Batches = new List<string> { "Class 10 — Maths", "IIT-JEE Morning Batch" }, JoiningDate = new DateTime(2022, 6, 15) },
-        new() { Name = "Rajesh Verma", EmployeeId = "VM-T-002", Email = "rajesh.verma@vargshala.com", Phone = "+91 98765 43211", Designation = "Senior Teacher", Qualification = "M.Sc.", Subject = "Physics", Batches = new List<string> { "Class 12 — Physics", "IIT-JEE Morning Batch" }, JoiningDate = new DateTime(2023, 1, 10) },
-        new() { Name = "Sunita Gupta", EmployeeId = "VM-T-003", Email = "sunita.gupta@vargshala.com", Phone = "+91 98765 43212", Designation = "Senior Teacher", Qualification = "M.Sc.", Subject = "Chemistry", Batches = new List<string> { "Class 12 — Chemistry", "NEET Evening Batch" }, JoiningDate = new DateTime(2023, 4, 1) },
-        new() { Name = "Amit Tiwari", EmployeeId = "VM-T-004", Email = "amit.tiwari@vargshala.com", Phone = "+91 98765 43213", Designation = "Assistant Teacher", Qualification = "B.Ed.", Subject = "English", Batches = new List<string> { "Class 10 — Maths", "Class 10 — Science" }, JoiningDate = new DateTime(2024, 7, 20) },
-        new() { Name = "Dr. Kavita Reddy", EmployeeId = "VM-T-005", Email = "kavita.reddy@vargshala.com", Phone = "+91 98765 43214", Designation = "HOD", Qualification = "Ph.D.", Subject = "Biology", Batches = new List<string> { "Class 12 — Biology", "NEET Evening Batch" }, JoiningDate = new DateTime(2021, 8, 5) },
-        new() { Name = "Manoj Kumar", EmployeeId = "VM-T-006", Email = "manoj.kumar@vargshala.com", Phone = "+91 98765 43215", Designation = "Assistant Teacher", Qualification = "M.A.", Subject = "Hindi", Batches = new List<string> { "Class 10 — Maths" }, JoiningDate = new DateTime(2025, 1, 15) },
-        new() { Name = "Neha Agarwal", EmployeeId = "VM-T-007", Email = "neha.agarwal@vargshala.com", Phone = "+91 98765 43216", Designation = "Guest Lecturer", Qualification = "B.Tech.", Subject = "Computer Science", Batches = new List<string> { "Class 10 — Science", "Class 12 — Physics", "IIT-JEE Morning Batch" }, JoiningDate = new DateTime(2025, 3, 1) },
-        new() { Name = "Vikram Singh", EmployeeId = "VM-T-008", Email = "vikram.singh@vargshala.com", Phone = "+91 98765 43217", Designation = "Senior Teacher", Qualification = "M.Ed.", Subject = "Social Studies", Batches = new List<string>(), Status = "Inactive", JoiningDate = new DateTime(2020, 5, 10) }
-    };
+    private List<TeacherDto> _teachers = new();
 
-    private List<TeacherDto> FilteredTeachers
+    protected override async Task OnInitializedAsync()
     {
-        get
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task HandlePageSizeChangedAsync(int newSize)
+    {
+        _query.PageSize = newSize;
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task LoadTeachersAsync(int page = 1)
+    {
+        _isLoading = true;
+        _query.PageNumber = page;
+
+        try
         {
-            var query = _teachers.Where(t =>
-                (string.IsNullOrWhiteSpace(_searchQuery) || 
-                 t.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
-                 t.Subject.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
-                 t.EmployeeId.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                 t.Phone.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                 t.Email.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)) &&
-                (string.IsNullOrWhiteSpace(_selectedSubject) || t.Subject == _selectedSubject) &&
-                (string.IsNullOrWhiteSpace(_selectedDesignation) || t.Designation == _selectedDesignation) &&
-                (string.IsNullOrWhiteSpace(_selectedStatus) || t.Status == _selectedStatus)
-            );
+            bool? isActive = null;
+            if (_selectedStatus == "Active") isActive = true;
+            else if (_selectedStatus == "Inactive") isActive = false;
 
-            if (_sortState.IsSorted)
+            var pagedRequest = new PagedRequest
             {
-                query = _sortState.Column switch
-                {
-                    "Name" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(t => t.Name) : query.OrderByDescending(t => t.Name),
-                    "Subject" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(t => t.Subject) : query.OrderByDescending(t => t.Subject),
-                    "Designation" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(t => t.Designation) : query.OrderByDescending(t => t.Designation),
-                    "Contact" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(t => t.Phone) : query.OrderByDescending(t => t.Phone),
-                    "Status" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(t => t.Status) : query.OrderByDescending(t => t.Status),
-                    _ => query
-                };
-            }
+                PageNumber = _query.PageNumber,
+                PageSize = _query.PageSize,
+                Search = string.IsNullOrWhiteSpace(_searchQuery) ? null : _searchQuery.Trim(),
+                SortBy = _sortState.Column,
+                SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : (_sortState.Direction == SortDirection.Ascending ? "asc" : null)
+            };
 
-            return query.ToList();
+            var response = await TeacherService.GetTeachersPagedAsync(
+                pagedRequest,
+                department: string.IsNullOrWhiteSpace(_selectedSubject) ? null : _selectedSubject,
+                designation: string.IsNullOrWhiteSpace(_selectedDesignation) ? null : _selectedDesignation,
+                isActive: isActive);
+
+            if (response != null && response.Success && response.Data != null)
+            {
+                _teachers = response.Data.Items.ToList();
+                _totalRecords = response.Data.TotalRecords;
+            }
+            else
+            {
+                _teachers = new();
+                _totalRecords = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Failed to load teachers: {ex.Message}");
+            _teachers = new();
+            _totalRecords = 0;
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
         }
     }
 
-    private void ToggleMenu(Guid teacherId)
+    private async Task OnSearchInput(ChangeEventArgs e)
     {
-        _activeMenuTeacherId = _activeMenuTeacherId == teacherId ? null : teacherId;
+        _searchQuery = e.Value?.ToString() ?? "";
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        _searchQuery = string.Empty;
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task HandleSubjectChanged(string val)
+    {
+        _selectedSubject = val;
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task HandleDesignationChanged(string val)
+    {
+        _selectedDesignation = val;
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task HandleStatusChanged(string val)
+    {
+        _selectedStatus = val;
+        await LoadTeachersAsync(1);
+    }
+
+    private async Task HandleSortAsync(string column)
+    {
+        _sortState.Toggle(column);
+        await LoadTeachersAsync(1);
     }
 
     private async Task OpenAddDrawerAsync()
     {
-        _activeMenuTeacherId = null;
         _editingTeacher = null;
         _modalModel = new TeacherDto
         {
-            Status = "Active",
+            FirstName = string.Empty,
+            LastName = string.Empty,
+            Country = "India",
+            JoiningDate = DateOnly.FromDateTime(DateTime.UtcNow),
             Designation = "Assistant Teacher",
+            Department = "Mathematics",
             Subject = "Mathematics",
-            Qualification = "B.Ed."
+            Specialization = "Mathematics",
+            Qualification = "B.Ed.",
+            HighestQualification = "B.Ed.",
+            Status = "Active",
+            IsActive = true
         };
+
+        // Auto-fetch generated Employee Code (EMP-YY00001)
+        try
+        {
+            var genRes = await TeacherService.GenerateTeacherCodeAsync();
+            if (genRes != null && genRes.Success && genRes.Data != null)
+            {
+                _modalModel.EmployeeCode = genRes.Data.EmployeeCode;
+            }
+        }
+        catch
+        {
+            // Backend will auto-generate if network fails
+        }
+
         _showDrawer = true;
         await Task.Yield();
         _isDrawerOpen = true;
     }
 
+    private async Task RegenerateTeacherCodeAsync()
+    {
+        try
+        {
+            var genRes = await TeacherService.GenerateTeacherCodeAsync();
+            if (genRes != null && genRes.Success && genRes.Data != null)
+            {
+                _modalModel.EmployeeCode = genRes.Data.EmployeeCode;
+                Toast.Info($"Generated: {_modalModel.EmployeeCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Could not generate code: {ex.Message}");
+        }
+    }
+
     private async Task OpenEditDrawerAsync(TeacherDto? teacher)
     {
         if (teacher == null) return;
-        _activeMenuTeacherId = null;
         _editingTeacher = teacher;
         _modalModel = new TeacherDto
         {
             Id = teacher.Id,
+            UserId = teacher.UserId,
+            FirstName = teacher.FirstName,
+            LastName = teacher.LastName,
             Name = teacher.Name,
             EmployeeId = teacher.EmployeeId,
+            EmployeeCode = teacher.EmployeeCode,
             Email = teacher.Email,
             Phone = teacher.Phone,
+            Mobile = teacher.Mobile,
             Designation = teacher.Designation,
+            Department = teacher.Department,
             Qualification = teacher.Qualification,
+            HighestQualification = teacher.HighestQualification,
             Subject = teacher.Subject,
+            Specialization = teacher.Specialization,
+            TeachingExperienceYears = teacher.TeachingExperienceYears,
+            Address = teacher.Address,
+            City = teacher.City,
+            State = teacher.State,
+            PostalCode = teacher.PostalCode,
+            Country = string.IsNullOrWhiteSpace(teacher.Country) ? "India" : teacher.Country,
+            AadharNumber = teacher.AadharNumber,
+            PreviousInstitute = teacher.PreviousInstitute,
+            Bio = teacher.Bio,
             Status = teacher.Status,
-            JoiningDate = teacher.JoiningDate,
-            Batches = new List<string>(teacher.Batches)
+            IsActive = teacher.IsActive,
+            JoiningDate = teacher.JoiningDate
         };
         _showDrawer = true;
         await Task.Yield();
@@ -795,56 +1013,186 @@
 
     private async Task SaveTeacherAsync()
     {
-        if (_editingTeacher == null)
-        {
-            _modalModel.Id = Guid.NewGuid();
-            if (string.IsNullOrWhiteSpace(_modalModel.EmployeeId))
-            {
-                _modalModel.EmployeeId = $"VM-T-{_teachers.Count + 1:D3}";
-            }
-            _teachers.Insert(0, _modalModel);
-        }
-        else
-        {
-            var index = _teachers.FindIndex(t => t.Id == _editingTeacher.Id);
-            if (index != -1)
-            {
-                _modalModel.Batches = _editingTeacher.Batches;
-                _teachers[index] = _modalModel;
-            }
-        }
+        if (_isSaving) return;
+        _isSaving = true;
 
-        await CloseDrawerAsync();
+        try
+        {
+            var firstName = _modalModel.FirstName?.Trim();
+            var lastName = _modalModel.LastName?.Trim();
+
+            if (string.IsNullOrWhiteSpace(firstName) && !string.IsNullOrWhiteSpace(_modalModel.Name))
+            {
+                var parts = _modalModel.Name.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                firstName = parts.Length > 0 ? parts[0] : "Teacher";
+                lastName = parts.Length > 1 ? parts[1] : ".";
+            }
+
+            if (string.IsNullOrWhiteSpace(firstName)) firstName = "Teacher";
+            if (string.IsNullOrWhiteSpace(lastName)) lastName = ".";
+
+            if (_editingTeacher == null)
+            {
+                var req = new CreateTeacherRequest
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = string.IsNullOrWhiteSpace(_modalModel.Email) ? null : _modalModel.Email.Trim(),
+                    Mobile = string.IsNullOrWhiteSpace(_modalModel.Mobile) ? (string.IsNullOrWhiteSpace(_modalModel.Phone) ? null : _modalModel.Phone.Trim()) : _modalModel.Mobile.Trim(),
+                    EmployeeCode = string.IsNullOrWhiteSpace(_modalModel.EmployeeCode) ? (string.IsNullOrWhiteSpace(_modalModel.EmployeeId) ? null : _modalModel.EmployeeId.Trim()) : _modalModel.EmployeeCode.Trim(),
+                    JoiningDate = _modalModel.JoiningDate,
+                    Department = string.IsNullOrWhiteSpace(_modalModel.Department) ? _modalModel.Subject : _modalModel.Department.Trim(),
+                    Designation = string.IsNullOrWhiteSpace(_modalModel.Designation) ? "Faculty" : _modalModel.Designation.Trim(),
+                    HighestQualification = string.IsNullOrWhiteSpace(_modalModel.HighestQualification) ? _modalModel.Qualification : _modalModel.HighestQualification.Trim(),
+                    Specialization = string.IsNullOrWhiteSpace(_modalModel.Specialization) ? _modalModel.Subject : _modalModel.Specialization.Trim(),
+                    TeachingExperienceYears = _modalModel.TeachingExperienceYears,
+                    Address = string.IsNullOrWhiteSpace(_modalModel.Address) ? null : _modalModel.Address.Trim(),
+                    City = string.IsNullOrWhiteSpace(_modalModel.City) ? null : _modalModel.City.Trim(),
+                    State = string.IsNullOrWhiteSpace(_modalModel.State) ? null : _modalModel.State.Trim(),
+                    PostalCode = string.IsNullOrWhiteSpace(_modalModel.PostalCode) ? null : _modalModel.PostalCode.Trim(),
+                    Country = string.IsNullOrWhiteSpace(_modalModel.Country) ? "India" : _modalModel.Country.Trim(),
+                    AadharNumber = string.IsNullOrWhiteSpace(_modalModel.AadharNumber) ? null : _modalModel.AadharNumber.Trim(),
+                    PreviousInstitute = string.IsNullOrWhiteSpace(_modalModel.PreviousInstitute) ? null : _modalModel.PreviousInstitute.Trim(),
+                    Bio = string.IsNullOrWhiteSpace(_modalModel.Bio) ? null : _modalModel.Bio.Trim(),
+                    IsActive = _modalModel.IsActive
+                };
+
+                var res = await TeacherService.CreateTeacherAsync(req);
+                if (res != null && res.Success)
+                {
+                    Toast.Success(res.Message ?? "Operation completed successfully.");
+                    await CloseDrawerAsync();
+                    await LoadTeachersAsync(1);
+                }
+                else
+                {
+                    Toast.Error(res?.Message ?? "Failed to register teacher.");
+                }
+            }
+            else
+            {
+                var req = new UpdateTeacherRequest
+                {
+                    Id = _editingTeacher.Id,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Email = string.IsNullOrWhiteSpace(_modalModel.Email) ? null : _modalModel.Email.Trim(),
+                    Mobile = string.IsNullOrWhiteSpace(_modalModel.Mobile) ? (string.IsNullOrWhiteSpace(_modalModel.Phone) ? null : _modalModel.Phone.Trim()) : _modalModel.Mobile.Trim(),
+                    EmployeeCode = string.IsNullOrWhiteSpace(_modalModel.EmployeeCode) ? (string.IsNullOrWhiteSpace(_modalModel.EmployeeId) ? null : _modalModel.EmployeeId.Trim()) : _modalModel.EmployeeCode.Trim(),
+                    JoiningDate = _modalModel.JoiningDate,
+                    Department = string.IsNullOrWhiteSpace(_modalModel.Department) ? _modalModel.Subject : _modalModel.Department.Trim(),
+                    Designation = string.IsNullOrWhiteSpace(_modalModel.Designation) ? "Faculty" : _modalModel.Designation.Trim(),
+                    HighestQualification = string.IsNullOrWhiteSpace(_modalModel.HighestQualification) ? _modalModel.Qualification : _modalModel.HighestQualification.Trim(),
+                    Specialization = string.IsNullOrWhiteSpace(_modalModel.Specialization) ? _modalModel.Subject : _modalModel.Specialization.Trim(),
+                    TeachingExperienceYears = _modalModel.TeachingExperienceYears,
+                    Address = string.IsNullOrWhiteSpace(_modalModel.Address) ? null : _modalModel.Address.Trim(),
+                    City = string.IsNullOrWhiteSpace(_modalModel.City) ? null : _modalModel.City.Trim(),
+                    State = string.IsNullOrWhiteSpace(_modalModel.State) ? null : _modalModel.State.Trim(),
+                    PostalCode = string.IsNullOrWhiteSpace(_modalModel.PostalCode) ? null : _modalModel.PostalCode.Trim(),
+                    Country = string.IsNullOrWhiteSpace(_modalModel.Country) ? "India" : _modalModel.Country.Trim(),
+                    AadharNumber = string.IsNullOrWhiteSpace(_modalModel.AadharNumber) ? null : _modalModel.AadharNumber.Trim(),
+                    PreviousInstitute = string.IsNullOrWhiteSpace(_modalModel.PreviousInstitute) ? null : _modalModel.PreviousInstitute.Trim(),
+                    Bio = string.IsNullOrWhiteSpace(_modalModel.Bio) ? null : _modalModel.Bio.Trim(),
+                    IsActive = _modalModel.IsActive
+                };
+
+                var res = await TeacherService.UpdateTeacherAsync(req);
+                if (res != null && res.Success)
+                {
+                    Toast.Success(res.Message ?? "Operation completed successfully.");
+                    await CloseDrawerAsync();
+                    await LoadTeachersAsync(_query.PageNumber);
+                }
+                else
+                {
+                    Toast.Error(res?.Message ?? "Failed to update teacher.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error saving teacher: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
     }
 
     private void OpenViewProfile(TeacherDto teacher)
     {
-        _activeMenuTeacherId = null;
         _selectedProfileTeacher = teacher;
     }
 
-    private void OpenBatchAssignment(TeacherDto teacher)
+    private async Task ToggleTeacherStatus(TeacherDto teacher)
     {
-        _activeMenuTeacherId = null;
-        _batchAssignTeacher = teacher;
+        try
+        {
+            var req = new UpdateTeacherRequest
+            {
+                Id = teacher.Id,
+                FirstName = !string.IsNullOrWhiteSpace(teacher.FirstName) ? teacher.FirstName : "Teacher",
+                LastName = !string.IsNullOrWhiteSpace(teacher.LastName) ? teacher.LastName : ".",
+                Email = teacher.Email,
+                Mobile = !string.IsNullOrWhiteSpace(teacher.Mobile) ? teacher.Mobile : teacher.Phone,
+                EmployeeCode = !string.IsNullOrWhiteSpace(teacher.EmployeeCode) ? teacher.EmployeeCode : teacher.EmployeeId,
+                JoiningDate = teacher.JoiningDate,
+                Department = teacher.Department,
+                Designation = teacher.Designation,
+                HighestQualification = teacher.HighestQualification,
+                Specialization = teacher.Specialization,
+                TeachingExperienceYears = teacher.TeachingExperienceYears,
+                Address = teacher.Address,
+                City = teacher.City,
+                State = teacher.State,
+                PostalCode = teacher.PostalCode,
+                Country = teacher.Country,
+                AadharNumber = teacher.AadharNumber,
+                PreviousInstitute = teacher.PreviousInstitute,
+                Bio = teacher.Bio,
+                IsActive = !teacher.IsActive
+            };
+
+            var res = await TeacherService.UpdateTeacherAsync(req);
+            if (res != null && res.Success)
+            {
+                Toast.Success($"Teacher status changed to {(req.IsActive ? "Active" : "Inactive")}.");
+                await LoadTeachersAsync(_query.PageNumber);
+            }
+            else
+            {
+                Toast.Error(res?.Message ?? "Failed to update status.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error updating teacher status: {ex.Message}");
+        }
     }
 
-    private void ToggleBatch(TeacherDto teacher, string batchName)
+    private async Task DeleteTeacherAsync(Guid id)
     {
-        if (teacher.Batches.Contains(batchName))
-            teacher.Batches.Remove(batchName);
-        else
-            teacher.Batches.Add(batchName);
-    }
-
-    private void ToggleTeacherStatus(TeacherDto teacher)
-    {
-        teacher.Status = teacher.Status == "Active" ? "Inactive" : "Active";
-        _activeMenuTeacherId = null;
+        try
+        {
+            var res = await TeacherService.DeleteTeacherAsync(id);
+            if (res != null && res.Success)
+            {
+                Toast.Success(res.Message ?? "Operation completed successfully.");
+                await LoadTeachersAsync(_query.PageNumber);
+            }
+            else
+            {
+                Toast.Error(res?.Message ?? "Failed to delete teacher.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error deleting teacher: {ex.Message}");
+        }
     }
 
     private void ExportCsv()
     {
-        // CSV Export logic
+        Toast.Info("Exporting teachers directory to CSV...");
     }
 }

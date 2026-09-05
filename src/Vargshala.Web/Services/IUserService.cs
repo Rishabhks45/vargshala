@@ -5,6 +5,10 @@ namespace Vargshala.Web.Services;
 
 public interface IUserService
 {
+    event Action<UserDto>? OnProfileUpdated;
+    UserDto? CurrentProfile { get; }
+    void NotifyProfileUpdated(UserDto profile);
+
     Task<ApiResponse<PagedResponse<UserDto>>> GetControlPanelUsersAsync(
         PagedRequest? request = null,
         UserRole? role = null,
@@ -21,5 +25,16 @@ public interface IUserService
 
     Task<ApiResponse<bool>> ToggleUserStatusAsync(
         Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<UserDto>> GetMyProfileAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<UserDto>> UpdateMyProfileAsync(
+        UpdateMyProfileRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<bool>> ChangePasswordAsync(
+        ChangePasswordRequest request,
         CancellationToken cancellationToken = default);
 }

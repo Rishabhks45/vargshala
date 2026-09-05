@@ -8,4 +8,5 @@ public interface IInstituteService
     Task<ApiResponse<PagedResponse<InstituteSummaryDto>>> GetAllInstitutesAsync(PagedRequest? request = null, CancellationToken cancellationToken = default);
     Task<ApiResponse<bool>> ToggleInstituteStatusAsync(Guid instituteId, CancellationToken cancellationToken = default);
     Task<ApiResponse<OrganizationDto>> UpdateInstituteAsync(UpdateOrganizationRequest request, CancellationToken cancellationToken = default);
+    Task<ApiResponse<OrganizationDto>> GetMyOrganizationAsync(CancellationToken cancellationToken = default);
 }

@@ -1,4 +1,5 @@
 using MediatR;
+using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Features.Organizations.Infrastructure;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Organizations;
@@ -8,10 +9,14 @@ namespace Vargshala.Application.Features.Organizations.Commands.UpdateOrganizati
 public class UpdateOrganizationCommandHandler : IRequestHandler<UpdateOrganizationCommand, ApiResponse<OrganizationDto>>
 {
     private readonly IOrganizationRepository _organizationRepository;
+    private readonly ICurrentUser _currentUser;
 
-    public UpdateOrganizationCommandHandler(IOrganizationRepository organizationRepository)
+    public UpdateOrganizationCommandHandler(
+        IOrganizationRepository organizationRepository,
+        ICurrentUser currentUser)
     {
         _organizationRepository = organizationRepository;
+        _currentUser = currentUser;
     }
 
     public async Task<ApiResponse<OrganizationDto>> Handle(
@@ -19,6 +24,12 @@ public class UpdateOrganizationCommandHandler : IRequestHandler<UpdateOrganizati
         CancellationToken cancellationToken)
     {
         var req = command.Request;
+
+        if (!_currentUser.IsSuperAdmin && _currentUser.OrganizationId != req.Id)
+        {
+            return ApiResponse<OrganizationDto>.FailureResponse("Unauthorized to update this organization.");
+        }
+
         var org = await _organizationRepository.GetByIdForUpdateAsync(req.Id, cancellationToken);
 
         if (org == null)

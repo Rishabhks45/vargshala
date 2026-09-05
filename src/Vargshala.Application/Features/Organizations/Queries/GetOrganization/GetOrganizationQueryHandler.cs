@@ -28,6 +28,16 @@ public class GetOrganizationQueryHandler
     {
         if (_currentUser.OrganizationId is null)
         {
+            if (_currentUser.IsSuperAdmin)
+            {
+                var all = await _organizationRepository.GetAllAsync(cancellationToken);
+                var first = all.FirstOrDefault();
+                if (first != null)
+                {
+                    return ApiResponse<OrganizationDto>.SuccessResponse(first.Adapt<OrganizationDto>());
+                }
+            }
+
             return ApiResponse<OrganizationDto>.FailureResponse("No organization associated with this user.");
         }
 
