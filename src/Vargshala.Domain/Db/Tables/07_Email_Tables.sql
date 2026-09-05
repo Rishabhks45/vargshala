@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS public."EmailTemplates"
     "Category"              INTEGER                  NOT NULL DEFAULT 1, -- 1=Onboarding, 2=Auth & Security, 3=Billing, 4=System
     
     -- Step 2: Target Role (Audience)
-    "TargetRole"            INTEGER                  NULL,     -- NULL=All Roles, 1001=SuperAdmin, 1=OrgAdmin, 2=Teacher, 3=Student
+    "TargetRole"            INTEGER                  NULL,     -- NULL=All Roles, 1001=SuperAdmin, 1=OrgAdmin, 2=Teacher, 3=Student, 4=BranchAdmin
     
     -- Step 3: Template (Code & Display Name)
     "Code"                  VARCHAR(50)              NOT NULL, -- 'WELCOME_ONBOARD', 'FORGOT_PASSWORD', 'PASSWORD_RESET'
