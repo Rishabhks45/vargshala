@@ -1,23 +1,26 @@
 <aside class="@GetAsideClass()">
     
-    <!-- Top Brand Header: Always Shows Logo (Both Expanded & Collapsed) -->
+    <!-- Top Brand Header: Logo.svg + BrandText.svg when expanded, Logo.svg when collapsed -->
     <div class="@GetHeaderClass()">
         @if (!IsCollapsed)
         {
-            <div class="flex items-center gap-3 overflow-hidden">
-                <img src="images/vargshala-logo.png" alt="Vargshala" class="w-9 h-9 rounded-full shadow-md shrink-0 object-contain drop-shadow-sm" />
-                <div class="min-w-0">
-                    <div class="font-extrabold text-base tracking-tight leading-tight flex items-center">
-                        <span class="text-white">Varg</span><span class="text-[#2DD4BF]">shala</span>
-                    </div>
-                    <p class="text-[9px] text-teal-200/80 uppercase tracking-wider">Institute SaaS</p>
-                </div>
-            </div>
+            <a href="/" class="flex items-center gap-2.5 overflow-hidden py-1 group" title="Vargshala Institute SaaS">
+                <img src="images/Logo.svg" 
+                     alt="Vargshala" 
+                     class="w-10 h-10 shrink-0 object-contain drop-shadow-md transition-transform duration-200 group-hover:scale-105" />
+                <img src="images/BrandText.svg" 
+                     alt="Vargshala Institute SaaS" 
+                     class="h-9 w-auto object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-[1.02]" />
+            </a>
         }
         else
         {
             <!-- Always Visible Centered Brand Logo in Collapsed Icon Mode -->
-            <img src="images/vargshala-logo.png" alt="Vargshala" class="w-9 h-9 rounded-full shadow-md shrink-0 cursor-pointer object-contain drop-shadow-sm" title="Vargshala Institute SaaS" />
+            <a href="/" class="flex items-center justify-center" title="Vargshala Institute SaaS">
+                <img src="images/Logo.svg" 
+                     alt="Vargshala" 
+                     class="w-10 h-10 shrink-0 cursor-pointer object-contain drop-shadow-md transition-transform duration-200 hover:scale-105" />
+            </a>
         }
     </div>
 
@@ -619,7 +622,7 @@
         $"flex flex-col {(IsCollapsed ? "w-16" : "w-60")} h-screen max-h-screen sticky top-0 bg-[#004D40] text-teal-100 transition-all duration-300 ease-in-out shrink-0 select-none border-none overflow-hidden justify-between relative";
 
     private string GetHeaderClass() =>
-        $"flex items-center {(IsCollapsed ? "justify-center px-2" : "justify-start px-4")} h-16 border-none shrink-0";
+        $"flex items-center {(IsCollapsed ? "justify-center px-2" : "justify-start px-3")} h-16 border-none shrink-0";
 
     private string GetNavLinkClass() =>
         $"flex items-center {(IsCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2")} rounded-xl text-xs font-medium transition-all text-teal-100 hover:text-white hover:bg-white/10 group relative";

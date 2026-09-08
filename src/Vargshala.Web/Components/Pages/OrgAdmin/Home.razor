@@ -6,7 +6,7 @@
 
 <AuthorizeView Roles="OrganizationAdmin,Teacher" Context="coachDashboardContext">
     <Authorized>
-        <div class="space-y-6">
+        <div class="flex-1 min-h-0 h-full overflow-y-auto scrollbar-hidden space-y-6 transition-colors duration-200 pb-20">
     
     <!-- Top Dashboard Action Bar with DateRangePicker & Coral Button -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -31,6 +31,38 @@
                     Text="Export" 
                     Icon="Export" 
                     OnClick="HandleExport" />
+        </div>
+    </div>
+
+    <!-- Vargshala Institute Hero Showcase Banner with Section.svg -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004D40] via-[#00382E] to-[#002B23] border border-teal-700/60 shadow-xl p-5 sm:p-6 text-white flex flex-col lg:flex-row items-center justify-between gap-6">
+        <!-- Ambient Glowing Background Spheres -->
+        <div class="absolute -top-16 -left-16 w-64 h-64 bg-[#009488]/25 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-16 -right-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 space-y-3 max-w-xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-900/80 border border-teal-500/40 text-[11px] font-bold text-teal-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Institute Management Suite Active
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                Welcome to <span class="text-[#2DD4BF]">Vargshala</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-teal-200/90 leading-relaxed">
+                Streamlined multi-tenant coaching & institute automation. Monitor student admissions, live classroom batches, fee collections, and staff analytics in real time.
+            </p>
+            <div class="flex flex-wrap items-center gap-3 pt-1">
+                <a href="students" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] text-white text-xs font-bold shadow-md transition-all">
+                    <span>+ New Admission</span>
+                </a>
+                <a href="batches" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-teal-500/30 text-white text-xs font-semibold transition-all">
+                    <span>View Batches</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="relative z-10 w-full lg:w-auto flex justify-center lg:justify-end shrink-0">
+            <img src="images/Section.svg" alt="Vargshala Institutes" class="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition-transform duration-300" />
         </div>
     </div>
 
