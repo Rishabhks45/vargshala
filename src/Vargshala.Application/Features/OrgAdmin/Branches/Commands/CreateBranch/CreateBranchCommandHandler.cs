@@ -1,9 +1,7 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Vargshala.Application.Abstractions.Authentication;
 using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
 using Vargshala.Application.Features.OrgAdmin.Branches.Infrastructure;
 using Vargshala.Application.Settings;
 using Vargshala.Contracts.Branches;
@@ -14,20 +12,17 @@ namespace Vargshala.Application.Features.OrgAdmin.Branches.Commands.CreateBranch
 
 public class CreateBranchCommandHandler : IRequestHandler<CreateBranchCommand, ApiResponse<BranchDto>>
 {
-    private readonly IVargshalaDbContext _db;
     private readonly IBranchRepository _branchRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IEncryptionService _encryptionService;
     private readonly EncryptionSettings _encryptionSettings;
 
     public CreateBranchCommandHandler(
-        IVargshalaDbContext db,
         IBranchRepository branchRepository,
         ICurrentUser currentUser,
         IEncryptionService encryptionService,
         IOptions<EncryptionSettings> encryptionOptions)
     {
-        _db = db;
         _branchRepository = branchRepository;
         _currentUser = currentUser;
         _encryptionService = encryptionService;
@@ -54,33 +49,23 @@ public class CreateBranchCommandHandler : IRequestHandler<CreateBranchCommand, A
             return ApiResponse<BranchDto>.FailureResponse($"A branch with code '{code}' already exists in your institute.");
         }
 
-        // If Branch Admin information is provided, verify email uniqueness
+        // If Branch Admin information is provided, verify email uniqueness via Repository
         var hasAdminInfo = !string.IsNullOrWhiteSpace(req.AdminEmail) && !string.IsNullOrWhiteSpace(req.AdminFirstName);
         string? adminEmailLower = null;
         if (hasAdminInfo)
         {
             adminEmailLower = req.AdminEmail!.Trim().ToLowerInvariant();
-            var emailExists = await _db.Users
-                .AnyAsync(u => u.Email != null && u.Email.ToLower() == adminEmailLower && !u.IsDeleted, cancellationToken);
+            var emailExists = await _branchRepository.IsUserEmailTakenAsync(adminEmailLower, null, cancellationToken);
             if (emailExists)
             {
                 return ApiResponse<BranchDto>.FailureResponse($"A user with email '{req.AdminEmail}' already exists in the system.");
             }
         }
 
-        // If this branch is marked as main branch, demote any other main branch in this organization
+        // If this branch is marked as main branch, demote any other main branch in this organization via Repository
         if (req.IsMainBranch)
         {
-            var currentMainBranches = await _db.Branches
-                .Where(b => b.OrganizationId == orgId.Value && b.IsMainBranch && !b.IsDeleted)
-                .ToListAsync(cancellationToken);
-
-            foreach (var mb in currentMainBranches)
-            {
-                mb.IsMainBranch = false;
-                mb.UpdatedAt = DateTime.UtcNow;
-                mb.UpdatedBy = _currentUser.UserId;
-            }
+            await _branchRepository.DemoteOtherMainBranchesAsync(orgId.Value, Guid.Empty, _currentUser.UserId, cancellationToken);
         }
 
         var branch = new Branch
@@ -126,22 +111,10 @@ public class CreateBranchCommandHandler : IRequestHandler<CreateBranchCommand, A
                 CreatedBy = _currentUser.UserId
             };
 
-            await _db.Users.AddAsync(branchAdmin, cancellationToken);
-
-            var branchAccess = new UserBranchAccess
-            {
-                Id = Guid.NewGuid(),
-                UserId = branchAdmin.Id,
-                BranchId = branch.Id,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = _currentUser.UserId
-            };
-
-            await _db.UserBranchAccesses.AddAsync(branchAccess, cancellationToken);
+            await _branchRepository.CreateBranchAdminAsync(branchAdmin, branch.Id, _currentUser.UserId, cancellationToken);
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _branchRepository.SaveChangesAsync(cancellationToken);
 
         var dto = branch.ToDto();
         if (branchAdmin != null)

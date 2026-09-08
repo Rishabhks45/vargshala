@@ -153,6 +153,13 @@ public class UpdateBranchRequest
     public bool IsMainBranch { get; set; }
     public bool UseBranchName { get; set; } = true;
     public bool IsActive { get; set; } = true;
+
+    // Branch Administrator User Details (Assigned BranchAdmin role)
+    public string? AdminFirstName { get; set; }
+    public string? AdminLastName { get; set; }
+    public string? AdminEmail { get; set; }
+    public string? AdminMobile { get; set; }
+    public string? AdminPassword { get; set; }
 }
 
 public class UpdateBranchRequestValidator : AbstractValidator<UpdateBranchRequest>
@@ -198,6 +205,28 @@ public class UpdateBranchRequestValidator : AbstractValidator<UpdateBranchReques
 
         RuleFor(x => x.Country)
             .MaximumLength(100).WithMessage("Country cannot exceed 100 characters.");
+
+        When(x => !string.IsNullOrWhiteSpace(x.AdminEmail) || !string.IsNullOrWhiteSpace(x.AdminFirstName), () =>
+        {
+            RuleFor(x => x.AdminFirstName)
+                .NotEmpty().WithMessage("Branch Admin First Name is required.")
+                .MaximumLength(100).WithMessage("First name cannot exceed 100 characters.");
+
+            RuleFor(x => x.AdminLastName)
+                .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters.");
+
+            RuleFor(x => x.AdminEmail)
+                .NotEmpty().WithMessage("Branch Admin Email is required.")
+                .EmailAddress().WithMessage("Please enter a valid email address for Branch Admin.")
+                .MaximumLength(150).WithMessage("Email cannot exceed 150 characters.");
+
+            RuleFor(x => x.AdminPassword)
+                .MinimumLength(6).WithMessage("Password must be at least 6 characters.")
+                .When(x => !string.IsNullOrWhiteSpace(x.AdminPassword));
+
+            RuleFor(x => x.AdminMobile)
+                .MaximumLength(20).WithMessage("Mobile number cannot exceed 20 characters.");
+        });
     }
 }
 

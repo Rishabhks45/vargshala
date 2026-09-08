@@ -191,5 +191,69 @@ public class BranchRepository : IBranchRepository
     {
         return await _db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DemoteOtherMainBranchesAsync(Guid organizationId, Guid excludeBranchId, Guid updatedBy, CancellationToken cancellationToken = default)
+    {
+        var mainBranches = await _db.Branches
+            .Where(b => b.OrganizationId == organizationId && b.IsMainBranch && b.Id != excludeBranchId && !b.IsDeleted)
+            .ToListAsync(cancellationToken);
+
+        foreach (var mb in mainBranches)
+        {
+            mb.IsMainBranch = false;
+            mb.UpdatedAt = DateTime.UtcNow;
+            mb.UpdatedBy = updatedBy;
+        }
+    }
+
+    public async Task<bool> IsUserEmailTakenAsync(string email, Guid? excludeUserId = null, CancellationToken cancellationToken = default)
+    {
+        var lower = email.Trim().ToLower();
+        var query = _db.Users.Where(u => u.Email != null && u.Email.ToLower() == lower && !u.IsDeleted);
+        if (excludeUserId.HasValue)
+        {
+            query = query.Where(u => u.Id != excludeUserId.Value);
+        }
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<User?> GetBranchAdminAsync(Guid branchId, CancellationToken cancellationToken = default)
+    {
+        var access = await _db.UserBranchAccesses
+            .AsNoTracking()
+            .Include(uba => uba.User)
+            .FirstOrDefaultAsync(uba => uba.BranchId == branchId && uba.IsActive && uba.User.Role == UserRole.BranchAdmin && !uba.User.IsDeleted, cancellationToken);
+
+        return access?.User;
+    }
+
+    public async Task<User?> GetBranchAdminForUpdateAsync(Guid branchId, CancellationToken cancellationToken = default)
+    {
+        var access = await _db.UserBranchAccesses
+            .Include(uba => uba.User)
+            .FirstOrDefaultAsync(uba => uba.BranchId == branchId && uba.IsActive && uba.User.Role == UserRole.BranchAdmin && !uba.User.IsDeleted, cancellationToken);
+
+        return access?.User;
+    }
+
+    public async Task CreateBranchAdminAsync(User adminUser, Guid branchId, Guid createdBy, CancellationToken cancellationToken = default)
+    {
+        await _db.Users.AddAsync(adminUser, cancellationToken);
+        var access = new UserBranchAccess
+        {
+            Id = Guid.NewGuid(),
+            UserId = adminUser.Id,
+            BranchId = branchId,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = createdBy
+        };
+        await _db.UserBranchAccesses.AddAsync(access, cancellationToken);
+    }
+
+    public void UpdateUser(User user)
+    {
+        _db.Users.Update(user);
+    }
     #endregion
 }

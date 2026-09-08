@@ -40,9 +40,9 @@ public class GetBranchesPagedQueryHandler : IRequestHandler<GetBranchesPagedQuer
 
         var pagedResponse = PagedResponse<BranchDto>.Create(
             dtos,
+            totalRecords,
             query.Request.PageNumber,
-            query.Request.PageSize,
-            totalRecords);
+            query.Request.PageSize);
 
         return ApiResponse<PagedResponse<BranchDto>>.SuccessResponse(pagedResponse);
     }

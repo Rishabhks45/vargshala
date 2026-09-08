@@ -104,6 +104,7 @@
     height: 0 !important;
   }
 
+
   /* Theme 4 Card Surface (Light & Dark) */
   .card-surface {
     background-color: #ffffff;
@@ -326,4 +327,13 @@ select:focus-visible,
 
 input, textarea, select {
   caret-color: #9333ea !important;
+}
+
+/* Action Tooltips (Custom Rich Styled) */
+.has-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+.has-tooltip:hover .tooltip-content {
+  display: flex !important;
 }

@@ -22,4 +22,12 @@ public interface IBranchRepository
     void Update(Branch branch);
     void Delete(Branch branch);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    // Main Branch & Branch Admin helpers
+    Task DemoteOtherMainBranchesAsync(Guid organizationId, Guid excludeBranchId, Guid updatedBy, CancellationToken cancellationToken = default);
+    Task<bool> IsUserEmailTakenAsync(string email, Guid? excludeUserId = null, CancellationToken cancellationToken = default);
+    Task<User?> GetBranchAdminAsync(Guid branchId, CancellationToken cancellationToken = default);
+    Task<User?> GetBranchAdminForUpdateAsync(Guid branchId, CancellationToken cancellationToken = default);
+    Task CreateBranchAdminAsync(User adminUser, Guid branchId, Guid createdBy, CancellationToken cancellationToken = default);
+    void UpdateUser(User user);
 }
