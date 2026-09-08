@@ -76,7 +76,9 @@ TestResults/
 .env.local
 .env.*.local
 
-# Sensitive config files (keep dev/base in git, ignore production secrets)
+# Sensitive config files (contain secrets/keys)
+**/appsettings.json
+**/appsettings.Development.json
 appsettings.Production.json
 
 # Database dumps (contain password hashes)
