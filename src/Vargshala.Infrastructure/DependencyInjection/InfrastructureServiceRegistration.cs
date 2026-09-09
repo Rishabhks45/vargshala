@@ -1,3 +1,5 @@
+using Vargshala.Application.Features.OrgAdmin.Classes.Infrastructure;
+using Vargshala.Application.Features.OrgAdmin.Batches.Infrastructure;
 using Vargshala.Application.Features.Subjects.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +58,9 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IStudentRepository,StudentRepository>();
         services.AddScoped<ITeacherRepository, TeacherRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<IClassRepository, ClassRepository>();
+        services.AddScoped<IBatchRepository, BatchRepository>();
+
         services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();

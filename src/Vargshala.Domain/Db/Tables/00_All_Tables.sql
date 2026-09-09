@@ -383,4 +383,187 @@ CREATE TABLE IF NOT EXISTS public."Subjects"
 CREATE INDEX IF NOT EXISTS "IX_Subjects_OrganizationId"
     ON public."Subjects" ("OrganizationId");
 
+-- ============================================================================
+-- 10. Classes Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public."Classes"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "BranchId" UUID NOT NULL,
+
+    "Name" VARCHAR(150) NOT NULL,
+    "Code" VARCHAR(50) NOT NULL,
+    "Description" TEXT,
+
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    "IsDeleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DeletedBy" UUID,
+    "DeletedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_Classes"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_Classes_Branches_BranchId"
+        FOREIGN KEY ("BranchId")
+        REFERENCES public."Branches" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "UQ_Classes_BranchId_Code"
+        UNIQUE ("BranchId", "Code")
+);
+
+CREATE INDEX IF NOT EXISTS "IX_Classes_BranchId"
+    ON public."Classes" ("BranchId");
+
+
+-- ============================================================================
+-- 11. Batches Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public."Batches"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "ClassId" UUID NOT NULL,
+    "SubjectId" UUID NOT NULL,
+
+    "Name" VARCHAR(150) NOT NULL,
+    "Code" VARCHAR(50) NOT NULL,
+    "StartTime" TIME,
+    "EndTime" TIME,
+
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    "IsDeleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DeletedBy" UUID,
+    "DeletedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_Batches"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_Batches_Classes_ClassId"
+        FOREIGN KEY ("ClassId")
+        REFERENCES public."Classes" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "FK_Batches_Subjects_SubjectId"
+        FOREIGN KEY ("SubjectId")
+        REFERENCES public."Subjects" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "UQ_Batches_ClassId_Code"
+        UNIQUE ("ClassId", "Code")
+);
+
+CREATE INDEX IF NOT EXISTS "IX_Batches_ClassId"
+    ON public."Batches" ("ClassId");
+
+CREATE INDEX IF NOT EXISTS "IX_Batches_SubjectId"
+    ON public."Batches" ("SubjectId");
+
+
+-- ============================================================================
+-- 12. BatchTeachers Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public."BatchTeachers"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "BatchId" UUID NOT NULL,
+    "TeacherId" UUID NOT NULL,
+
+    "AssignedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "RemovedAt" TIMESTAMPTZ,
+
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_BatchTeachers"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_BatchTeachers_Batches_BatchId"
+        FOREIGN KEY ("BatchId")
+        REFERENCES public."Batches" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "FK_BatchTeachers_Teachers_TeacherId"
+        FOREIGN KEY ("TeacherId")
+        REFERENCES public."Teachers" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "UQ_BatchTeachers_BatchId_TeacherId"
+        UNIQUE ("BatchId", "TeacherId")
+);
+
+CREATE INDEX IF NOT EXISTS "IX_BatchTeachers_BatchId"
+    ON public."BatchTeachers" ("BatchId");
+
+CREATE INDEX IF NOT EXISTS "IX_BatchTeachers_TeacherId"
+    ON public."BatchTeachers" ("TeacherId");
+
+
+-- ============================================================================
+-- 13. BatchStudents Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public."BatchStudents"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "BatchId" UUID NOT NULL,
+    "StudentId" UUID NOT NULL,
+
+    "IsPrimary" BOOLEAN NOT NULL DEFAULT TRUE,
+    "EnrollmentType" VARCHAR(50) NOT NULL DEFAULT 'Regular',
+
+    "JoinedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "LeftAt" TIMESTAMPTZ,
+
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_BatchStudents"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_BatchStudents_Batches_BatchId"
+        FOREIGN KEY ("BatchId")
+        REFERENCES public."Batches" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "FK_BatchStudents_Students_StudentId"
+        FOREIGN KEY ("StudentId")
+        REFERENCES public."Students" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "UQ_BatchStudents_BatchId_StudentId"
+        UNIQUE ("BatchId", "StudentId")
+);
+
+CREATE INDEX IF NOT EXISTS "IX_BatchStudents_BatchId"
+    ON public."BatchStudents" ("BatchId");
+
+CREATE INDEX IF NOT EXISTS "IX_BatchStudents_StudentId"
+    ON public."BatchStudents" ("StudentId");
+
 COMMIT;

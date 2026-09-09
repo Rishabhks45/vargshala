@@ -31,4 +31,5 @@ public class Teacher : BaseEntity
 
     // Navigation
     public User User { get; set; } = null!;
+    public ICollection<BatchTeacher> BatchTeachers { get; set; } = new List<BatchTeacher>();
 }

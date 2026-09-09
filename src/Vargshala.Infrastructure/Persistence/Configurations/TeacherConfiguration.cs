@@ -30,7 +30,7 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
 
         // One-to-one relationship with User
         builder.HasOne(t => t.User)
-            .WithOne()
+            .WithOne(u => u.Teacher)
             .HasForeignKey<Teacher>(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 

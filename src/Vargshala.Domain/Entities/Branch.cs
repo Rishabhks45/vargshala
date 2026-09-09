@@ -28,4 +28,5 @@ public class Branch : BaseEntity
     // Navigation
     public Organization Organization { get; set; } = null!;
     public ICollection<UserBranchAccess> UserBranchAccesses { get; set; } = new List<UserBranchAccess>();
+    public ICollection<Class> Classes { get; set; } = new List<Class>();
 }

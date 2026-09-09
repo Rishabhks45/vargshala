@@ -44,4 +44,5 @@ public class Student : BaseEntity
 
     // Navigation
     public User User { get; set; } = null!;
+    public ICollection<BatchStudent> BatchStudents { get; set; } = new List<BatchStudent>();
 }

@@ -13,4 +13,5 @@ public class Subject : BaseEntity
 
     // Navigation
     public Organization Organization { get; set; } = null!;
+    public ICollection<Batch> Batches { get; set; } = new List<Batch>();
 }

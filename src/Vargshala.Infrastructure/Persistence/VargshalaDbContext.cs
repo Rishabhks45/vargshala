@@ -19,6 +19,10 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<UserBranchAccess> UserBranchAccesses => Set<UserBranchAccess>();
     public DbSet<Subject> Subjects => Set<Subject>();
+    public DbSet<Class> Classes => Set<Class>();
+    public DbSet<Batch> Batches => Set<Batch>();
+    public DbSet<BatchTeacher> BatchTeachers => Set<BatchTeacher>();
+    public DbSet<BatchStudent> BatchStudents => Set<BatchStudent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +39,8 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
         modelBuilder.Entity<Teacher>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Branch>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Subject>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Class>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Batch>().HasQueryFilter(e => !e.IsDeleted);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
