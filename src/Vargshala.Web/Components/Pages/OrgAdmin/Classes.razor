@@ -1,0 +1,952 @@
+@page "/classes"
+@page "/class"
+@attribute [Authorize(Roles = "OrganizationAdmin,SuperAdmin,BranchAdmin,1,1001,4")]
+@using Microsoft.AspNetCore.Components.Web
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Classes
+@using Vargshala.Contracts.Branches
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Pagination
+@using Vargshala.Web.Services
+@inject IClassService ClassService
+@inject IBranchService BranchService
+@inject INotificationService Toast
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Classes Directory | Vargshala</PageTitle>
+
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
+    
+    <!-- Top Header & Action Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Classes Directory
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage academic standards, grades, classes, and branch allocations.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="OpenAddDrawerAsync"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                <span>Add Class</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Summary -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Classes</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        @_classes.Count(c => c.IsActive) Active • @_classes.Count(c => !c.IsActive) Inactive
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Classes</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                        @_classes.Count(c => c.IsActive)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Available for batch assignment</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Linked Batches</p>
+                    <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                        @_classes.Sum(c => c.BatchesCount)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Total across current classes</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Branches</p>
+                    <h3 class="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
+                        @_branches.Count
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Campus locations</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="shrink-0 p-3 card-surface border border-tealborder rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 shadow-2xs">
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <!-- Search Input -->
+            <div class="relative min-w-[240px] max-w-sm w-full">
+                <input type="text" 
+                       @bind="_searchQuery" 
+                       @bind:event="oninput"
+                       @onkeyup="HandleSearchKeyUp"
+                       placeholder="Search by name or code..." 
+                       class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all shadow-2xs" />
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                @if (!string.IsNullOrWhiteSpace(_searchQuery))
+                {
+                    <button type="button" @onclick="ClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                }
+            </div>
+
+            <!-- Branch Filter -->
+            <div class="min-w-[170px]">
+                <select @onchange="HandleBranchChange"
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
+                    <option value="">All Branches</option>
+                    @foreach (var branch in _branches)
+                    {
+                        <option value="@branch.Id">@branch.Name</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="min-w-[130px]">
+                <select @onchange="HandleStatusChange"
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
+                    <option value="">All Statuses</option>
+                    <option value="true">Active Only</option>
+                    <option value="false">Inactive Only</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- View Mode Toggle -->
+        <div class="flex items-center gap-2 self-end md:self-auto">
+            <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] p-0.5 shadow-2xs">
+                <button type="button" @onclick='() => _viewMode = "table"'
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "table" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
+                        title="Table View">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <button type="button" @onclick='() => _viewMode = "grid"'
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "grid" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
+                        title="Grid View">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Data Container -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder rounded-2xl shadow-2xs flex flex-col overflow-hidden">
+        @if (_isLoading)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
+                <div class="w-8 h-8 border-3 border-[#009488] border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs font-semibold">Loading classes...</p>
+            </div>
+        }
+        else if (_classes.Count == 0)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#009488] flex items-center justify-center mb-3">
+                    <svg class="w-8 h-8 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                    </svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white">No Classes Found</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
+                    No classes match your current search filters or none have been created yet.
+                </p>
+                <button type="button" @onclick="OpenAddDrawerAsync"
+                        class="mt-4 px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-md shadow-[#004D40]/20 hover:scale-[1.02] transition-all cursor-pointer">
+                    Add First Class
+                </button>
+            </div>
+        }
+        else if (_viewMode == "table")
+        {
+            <!-- Table View -->
+            <div class="flex-1 overflow-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-[#142025] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10">
+                            <th class="py-3 px-4">Class Details</th>
+                            <th class="py-3 px-4">Branch</th>
+                            <th class="py-3 px-4">Description</th>
+                            <th class="py-3 px-4 text-center">Batches</th>
+                            <th class="py-3 px-4 text-center">Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                        @foreach (var cls in _classes)
+                        {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-[#18262c]/50 transition-colors">
+                                <!-- Class Info -->
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 dark:border-teal-800 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                                            @GetInitials(cls.Name)
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-slate-900 dark:text-white truncate">@cls.Name</p>
+                                            <span class="inline-block uppercase font-mono text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 rounded border border-teal-200/80 dark:border-teal-800/80 mt-0.5">
+                                                @cls.Code
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Branch -->
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold">
+                                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+                                        <span class="truncate">@(string.IsNullOrWhiteSpace(cls.BranchName) ? "Default Branch" : cls.BranchName)</span>
+                                    </div>
+                                </td>
+
+                                <!-- Description -->
+                                <td class="py-3 px-4 max-w-[220px]">
+                                    <p class="text-slate-500 dark:text-slate-400 truncate text-[11px]" title="@cls.Description">
+                                        @(string.IsNullOrWhiteSpace(cls.Description) ? "—" : cls.Description)
+                                    </p>
+                                </td>
+
+                                <!-- Batches Count -->
+                                <td class="py-3 px-4 text-center">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold @(cls.BatchesCount > 0 ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                                        <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                        @cls.BatchesCount
+                                    </span>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="py-3 px-4 text-center">
+                                    <button type="button" @onclick="() => ToggleStatusAsync(cls)"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer @(cls.IsActive ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200")"
+                                            title="Click to toggle status">
+                                        <span class="w-1.5 h-1.5 rounded-full @(cls.IsActive ? "bg-emerald-500" : "bg-slate-400")"></span>
+                                        @(cls.IsActive ? "Active" : "Inactive")
+                                    </button>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <button type="button" @onclick="() => OpenViewModal(cls)"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors cursor-pointer"
+                                                title="View Details">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </button>
+                                        <button type="button" @onclick="() => OpenEditDrawerAsync(cls)"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                                                title="Edit Class">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        </button>
+                                        <button type="button" @onclick="() => ConfirmDelete(cls)"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                                title="Delete Class">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- Grid View -->
+            <div class="flex-1 overflow-auto p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    @foreach (var cls in _classes)
+                    {
+                        <div class="card-surface p-4 border border-tealborder rounded-2xl shadow-2xs hover:border-[#009488]/40 transition-all flex flex-col justify-between group">
+                            <div>
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/80 dark:border-teal-800 font-black text-sm flex items-center justify-center shrink-0">
+                                            @GetInitials(cls.Name)
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-slate-900 dark:text-white text-sm group-hover:text-[#009488] transition-colors">@cls.Name</h4>
+                                            <span class="inline-block uppercase font-mono text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-1.5 py-0.5 rounded border border-teal-200/80 dark:border-teal-800">
+                                                @cls.Code
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button type="button" @onclick="() => ToggleStatusAsync(cls)"
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border @(cls.IsActive ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200")">
+                                        @(cls.IsActive ? "Active" : "Inactive")
+                                    </button>
+                                </div>
+
+                                <div class="mt-3.5 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <span class="text-slate-400">Branch:</span>
+                                        <span class="font-semibold text-slate-800 dark:text-slate-200">@(string.IsNullOrWhiteSpace(cls.BranchName) ? "Default" : cls.BranchName)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <span class="text-slate-400">Active Batches:</span>
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">@cls.BatchesCount</span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(cls.Description))
+                                    {
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                            @cls.Description
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                                <button type="button" @onclick="() => OpenViewModal(cls)"
+                                        class="text-xs font-bold text-[#009488] hover:underline cursor-pointer">
+                                    View Details →
+                                </button>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" @onclick="() => OpenEditDrawerAsync(cls)"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                                            title="Edit Class">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </button>
+                                    <button type="button" @onclick="() => ConfirmDelete(cls)"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                            title="Delete Class">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Reusable Server-Side Table Pagination Component -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="@_currentPage" 
+                             PageSize="@_pageSize" 
+                             TotalRecords="@_totalRecords" 
+                             ItemLabel="classes"
+                             IsLoading="@_isLoading"
+                             OnPageChanged="HandlePageChanged"
+                             OnPageSizeChanged="HandlePageSizeChanged" />
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Add / Edit Class Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showAddEditModal)
+{
+    <!-- Backdrop Overlay -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-2 flex items-center justify-center shadow-md shrink-0">
+                    <svg class="w-5 h-5 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        <span>@(_editingClass == null ? "Add New Class" : "Edit Class Details")</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        @(_editingClass == null ? "Define a standard, grade or academic level" : $"Updating records for {_editingClass.Name}")
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <EditForm Model="@_formModel" OnValidSubmit="SaveClassAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <DataAnnotationsValidator />
+
+            <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4 select-text text-slate-800 dark:text-slate-100" style="scrollbar-width: none; -ms-overflow-style: none;">
+                
+                <!-- Branch Selection -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch *</label>
+                    <select @bind="_formModel.BranchId" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all font-medium cursor-pointer">
+                        <option value="@Guid.Empty">-- Select Branch --</option>
+                        @foreach (var b in _branches)
+                        {
+                            <option value="@b.Id">@b.Name</option>
+                        }
+                    </select>
+                    @if (_formModel.BranchId == Guid.Empty && _submitted)
+                    {
+                        <p class="text-[10px] text-rose-500 font-semibold">Please select a branch.</p>
+                    }
+                </div>
+
+                <!-- Class Name -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Class / Grade Name *</label>
+                    <InputText @bind-Value="_formModel.Name" placeholder="e.g. Class 10th or Grade 12 - PCM" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    <ValidationMessage For="@(() => _formModel.Name)" class="text-[10px] text-rose-500" />
+                </div>
+
+                <!-- Class Code -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Class Code *</label>
+                    <InputText @bind-Value="_formModel.Code" placeholder="e.g. CLS-10" class="w-full uppercase font-mono px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    <ValidationMessage For="@(() => _formModel.Code)" class="text-[10px] text-rose-500" />
+                    <p class="text-[10px] text-slate-400">Unique identifier within the selected branch.</p>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Description / Academic Note</label>
+                    <InputTextArea @bind-Value="_formModel.Description" rows="3" placeholder="Additional details, syllabus board, or notes..." class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                </div>
+
+                <!-- Active Status Toggle -->
+                <div class="pt-2">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" @bind="_formModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-teal-500 border-slate-300 dark:border-slate-700" />
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Active (Visible for batch creation)</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- Drawer Footer Buttons -->
+            <div class="p-4 bg-slate-50 dark:bg-[#111c21] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync" 
+                        disabled="@_isSaving"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#1f3037] rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        disabled="@_isSaving"
+                        class="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] rounded-xl shadow-md shadow-[#004D40]/20 transition-all cursor-pointer disabled:opacity-50">
+                    @if (_isSaving)
+                    {
+                        <svg class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>@(_editingClass == null ? "Create Class" : "Save Changes")</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: View Details Modal -->
+<!-- ========================================================================= -->
+@if (_selectedClass != null)
+{
+    <Modal IsOpen="true" 
+           Title="@_selectedClass.Name" 
+           Subtitle="@($"Code: {_selectedClass.Code}")" 
+           MaxWidth="max-w-md" 
+           OnClose="() => _selectedClass = null">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="p-4 bg-slate-50 dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3 text-xs">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Class Code:</span>
+                        <span class="font-mono font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
+                            @_selectedClass.Code
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Branch:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">
+                            @(string.IsNullOrWhiteSpace(_selectedClass.BranchName) ? "Default Branch" : _selectedClass.BranchName)
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Active Batches:</span>
+                        <span class="font-bold text-blue-600 dark:text-blue-400">@_selectedClass.BatchesCount</span>
+                    </div>
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Status:</span>
+                        <span class="inline-flex items-center gap-1 font-bold @(_selectedClass.IsActive ? "text-emerald-600" : "text-slate-400")">
+                            <span class="w-1.5 h-1.5 rounded-full @(_selectedClass.IsActive ? "bg-emerald-500" : "bg-slate-400")"></span>
+                            @(_selectedClass.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 font-medium">Created On:</span>
+                        <span class="text-slate-600 dark:text-slate-300 font-medium">
+                            @_selectedClass.CreatedAt.ToString("MMM dd, yyyy")
+                        </span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_selectedClass.Description))
+                {
+                    <div class="space-y-1">
+                        <h5 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Description</h5>
+                        <p class="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#18262c] p-3 rounded-xl border border-slate-200 dark:border-slate-700/60 leading-relaxed">
+                            @_selectedClass.Description
+                        </p>
+                    </div>
+                }
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-between w-full">
+                <button type="button" @onclick='() => Navigation.NavigateTo("batches")'
+                        class="text-xs font-bold text-[#009488] hover:underline cursor-pointer">
+                    Manage Batches →
+                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" @onclick="async () => { var c = _selectedClass; _selectedClass = null; await OpenEditDrawerAsync(c); }"
+                            class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl transition-all cursor-pointer">
+                        Edit Class
+                    </button>
+                    <button type="button" @onclick="() => _selectedClass = null"
+                            class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Delete Confirmation -->
+<!-- ========================================================================= -->
+@if (_classToDelete != null)
+{
+    <Modal IsOpen="true" 
+           Title="Delete Class" 
+           Subtitle="Are you sure you want to delete this class?" 
+           MaxWidth="max-w-sm" 
+           OnClose="() => _classToDelete = null">
+        <ChildContent>
+            <div class="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                <p>This will soft-delete <span class="font-bold text-slate-900 dark:text-white">@_classToDelete.Name</span> (@_classToDelete.Code).</p>
+                <p class="text-[11px] text-slate-400">If active batches exist, deletion will be rejected to protect your academic records.</p>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-end gap-2 w-full">
+                <button type="button" @onclick="() => _classToDelete = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" @onclick="DeleteClassAsync"
+                        disabled="@_isDeleting"
+                        class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md shadow-rose-600/20 transition-all cursor-pointer disabled:opacity-50">
+                    @(_isDeleting ? "Deleting..." : "Delete Class")
+                </button>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private List<ClassDto> _classes = new();
+    private List<BranchDto> _branches = new();
+    private bool _isLoading = true;
+    private string _viewMode = "table";
+
+    // Filters & Pagination State
+    private string _searchQuery = string.Empty;
+    private Guid? _selectedBranchId;
+    private bool? _selectedStatus;
+    private int _currentPage = 1;
+    private int _pageSize = 10;
+    private int _totalRecords = 0;
+    private int _totalPages => _pageSize > 0 ? (int)Math.Ceiling((double)_totalRecords / _pageSize) : 1;
+
+    // Slide-over Drawer State
+    private bool _showAddEditModal = false;
+    private bool _isDrawerOpen = false;
+    private bool _isSaving = false;
+    private bool _submitted = false;
+    private ClassDto? _editingClass;
+    private ClassFormModel _formModel = new();
+
+    // Modals
+    private ClassDto? _selectedClass;
+    private ClassDto? _classToDelete;
+    private bool _isDeleting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBranchesAsync();
+        await LoadClassesAsync();
+    }
+
+    private async Task LoadBranchesAsync()
+    {
+        try
+        {
+            var res = await BranchService.GetAllActiveBranchesAsync();
+            if (res.Success && res.Data != null)
+            {
+                _branches = res.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Failed to load branches: " + ex.Message);
+        }
+    }
+
+    private async Task LoadClassesAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var req = new PagedRequest
+            {
+                PageNumber = _currentPage,
+                PageSize = _pageSize,
+                Search = _searchQuery,
+                SortBy = "Name",
+                SortDirection = "asc"
+            };
+
+            var res = await ClassService.GetClassesPagedAsync(req, _selectedBranchId, _selectedStatus);
+            if (res.Success && res.Data != null)
+            {
+                _classes = res.Data.Items;
+                _totalRecords = res.Data.TotalRecords;
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to load classes.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading classes: " + ex.Message);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            _currentPage = 1;
+            await LoadClassesAsync();
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        _searchQuery = string.Empty;
+        _currentPage = 1;
+        await LoadClassesAsync();
+    }
+
+    private async Task HandleBranchChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        _currentPage = 1;
+        await LoadClassesAsync();
+    }
+
+    private async Task HandleStatusChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _selectedStatus = string.IsNullOrWhiteSpace(val) ? null : bool.Parse(val);
+        _currentPage = 1;
+        await LoadClassesAsync();
+    }
+
+    private async Task HandlePageChanged(int page)
+    {
+        _currentPage = page;
+        await LoadClassesAsync();
+    }
+
+    private async Task HandlePageSizeChanged(int size)
+    {
+        _pageSize = size;
+        _currentPage = 1;
+        await LoadClassesAsync();
+    }
+
+    private async Task OpenAddDrawerAsync()
+    {
+        _editingClass = null;
+        _submitted = false;
+        _formModel = new ClassFormModel
+        {
+            BranchId = _branches.FirstOrDefault()?.Id ?? Guid.Empty,
+            IsActive = true
+        };
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task OpenEditDrawerAsync(ClassDto cls)
+    {
+        _editingClass = cls;
+        _submitted = false;
+        _formModel = new ClassFormModel
+        {
+            Id = cls.Id,
+            BranchId = cls.BranchId,
+            Name = cls.Name,
+            Code = cls.Code,
+            Description = cls.Description,
+            IsActive = cls.IsActive
+        };
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        await Task.Delay(300); // Wait for transition animation
+        _showAddEditModal = false;
+    }
+
+    private async Task SaveClassAsync()
+    {
+        _submitted = true;
+        if (_formModel.BranchId == Guid.Empty)
+        {
+            Toast.Error("Please select a branch.");
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            if (_editingClass == null)
+            {
+                var req = new CreateClassRequest
+                {
+                    BranchId = _formModel.BranchId,
+                    Name = _formModel.Name,
+                    Code = _formModel.Code,
+                    Description = _formModel.Description
+                };
+                var res = await ClassService.CreateClassAsync(req);
+                if (res.Success)
+                {
+                    Toast.Success("Class created successfully!");
+                    await CloseDrawerAsync();
+                    await LoadClassesAsync();
+                }
+                else
+                {
+                    Toast.Error(res.Message ?? "Failed to create class.");
+                }
+            }
+            else
+            {
+                var req = new UpdateClassRequest
+                {
+                    Id = _formModel.Id,
+                    BranchId = _formModel.BranchId,
+                    Name = _formModel.Name,
+                    Code = _formModel.Code,
+                    Description = _formModel.Description,
+                    IsActive = _formModel.IsActive
+                };
+                var res = await ClassService.UpdateClassAsync(req);
+                if (res.Success)
+                {
+                    Toast.Success("Class updated successfully!");
+                    await CloseDrawerAsync();
+                    await LoadClassesAsync();
+                }
+                else
+                {
+                    Toast.Error(res.Message ?? "Failed to update class.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error saving class: " + ex.Message);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task ToggleStatusAsync(ClassDto cls)
+    {
+        try
+        {
+            var res = await ClassService.ToggleClassStatusAsync(cls.Id);
+            if (res.Success)
+            {
+                cls.IsActive = res.Data;
+                Toast.Success(res.Message ?? "Status updated.");
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to update status.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error: " + ex.Message);
+        }
+    }
+
+    private void OpenViewModal(ClassDto cls)
+    {
+        _selectedClass = cls;
+    }
+
+    private void ConfirmDelete(ClassDto cls)
+    {
+        _classToDelete = cls;
+    }
+
+    private async Task DeleteClassAsync()
+    {
+        if (_classToDelete == null) return;
+        _isDeleting = true;
+        try
+        {
+            var res = await ClassService.DeleteClassAsync(_classToDelete.Id);
+            if (res.Success)
+            {
+                Toast.Success("Class deleted successfully.");
+                _classToDelete = null;
+                await LoadClassesAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to delete class.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error deleting class: " + ex.Message);
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
+    }
+
+    private void ExportCsv()
+    {
+        Toast.Info("Exporting classes directory to CSV...");
+    }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "C";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join("", parts.Where(s => char.IsLetter(s[0])).Take(2).Select(s => s[0])).ToUpper();
+    }
+
+    public class ClassFormModel
+    {
+        public Guid Id { get; set; }
+        public Guid BranchId { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Class Name is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(150, ErrorMessage = "Max 150 characters.")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Class Code is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(50, ErrorMessage = "Max 50 characters.")]
+        public string Code { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}
