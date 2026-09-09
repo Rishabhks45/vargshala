@@ -13,6 +13,7 @@ public interface IVargshalaDbContext
     DbSet<Teacher> Teachers { get; }
     DbSet<Branch> Branches { get; }
     DbSet<UserBranchAccess> UserBranchAccesses { get; }
+    DbSet<Subject> Subjects { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

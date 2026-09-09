@@ -1,3 +1,4 @@
+using Vargshala.Application.Features.Subjects.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,6 +56,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IStudentRepository,StudentRepository>();
         services.AddScoped<ITeacherRepository, TeacherRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();

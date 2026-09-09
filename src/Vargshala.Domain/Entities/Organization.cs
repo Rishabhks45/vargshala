@@ -27,4 +27,5 @@ public class Organization : BaseEntity
     // Navigation
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Branch> Branches { get; set; } = new List<Branch>();
+    public ICollection<Subject> Subjects { get; set; } = new List<Subject>();
 }

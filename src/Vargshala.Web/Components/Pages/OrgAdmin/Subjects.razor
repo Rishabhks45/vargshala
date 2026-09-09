@@ -1,0 +1,776 @@
+@page "/subjects"
+@attribute [Authorize(Roles = "OrganizationAdmin,SuperAdmin")]
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Subjects
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Pagination
+@using Vargshala.Web.Services
+@inject ISubjectService SubjectService
+@inject INotificationService Toast
+@rendermode InteractiveServer
+
+<PageTitle>Subjects Directory | Vargshala</PageTitle>
+
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
+    
+    <!-- Top Header & Action Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Subjects Directory
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage academic subjects, course codes, curriculum details, and syllabus mappings.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="OpenAddModalAsync"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                <span>Add Subject</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Summary -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Subjects</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        @_subjects.Count(s => s.IsActive) Active · @_subjects.Count(s => !s.IsActive) Inactive
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Subjects</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">@_subjects.Count(s => s.IsActive)</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Offered in Curriculums</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Inactive Subjects</p>
+                    <h3 class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">@_subjects.Count(s => !s.IsActive)</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Archived / Paused</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Current Page</p>
+                    <h3 class="text-2xl font-black text-sky-600 dark:text-sky-400 mt-1">@_subjects.Count</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Visible on Page @_query.PageNumber</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row items-center justify-between gap-3">
+        <!-- Search Input with Clear Button -->
+        <div class="relative w-full md:w-80">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </span>
+            <input type="text" 
+                   value="@_searchQuery" 
+                   @oninput="OnSearchInput" 
+                   placeholder="Search by name, code or description..." 
+                   class="w-full pl-9 pr-8 py-2 text-xs bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all shadow-2xs" />
+            @if (!string.IsNullOrEmpty(_searchQuery))
+            {
+                <button type="button" 
+                        @onclick="ClearSearchAsync" 
+                        class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            }
+        </div>
+
+        <!-- Filter Dropdowns -->
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <div class="w-40">
+                <CustomSelect Value="@_selectedStatus" 
+                              ValueChanged="HandleStatusChanged" 
+                              Options="_statusFilterOptions" 
+                              Placeholder="All Status" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Subjects Data Table -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        <div class="flex-1 min-h-0 overflow-auto scrollbar-hidden">
+            <table class="w-full min-w-[760px] text-left border-collapse table-fixed">
+                <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                    <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                        <th class="w-[36%] py-2 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("name")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Subject</span>
+                                <span class="@_sortState.GetIndicatorClass("name")">@_sortState.GetIndicator("name")</span>
+                            </div>
+                        </th>
+                        <th class="w-[18%] py-2 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("code")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Code</span>
+                                <span class="@_sortState.GetIndicatorClass("code")">@_sortState.GetIndicator("code")</span>
+                            </div>
+                        </th>
+                        <th class="w-[14%] py-2 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("isactive")'>
+                            <div class="flex items-center justify-center gap-1.5">
+                                <span>Status</span>
+                                <span class="@_sortState.GetIndicatorClass("isactive")">@_sortState.GetIndicator("isactive")</span>
+                            </div>
+                        </th>
+                        <th class="w-[16%] py-2 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("createdat")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Created</span>
+                                <span class="@_sortState.GetIndicatorClass("createdat")">@_sortState.GetIndicator("createdat")</span>
+                            </div>
+                        </th>
+                        <th class="w-[16%] py-2 px-5 text-right select-none">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _subjects.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                    @if (_isLoading && !_subjects.Any())
+                    {
+                        <TableSkeletonRows Columns="5" Rows="6" />
+                    }
+                    else if (_subjects.Any())
+                    {
+                        @foreach (var subject in _subjects)
+                        {
+                            <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors">
+                                
+                                <!-- Subject: Initials Avatar + Name + Description -->
+                                <td class="py-2.5 px-5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-xl bg-teal-500/10 text-[#009488] font-black text-xs flex items-center justify-center shrink-0 shadow-inner">
+                                            @(string.IsNullOrWhiteSpace(subject.Name) ? "S" : subject.Name.Substring(0, Math.Min(2, subject.Name.Length)).ToUpperInvariant())
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-slate-800 dark:text-white leading-tight truncate cursor-pointer hover:text-[#009488]"
+                                                 @onclick="() => OpenViewModal(subject)">
+                                                @subject.Name
+                                            </div>
+                                            <div class="text-[11px] text-slate-400 truncate mt-0.5 max-w-xs">
+                                                @(!string.IsNullOrEmpty(subject.Description) ? subject.Description : "No description provided")
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Code -->
+                                <td class="py-2.5 px-4">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-teal-800 dark:text-teal-300">
+                                        @subject.Code
+                                    </span>
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td class="py-2.5 px-3 text-center">
+                                    <button type="button" 
+                                            @onclick="() => ToggleStatusAsync(subject)"
+                                            class="cursor-pointer transition-transform active:scale-95">
+                                        <Badge Text="@(subject.IsActive ? "Active" : "Inactive")" 
+                                               Variant="@(subject.IsActive ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" />
+                                    </button>
+                                </td>
+
+                                <!-- Created Date -->
+                                <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
+                                    @subject.CreatedAt.ToString("dd MMM yyyy")
+                                </td>
+
+                                <!-- Action Buttons -->
+                                <td class="py-2.5 px-5 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        
+                                        <!-- Edit Action -->
+                                        <button type="button" 
+                                                @onclick="() => OpenEditModalAsync(subject)" 
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/50 transition-colors cursor-pointer" 
+                                                title="Edit Subject">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Delete Action -->
+                                        <button type="button" 
+                                                @onclick="() => ConfirmDeleteAsync(subject)" 
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer" 
+                                                title="Delete Subject">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                                    </svg>
+                                    <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No subjects found</p>
+                                    <p class="text-xs text-slate-400">Add a new subject or adjust your search filter.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Server-Side Table Pagination Component -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="_query.PageNumber" 
+                             PageSize="_query.PageSize" 
+                             TotalRecords="_totalRecords" 
+                             ItemLabel="subjects"
+                             IsLoading="_isLoading"
+                             OnPageChanged="LoadSubjectsAsync"
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Add / Edit Subject Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showAddEditModal)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-2 flex items-center justify-center shadow-md shrink-0">
+                    <svg class="w-5 h-5 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        <span>@(_editingSubject == null ? "Add New Subject" : "Edit Subject Details")</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        @(_editingSubject == null ? "Define a new curriculum course & subject code" : $"Updating records for {_editingSubject.Name}")
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <EditForm Model="@_formModel" OnValidSubmit="SaveSubjectAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <DataAnnotationsValidator />
+
+            <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-5 select-text text-slate-800 dark:text-slate-100" style="scrollbar-width: none; -ms-overflow-style: none;">
+                
+                <!-- Subject Name -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject Name *</label>
+                    <InputText @bind-Value="_formModel.Name" placeholder="e.g. Physics - Mechanics & Waves" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    <ValidationMessage For="@(() => _formModel.Name)" class="text-[10px] text-rose-500" />
+                </div>
+
+                <!-- Subject Code -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject Code *</label>
+                    <InputText @bind-Value="_formModel.Code" placeholder="e.g. PHY101" class="w-full uppercase font-mono px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    <ValidationMessage For="@(() => _formModel.Code)" class="text-[10px] text-rose-500" />
+                    <p class="text-[10px] text-slate-400">Must be unique across your organization.</p>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Description / Syllabus Overview</label>
+                    <InputTextArea @bind-Value="_formModel.Description" rows="4" placeholder="Brief outline of syllabus chapters, reference books, or focus areas..." class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                    <ValidationMessage For="@(() => _formModel.Description)" class="text-[10px] text-rose-500" />
+                </div>
+
+                <!-- Active Status Toggle -->
+                <div class="pt-2">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" @bind="_formModel.IsActive" class="w-4 h-4 rounded text-[#009488] focus:ring-teal-500 border-slate-300 dark:border-slate-700" />
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Active (Visible in curriculum and batch allocation)</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- Drawer Footer Action Buttons -->
+            <div class="p-4 bg-slate-50 dark:bg-[#111c21] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
+                <button type="button" 
+                        @onclick="CloseDrawerAsync" 
+                        disabled="@_isSaving"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#1f3037] rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        disabled="@_isSaving"
+                        class="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] rounded-xl shadow-md shadow-[#004D40]/20 transition-all cursor-pointer disabled:opacity-50">
+                    @if (_isSaving)
+                    {
+                        <svg class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>@(_editingSubject == null ? "Create Subject" : "Save Changes")</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: View Subject Details Modal -->
+<!-- ========================================================================= -->
+@if (_selectedSubject != null)
+{
+    <Modal IsOpen="true" 
+           Title="@_selectedSubject.Name" 
+           Subtitle="@($"Code: {_selectedSubject.Code}")" 
+           MaxWidth="max-w-md" 
+           OnClose="() => _selectedSubject = null">
+        <ChildContent>
+            <div class="space-y-4">
+                <div class="p-4 bg-slate-50 dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3 text-xs">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Subject Code:</span>
+                        <span class="font-mono font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
+                            @_selectedSubject.Code
+                        </span>
+                    </div>
+
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Status:</span>
+                        <Badge Text="@(_selectedSubject.IsActive ? "Active" : "Inactive")" 
+                               Variant="@(_selectedSubject.IsActive ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" />
+                    </div>
+
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                        <span class="text-slate-400 font-medium">Created On:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedSubject.CreatedAt.ToString("f")</span>
+                    </div>
+
+                    <div class="pt-1 space-y-1">
+                        <span class="text-slate-400 font-medium block">Description &amp; Syllabus:</span>
+                        <p class="text-slate-700 dark:text-slate-300 leading-relaxed font-normal bg-white dark:bg-[#111c21] p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                            @(!string.IsNullOrEmpty(_selectedSubject.Description) ? _selectedSubject.Description : "No description provided.")
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" 
+                    @onclick="async () => { var s = _selectedSubject; _selectedSubject = null; await OpenEditModalAsync(s); }" 
+                    class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#00796b] rounded-xl transition-all cursor-pointer">
+                Edit Subject
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Delete Confirmation Modal -->
+<!-- ========================================================================= -->
+@if (_subjectToDelete != null)
+{
+    <Modal IsOpen="true" 
+           Title="Delete Subject" 
+           Subtitle="Are you sure you want to delete this subject?" 
+           MaxWidth="max-w-sm" 
+           OnClose="() => _subjectToDelete = null">
+        <ChildContent>
+            <div class="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                <p>This will soft-delete <span class="font-bold text-slate-900 dark:text-white">@_subjectToDelete.Name</span> (@_subjectToDelete.Code).</p>
+                <p class="text-[11px] text-slate-400">Past student and batch history will be preserved.</p>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <button type="button" 
+                    @onclick="() => _subjectToDelete = null" 
+                    class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="ExecuteDeleteAsync" 
+                    class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all cursor-pointer">
+                Delete
+            </button>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private readonly TableQueryState _query = new();
+    private int _totalRecords = 0;
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+    private string _searchQuery = string.Empty;
+    private string _selectedStatus = string.Empty;
+    private TableSortState _sortState => _query.SortState;
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Status"),
+        new("Active", "Active Only"),
+        new("Inactive", "Inactive Only")
+    };
+
+    private bool _showAddEditModal = false;
+    private bool _isDrawerOpen = false;
+    private SubjectDto? _editingSubject;
+    private SubjectFormModel _formModel = new();
+    private SubjectDto? _selectedSubject;
+    private SubjectDto? _subjectToDelete;
+
+    private List<SubjectDto> _subjects = new();
+
+    public class SubjectFormModel
+    {
+        public Guid Id { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Subject name is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(150, ErrorMessage = "Cannot exceed 150 characters.")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Subject code is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(50, ErrorMessage = "Cannot exceed 50 characters.")]
+        public string Code { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.StringLength(1000, ErrorMessage = "Cannot exceed 1000 characters.")]
+        public string? Description { get; set; }
+
+        public bool IsActive { get; set; } = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubjectsAsync(1);
+    }
+
+    private async Task HandlePageSizeChangedAsync(int newSize)
+    {
+        _query.PageSize = newSize;
+        await LoadSubjectsAsync(1);
+    }
+
+    private async Task LoadSubjectsAsync(int page = 1)
+    {
+        _isLoading = true;
+        _query.PageNumber = page;
+
+        try
+        {
+            bool? isActive = null;
+            if (_selectedStatus == "Active") isActive = true;
+            else if (_selectedStatus == "Inactive") isActive = false;
+
+            var pagedRequest = new PagedRequest
+            {
+                PageNumber = _query.PageNumber,
+                PageSize = _query.PageSize,
+                Search = string.IsNullOrWhiteSpace(_searchQuery) ? null : _searchQuery.Trim(),
+                SortBy = _sortState.Column,
+                SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : (_sortState.Direction == SortDirection.Ascending ? "asc" : null)
+            };
+
+            var response = await SubjectService.GetSubjectsPagedAsync(pagedRequest, isActive);
+            if (response != null && response.Success && response.Data != null)
+            {
+                _subjects = response.Data.Items.ToList();
+                _totalRecords = response.Data.TotalRecords;
+            }
+            else
+            {
+                _subjects = new();
+                _totalRecords = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Failed to load subjects: {ex.Message}");
+            _subjects = new();
+            _totalRecords = 0;
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _searchQuery = e.Value?.ToString() ?? "";
+        await LoadSubjectsAsync(1);
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        _searchQuery = string.Empty;
+        await LoadSubjectsAsync(1);
+    }
+
+    private async Task HandleStatusChanged(string val)
+    {
+        _selectedStatus = val;
+        await LoadSubjectsAsync(1);
+    }
+
+    private async Task HandleSortAsync(string column)
+    {
+        _sortState.Toggle(column);
+        await LoadSubjectsAsync(1);
+    }
+
+    private void OpenViewModal(SubjectDto subject)
+    {
+        _selectedSubject = subject;
+    }
+
+    private async Task OpenAddModalAsync()
+    {
+        _editingSubject = null;
+        _formModel = new SubjectFormModel
+        {
+            IsActive = true
+        };
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task OpenEditModalAsync(SubjectDto subject)
+    {
+        _editingSubject = subject;
+        _formModel = new SubjectFormModel
+        {
+            Id = subject.Id,
+            Name = subject.Name,
+            Code = subject.Code,
+            Description = subject.Description,
+            IsActive = subject.IsActive
+        };
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        await Task.Delay(300);
+        _showAddEditModal = false;
+        _editingSubject = null;
+    }
+
+    private async Task SaveSubjectAsync()
+    {
+        if (_isSaving) return;
+        _isSaving = true;
+
+        try
+        {
+            if (_editingSubject == null)
+            {
+                var req = new CreateSubjectRequest
+                {
+                    Name = _formModel.Name,
+                    Code = _formModel.Code,
+                    Description = _formModel.Description
+                };
+                var response = await SubjectService.CreateSubjectAsync(req);
+                if (response.Success)
+                {
+                    Toast.Success(response.Message ?? "Subject created successfully.");
+                    await CloseDrawerAsync();
+                    await LoadSubjectsAsync(1);
+                }
+                else
+                {
+                    Toast.Error(response.Message ?? "Failed to create subject.");
+                }
+            }
+            else
+            {
+                var req = new UpdateSubjectRequest
+                {
+                    Id = _formModel.Id,
+                    Name = _formModel.Name,
+                    Code = _formModel.Code,
+                    Description = _formModel.Description,
+                    IsActive = _formModel.IsActive
+                };
+                var response = await SubjectService.UpdateSubjectAsync(req);
+                if (response.Success)
+                {
+                    Toast.Success(response.Message ?? "Subject updated successfully.");
+                    await CloseDrawerAsync();
+                    await LoadSubjectsAsync(_query.PageNumber);
+                }
+                else
+                {
+                    Toast.Error(response.Message ?? "Failed to update subject.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"An unexpected error occurred: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task ToggleStatusAsync(SubjectDto subject)
+    {
+        try
+        {
+            var response = await SubjectService.ToggleSubjectStatusAsync(subject.Id);
+            if (response.Success)
+            {
+                subject.IsActive = response.Data;
+                Toast.Success($"Subject status updated to {(subject.IsActive ? "Active" : "Inactive")}.");
+            }
+            else
+            {
+                Toast.Error(response.Message ?? "Failed to toggle status.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error toggling status: {ex.Message}");
+        }
+    }
+
+    private void ConfirmDeleteAsync(SubjectDto subject)
+    {
+        _subjectToDelete = subject;
+    }
+
+    private async Task ExecuteDeleteAsync()
+    {
+        if (_subjectToDelete == null) return;
+        var subjectId = _subjectToDelete.Id;
+        _subjectToDelete = null;
+
+        try
+        {
+            var response = await SubjectService.DeleteSubjectAsync(subjectId);
+            if (response.Success)
+            {
+                Toast.Success(response.Message ?? "Subject deleted successfully.");
+                await LoadSubjectsAsync(_query.PageNumber);
+            }
+            else
+            {
+                Toast.Error(response.Message ?? "Failed to delete subject.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error deleting subject: {ex.Message}");
+        }
+    }
+
+    private void ExportCsv()
+    {
+        Toast.Info("Subject CSV export initiated.");
+    }
+}
