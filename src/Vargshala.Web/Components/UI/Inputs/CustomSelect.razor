@@ -49,6 +49,7 @@
     [Parameter] public bool DropUp { get; set; } = false;
     [Parameter] public string Align { get; set; } = "auto";
     [Parameter] public string MenuWidthClass { get; set; } = "min-w-[160px]";
+    [Parameter] public string TriggerClass { get; set; } = string.Empty;
 
     private bool _isOpen = false;
 
@@ -58,6 +59,14 @@
     {
         get
         {
+            if (!string.IsNullOrEmpty(TriggerClass))
+            {
+                var customState = _isOpen
+                    ? "border-[#009488] ring-2 ring-teal-500/20 is-open"
+                    : "border-slate-200 hover:border-slate-300";
+                return $"{TriggerClass} {customState}";
+            }
+
             if (Compact)
             {
                 return "h-7 px-2.5 text-[11px] rounded-lg bg-white dark:bg-[#18262c] font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 shadow-2xs";

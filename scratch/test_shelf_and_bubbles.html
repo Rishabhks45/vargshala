@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Preview: Shelf & Flat Bubbles</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #F4F9F8;
+      font-family: sans-serif;
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .canvas-container {
+      position: relative;
+      width: 580px;
+      height: 600px;
+      border-radius: 3rem;
+      background: #EDF8F4;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 40px rgba(0, 77, 64, 0.08);
+    }
+
+    /* Flat Circular Bubbles matching User Image 2 */
+    .auth-bubble {
+      position: absolute;
+      border-radius: 9999px;
+      background: #80D8CB;
+      opacity: 0.85;
+      pointer-events: none;
+    }
+
+    @keyframes floatBubble1 {
+      0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+      33% { transform: translateY(-22px) translateX(12px) scale(1.05); }
+      66% { transform: translateY(-38px) translateX(-10px) scale(0.96); }
+    }
+    @keyframes floatBubble2 {
+      0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+      40% { transform: translateY(-30px) translateX(-14px) scale(1.06); }
+      75% { transform: translateY(-12px) translateX(10px) scale(0.95); }
+    }
+    @keyframes floatBubble3 {
+      0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+      50% { transform: translateY(-26px) translateX(16px) scale(1.08); }
+    }
+
+    .svg-showcase {
+      position: relative;
+      z-index: 10;
+      width: 90%;
+      height: auto;
+      max-height: 480px;
+    }
+    .quote-box {
+      position: absolute;
+      bottom: 24px;
+      text-align: center;
+      z-index: 10;
+      color: #0B2E27;
+      font-weight: 600;
+      font-size: 13px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas-container">
+    <!-- Flat Bubbles -->
+    <div class="auth-bubble" style="width: 105px; height: 105px; top: 35px; left: 40px; animation: floatBubble1 8s ease-in-out infinite;"></div>
+    <div class="auth-bubble" style="width: 42px; height: 42px; top: 180px; left: 110px; animation: floatBubble2 7s ease-in-out 1s infinite;"></div>
+    <div class="auth-bubble" style="width: 75px; height: 75px; bottom: 85px; right: 50px; animation: floatBubble1 10s ease-in-out 2s infinite;"></div>
+    <div class="auth-bubble" style="width: 32px; height: 32px; bottom: 180px; right: 110px; animation: floatBubble3 6.5s ease-in-out 0.5s infinite;"></div>
+    <div class="auth-bubble" style="width: 50px; height: 50px; top: 70px; right: 60px; animation: floatBubble2 9s ease-in-out 1.5s infinite;"></div>
+    <div class="auth-bubble" style="width: 28px; height: 28px; bottom: 60px; left: 90px; animation: floatBubble1 6s ease-in-out 3s infinite;"></div>
+
+    <!-- Decorative Sparkles -->
+    <div style="position: absolute; top: 48px; right: 90px; color: rgba(0, 148, 136, 0.4); font-size: 18px;">✦</div>
+    <div style="position: absolute; bottom: 70px; left: 55px; color: rgba(0, 148, 136, 0.4); font-size: 14px;">✦</div>
+
+    <!-- SVG Illustration -->
+    <object data="preview_online_learning.svg" type="image/svg+xml" class="svg-showcase"></object>
+
+    <!-- Quote -->
+    <div class="quote-box">
+      "Simplifying Institute Management, Amplifying Education."
+      <div style="width: 48px; height: 4px; background: #F59E0B; border-radius: 9999px; margin: 6px auto 0;"></div>
+    </div>
+  </div>
+</body>
+</html>

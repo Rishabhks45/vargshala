@@ -32,6 +32,11 @@ public class User : BaseEntity
 
     public DateTime? RefreshTokenExpiryTime { get; set; }
 
+    // Password Reset (Single-Use Token with Expiry)
+    public string? PasswordResetToken { get; set; }
+
+    public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
     // Navigation
     public Organization? Organization { get; set; }
     public ICollection<UserBranchAccess> UserBranchAccesses { get; set; } = new List<UserBranchAccess>();

@@ -96,10 +96,10 @@ public class EmailsController : ControllerBase
 
         if (!success)
         {
-            return BadRequest(ApiResponse<bool>.FailureResponse("Failed to dispatch email via Resend. Check server logs and API key configuration."));
+            return BadRequest(ApiResponse<bool>.FailureResponse("Failed to dispatch email via SendGrid. Check server logs and API key configuration."));
         }
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, $"Email dispatched successfully via Resend to {request.To}."));
+        return Ok(ApiResponse<bool>.SuccessResponse(true, $"Email dispatched successfully via SendGrid to {request.To}."));
     }
 
     [HttpPost("test")]
@@ -117,18 +117,18 @@ public class EmailsController : ControllerBase
 <body style='font-family: sans-serif; background-color: #f8fafc; padding: 24px;'>
     <div style='max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0;'>
         <div style='background: #004D40; color: #ffffff; padding: 12px 16px; border-radius: 8px; font-weight: bold;'>
-            ✉️ Vargshala &bull; Resend Live Test
+            ✉️ Vargshala &bull; SendGrid Live Test
         </div>
         <div style='padding: 16px 0;'>
             <p style='font-size: 14px; color: #334155;'>Hello,</p>
-            <p style='font-size: 14px; color: #334155;'>This is a verification email dispatched via <strong>Resend</strong> from your Vargshala Educational Institute Management SaaS platform.</p>
+            <p style='font-size: 14px; color: #334155;'>This is a verification email dispatched via <strong>SendGrid</strong> from your Vargshala Educational Institute Management SaaS platform.</p>
             <div style='background: #f0fdfa; border: 1px solid #ccfbf1; padding: 12px; border-radius: 8px; color: #0f766e; font-size: 12px;'>
-                ✅ <strong>Resend Configuration Status:</strong> Active &amp; Verified.<br/>
+                ✅ <strong>SendGrid Configuration Status:</strong> Active &amp; Verified.<br/>
                 ⏰ <strong>Dispatched At:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
             </div>
         </div>
         <div style='border-top: 1px solid #f1f5f9; padding-top: 12px; font-size: 11px; color: #94a3b8; text-align: center;'>
-            Sent by Vargshala Cloud Infrastructure via Resend API
+            Sent by Vargshala Cloud Infrastructure via SendGrid API
         </div>
     </div>
 </body>
@@ -136,16 +136,16 @@ public class EmailsController : ControllerBase
 
         var success = await _emailService.SendEmailAsync(
             request.RecipientEmail,
-            "Vargshala Test Email — Resend Verified",
+            "Vargshala Test Email — SendGrid Verified",
             testHtml,
             null,
             cancellationToken);
 
         if (!success)
         {
-            return BadRequest(ApiResponse<bool>.FailureResponse("Could not send test email via Resend. Check that RESEND_API_KEY is configured and recipient is permitted."));
+            return BadRequest(ApiResponse<bool>.FailureResponse("Could not send test email via SendGrid. Check that SendGrid API key is configured."));
         }
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, $"Test email successfully dispatched to {request.RecipientEmail} via Resend."));
+        return Ok(ApiResponse<bool>.SuccessResponse(true, $"Test email successfully dispatched to {request.RecipientEmail} via SendGrid."));
     }
 }

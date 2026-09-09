@@ -1,9 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Vargshala.Application.Features.Authentication.Commands.ForgotPassword;
 using Vargshala.Application.Features.Authentication.Commands.Login;
 using Vargshala.Application.Features.Authentication.Commands.RefreshToken;
 using Vargshala.Application.Features.Authentication.Commands.RegisterOrganization;
 using Vargshala.Application.Features.Authentication.Commands.RegisterUser;
+using Vargshala.Application.Features.Authentication.Commands.ResetPassword;
 using Vargshala.Contracts.Authentication;
 
 namespace Vargshala.API.Controllers;
@@ -99,4 +101,33 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var command = new ForgotPasswordCommand(request.Email);
+        var result = await _mediator.Send(command);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var command = new ResetPasswordCommand(request);
+        var result = await _mediator.Send(command);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }
+

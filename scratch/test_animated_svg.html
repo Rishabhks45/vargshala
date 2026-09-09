@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Animated SVG Test</title>
+  <style>
+    body { background: #004D40; display: flex; gap: 40px; justify-content: center; align-items: center; min-height: 100vh; }
+    .box { width: 450px; background: rgba(0, 77, 64, 0.8); border: 1px solid rgba(45, 212, 191, 0.4); border-radius: 24px; padding: 20px; text-align: center; }
+    h3 { color: #fff; font-family: sans-serif; font-size: 16px; margin-bottom: 12px; }
+    img, object { width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h3>Using &lt;object&gt; (Full CSS Animations Active)</h3>
+    <object data="../src/Vargshala.Web/wwwroot/images/online-learning.svg" type="image/svg+xml"></object>
+  </div>
+  <div class="box">
+    <h3>Using &lt;img&gt;</h3>
+    <img src="../src/Vargshala.Web/wwwroot/images/online-learning.svg" alt="Online Learning" />
+  </div>
+</body>
+</html>

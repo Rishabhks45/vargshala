@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vargshala - Auth Preview (Exact Mockup Match)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+    </style>
+</head>
+<body class="bg-[#F8FCFA] min-h-screen text-slate-800 flex flex-col justify-between selection:bg-[#004D40] selection:text-white relative overflow-x-hidden">
+
+    <!-- Seamless 2-Column Split Layout (NO Container / NO Box Card around form) -->
+    <div class="min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 relative">
+
+        <!-- ========================================================================= -->
+        <!-- LEFT COLUMN: Completely Seamless Form (Directly on Canvas, No Container)   -->
+        <!-- ========================================================================= -->
+        <div class="lg:col-span-5 xl:col-span-5 flex flex-col justify-between px-6 sm:px-12 lg:px-16 xl:px-20 py-8 lg:py-12 z-10">
+            
+            <!-- Top Brand Logo (Matching Image Exactly) & Switcher -->
+            <div class="flex items-center justify-between">
+                <a href="#" class="flex items-center gap-3">
+                    <img src="../src/Vargshala.Web/wwwroot/images/Logo.svg" alt="Vargshala" class="w-10 h-10 object-contain" />
+                    <div class="flex flex-col leading-tight">
+                        <span class="text-xl font-extrabold text-[#004D40] tracking-tight">Varg<span class="text-[#009488]">shala</span></span>
+                        <span class="text-[10px] text-teal-700/80 font-semibold tracking-wider">Institute SaaS</span>
+                    </div>
+                </a>
+
+                <!-- Interactive Switcher Link -->
+                <button type="button" id="toggleAuthBtn" onclick="toggleAuthMode()" class="text-xs font-semibold text-[#004D40] hover:text-[#009488] hover:underline cursor-pointer">
+                    Create Account →
+                </button>
+            </div>
+
+            <!-- Center Form Area -->
+            <div class="my-auto py-8 max-w-md w-full">
+                
+                <!-- Heading -->
+                <div class="space-y-2 mb-6">
+                    <h1 id="formHeading" class="text-3xl sm:text-4xl font-extrabold text-[#0B2E27] tracking-tight">
+                        Welcome Back
+                    </h1>
+                    <p id="formSubheading" class="text-sm text-slate-500 font-normal leading-relaxed">
+                        Login to your account and continue managing your institute.
+                    </p>
+                </div>
+
+                <!-- Form Fields -->
+                <form onsubmit="return false;" class="space-y-4">
+                    
+                    <!-- Name Input (Hidden in Login, Visible in SignUp) -->
+                    <div id="nameGroup" class="space-y-1.5 hidden">
+                        <label class="block text-xs font-semibold text-slate-700">
+                            Name
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-teal-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </span>
+                            <input type="text" 
+                                   placeholder="Enter your name"
+                                   class="w-full py-3 pl-11 pr-4 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl focus:border-[#009488] focus:outline-none focus:ring-2 focus:ring-teal-500/15 text-slate-800 placeholder-slate-400 transition-all font-medium shadow-xs" />
+                        </div>
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-slate-700">
+                            Email
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-teal-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </span>
+                            <input type="email" 
+                                   placeholder="Enter your email"
+                                   class="w-full py-3 pl-11 pr-4 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl focus:border-[#009488] focus:outline-none focus:ring-2 focus:ring-teal-500/15 text-slate-800 placeholder-slate-400 transition-all font-medium shadow-xs" />
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-semibold text-slate-700">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-teal-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </span>
+                            <input type="password" 
+                                   placeholder="Enter your password"
+                                   class="w-full py-3 pl-11 pr-11 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl focus:border-[#009488] focus:outline-none focus:ring-2 focus:ring-teal-500/15 text-slate-800 placeholder-slate-400 transition-all font-medium shadow-xs" />
+                            <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password Input (Hidden in Login, Visible in SignUp) -->
+                    <div id="confirmPasswordGroup" class="space-y-1.5 hidden">
+                        <label class="block text-xs font-semibold text-slate-700">
+                            Confirm password
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-teal-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </span>
+                            <input type="password" 
+                                   placeholder="Confirm your password"
+                                   class="w-full py-3 pl-11 pr-11 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-xl focus:border-[#009488] focus:outline-none focus:ring-2 focus:ring-teal-500/15 text-slate-800 placeholder-slate-400 transition-all font-medium shadow-xs" />
+                            <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember me & Forgot password Row -->
+                    <div id="rememberRow" class="flex items-center justify-between pt-1 pb-1">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" checked class="w-4 h-4 rounded text-[#004D40] border-slate-300 focus:ring-[#004D40]" />
+                            <span class="text-xs font-medium text-slate-600">Remember me</span>
+                        </label>
+                        <a href="#" class="text-xs font-semibold text-[#004D40] hover:text-[#009488] hover:underline">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <!-- Primary Pill Button -->
+                    <button type="submit" id="submitBtn"
+                            class="w-full py-3.5 rounded-full font-bold text-sm text-white bg-[#004D40] hover:bg-[#00382E] transition-all shadow-[0_8px_20px_-4px_rgba(0,77,64,0.35)] flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg mt-3">
+                        <span>Log In →</span>
+                    </button>
+                </form>
+
+                <!-- Helper Switch Link below -->
+                <div class="text-center py-3">
+                    <p id="bottomSwitchText" class="text-xs text-slate-600 font-medium">
+                        Don't have an account?
+                        <a href="javascript:void(0)" onclick="toggleAuthMode()" class="font-bold text-[#004D40] hover:text-[#009488] hover:underline ml-1 transition-colors">
+                            Sign up
+                        </a>
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- RIGHT COLUMN: Organic Mint Canvas with Online Learning SVG & Quote        -->
+        <!-- ========================================================================= -->
+        <div class="hidden lg:flex lg:col-span-7 xl:col-span-7 flex-col items-center justify-between relative px-8 py-12 min-h-screen overflow-hidden">
+            
+            <!-- Large Organic Mint Fluid Background Shape (Matching Image Exactly) -->
+            <div class="absolute inset-y-6 right-6 left-4 rounded-[3.5rem] bg-[#EDF8F4] -z-0 pointer-events-none"></div>
+
+            <!-- Decorative Floating Sparkles (Matching Image Exactly) -->
+            <div class="absolute top-16 right-24 text-teal-600/40 text-lg pointer-events-none">✦</div>
+            <div class="absolute bottom-24 left-16 text-teal-600/40 text-sm pointer-events-none">✦</div>
+            <div class="absolute top-1/3 left-10 text-teal-600/30 text-xs pointer-events-none">✚</div>
+
+            <!-- Top Spacer -->
+            <div></div>
+
+            <!-- Center Educational SVG Illustration Showcase -->
+            <div class="relative z-10 w-full flex flex-col items-center justify-center my-auto max-w-xl">
+                <object data="../src/Vargshala.Web/wwwroot/images/online-learning.svg" 
+                        type="image/svg+xml" 
+                        class="w-full h-auto max-w-lg object-contain pointer-events-none drop-shadow-[0_15px_30px_rgba(0,77,64,0.06)] transition-transform duration-300 hover:scale-[1.01]">
+                </object>
+            </div>
+
+            <!-- Quote & Accent Underline Bar (Matching Image Exactly) -->
+            <div class="relative z-10 text-center space-y-3 mt-4 mb-2">
+                <p class="text-sm sm:text-base font-semibold italic text-[#0B2E27] tracking-wide">
+                    “Simplifying Institute Management, Amplifying Education.”
+                </p>
+                <div class="w-14 h-1 bg-[#F59E0B] rounded-full mx-auto shadow-xs"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        let isSignUp = false;
+        function toggleAuthMode() {
+            isSignUp = !isSignUp;
+            const heading = document.getElementById('formHeading');
+            const subheading = document.getElementById('formSubheading');
+            const toggleBtn = document.getElementById('toggleAuthBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const nameGroup = document.getElementById('nameGroup');
+            const confirmPassGroup = document.getElementById('confirmPasswordGroup');
+            const rememberRow = document.getElementById('rememberRow');
+            const bottomText = document.getElementById('bottomSwitchText');
+
+            if (isSignUp) {
+                heading.innerText = "Create Account";
+                subheading.innerText = "Sign up to manage and amplify your coaching institute.";
+                toggleBtn.innerText = "Sign In →";
+                submitBtn.innerHTML = "<span>Sign Up →</span>";
+                nameGroup.classList.remove('hidden');
+                confirmPassGroup.classList.remove('hidden');
+                rememberRow.classList.add('hidden');
+                bottomText.innerHTML = 'Already got an account? <a href="javascript:void(0)" onclick="toggleAuthMode()" class="font-bold text-[#004D40] hover:text-[#009488] hover:underline ml-1 transition-colors">Sign in</a>';
+            } else {
+                heading.innerText = "Welcome Back";
+                subheading.innerText = "Login to your account and continue managing your institute.";
+                toggleBtn.innerText = "Create Account →";
+                submitBtn.innerHTML = "<span>Log In →</span>";
+                nameGroup.classList.add('hidden');
+                confirmPassGroup.classList.add('hidden');
+                rememberRow.classList.remove('hidden');
+                bottomText.innerHTML = 'Don\'t have an account? <a href="javascript:void(0)" onclick="toggleAuthMode()" class="font-bold text-[#004D40] hover:text-[#009488] hover:underline ml-1 transition-colors">Sign up</a>';
+            }
+        }
+    </script>
+
+</body>
+</html>

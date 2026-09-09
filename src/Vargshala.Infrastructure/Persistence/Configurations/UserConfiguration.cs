@@ -36,6 +36,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.RefreshToken)
             .HasMaxLength(500);
 
+        builder.Property(u => u.PasswordResetToken)
+            .HasMaxLength(500);
+
         // Index: unique email within an organization (filtered by non-deleted)
         builder.HasIndex(u => new { u.Email, u.OrganizationId })
             .IsUnique()

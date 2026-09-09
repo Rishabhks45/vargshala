@@ -77,6 +77,62 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<ApiResponse<ForgotPasswordResponse>> ForgotPasswordAsync(
+        ForgotPasswordRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/auth/forgot-password", request, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<ForgotPasswordResponse>>(cancellationToken: cancellationToken);
+
+            if (result is not null)
+            {
+                return result;
+            }
+
+            return ApiResponse<ForgotPasswordResponse>.FailureResponse($"Server returned status code {(int)response.StatusCode}.");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP connection error during forgot password");
+            return ApiResponse<ForgotPasswordResponse>.FailureResponse("Unable to connect to the backend server. Please make sure the API is running.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during forgot password");
+            return ApiResponse<ForgotPasswordResponse>.FailureResponse("Failed to process forgot password request: " + ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse<ResetPasswordResponse>> ResetPasswordAsync(
+        ResetPasswordRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/v1/auth/reset-password", request, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<ResetPasswordResponse>>(cancellationToken: cancellationToken);
+
+            if (result is not null)
+            {
+                return result;
+            }
+
+            return ApiResponse<ResetPasswordResponse>.FailureResponse($"Server returned status code {(int)response.StatusCode}.");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP connection error during reset password");
+            return ApiResponse<ResetPasswordResponse>.FailureResponse("Unable to connect to the backend server. Please make sure the API is running.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during reset password");
+            return ApiResponse<ResetPasswordResponse>.FailureResponse("Failed to reset password: " + ex.Message);
+        }
+    }
+
     public Task LogoutAsync()
     {
         _navigation.NavigateTo("/account/logout", forceLoad: true);

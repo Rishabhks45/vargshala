@@ -6,6 +6,7 @@ namespace Vargshala.Application.Features.Authentication.Infrastructure;
 public interface IAuthRepository
 {
     Task<User?> GetUserByEmailWithOrgAsync(string email, CancellationToken cancellationToken = default);
+    Task<User?> GetUserByResetTokenAsync(string token, CancellationToken cancellationToken = default);
     Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Organization?> GetOrganizationByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<bool> OrganizationCodeExistsAsync(string code, CancellationToken cancellationToken = default);

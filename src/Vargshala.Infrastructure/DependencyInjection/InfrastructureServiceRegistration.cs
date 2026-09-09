@@ -62,11 +62,11 @@ public static class InfrastructureServiceRegistration
         // HttpContextAccessor (needed by CurrentUser)
         services.AddHttpContextAccessor();
 
-        // Resend Email Settings & HTTP Client
-        services.Configure<ResendOptions>(configuration.GetSection(ResendOptions.SectionName));
-        services.AddHttpClient<IEmailService, ResendEmailService>(client =>
+        // SendGrid Email Settings & HTTP Client
+        services.Configure<SendGridOptions>(configuration.GetSection(SendGridOptions.SectionName));
+        services.AddHttpClient<IEmailService, SendGridEmailService>(client =>
         {
-            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.BaseAddress = new Uri("https://api.sendgrid.com/");
             client.Timeout = TimeSpan.FromSeconds(15);
         });
 

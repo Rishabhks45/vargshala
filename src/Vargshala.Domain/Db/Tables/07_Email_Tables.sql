@@ -122,7 +122,7 @@ INSERT INTO public."EmailTemplates" (
     'OTP for Password Reset - {{InstituteName}}',
     '<div style="font-family:sans-serif;padding:24px;"><h2>Password Recovery</h2><p>Use OTP <strong>{{OtpCode}}</strong> to reset your password. Valid for 10 minutes.</p></div>',
     'Sent when user requests password recovery via OTP',
-    '{{InstituteName}},{{RecipientName}},{{OtpCode}}',
+    '{{InstituteName}},{{RecipientName}},{{OtpCode}},{{ResetUrl}},{{CurrentYear}}',
     TRUE,
     CURRENT_TIMESTAMP,
     FALSE
@@ -137,7 +137,7 @@ INSERT INTO public."EmailTemplates" (
     'Reset your password for {{InstituteName}}',
     '<div style="font-family:sans-serif;padding:24px;"><h2>Password Reset</h2><p>Click the link below to set a new password:</p><p><a href="{{ResetUrl}}">Reset Password</a></p></div>',
     'Sent when user requests a password reset link',
-    '{{InstituteName}},{{RecipientName}},{{ResetUrl}}',
+    '{{InstituteName}},{{RecipientName}},{{ResetUrl}},{{CurrentYear}},{{OtpCode}}',
     TRUE,
     CURRENT_TIMESTAMP,
     FALSE

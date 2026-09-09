@@ -2,208 +2,209 @@
 @attribute [AllowAnonymous]
 @layout AuthLayout
 @using Vargshala.Web.Services
+@using Vargshala.Contracts.Authentication
+@using Vargshala.Contracts.Common
+@using Microsoft.AspNetCore.Components.Forms
+@using Vargshala.Web.Components.UI.Validation
 @inject IAuthService AuthService
 @inject INotificationService NotificationService
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
-<PageTitle>Sign In | Vargshala</PageTitle>
+<PageTitle>Log In | Vargshala</PageTitle>
 
-<div class="w-full max-w-5xl mx-auto flex items-center justify-center h-full">
+<!-- Fullscreen Seamless Light Canvas (No Page Scroll, Fits 100vh Screen) -->
+<div class="fixed inset-0 z-30 h-screen w-screen overflow-hidden bg-[#F8FCFA] text-slate-800 selection:bg-[#004D40] selection:text-white flex flex-col">
     
-    <!-- Unified 2-Column Responsive Card Shell (Matching Heights & Zero Clipping) -->
-    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
-        
+    <div class="h-full w-full grid grid-cols-1 lg:grid-cols-12 relative overflow-hidden">
+
         <!-- ========================================================================= -->
-        <!-- LEFT COLUMN: Theme 4 Educational Showcase with Plant & Books PNG -->
+        <!-- LEFT COLUMN: Completely Seamless Form (Compact, No Page Scroll)           -->
         <!-- ========================================================================= -->
-        <div class="hidden lg:flex lg:col-span-7 flex-col justify-between relative rounded-3xl bg-[#004D40]/80 border border-teal-700/60 backdrop-blur-xl p-6 shadow-2xl overflow-hidden min-h-[440px]">
+        <div class="lg:col-span-5 xl:col-span-5 flex flex-col justify-between px-6 sm:px-10 lg:px-12 xl:px-14 py-4 lg:py-5 z-10 h-full overflow-y-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
             
-            <!-- Glowing Ambient Background Lights -->
-            <div class="absolute -top-10 -left-10 w-60 h-60 bg-[#009488]/30 rounded-full blur-3xl pointer-events-none animate-pulse-glow"></div>
-            <div class="absolute -bottom-10 -right-10 w-60 h-60 bg-[#FB6868]/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="w-full max-w-md mx-auto flex flex-col justify-between h-full">
 
-            <!-- Background Dotted Trajectory Curves -->
-            <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20" xmlns="http://www.w3.org/2000/svg">
-                <path d="M 40 100 Q 180 20 380 80 T 480 220" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="6,6" class="animate-dash-flow" />
-                <path d="M 60 320 Q 200 380 420 290" fill="none" stroke="#fb6868" stroke-width="2" stroke-dasharray="6,6" />
-            </svg>
-
-            <!-- Top Row Floating Badges -->
-            <div class="flex items-center justify-between relative z-10 w-full">
-                <!-- Target Icon -->
-                <div class="p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/50 shadow-lg text-teal-300 animate-float-slow">
-                    <svg class="w-4 h-4 text-[#14B8A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                        <circle cx="12" cy="12" r="6" stroke-width="2"></circle>
-                        <circle cx="12" cy="12" r="2" stroke-width="2"></circle>
-                    </svg>
-                </div>
-
-                <!-- Paper Airplane -->
-                <div class="p-2.5 rounded-2xl bg-gradient-to-tr from-[#FB6868] to-amber-500 text-white shadow-lg animate-plane-fly">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Center Vargshala Brand Section Showcase -->
-            <div class="relative flex flex-col items-center justify-center my-auto py-2 group z-10 w-full">
-                <div class="absolute inset-0 bg-[#009488]/20 rounded-full blur-3xl group-hover:bg-[#14B8A6]/30 transition-all"></div>
-                <img src="images/Section.svg" 
-                     alt="Vargshala Institutes" 
-                     class="w-full max-w-md h-auto object-contain relative drop-shadow-[0_15px_35px_rgba(0,148,136,0.35)] transition-transform duration-300 group-hover:scale-[1.02]" />
-            </div>
-
-            <!-- Bottom Floating Telemetry Badges -->
-            <div class="grid grid-cols-2 gap-3 relative z-10 w-full">
-                <!-- Live Class Telemetry -->
-                <div class="p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/60 shadow-xl backdrop-blur-md flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-amber-400 text-slate-900 font-bold flex items-center justify-center text-xs shadow-md shrink-0">
-                        📚
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1">
-                            <span class="text-[11px] font-bold text-white truncate">Vidya Mandir</span>
-                            <span class="inline-flex items-center px-1 py-0.2 rounded text-[7px] font-bold bg-emerald-900/80 text-emerald-300 border border-emerald-500/50 shrink-0">
-                                ● LIVE
-                            </span>
+                <!-- Top Brand Logo -->
+                <div class="flex items-center justify-between shrink-0">
+                    <a href="/" class="flex items-center gap-2.5">
+                        <img src="images/Logo.svg" alt="Vargshala" class="w-9 h-9 object-contain" />
+                        <div class="flex flex-col leading-tight">
+                            <span class="text-lg font-extrabold text-[#004D40] tracking-tight">Varg<span class="text-[#009488]">shala</span></span>
+                            <span class="text-[9px] text-teal-700/80 font-semibold tracking-wider">Institute SaaS</span>
                         </div>
-                        <p class="text-[9px] text-teal-200 truncate">64 Batches • 1,248 Students</p>
-                    </div>
+                    </a>
+
+                    <!-- Switch to Signup button -->
+                    <button type="button" 
+                            @onclick="NavigateToSignUp" 
+                            class="text-xs font-semibold text-[#004D40] hover:text-[#009488] hover:underline cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
+                        Create Account →
+                    </button>
                 </div>
 
-                <!-- Attendance Rate Telemetry -->
-                <div class="p-2.5 rounded-2xl bg-[#00382E]/90 border border-teal-600/60 shadow-xl backdrop-blur-md flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-[#009488] text-white flex items-center justify-center text-xs shadow-md font-bold shrink-0">
-                        📈
+                <!-- Center Form Area -->
+                <div class="my-auto py-2 w-full">
+                    
+                    <!-- Heading -->
+                    <div class="space-y-1.5 mb-4 text-center">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0B2E27] tracking-tight">
+                            Welcome Back
+                        </h1>
+                        <p class="text-xs text-slate-500 font-normal leading-snug">
+                            Login to your account and continue managing your institute.
+                        </p>
                     </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1">
-                            <span class="text-[11px] font-bold text-white">Attendance</span>
-                            <span class="text-[9px] font-bold text-emerald-400">↑ 92%</span>
+
+                    <!-- Login Form -->
+                    <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3">
+                        <FluentValidationValidator />
+
+                        <!-- Email Input -->
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-bold text-slate-700">
+                                Email
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-teal-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/></svg>
+                                </span>
+                                <InputText @bind-Value="_loginModel.Email" 
+                                           placeholder="admin@institute.com" 
+                                           class="w-full py-2 pl-9 pr-3 text-xs bg-white border border-slate-200 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 placeholder-slate-400 font-medium transition-all shadow-2xs" />
+                            </div>
+                            <ValidationMessage For="@(() => _loginModel.Email)" class="text-[10px] text-rose-500 font-semibold" />
                         </div>
-                        <p class="text-[9px] text-teal-200 truncate">Real-Time Institute Sync</p>
-                    </div>
-                </div>
-            </div>
 
-        </div>
+                        <!-- Password Input -->
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-bold text-slate-700">
+                                Password
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-teal-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </span>
+                                @if (_showPassword)
+                                {
+                                    <InputText type="text" 
+                                               @bind-Value="_loginModel.Password" 
+                                               placeholder="••••••••" 
+                                               class="w-full py-2 pl-9 pr-9 text-xs bg-white border border-slate-200 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 placeholder-slate-400 font-medium transition-all shadow-2xs" />
+                                }
+                                else
+                                {
+                                    <InputText type="password" 
+                                               @bind-Value="_loginModel.Password" 
+                                               placeholder="••••••••" 
+                                               class="w-full py-2 pl-9 pr-9 text-xs bg-white border border-slate-200 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 placeholder-slate-400 font-medium transition-all shadow-2xs" />
+                                }
+                                <button type="button" 
+                                        @onclick="TogglePasswordVisibility" 
+                                        @onclick:preventDefault="true"
+                                        class="absolute inset-y-0 right-0 flex items-center pr-3 z-20 cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
+                                        tabindex="-1">
+                                    @if (_showPassword)
+                                    {
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                                        </svg>
+                                    }
+                                    else
+                                    {
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    }
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => _loginModel.Password)" class="text-[10px] text-rose-500 font-semibold" />
+                        </div>
 
-        <!-- ========================================================================= -->
-        <!-- RIGHT COLUMN: Theme 4 Teal Glassmorphic Login Form Card -->
-        <!-- ========================================================================= -->
-        <div class="lg:col-span-5 w-full flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[#004D40]/90 border border-teal-700/70 shadow-2xl backdrop-blur-2xl min-h-[440px]">
-            
-            <!-- Branding Header with Vargshala Logo -->
-            <div class="text-center space-y-1">
-                <img src="images/Logo.svg" alt="Vargshala" class="w-14 h-14 mb-1 mx-auto drop-shadow-md object-contain" />
-                <h2 class="text-xl font-extrabold tracking-tight">
-                    <span class="text-white">Welcome to </span><span class="text-white">Varg</span><span class="text-[#2DD4BF]">shala</span>
-                </h2>
-                <p class="text-[11px] text-teal-200">
-                    Sign in to manage your coaching institute
-                </p>
-            </div>
+                        <!-- Remember me & Forgot password Row -->
+                        <div class="flex items-center justify-between pt-0.5 pb-0.5">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" @bind="_rememberMe" class="w-3.5 h-3.5 rounded text-[#004D40] border-slate-300 focus:ring-[#004D40]" />
+                                <span class="text-[11px] font-medium text-slate-600">Remember me</span>
+                            </label>
+                            <a href="forgot-password" class="text-[11px] font-semibold text-[#004D40] hover:text-[#009488] hover:underline">
+                                Forgot password?
+                            </a>
+                        </div>
 
-            <!-- Login Form -->
-            <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin" class="space-y-3.5 my-auto py-2">
-                <FluentValidationValidator />
-
-                <!-- Email Input -->
-                <div class="space-y-1">
-                    <label class="block text-[10px] font-semibold text-teal-200 uppercase tracking-wider">
-                        Email Address
-                    </label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-teal-400">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206"/>
-                            </svg>
-                        </span>
-                        <InputText @bind-Value="_loginModel.Email" 
-                                   placeholder="name@institute.com"
-                                   class="w-full py-2.5 pl-9 pr-3 text-xs bg-[#00382E] border border-teal-600/70 rounded-xl focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-teal-400/30 text-white placeholder-teal-300/50 transition-all" />
-                    </div>
-                    <ValidationMessage For="@(() => _loginModel.Email)" class="text-[10px] text-rose-300" />
-                </div>
-
-                <!-- Password Input -->
-                <div class="space-y-1">
-                    <div class="flex items-center justify-between">
-                        <label class="block text-[10px] font-semibold text-teal-200 uppercase tracking-wider">
-                            Password
-                        </label>
-                        <a href="forgot-password" class="text-[11px] font-medium text-[#14B8A6] hover:text-white hover:underline">
-                            Forgot?
-                        </a>
-                    </div>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-teal-400">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                        </span>
-                        <input type="@(_showPassword ? "text" : "password")" 
-                               @bind="_loginModel.Password" 
-                               placeholder="••••••••"
-                               class="w-full py-2.5 pl-9 pr-9 text-xs bg-[#00382E] border border-teal-600/70 rounded-xl focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-teal-400/30 text-white placeholder-teal-300/50 transition-all" />
-                        <button type="button" 
-                                @onclick="TogglePasswordVisibility"
-                                class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-teal-400 hover:text-white">
-                            @if (_showPassword)
+                        <!-- Primary Pill Button -->
+                        <button type="submit" 
+                                disabled="@_isLoading"
+                                class="w-full py-2.5 rounded-full font-bold text-xs text-white bg-[#004D40] hover:bg-[#00382E] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg mt-2">
+                            @if (_isLoading)
                             {
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                                <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
+                                <span>Logging In...</span>
                             }
                             else
                             {
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
+                                <span>Log In →</span>
                             }
                         </button>
+                    </EditForm>
+
+                    <!-- Footer Sign-Up Redirect -->
+                    <div class="pt-3 text-center">
+                        <p class="text-[11px] text-slate-500">
+                            Don't have an Institute Account?
+                            <button type="button" @onclick="NavigateToSignUp" 
+                                    class="font-bold text-[#004D40] hover:text-[#009488] hover:underline ml-1 bg-transparent border-0 p-0 cursor-pointer focus:outline-none">
+                                Register Institute →
+                            </button>
+                        </p>
                     </div>
-                    <ValidationMessage For="@(() => _loginModel.Password)" class="text-[10px] text-rose-300" />
                 </div>
 
-                <!-- Remember Me Checkbox -->
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="rememberMe" @bind="_rememberMe" class="w-3.5 h-3.5 rounded text-[#009488] bg-[#00382E] border-teal-600 focus:ring-[#009488]" />
-                    <label for="rememberMe" class="text-[11px] text-teal-200/90 cursor-pointer">
-                        Remember this device for 30 days
-                    </label>
-                </div>
+            </div>
+        </div>
 
-                <!-- Submit Button -->
-                <button type="submit" 
-                        disabled="@_isLoading"
-                        class="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-[#009488] hover:bg-[#0f766e] transition-all shadow-[0_8px_20px_-4px_rgba(0,148,136,0.5)] flex items-center justify-center gap-2">
-                    @if (_isLoading)
-                    {
-                        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Authenticating...</span>
-                    }
-                    else
-                    {
-                        <span>Sign In to Dashboard →</span>
-                    }
-                </button>
-            </EditForm>
+        <!-- ========================================================================= -->
+        <!-- RIGHT COLUMN: Organic Mint Canvas with Online Learning SVG & Quote        -->
+        <!-- ========================================================================= -->
+        <div class="hidden lg:flex lg:col-span-7 xl:col-span-7 flex-col items-center justify-center relative px-6 py-6 h-full overflow-hidden">
+            
+            <!-- Large Organic Mint Fluid Background Shape -->
+            <div class="absolute inset-y-4 right-5 left-3 rounded-[3rem] bg-[#EDF8F4] -z-0 pointer-events-none"></div>
 
-            <!-- Register Organization Footer Link -->
-            <div class="pt-3 border-t border-teal-800/80 text-center">
-                <p class="text-[11px] text-teal-200/80">
-                    New Institute?
-                    <a href="register" class="font-bold text-amber-300 hover:text-white hover:underline ml-1">
-                        Register Organization
-                    </a>
+            <!-- Floating Clean Mint Circles -->
+            <div class="absolute inset-y-4 right-5 left-3 rounded-[3rem] overflow-hidden pointer-events-none z-0">
+                <div class="auth-bubble w-28 h-28 top-8 left-10" style="animation: floatBubble1 8s ease-in-out infinite;"></div>
+                <div class="auth-bubble w-20 h-20 bottom-24 right-14" style="animation: floatBubble2 10s ease-in-out 1s infinite;"></div>
+                <div class="auth-bubble w-14 h-14 top-1/4 right-8" style="animation: floatBubble3 7s ease-in-out 2s infinite;"></div>
+                <div class="auth-bubble w-24 h-24 bottom-1/3 left-6" style="animation: floatBubble1 11s ease-in-out 3s infinite;"></div>
+                <div class="auth-bubble w-12 h-12 top-16 right-32" style="animation: floatBubble2 6.5s ease-in-out 0.5s infinite;"></div>
+                <div class="auth-bubble w-16 h-16 top-2/3 right-10" style="animation: floatBubble3 9s ease-in-out 2.5s infinite;"></div>
+                <div class="auth-bubble w-9 h-9 bottom-12 left-28" style="animation: floatBubble2 6s ease-in-out 1.5s infinite;"></div>
+            </div>
+
+            <!-- Decorative Floating Sparkles -->
+            <div class="absolute top-12 right-20 text-teal-600/40 text-base pointer-events-none z-10">✦</div>
+            <div class="absolute bottom-16 left-12 text-teal-600/40 text-xs pointer-events-none z-10">✦</div>
+            <div class="absolute top-1/3 left-8 text-teal-600/30 text-xs pointer-events-none z-10">✚</div>
+
+            <!-- Center Educational SVG Illustration Showcase -->
+            <div class="relative z-10 w-full flex flex-col items-center justify-center my-auto max-w-lg xl:max-w-xl">
+                <object data="images/online-learning.svg?v=3" 
+                        type="image/svg+xml" 
+                        class="w-full max-h-[100vh] object-contain pointer-events-none drop-shadow-[0_15px_30px_rgba(0,77,64,0.06)]">
+                </object>
+            </div>
+
+            <!-- Quote & Accent Underline Bar -->
+            <div class="absolute bottom-8 inset-x-0 z-10 text-center space-y-2 pointer-events-none">
+                <p class="text-xs sm:text-sm font-semibold italic text-[#0B2E27] tracking-wide">
+                    “Simplifying Institute Management, Amplifying Education.”
                 </p>
+                <div class="w-12 h-1 bg-[#F59E0B] rounded-full mx-auto shadow-2xs"></div>
             </div>
 
         </div>
@@ -212,14 +213,52 @@
 
 </div>
 
+<style>
+    .auth-bubble {
+        position: absolute;
+        border-radius: 9999px;
+        background: #80D8CB;
+        opacity: 0.85;
+        pointer-events: none;
+    }
+    @@keyframes floatBubble1 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px) scale(1);
+        }
+        33% {
+            transform: translateY(-22px) translateX(12px) scale(1.05);
+        }
+        66% {
+            transform: translateY(-38px) translateX(-10px) scale(0.96);
+        }
+    }
+    @@keyframes floatBubble2 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px) scale(1);
+        }
+        40% {
+            transform: translateY(-30px) translateX(-14px) scale(1.06);
+        }
+        75% {
+            transform: translateY(-12px) translateX(10px) scale(0.95);
+        }
+    }
+    @@keyframes floatBubble3 {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px) scale(1);
+        }
+        50% {
+            transform: translateY(-26px) translateX(16px) scale(1.08);
+        }
+    }
+</style>
+
 @code {
     private readonly LoginRequest _loginModel = new();
     private bool _rememberMe = true;
-
     private bool _showPassword = false;
     private bool _isLoading = false;
 
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
     [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -238,6 +277,11 @@
     private void TogglePasswordVisibility()
     {
         _showPassword = !_showPassword;
+    }
+
+    private void NavigateToSignUp()
+    {
+        Navigation.NavigateTo("/signup", forceLoad: true);
     }
 
     private async Task HandleLogin()

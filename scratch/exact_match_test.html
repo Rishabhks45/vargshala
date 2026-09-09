@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Exact Match</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .auth-bubble {
+            position: absolute;
+            border-radius: 9999px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(153, 246, 228, 0.4) 45%, rgba(0, 148, 136, 0.18) 80%, rgba(0, 77, 64, 0.1) 100%);
+            border: 1.5px solid rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.9), inset 0 -3px 6px rgba(0, 148, 136, 0.2), 0 10px 25px rgba(0, 148, 136, 0.12);
+            backdrop-filter: blur(1px);
+            pointer-events: none;
+        }
+        .bubble-specular {
+            position: absolute;
+            top: 15%;
+            left: 18%;
+            width: 25%;
+            height: 18%;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.95);
+            transform: rotate(-30deg);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden bg-[#F6FBF8] text-slate-800 flex flex-col justify-between relative selection:bg-[#004D40] selection:text-white">
+
+    <!-- Top-Left Brand Corner Accent Wave with Amber Line -->
+    <svg class="absolute top-0 left-0 w-44 sm:w-60 md:w-72 lg:w-88 max-w-[45vw] h-auto pointer-events-none z-10" viewBox="0 0 350 240" fill="none">
+        <path d="M0 0 L320 0 C 220 25, 90 95, 0 220 Z" fill="#004D40"/>
+        <path d="M320 0 C 220 25, 90 95, 0 220" stroke="#E5A93C" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+
+    <!-- Bottom-Left Brand Corner Accent Wave with Amber Line -->
+    <svg class="absolute bottom-0 left-0 w-44 sm:w-60 md:w-72 lg:w-88 max-w-[45vw] h-auto pointer-events-none z-10" viewBox="0 0 350 260" fill="none">
+        <path d="M0 260 L0 30 C 15 110, 110 200, 310 260 Z" fill="#004D40"/>
+        <path d="M0 30 C 15 110, 110 200, 310 260" stroke="#E5A93C" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 w-full min-h-0 relative z-20 flex flex-col">
+        <div class="h-full w-full grid grid-cols-1 md:grid-cols-12 relative overflow-hidden">
+
+            <!-- LEFT COLUMN: Form Section -->
+            <div class="md:col-span-6 lg:col-span-5 flex flex-col justify-between px-6 sm:px-10 lg:px-14 xl:px-16 py-4 lg:py-6 z-10 h-full overflow-y-auto" style="scrollbar-width: none;">
+                <div class="w-full max-w-md mx-auto flex flex-col justify-between h-full">
+                    
+                    <!-- Top Brand Logo Header -->
+                    <div class="flex items-center justify-between shrink-0 pt-1">
+                        <a href="#" class="flex items-center gap-3">
+                            <img src="../src/Vargshala.Web/wwwroot/images/Logo.svg" alt="Vargshala" class="w-10 h-10 object-contain" />
+                            <div class="flex flex-col leading-tight">
+                                <span class="text-xl font-extrabold text-[#004D40] tracking-tight">Vargshala</span>
+                                <span class="text-[10px] text-teal-800/80 font-semibold italic tracking-wider">Institute SaaS</span>
+                            </div>
+                        </a>
+
+                        <button type="button" class="text-xs font-semibold text-[#004D40] hover:text-[#009488] hover:underline cursor-pointer bg-transparent border-0 p-0">
+                            Create Account →
+                        </button>
+                    </div>
+
+                    <!-- Center Form Area -->
+                    <div class="my-auto py-4 w-full">
+                        
+                        <!-- Heading with Golden Dash -->
+                        <div class="space-y-1 mb-6 text-left">
+                            <h1 class="text-3xl sm:text-4xl font-extrabold text-[#0A2E26] tracking-tight">
+                                Welcome Back
+                            </h1>
+                            <div class="w-8 h-1 bg-[#E5A93C] rounded-full mt-1 mb-2"></div>
+                            <p class="text-xs text-slate-500 font-normal leading-relaxed">
+                                Login to your account and continue managing your institute.
+                            </p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form class="space-y-4" onsubmit="return false;">
+                            <!-- Email Input -->
+                            <div class="space-y-1.5 text-left">
+                                <label class="block text-xs font-bold text-slate-700">Email</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#004D40]">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                    </span>
+                                    <input type="text" value="rishabh.sharma@yopmail.com" class="w-full py-3 pl-10 pr-3 text-xs bg-[#E9F1FD] border-0 rounded-2xl focus:ring-2 focus:ring-[#004D40]/20 focus:bg-white focus:outline-none text-slate-800 placeholder-slate-400 font-medium transition-all" />
+                                </div>
+                            </div>
+
+                            <!-- Password Input -->
+                            <div class="space-y-1.5 text-left">
+                                <label class="block text-xs font-bold text-slate-700">Password</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#004D40]">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    </span>
+                                    <input type="password" value="•••••••••" class="w-full py-3 pl-10 pr-10 text-xs bg-[#E9F1FD] border-0 rounded-2xl focus:ring-2 focus:ring-[#004D40]/20 focus:bg-white focus:outline-none text-slate-800 placeholder-slate-400 font-medium transition-all" />
+                                    <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Remember me & Forgot password Row -->
+                            <div class="flex items-center justify-between pt-1 pb-1">
+                                <label class="flex items-center gap-2 cursor-pointer select-none">
+                                    <input type="checkbox" checked class="w-4 h-4 rounded text-[#004D40] accent-[#004D40] border-slate-300 focus:ring-[#004D40] cursor-pointer" />
+                                    <span class="text-xs font-medium text-slate-600">Remember me</span>
+                                </label>
+                                <a href="#" class="text-xs font-bold text-[#004D40] hover:text-[#009488] hover:underline">Forgot password?</a>
+                            </div>
+
+                            <!-- Primary Pill Button (FULL CAPSULE rounded-full) -->
+                            <button type="submit" class="w-full py-3.5 rounded-full font-bold text-xs sm:text-sm text-white bg-[#004D40] hover:bg-[#00382E] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer hover:shadow-lg mt-4">
+                                <span>Log In →</span>
+                            </button>
+                        </form>
+
+                        <!-- Footer Sign-Up Redirect -->
+                        <div class="pt-4 text-center">
+                            <p class="text-xs text-slate-500">
+                                Don't have an Institute Account?
+                                <a href="#" class="font-bold text-[#004D40] hover:text-[#009488] hover:underline ml-1">Register Institute →</a>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="shrink-0 h-2"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Organic Mint Canvas with Online Learning SVG & Quote -->
+            <div class="hidden md:flex md:col-span-6 lg:col-span-7 flex-col items-center justify-between relative px-6 py-6 h-full overflow-hidden">
+                <!-- Large Organic Mint Fluid Background Shape (Exact Match to Mockup) -->
+                <div class="absolute inset-y-2 right-4 left-2 rounded-[50px] lg:rounded-[70px] xl:rounded-[80px] bg-gradient-to-br from-[#F1FAF7] via-[#E8F6F2] to-[#D5EFE7] -z-0 pointer-events-none shadow-sm"></div>
+
+                <!-- Soft Pastel Floating Decorative Discs & Bubbles Matching Mockup -->
+                <div class="absolute inset-y-2 right-4 left-2 rounded-[50px] lg:rounded-[70px] xl:rounded-[80px] overflow-hidden pointer-events-none z-0">
+                    <div class="absolute top-10 left-16 w-20 h-20 rounded-full bg-teal-300/25 blur-xs"></div>
+                    <div class="absolute bottom-20 right-14 w-24 h-24 rounded-full bg-teal-200/30 blur-xs"></div>
+                    <div class="absolute top-24 right-20 w-8 h-8 rounded-full bg-teal-200/35"></div>
+                    <div class="absolute top-1/2 left-8 w-10 h-10 rounded-full bg-teal-300/20"></div>
+
+                    <div class="auth-bubble w-20 h-20 top-12 left-28">
+                        <div class="bubble-specular"></div>
+                    </div>
+                    <div class="auth-bubble w-16 h-16 bottom-28 right-24">
+                        <div class="bubble-specular"></div>
+                    </div>
+                    <div class="auth-bubble w-12 h-12 top-1/3 right-12">
+                        <div class="bubble-specular"></div>
+                    </div>
+                </div>
+
+                <div></div>
+
+                <!-- Center Educational SVG Illustration Showcase -->
+                <div class="relative z-10 w-full flex flex-col items-center justify-center my-auto max-w-lg xl:max-w-xl">
+                    <object data="../src/Vargshala.Web/wwwroot/images/online-learning.svg" type="image/svg+xml" class="w-full max-h-[54vh] xl:max-h-[58vh] object-contain pointer-events-none drop-shadow-[0_12px_24px_rgba(0,77,64,0.05)]"></object>
+                </div>
+
+                <!-- Quote & Accent Underline Bar -->
+                <div class="relative z-10 text-center space-y-2 mt-2 mb-2 pointer-events-none">
+                    <p class="text-xs sm:text-sm font-semibold italic text-[#063A31] tracking-wide">
+                        “Simplifying Institute Management, Amplifying Education.”
+                    </p>
+                    <div class="w-12 h-1 bg-[#E5A93C] rounded-full mx-auto shadow-2xs"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Minimal Fixed-Height Light Footer -->
+    <footer class="w-full px-8 lg:px-14 py-2.5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 shrink-0 relative z-20">
+        <div>
+            © 2026 Vargshala • Coaching Institute Management SaaS
+        </div>
+        <div class="flex items-center gap-2 mt-1 sm:mt-0">
+            <a href="#" class="hover:text-slate-600 transition-colors">Privacy Policy</a>
+            <span>•</span>
+            <a href="#" class="hover:text-slate-600 transition-colors">Terms of Service</a>
+            <span>•</span>
+            <a href="#" class="hover:text-slate-600 transition-colors">Help Center</a>
+        </div>
+    </footer>
+</body>
+</html>

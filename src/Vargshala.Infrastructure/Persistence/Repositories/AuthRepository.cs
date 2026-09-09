@@ -19,11 +19,17 @@ public class AuthRepository : IAuthRepository
     #region Query Methods
     public async Task<User?> GetUserByEmailWithOrgAsync(string email, CancellationToken cancellationToken = default)
     {
+        var normalizedEmail = email.Trim().ToLower();
         return await _db.Users
             .Include(u => u.Organization)
-            .Include(u => u.UserBranchAccesses.Where(uba => uba.IsActive))
-                .ThenInclude(uba => uba.Branch)
-            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted, cancellationToken);
+            .OrderByDescending(u => u.IsActive)
+            .FirstOrDefaultAsync(u => !u.IsDeleted && u.Email != null && (u.Email.ToLower() == normalizedEmail || EF.Functions.ILike(u.Email, normalizedEmail)), cancellationToken);
+    }
+
+    public async Task<User?> GetUserByResetTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        return await _db.Users
+            .FirstOrDefaultAsync(u => u.PasswordResetToken == token && !u.IsDeleted, cancellationToken);
     }
 
     public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)

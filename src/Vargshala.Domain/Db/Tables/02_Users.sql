@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public."Users"
     "LastLoginAt" timestamp with time zone,
     "RefreshToken" character varying(500) COLLATE pg_catalog."default",
     "RefreshTokenExpiryTime" timestamp with time zone,
+    "PasswordResetToken" character varying(500) COLLATE pg_catalog."default",
+    "PasswordResetTokenExpiresAt" timestamp with time zone,
     "IsActive" boolean NOT NULL DEFAULT true,
     "CreatedBy" uuid,
     "CreatedAt" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
