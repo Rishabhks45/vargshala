@@ -1,4 +1,31 @@
 -- Table: public.Teachers
+-- Designation Enum:
+--   1 = Teacher
+--   2 = Senior Teacher
+--   3 = HOD
+--   4 = Assistant Teacher
+--   5 = Guest Lecturer
+--   6 = Principal
+--   7 = Vice Principal
+--   8 = Lab Assistant
+--   9 = Other
+--
+-- HighestQualification Enum:
+--   1 = B.Ed.
+--   2 = M.Ed.
+--   3 = B.Sc.
+--   4 = M.Sc.
+--   5 = B.A.
+--   6 = M.A.
+--   7 = B.Tech.
+--   8 = M.Tech.
+--   9 = B.Com.
+--   10 = M.Com.
+--   11 = BCA
+--   12 = MCA
+--   13 = MBA
+--   14 = Ph.D.
+--   15 = Other
 
 -- DROP TABLE IF EXISTS public."Teachers";
 
@@ -9,8 +36,8 @@ CREATE TABLE IF NOT EXISTS public."Teachers"
     "EmployeeCode" character varying(50) COLLATE pg_catalog."default",
     "JoiningDate" date,
     "Department" character varying(100) COLLATE pg_catalog."default",
-    "Designation" character varying(100) COLLATE pg_catalog."default",
-    "HighestQualification" character varying(150) COLLATE pg_catalog."default",
+    "Designation" integer,
+    "HighestQualification" integer,
     "Specialization" character varying(150) COLLATE pg_catalog."default",
     "TeachingExperienceYears" numeric(5, 2),
     "Address" text COLLATE pg_catalog."default",
@@ -55,5 +82,5 @@ CREATE INDEX IF NOT EXISTS "IX_Teachers_Department"
 
 CREATE INDEX IF NOT EXISTS "IX_Teachers_Designation"
     ON public."Teachers" USING btree
-    ("Designation" COLLATE pg_catalog."default" ASC NULLS LAST)
+    ("Designation" ASC NULLS LAST)
     TABLESPACE pg_default;

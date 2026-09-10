@@ -30,8 +30,17 @@ public class BatchRepository : IBatchRepository
     private static readonly Dictionary<string, Expression<Func<Batch, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
     {
         ["name"] = b => b.Name,
+        ["batchname"] = b => b.Name,
         ["code"] = b => b.Code,
+        ["batchcode"] = b => b.Code,
+        ["class"] = b => b.Class!.Name,
+        ["classname"] = b => b.Class!.Name,
+        ["subject"] = b => b.Subject!.Name,
+        ["subjectname"] = b => b.Subject!.Name,
+        ["branch"] = b => b.Class!.Branch!.Name,
+        ["branchname"] = b => b.Class!.Branch!.Name,
         ["isactive"] = b => b.IsActive,
+        ["status"] = b => b.IsActive,
         ["createdat"] = b => b.CreatedAt,
         ["updatedat"] = b => b.UpdatedAt!
     };

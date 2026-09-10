@@ -1,0 +1,1569 @@
+@page "/class-sessions"
+@page "/sessions"
+@attribute [Authorize(Roles = "OrganizationAdmin,SuperAdmin,BranchAdmin,1,1001,4,Teacher,2")]
+@using Microsoft.AspNetCore.Components.Web
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.ClassSessions
+@using Vargshala.Contracts.Branches
+@using Vargshala.Contracts.Classes
+@using Vargshala.Contracts.Batches
+@using Vargshala.Contracts.Teachers
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Pagination
+@using Vargshala.Web.Services
+@inject IClassSessionService ClassSessionService
+@inject IBranchService BranchService
+@inject IClassService ClassService
+@inject IBatchService BatchService
+@inject ITeacherService TeacherService
+@inject INotificationService Toast
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Class Sessions Directory | Vargshala</PageTitle>
+
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
+    
+    <!-- Top Header & Action Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Class Sessions Directory
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage actual class instances, daily schedules, topics covered, and automated session generation.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="OpenGenerateModal"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-teal-50 dark:bg-teal-950/70 border border-teal-300 dark:border-teal-700 text-[#009488] dark:text-teal-300 hover:bg-teal-100 transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.253 3.75m0 0h18m-18 0v11.25c0 .621.504 1.125 1.125 1.125h15.75c.621 0 1.125-.504 1.125-1.125V6.75m-18 0A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75"/>
+                </svg>
+                <span>Generate from Schedule</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="OpenAddDrawerAsync"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                <span>Add Session</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Summary -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Sessions</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold mt-0.5">
+                        Recorded classes
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Scheduled</p>
+                    <h3 class="text-2xl font-black text-[#009488] mt-1">
+                        @_sessions.Count(s => s.Status == ClassSessionStatusNames.Scheduled)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Upcoming classes</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.253 3.75m0 0h18m-18 0v11.25c0 .621.504 1.125 1.125 1.125h15.75c.621 0 1.125-.504 1.125-1.125V6.75m-18 0A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Completed</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                        @_sessions.Count(s => s.Status == ClassSessionStatusNames.Completed)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Classes conducted</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Cancelled / Postponed</p>
+                    <h3 class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                        @_sessions.Count(s => s.Status == ClassSessionStatusNames.Cancelled || s.Status == ClassSessionStatusNames.Postponed)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Disrupted schedules</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls (Matched with Students.razor) -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        
+        <!-- Reusable SearchInput Component with Debounce & Clear (Matched with Students.razor) -->
+        <div class="relative w-full md:w-72 lg:w-80 shrink-0">
+            <SearchInput @bind-Value="_searchQuery" 
+                         OnSearch="() => LoadSessionsAsync()" 
+                         Placeholder="Search topic, batch, notes..." />
+        </div>
+
+        <!-- Filter Dropdowns & View Mode Controls -->
+        <div class="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap justify-end">
+            <!-- Branch Filter with CustomSelect -->
+            <div class="w-36">
+                <CustomSelect Value="@(_selectedBranchId?.ToString() ?? "")"
+                              ValueChanged="HandleBranchChanged"
+                              Options="_branchFilterOptions"
+                              Placeholder="All Branches" />
+            </div>
+
+            <!-- Class Filter with CustomSelect -->
+            <div class="w-32">
+                <CustomSelect Value="@(_selectedClassId?.ToString() ?? "")"
+                              ValueChanged="HandleClassChanged"
+                              Options="_classFilterOptions"
+                              Placeholder="All Classes" />
+            </div>
+
+            <!-- Batch Filter with CustomSelect -->
+            <div class="w-36">
+                <CustomSelect Value="@(_selectedBatchId?.ToString() ?? "")"
+                              ValueChanged="HandleBatchChanged"
+                              Options="_batchFilterOptions"
+                              Placeholder="All Batches" />
+            </div>
+
+            <!-- Teacher Filter with CustomSelect -->
+            <div class="w-36">
+                <CustomSelect Value="@(_selectedTeacherId?.ToString() ?? "")"
+                              ValueChanged="HandleTeacherChanged"
+                              Options="_teacherFilterOptions"
+                              Placeholder="All Teachers" />
+            </div>
+
+            <!-- Status Filter with CustomSelect -->
+            <div class="w-32">
+                <CustomSelect Value="@(_selectedStatus ?? "")"
+                              ValueChanged="HandleStatusChanged"
+                              Options="_statusFilterOptions"
+                              Placeholder="All Statuses" />
+            </div>
+
+            <!-- View Mode Toggle -->
+            <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] p-0.5 shadow-2xs shrink-0">
+                <button type="button" @onclick='() => _viewMode = "table"'
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "table" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
+                        title="Table View">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <button type="button" @onclick='() => _viewMode = "grid"'
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "grid" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
+                        title="Grid View">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Filters Badge Row -->
+    @if (!string.IsNullOrWhiteSpace(_searchQuery) || _selectedBranchId.HasValue || _selectedClassId.HasValue || _selectedBatchId.HasValue || _selectedTeacherId.HasValue || !string.IsNullOrWhiteSpace(_selectedStatus))
+    {
+        <div class="shrink-0 flex flex-wrap items-center gap-2 px-1 text-xs">
+            <span class="text-slate-400 font-semibold text-[11px]">Active Filters:</span>
+            
+            @if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Search: "@_searchQuery"
+                    <button type="button" @onclick="ClearSearch" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedBranchId.HasValue)
+            {
+                var branchName = _branches.FirstOrDefault(b => b.Id == _selectedBranchId)?.Name ?? "Branch";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Branch: @branchName
+                    <button type="button" @onclick="async () => { _selectedBranchId = null; await LoadSessionsAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedClassId.HasValue)
+            {
+                var className = _classes.FirstOrDefault(c => c.Id == _selectedClassId)?.Name ?? "Class";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Class: @className
+                    <button type="button" @onclick="async () => { _selectedClassId = null; await LoadSessionsAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedBatchId.HasValue)
+            {
+                var batchName = _batches.FirstOrDefault(b => b.Id == _selectedBatchId)?.Name ?? "Batch";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Batch: @batchName
+                    <button type="button" @onclick="async () => { _selectedBatchId = null; await LoadSessionsAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedTeacherId.HasValue)
+            {
+                var teacherName = _teachers.FirstOrDefault(t => t.Id == _selectedTeacherId)?.FullName ?? "Teacher";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Teacher: @teacherName
+                    <button type="button" @onclick="async () => { _selectedTeacherId = null; await LoadSessionsAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(_selectedStatus))
+            {
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Status: @_selectedStatus
+                    <button type="button" @onclick="async () => { _selectedStatus = null; await LoadSessionsAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+
+            <button type="button" @onclick="ClearAllFilters" class="text-xs text-rose-500 hover:text-rose-700 font-bold ml-1 cursor-pointer">
+                Clear All
+            </button>
+        </div>
+    }
+
+    <!-- Main Data Container (Matched with Students.razor skeleton loading) -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        @if (_viewMode == "table")
+        {
+            <!-- Table View -->
+            <div class="flex-1 overflow-auto">
+                <table class="w-full min-w-[1150px] text-left border-collapse table-fixed">
+                    <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                        <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                            <th class="w-[14%] py-2 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("SessionDate")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Date &amp; Status</span>
+                                    <span class="@_sortState.GetIndicatorClass("SessionDate")">@_sortState.GetIndicator("SessionDate")</span>
+                                </div>
+                            </th>
+                            <th class="w-[17%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("BatchName")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Batch &amp; Subject</span>
+                                    <span class="@_sortState.GetIndicatorClass("BatchName")">@_sortState.GetIndicator("BatchName")</span>
+                                </div>
+                            </th>
+                            <th class="w-[14%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("ClassName")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Class &amp; Branch</span>
+                                    <span class="@_sortState.GetIndicatorClass("ClassName")">@_sortState.GetIndicator("ClassName")</span>
+                                </div>
+                            </th>
+                            <th class="w-[13%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("StartTime")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Timing</span>
+                                    <span class="@_sortState.GetIndicatorClass("StartTime")">@_sortState.GetIndicator("StartTime")</span>
+                                </div>
+                            </th>
+                            <th class="w-[14%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("TeacherName")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Faculty</span>
+                                    <span class="@_sortState.GetIndicatorClass("TeacherName")">@_sortState.GetIndicator("TeacherName")</span>
+                                </div>
+                            </th>
+                            <th class="w-[13%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Topic")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Topic Covered</span>
+                                    <span class="@_sortState.GetIndicatorClass("Topic")">@_sortState.GetIndicator("Topic")</span>
+                                </div>
+                            </th>
+                            <th class="w-[15%] min-w-[160px] py-2 px-4 text-right select-none whitespace-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _sessions.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                        @if (_isLoading && !_sessions.Any())
+                        {
+                            <TableSkeletonRows Columns="7" Rows="8" />
+                        }
+                        else if (_sessions.Any())
+                        {
+                            @foreach (var s in _sessions)
+                            {
+                                <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors group">
+                                    <!-- Date & Status -->
+                                    <td class="py-2.5 px-4">
+                                        <div class="flex flex-col gap-1">
+                                            <span class="font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                                @s.SessionDate.ToString("dd MMM yyyy")
+                                            </span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit @GetStatusBadgeClass(s.Status)">
+                                                <span class="w-1.5 h-1.5 rounded-full @GetStatusDotClass(s.Status)"></span>
+                                                <span>@s.Status</span>
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Batch & Subject -->
+                                    <td class="py-2.5 px-3">
+                                        <div class="font-bold text-slate-800 dark:text-white group-hover:text-[#009488] transition-colors truncate" title="@s.BatchName">
+                                            @s.BatchName
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 font-mono truncate" title="Code: @s.BatchCode • @s.SubjectName">
+                                            Code: @s.BatchCode • @s.SubjectName
+                                        </div>
+                                    </td>
+
+                                    <!-- Class & Branch -->
+                                    <td class="py-2.5 px-3">
+                                        <div class="text-slate-700 dark:text-slate-300 font-medium truncate" title="@s.ClassName">@s.ClassName</div>
+                                        <div class="text-[10px] text-slate-400 truncate" title="@s.BranchName">@s.BranchName</div>
+                                    </td>
+
+                                    <!-- Timing -->
+                                    <td class="py-2.5 px-3">
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                            <svg class="w-3.5 h-3.5 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>@FormatSchedule(s.StartTime, s.EndTime)</span>
+                                        </span>
+                                    </td>
+
+                                    <!-- Faculty -->
+                                    <td class="py-2.5 px-3">
+                                        @if (!string.IsNullOrWhiteSpace(s.TeacherName))
+                                        {
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <div class="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] font-bold text-xs flex items-center justify-center shrink-0">
+                                                    @s.TeacherName[0].ToString().ToUpper()
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <div class="font-bold text-slate-800 dark:text-slate-200 truncate" title="@s.TeacherName">@s.TeacherName</div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-[11px] text-slate-400 italic">Unassigned</span>
+                                        }
+                                    </td>
+
+                                    <!-- Topic Covered (Strictly truncated, never overflows) -->
+                                    <td class="py-2.5 px-3 min-w-0">
+                                        <div class="text-slate-800 dark:text-slate-200 font-medium truncate max-w-full" title="@s.Topic">
+                                            @(string.IsNullOrWhiteSpace(s.Topic) ? "—" : s.Topic)
+                                        </div>
+                                    </td>
+
+                                    <!-- Actions (Consistent Students.razor colors and tooltips) -->
+                                    <td class="py-2.5 px-4 text-right whitespace-nowrap">
+                                        <div class="flex items-center justify-end gap-1">
+                                            <!-- View Details -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => OpenSessionDetail(s)"
+                                                        class="p-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="View Details"
+                                                        aria-label="View Details">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-[#004D40] text-teal-100 border border-teal-500/50 shadow-lg tracking-wide">
+                                                        View Details
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#004D40] border-r border-b border-teal-500/50"></span>
+                                                </div>
+                                            </div>
+
+                                            @if (s.Status == ClassSessionStatusNames.Scheduled)
+                                            {
+                                                <!-- Complete Session -->
+                                                <div class="relative group/act inline-flex items-center justify-center">
+                                                    <button type="button"
+                                                            @onclick="() => OpenCompleteModal(s)"
+                                                            class="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                            title="Mark Completed"
+                                                            aria-label="Mark Completed">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                    </button>
+                                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                        <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-emerald-700 text-white border border-emerald-500/50 shadow-lg tracking-wide">
+                                                            Mark Completed
+                                                        </span>
+                                                        <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-emerald-700 border-r border-b border-emerald-500/50"></span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Cancel Session -->
+                                                <div class="relative group/act inline-flex items-center justify-center">
+                                                    <button type="button"
+                                                            @onclick="() => OpenCancelModal(s)"
+                                                            class="p-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                            title="Cancel Session"
+                                                            aria-label="Cancel Session">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                        </svg>
+                                                    </button>
+                                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                        <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-sky-700 text-white border border-white/20 shadow-lg tracking-wide">
+                                                            Cancel Session
+                                                        </span>
+                                                        <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-sky-700 border-r border-b border-white/20"></span>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <!-- Edit Session -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => OpenEditDrawerAsync(s)"
+                                                        class="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="Edit Session"
+                                                        aria-label="Edit Session">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-amber-600 text-white border border-amber-400/50 shadow-lg tracking-wide">
+                                                        Edit Session
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-amber-600 border-r border-b border-amber-400/50"></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Delete Session -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => ConfirmDelete(s)"
+                                                        class="p-1.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="Delete Session"
+                                                        aria-label="Delete Session">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-600 text-white border border-rose-400/50 shadow-lg tracking-wide">
+                                                        Delete Session
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-rose-600 border-r border-b border-rose-400/50"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                                        else
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No class sessions found</p>
+                                    <p class="text-xs text-slate-400">Try changing your search query or filter options.</p>
+                                    <div class="flex items-center justify-center gap-2 pt-2">
+                                        <button type="button" @onclick="OpenGenerateModal"
+                                                class="px-3 py-1.5 rounded-lg bg-teal-50 text-[#009488] text-xs font-bold border border-teal-200 hover:bg-teal-100 transition-all cursor-pointer">
+                                            Generate
+                                        </button>
+                                        <button type="button" @onclick="OpenAddDrawerAsync"
+                                                class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-xs hover:scale-[1.02] transition-all cursor-pointer">
+                                            Add Session
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- Grid Card View -->
+            <div class="flex-1 overflow-auto p-4 scrollbar-hidden @(_isLoading && _sessions.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                @if (_isLoading && !_sessions.Any())
+                {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <div class="p-4 rounded-2xl bg-white dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700/80 shadow-2xs animate-pulse space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+                                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-16"></div>
+                                </div>
+                                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+                                <div class="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl"></div>
+                                <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between">
+                                    <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+                                    <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-12"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (_sessions.Any())
+                {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach (var s in _sessions)
+                    {
+                        <div class="p-4 rounded-2xl bg-white dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700/80 shadow-2xs hover:shadow-md transition-all group flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="font-extrabold text-sm text-slate-900 dark:text-white">
+                                            @s.SessionDate.ToString("dd MMM yyyy")
+                                        </div>
+                                        <div class="text-[11px] text-teal-600 font-bold mt-0.5">
+                                            @FormatSchedule(s.StartTime, s.EndTime)
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @GetStatusBadgeClass(s.Status)">
+                                        @s.Status
+                                    </span>
+                                </div>
+
+                                <div class="mt-3">
+                                    <h4 class="font-bold text-xs text-slate-800 dark:text-white truncate">
+                                        @s.BatchName
+                                    </h4>
+                                    <p class="text-[10px] text-slate-400">@s.ClassName • @s.SubjectName</p>
+                                </div>
+
+                                <div class="mt-2.5 p-2 rounded-xl bg-slate-50 dark:bg-[#142025] text-[11px]">
+                                    <span class="text-slate-400 text-[10px] block">Topic</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200 truncate block">
+                                        @(string.IsNullOrWhiteSpace(s.Topic) ? "Not specified" : s.Topic)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                                <span class="text-slate-400 text-[10px]">
+                                    Faculty: <strong class="text-slate-700 dark:text-slate-300">@(s.TeacherName ?? "Unassigned")</strong>
+                                </span>
+
+                                <div class="flex items-center gap-1">
+                                    <button type="button" @onclick="() => OpenSessionDetail(s)"
+                                            class="p-1 rounded text-slate-400 hover:text-[#009488] transition-colors cursor-pointer"
+                                            title="View Details">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </button>
+                                    <button type="button" @onclick="() => OpenEditDrawerAsync(s)"
+                                            class="p-1 rounded text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                                            title="Edit">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                                    </div>
+                }
+                else
+                {
+                    <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                        <div class="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#009488] flex items-center justify-center mb-3">
+                            <svg class="w-8 h-8 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">No Class Sessions Found</h3>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
+                            No sessions match your search criteria. Generate sessions from weekly timetables or add an ad-hoc session.
+                        </p>
+                        <div class="flex items-center gap-2 mt-4">
+                            <button type="button" @onclick="OpenGenerateModal"
+                                    class="px-3.5 py-2 rounded-xl bg-teal-50 text-[#009488] text-xs font-bold border border-teal-200 hover:bg-teal-100 transition-all cursor-pointer">
+                                Generate Timetable Sessions
+                            </button>
+                            <button type="button" @onclick="OpenAddDrawerAsync"
+                                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-md shadow-[#004D40]/20 hover:scale-[1.02] transition-all cursor-pointer">
+                                Add Manual Session
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        <!-- Pagination Footer -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="_query.PageNumber"
+                             PageSize="_query.PageSize"
+                             TotalRecords="_totalRecords"
+                             ItemLabel="sessions"
+                             IsLoading="_isLoading"
+                             OnPageChanged="LoadSessionsAsync"
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Add / Edit Session Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showAddEditModal)
+{
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-1.5 flex items-center justify-center shadow-md shrink-0">
+                    <img src="images/Logo.svg" alt="Vargshala" class="w-full h-full object-contain" />
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        @(_editingSession == null ? "Create Class Session" : "Edit Class Session")
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        @(_editingSession == null ? "Schedule a single ad-hoc class session" : $"Editing session on {_editingSession.SessionDate:dd MMM yyyy}")
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <EditForm Model="@_formModel" OnValidSubmit="SaveSessionAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <DataAnnotationsValidator />
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-5 select-text text-slate-800 dark:text-slate-100">
+                
+                <!-- Batch Selection -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Target Batch *</label>
+                    <CustomSelect Value="@(_formModel.BatchId == Guid.Empty ? "" : _formModel.BatchId.ToString())"
+                                  ValueChanged="@((string v) => _formModel.BatchId = string.IsNullOrEmpty(v) ? Guid.Empty : Guid.Parse(v))"
+                                  Options="_drawerBatchOptions"
+                                  Placeholder="Select Batch"
+                                  Disabled="@(_editingSession != null)"
+                                  Class="w-full" />
+                    <ValidationMessage For="@(() => _formModel.BatchId)" class="text-[10px] text-rose-500" />
+                </div>
+
+                <!-- Teacher Selection -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Assigned Teacher</label>
+                    <CustomSelect Value="@(_formModel.TeacherId?.ToString() ?? "")"
+                                  ValueChanged="@((string v) => _formModel.TeacherId = string.IsNullOrEmpty(v) ? null : Guid.Parse(v))"
+                                  Options="_drawerTeacherOptions"
+                                  Placeholder="-- No Teacher Assigned --"
+                                  Class="w-full" />
+                </div>
+
+                <!-- Date & Timings -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="space-y-1 sm:col-span-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Session Date *</label>
+                        <input type="date" @bind="_formModel.SessionDate"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Start Time *</label>
+                        <input type="time" @bind="_formModel.StartTime"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">End Time *</label>
+                        <input type="time" @bind="_formModel.EndTime"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                    </div>
+                </div>
+
+                <!-- Topic & Notes -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Lesson / Topic</label>
+                    <InputText @bind-Value="_formModel.Topic" placeholder="e.g. Quadratic Equations - Part 1" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Session Notes</label>
+                    <InputTextArea @bind-Value="_formModel.Notes" rows="3" placeholder="Homework assigned, classroom notes, room details..." class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                </div>
+
+                <!-- Status Selector -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Status</label>
+                    <CustomSelect @bind-Value="_formModel.Status"
+                                  Options="_drawerStatusOptions"
+                                  Placeholder="Select Status"
+                                  Class="w-full" />
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50/80 dark:bg-[#142025] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <button type="button" @onclick="CloseDrawerAsync"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+
+                <button type="submit" disabled="@_isSaving"
+                        class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50">
+                    @if (_isSaving)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    }
+                    <span>@(_editingSession == null ? "Create Session" : "Save Changes")</span>
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Generate Sessions from Schedule Modal -->
+<!-- ========================================================================= -->
+@if (_showGenerateModal)
+{
+    <Modal IsOpen="true"
+           Title="Generate Timetable Sessions"
+           Subtitle="Automatically generate class sessions from recurring batch schedules"
+           MaxWidth="max-w-lg"
+           OnClose="() => _showGenerateModal = false">
+        <ChildContent>
+            <div class="space-y-4 text-xs">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Select Batch *</label>
+                    <CustomSelect Value="@(_generateModel.BatchId == Guid.Empty ? "" : _generateModel.BatchId.ToString())"
+                                  ValueChanged="@((string v) => _generateModel.BatchId = string.IsNullOrEmpty(v) ? Guid.Empty : Guid.Parse(v))"
+                                  Options="_drawerBatchOptions"
+                                  Placeholder="-- Select Batch --"
+                                  Class="w-full" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">From Date *</label>
+                        <input type="date" @bind="_generateModel.StartDate"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">To Date *</label>
+                        <input type="date" @bind="_generateModel.EndDate"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl" />
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Default Faculty (Optional)</label>
+                    <CustomSelect Value="@(_generateModel.TeacherId?.ToString() ?? "")"
+                                  ValueChanged="@((string v) => _generateModel.TeacherId = string.IsNullOrEmpty(v) ? null : Guid.Parse(v))"
+                                  Options="_generateTeacherOptions"
+                                  Placeholder="-- Batch Primary Teacher --"
+                                  Class="w-full" />
+                </div>
+
+                <div class="p-3 bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 rounded-xl text-teal-800 dark:text-teal-200 text-[11px]">
+                    <p class="font-bold">Duplicate Prevention Active:</p>
+                    <p class="mt-0.5">Existing sessions on matching dates will not be duplicated. Only newly scheduled dates will be populated.</p>
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-end gap-2 w-full">
+                <button type="button" @onclick="() => _showGenerateModal = false"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" @onclick="GenerateSessionsAsync" disabled="@_isGenerating"
+                        class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50">
+                    @if (_isGenerating)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    }
+                    <span>Generate Sessions</span>
+                </button>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Session Detail View -->
+<!-- ========================================================================= -->
+@if (_selectedSession != null)
+{
+    <Modal IsOpen="true"
+           Title="@_selectedSession.BatchName"
+           Subtitle="@($"{_selectedSession.SessionDate:dd MMMM yyyy} • {FormatSchedule(_selectedSession.StartTime, _selectedSession.EndTime)}")"
+           MaxWidth="max-w-md"
+           OnClose="() => _selectedSession = null">
+        <ChildContent>
+            <div class="space-y-3.5 text-xs text-slate-700 dark:text-slate-300">
+                <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-[#18262c] rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Class &amp; Subject</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedSession.ClassName • @_selectedSession.SubjectName</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Branch</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedSession.BranchName</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Faculty Assigned</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">@(_selectedSession.TeacherName ?? "Unassigned")</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Status</span>
+                        <span class="font-bold @GetStatusTextColor(_selectedSession.Status)">@_selectedSession.Status</span>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 dark:bg-[#18262c] rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+                    <span class="text-[10px] text-slate-400 font-bold block uppercase">Topic Covered</span>
+                    <p class="font-semibold text-slate-800 dark:text-white">
+                        @(string.IsNullOrWhiteSpace(_selectedSession.Topic) ? "No topic recorded yet." : @_selectedSession.Topic)
+                    </p>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_selectedSession.Notes))
+                {
+                    <div class="p-3 bg-slate-50 dark:bg-[#18262c] rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+                        <span class="text-[10px] text-slate-400 font-bold block uppercase">Notes</span>
+                        <p class="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">@_selectedSession.Notes</p>
+                    </div>
+                }
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-between w-full">
+                <button type="button" @onclick="() => _selectedSession = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                    Close
+                </button>
+                <button type="button" @onclick="async () => { var s = _selectedSession; _selectedSession = null; await OpenEditDrawerAsync(s); }"
+                        class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl transition-all cursor-pointer">
+                    Edit Session
+                </button>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Mark Completed Modal -->
+<!-- ========================================================================= -->
+@if (_completingSession != null)
+{
+    <Modal IsOpen="true"
+           Title="Complete Class Session"
+           Subtitle="@($"{_completingSession.BatchName} • {_completingSession.SessionDate:dd MMM yyyy}")"
+           MaxWidth="max-w-md"
+           OnClose="() => _completingSession = null">
+        <ChildContent>
+            <div class="space-y-3 text-xs">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Topic Covered *</label>
+                    <InputText @bind-Value="_completeTopic" placeholder="e.g. Chapter 4 Exercises Completed"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl" />
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Teacher Notes / Homework</label>
+                    <InputTextArea @bind-Value="_completeNotes" rows="3" placeholder="Homework problems 1-10 assigned..."
+                                   class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl" />
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-end gap-2 w-full">
+                <button type="button" @onclick="() => _completingSession = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Cancel</button>
+                <button type="button" @onclick="SubmitCompleteSessionAsync"
+                        class="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md">
+                    Mark Completed
+                </button>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Cancel Session Modal -->
+<!-- ========================================================================= -->
+@if (_cancellingSession != null)
+{
+    <Modal IsOpen="true"
+           Title="Cancel Class Session"
+           Subtitle="@($"{_cancellingSession.BatchName} • {_cancellingSession.SessionDate:dd MMM yyyy}")"
+           MaxWidth="max-w-md"
+           OnClose="() => _cancellingSession = null">
+        <ChildContent>
+            <div class="space-y-3 text-xs">
+                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 text-amber-800 dark:text-amber-200">
+                    <p class="font-bold">Are you sure you want to cancel this session?</p>
+                    <p class="text-[11px] mt-0.5">Students and faculty will be notified of cancellation.</p>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Cancellation Reason</label>
+                    <InputText @bind-Value="_cancelReason" placeholder="e.g. Teacher on emergency leave / Holiday"
+                               class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl" />
+                </div>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-end gap-2 w-full">
+                <button type="button" @onclick="() => _cancellingSession = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Back</button>
+                <button type="button" @onclick="SubmitCancelSessionAsync"
+                        class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md">
+                    Confirm Cancel
+                </button>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Delete Confirmation Modal -->
+<!-- ========================================================================= -->
+@if (_sessionToDelete != null)
+{
+    <Modal IsOpen="true"
+           Title="Delete Class Session"
+           Subtitle="Confirm deletion of session record"
+           MaxWidth="max-w-md"
+           OnClose="() => _sessionToDelete = null">
+        <ChildContent>
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 text-rose-800 text-xs">
+                <p class="font-bold">Permanently soft-delete this class session?</p>
+                <p class="mt-0.5 text-[11px]">Date: @_sessionToDelete.SessionDate:dd MMM yyyy, Batch: @_sessionToDelete.BatchName.</p>
+            </div>
+        </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-end gap-2 w-full">
+                <button type="button" @onclick="() => _sessionToDelete = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Cancel</button>
+                <button type="button" @onclick="DeleteSessionAsync"
+                        class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl">Delete</button>
+            </div>
+        </FooterTemplate>
+    </Modal>
+}
+
+@code {
+    private List<ClassSessionDto> _sessions = new();
+    private List<BranchDto> _branches = new();
+    private List<ClassLookupDto> _classes = new();
+    private List<BatchDto> _batches = new();
+    private List<TeacherDto> _teachers = new();
+
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+    private bool _isGenerating = false;
+    private string _viewMode = "table";
+
+    // Filtering State
+    private readonly TableQueryState _query = new();
+    private TableSortState _sortState => _query.SortState;
+    private string _searchQuery = string.Empty;
+
+    // CustomSelect Filter Options
+    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new() { new("", "All Branches") };
+    private List<CustomSelect.CustomSelectOption> _classFilterOptions = new() { new("", "All Classes") };
+    private List<CustomSelect.CustomSelectOption> _batchFilterOptions = new() { new("", "All Batches") };
+    private List<CustomSelect.CustomSelectOption> _teacherFilterOptions = new() { new("", "All Teachers") };
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Statuses"),
+        new(ClassSessionStatusNames.Scheduled, "Scheduled"),
+        new(ClassSessionStatusNames.Completed, "Completed"),
+        new(ClassSessionStatusNames.Cancelled, "Cancelled"),
+        new(ClassSessionStatusNames.Postponed, "Postponed")
+    };
+
+    // CustomSelect Drawer & Modal Options
+    private List<CustomSelect.CustomSelectOption> _drawerBatchOptions = new();
+    private List<CustomSelect.CustomSelectOption> _drawerTeacherOptions = new();
+    private List<CustomSelect.CustomSelectOption> _generateTeacherOptions = new();
+    private readonly List<CustomSelect.CustomSelectOption> _drawerStatusOptions = new()
+    {
+        new(ClassSessionStatusNames.Scheduled, "Scheduled"),
+        new(ClassSessionStatusNames.Completed, "Completed"),
+        new(ClassSessionStatusNames.Cancelled, "Cancelled"),
+        new(ClassSessionStatusNames.Postponed, "Postponed")
+    };
+    private Guid? _selectedBranchId;
+    private Guid? _selectedClassId;
+    private Guid? _selectedBatchId;
+    private Guid? _selectedTeacherId;
+    private string? _selectedStatus;
+    private int _totalRecords = 0;
+
+    // Drawer state
+    private bool _showAddEditModal = false;
+    private bool _isDrawerOpen = false;
+    private ClassSessionDto? _editingSession;
+    private SessionFormModel _formModel = new();
+
+    // Generate Modal state
+    private bool _showGenerateModal = false;
+    private GenerateFormModel _generateModel = new();
+
+    // Details & Actions state
+    private ClassSessionDto? _selectedSession;
+    private ClassSessionDto? _completingSession;
+    private string _completeTopic = string.Empty;
+    private string _completeNotes = string.Empty;
+
+    private ClassSessionDto? _cancellingSession;
+    private string _cancelReason = string.Empty;
+
+    private ClassSessionDto? _sessionToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLookupsAsync();
+        await LoadSessionsAsync();
+    }
+
+    private async Task LoadLookupsAsync()
+    {
+        try
+        {
+            var branchTask = BranchService.GetAllActiveBranchesAsync();
+            var classTask = ClassService.GetAllActiveClassesAsync();
+            var batchTask = BatchService.GetAllActiveBatchesAsync();
+            var teacherTask = TeacherService.GetTeachersPagedAsync(new PagedRequest { PageSize = 100 });
+
+            await Task.WhenAll(branchTask, classTask, batchTask, teacherTask);
+
+            if (branchTask.Result.Success && branchTask.Result.Data != null)
+            {
+                _branches = branchTask.Result.Data;
+                _branchFilterOptions = new() { new("", "All Branches") };
+                _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
+            }
+            if (classTask.Result.Success && classTask.Result.Data != null)
+            {
+                _classes = classTask.Result.Data;
+                _classFilterOptions = new() { new("", "All Classes") };
+                _classFilterOptions.AddRange(_classes.Select(c => new CustomSelect.CustomSelectOption(c.Id.ToString(), c.Name)));
+            }
+            if (batchTask.Result.Success && batchTask.Result.Data != null)
+            {
+                _batches = batchTask.Result.Data;
+                _batchFilterOptions = new() { new("", "All Batches") };
+                _batchFilterOptions.AddRange(_batches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
+                _drawerBatchOptions = _batches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), $"{b.Name} ({b.ClassName} - {b.SubjectName})")).ToList();
+            }
+            if (teacherTask.Result.Success && teacherTask.Result.Data != null)
+            {
+                _teachers = teacherTask.Result.Data.Items;
+                _teacherFilterOptions = new() { new("", "All Teachers") };
+                _teacherFilterOptions.AddRange(_teachers.Select(t => new CustomSelect.CustomSelectOption(t.Id.ToString(), t.FullName)));
+                _drawerTeacherOptions = new() { new("", "-- No Teacher Assigned --") };
+                _drawerTeacherOptions.AddRange(_teachers.Select(t => new CustomSelect.CustomSelectOption(t.Id.ToString(), $"{t.FullName} ({t.Department})")));
+                _generateTeacherOptions = new() { new("", "-- Batch Primary Teacher --") };
+                _generateTeacherOptions.AddRange(_teachers.Select(t => new CustomSelect.CustomSelectOption(t.Id.ToString(), $"{t.FullName} ({t.Department})")));
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading filter lookups: " + ex.Message);
+        }
+    }
+
+    private async Task LoadSessionsAsync(int page = 1)
+    {
+        _isLoading = true;
+        _query.PageNumber = page;
+
+        try
+        {
+            var req = new PagedRequest
+            {
+                PageNumber = _query.PageNumber,
+                PageSize = _query.PageSize,
+                Search = string.IsNullOrWhiteSpace(_searchQuery) ? null : _searchQuery.Trim(),
+                SortBy = _sortState.Column,
+                SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : (_sortState.Direction == SortDirection.Ascending ? "asc" : null)
+            };
+
+            var res = await ClassSessionService.GetClassSessionsPagedAsync(
+                req,
+                _selectedBranchId,
+                _selectedClassId,
+                _selectedBatchId,
+                _selectedTeacherId,
+                null,
+                null,
+                _selectedStatus);
+
+            if (res.Success && res.Data != null)
+            {
+                _sessions = res.Data.Items;
+                _totalRecords = res.Data.TotalRecords;
+            }
+            else
+            {
+                _sessions.Clear();
+                _totalRecords = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error fetching class sessions: " + ex.Message);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleSortAsync(string column)
+    {
+        _sortState.Toggle(column);
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task HandlePageSizeChangedAsync(int size)
+    {
+        _query.PageSize = size;
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task ClearSearch()
+    {
+        _searchQuery = string.Empty;
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task HandleBranchChanged(string val)
+    {
+        _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task HandleClassChanged(string val)
+    {
+        _selectedClassId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task HandleBatchChanged(string val)
+    {
+        _selectedBatchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task HandleTeacherChanged(string val)
+    {
+        _selectedTeacherId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task HandleStatusChanged(string val)
+    {
+        _selectedStatus = string.IsNullOrWhiteSpace(val) ? null : val;
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task ClearAllFilters()
+    {
+        _searchQuery = string.Empty;
+        _selectedBranchId = null;
+        _selectedClassId = null;
+        _selectedBatchId = null;
+        _selectedTeacherId = null;
+        _selectedStatus = null;
+        _sortState.Reset();
+        await LoadSessionsAsync(1);
+    }
+
+    private async Task OpenAddDrawerAsync()
+    {
+        _editingSession = null;
+        _formModel = new SessionFormModel
+        {
+            BatchId = _batches.FirstOrDefault()?.Id ?? Guid.Empty,
+            SessionDate = DateOnly.FromDateTime(DateTime.Today),
+            StartTime = DateTime.Today.AddHours(8),
+            EndTime = DateTime.Today.AddHours(9),
+            Status = ClassSessionStatusNames.Scheduled
+        };
+
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task OpenEditDrawerAsync(ClassSessionDto s)
+    {
+        _editingSession = s;
+        _formModel = new SessionFormModel
+        {
+            Id = s.Id,
+            BatchId = s.BatchId,
+            TeacherId = s.TeacherId,
+            SessionDate = s.SessionDate,
+            StartTime = DateTime.Today.Add(s.StartTime.ToTimeSpan()),
+            EndTime = DateTime.Today.Add(s.EndTime.ToTimeSpan()),
+            Topic = s.Topic,
+            Notes = s.Notes,
+            Status = s.Status
+        };
+
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        await Task.Delay(250);
+        _showAddEditModal = false;
+        _editingSession = null;
+    }
+
+    private async Task SaveSessionAsync()
+    {
+        _isSaving = true;
+        try
+        {
+            var sTime = _formModel.StartTime.HasValue ? TimeOnly.FromDateTime(_formModel.StartTime.Value) : new TimeOnly(8, 0);
+            var eTime = _formModel.EndTime.HasValue ? TimeOnly.FromDateTime(_formModel.EndTime.Value) : new TimeOnly(9, 0);
+
+            if (_editingSession == null)
+            {
+                var req = new CreateClassSessionRequest
+                {
+                    BatchId = _formModel.BatchId,
+                    TeacherId = _formModel.TeacherId,
+                    SessionDate = _formModel.SessionDate,
+                    StartTime = sTime,
+                    EndTime = eTime,
+                    Topic = _formModel.Topic,
+                    Notes = _formModel.Notes
+                };
+
+                var res = await ClassSessionService.CreateClassSessionAsync(req);
+                if (res.Success)
+                {
+                    Toast.Success("Class session created successfully.");
+                    await CloseDrawerAsync();
+                    await LoadSessionsAsync();
+                }
+                else
+                {
+                    Toast.Error(res.Message ?? "Failed to create session.");
+                }
+            }
+            else
+            {
+                var req = new UpdateClassSessionRequest
+                {
+                    Id = _formModel.Id,
+                    TeacherId = _formModel.TeacherId,
+                    SessionDate = _formModel.SessionDate,
+                    StartTime = sTime,
+                    EndTime = eTime,
+                    Topic = _formModel.Topic,
+                    Notes = _formModel.Notes,
+                    Status = _formModel.Status
+                };
+
+                var res = await ClassSessionService.UpdateClassSessionAsync(_formModel.Id, req);
+                if (res.Success)
+                {
+                    Toast.Success("Class session updated successfully.");
+                    await CloseDrawerAsync();
+                    await LoadSessionsAsync();
+                }
+                else
+                {
+                    Toast.Error(res.Message ?? "Failed to update session.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error saving session: " + ex.Message);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void OpenGenerateModal()
+    {
+        _generateModel = new GenerateFormModel
+        {
+            BatchId = _batches.FirstOrDefault()?.Id ?? Guid.Empty,
+            StartDate = DateOnly.FromDateTime(DateTime.Today),
+            EndDate = DateOnly.FromDateTime(DateTime.Today.AddDays(14))
+        };
+        _showGenerateModal = true;
+    }
+
+    private async Task GenerateSessionsAsync()
+    {
+        if (_generateModel.BatchId == Guid.Empty)
+        {
+            Toast.Warning("Please select a batch.");
+            return;
+        }
+
+        _isGenerating = true;
+        try
+        {
+            var req = new GenerateSessionsFromScheduleRequest
+            {
+                BatchId = _generateModel.BatchId,
+                StartDate = _generateModel.StartDate,
+                EndDate = _generateModel.EndDate,
+                TeacherId = _generateModel.TeacherId
+            };
+
+            var res = await ClassSessionService.GenerateSessionsFromScheduleAsync(req);
+            if (res.Success)
+            {
+                Toast.Success(res.Message ?? $"Generated {res.Data} sessions.");
+                _showGenerateModal = false;
+                await LoadSessionsAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to generate sessions.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error: " + ex.Message);
+        }
+        finally
+        {
+            _isGenerating = false;
+        }
+    }
+
+    private void OpenSessionDetail(ClassSessionDto s)
+    {
+        _selectedSession = s;
+    }
+
+    private void OpenCompleteModal(ClassSessionDto s)
+    {
+        _completingSession = s;
+        _completeTopic = s.Topic ?? string.Empty;
+        _completeNotes = s.Notes ?? string.Empty;
+    }
+
+    private async Task SubmitCompleteSessionAsync()
+    {
+        if (_completingSession == null) return;
+        try
+        {
+            var res = await ClassSessionService.CompleteClassSessionAsync(_completingSession.Id, new CompleteClassSessionRequest
+            {
+                Topic = _completeTopic,
+                Notes = _completeNotes
+            });
+
+            if (res.Success)
+            {
+                Toast.Success("Session marked as completed.");
+                _completingSession = null;
+                await LoadSessionsAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to complete session.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error: " + ex.Message);
+        }
+    }
+
+    private void OpenCancelModal(ClassSessionDto s)
+    {
+        _cancellingSession = s;
+        _cancelReason = string.Empty;
+    }
+
+    private async Task SubmitCancelSessionAsync()
+    {
+        if (_cancellingSession == null) return;
+        try
+        {
+            var res = await ClassSessionService.CancelClassSessionAsync(_cancellingSession.Id, new CancelClassSessionRequest
+            {
+                Reason = _cancelReason
+            });
+
+            if (res.Success)
+            {
+                Toast.Success("Session cancelled.");
+                _cancellingSession = null;
+                await LoadSessionsAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to cancel session.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error: " + ex.Message);
+        }
+    }
+
+    private void ConfirmDelete(ClassSessionDto s)
+    {
+        _sessionToDelete = s;
+    }
+
+    private async Task DeleteSessionAsync()
+    {
+        if (_sessionToDelete == null) return;
+        try
+        {
+            var res = await ClassSessionService.DeleteClassSessionAsync(_sessionToDelete.Id);
+            if (res.Success)
+            {
+                Toast.Success("Session deleted successfully.");
+                _sessionToDelete = null;
+                await LoadSessionsAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to delete session.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error: " + ex.Message);
+        }
+    }
+
+    private void ExportCsv()
+    {
+        Toast.Info("Exporting class sessions directory to CSV...");
+    }
+
+    private string FormatSchedule(TimeOnly start, TimeOnly end)
+    {
+        return $"{start:HH:mm} - {end:HH:mm}";
+    }
+
+    private string GetStatusBadgeClass(string status) => status switch
+    {
+        ClassSessionStatusNames.Completed => "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80",
+        ClassSessionStatusNames.Scheduled => "bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/80",
+        ClassSessionStatusNames.Cancelled => "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200/80",
+        ClassSessionStatusNames.Postponed => "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80",
+        _ => "bg-slate-100 text-slate-600"
+    };
+
+    private string GetStatusDotClass(string status) => status switch
+    {
+        ClassSessionStatusNames.Completed => "bg-emerald-500",
+        ClassSessionStatusNames.Scheduled => "bg-[#009488] animate-pulse",
+        ClassSessionStatusNames.Cancelled => "bg-rose-500",
+        ClassSessionStatusNames.Postponed => "bg-amber-500",
+        _ => "bg-slate-400"
+    };
+
+    private string GetStatusTextColor(string status) => status switch
+    {
+        ClassSessionStatusNames.Completed => "text-emerald-600",
+        ClassSessionStatusNames.Scheduled => "text-[#009488]",
+        ClassSessionStatusNames.Cancelled => "text-rose-600",
+        ClassSessionStatusNames.Postponed => "text-amber-600",
+        _ => "text-slate-400"
+    };
+
+    public class SessionFormModel
+    {
+        public Guid Id { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Batch is required.")]
+        public Guid BatchId { get; set; }
+
+        public Guid? TeacherId { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Session Date is required.")]
+        public DateOnly SessionDate { get; set; }
+
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+
+        public string? Topic { get; set; }
+        public string? Notes { get; set; }
+        public string Status { get; set; } = ClassSessionStatusNames.Scheduled;
+    }
+
+    public class GenerateFormModel
+    {
+        public Guid BatchId { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
+        public Guid? TeacherId { get; set; }
+    }
+}

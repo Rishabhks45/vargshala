@@ -14,9 +14,9 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
 
         builder.Property(t => t.EmployeeCode).HasMaxLength(50);
         builder.Property(t => t.Department).HasMaxLength(100);
-        builder.Property(t => t.Designation).HasMaxLength(100);
+        builder.Property(t => t.Designation);
+        builder.Property(t => t.HighestQualification);
 
-        builder.Property(t => t.HighestQualification).HasMaxLength(150);
         builder.Property(t => t.Specialization).HasMaxLength(150);
         builder.Property(t => t.TeachingExperienceYears).HasPrecision(5, 2);
 

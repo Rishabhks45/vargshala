@@ -76,11 +76,14 @@ public class UpdateTeacherCommandHandler : IRequestHandler<UpdateTeacherCommand,
         }
 
         // Update Teacher
+        var designation = req.Designation ?? DesignationExtensions.ParseDesignation(req.DesignationName);
+        var highestQualification = req.HighestQualification ?? HighestQualificationExtensions.ParseQualification(req.Qualification);
+
         teacher.EmployeeCode = req.EmployeeCode?.Trim();
         teacher.JoiningDate = req.JoiningDate;
         teacher.Department = req.Department?.Trim();
-        teacher.Designation = req.Designation?.Trim();
-        teacher.HighestQualification = req.HighestQualification?.Trim();
+        teacher.Designation = designation;
+        teacher.HighestQualification = highestQualification;
         teacher.Specialization = req.Specialization?.Trim();
         teacher.TeachingExperienceYears = req.TeachingExperienceYears;
         teacher.Address = req.Address?.Trim();

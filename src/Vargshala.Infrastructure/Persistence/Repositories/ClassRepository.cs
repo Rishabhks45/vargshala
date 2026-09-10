@@ -29,8 +29,14 @@ public class ClassRepository : IClassRepository
     private static readonly Dictionary<string, Expression<Func<Class, object>>> SortMappings = new(StringComparer.OrdinalIgnoreCase)
     {
         ["name"] = c => c.Name,
+        ["classname"] = c => c.Name,
         ["code"] = c => c.Code,
+        ["classcode"] = c => c.Code,
+        ["branch"] = c => c.Branch!.Name,
+        ["branchname"] = c => c.Branch!.Name,
+        ["description"] = c => c.Description!,
         ["isactive"] = c => c.IsActive,
+        ["status"] = c => c.IsActive,
         ["createdat"] = c => c.CreatedAt,
         ["updatedat"] = c => c.UpdatedAt!
     };

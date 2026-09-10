@@ -5,6 +5,7 @@ using Vargshala.Application.Abstractions.Persistence;
 using Vargshala.Application.Common;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Infrastructure;
 using Vargshala.Contracts.Common;
+using Vargshala.Contracts.Teachers;
 using Vargshala.Domain.Entities;
 
 namespace Vargshala.Infrastructure.Persistence.Repositories;
@@ -30,7 +31,6 @@ public class TeacherRepository : ITeacherRepository
           || (t.User != null && t.User.Mobile != null && EF.Functions.Like(t.User.Mobile, $"%{term}%"))
           || (t.EmployeeCode != null && EF.Functions.Like(t.EmployeeCode.ToLower(), lowerTerm))
           || (t.Department != null && EF.Functions.Like(t.Department.ToLower(), lowerTerm))
-          || (t.Designation != null && EF.Functions.Like(t.Designation.ToLower(), lowerTerm))
           || (t.Specialization != null && EF.Functions.Like(t.Specialization.ToLower(), lowerTerm));
     };
 
@@ -126,7 +126,11 @@ public class TeacherRepository : ITeacherRepository
 
         if (!string.IsNullOrWhiteSpace(designation))
         {
-            query = query.Where(t => t.Designation == designation);
+            var parsed = DesignationExtensions.ParseDesignation(designation);
+            if (parsed.HasValue)
+            {
+                query = query.Where(t => t.Designation == parsed.Value);
+            }
         }
 
         if (isActive.HasValue)

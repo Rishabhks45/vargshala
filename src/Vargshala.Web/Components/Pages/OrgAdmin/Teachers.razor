@@ -96,7 +96,7 @@
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Departments</p>
                     <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
-                        @_teachers.Select(t => t.Department ?? t.Subject).Where(s => !string.IsNullOrEmpty(s)).Distinct().Count()
+                        @_teachers.Select(t => t.Department).Where(s => !string.IsNullOrEmpty(s)).Distinct().Count()
                     </h3>
                     <p class="text-[10px] text-slate-400 font-medium mt-0.5">Active Academic Streams</p>
                 </div>
@@ -136,10 +136,10 @@
         <!-- Filter Dropdowns with CustomSelect -->
         <div class="flex items-center gap-2 w-full md:w-auto">
             <div class="w-44">
-                <CustomSelect Value="@_selectedSubject" 
-                              ValueChanged="HandleSubjectChanged" 
-                              Options="_subjectFilterOptions" 
-                              Placeholder="All Subjects" />
+                <CustomSelect Value="@_selectedDepartment" 
+                              ValueChanged="HandleDepartmentChanged" 
+                              Options="_departmentFilterOptions" 
+                              Placeholder="All Departments" />
             </div>
             <div class="w-40">
                 <CustomSelect Value="@_selectedDesignation" 
@@ -159,46 +159,58 @@
     <!-- Teachers Data Table (Fits screen height, internal scrolling with hidden scrollbar) -->
     <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
         <div class="flex-1 min-h-0 overflow-auto scrollbar-hidden">
-            <table class="w-full min-w-[860px] text-left border-collapse table-fixed">
+            <table class="w-full min-w-[1150px] text-left border-collapse table-fixed">
                 <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
                     <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
-                        <th class="w-[26%] py-2 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Name")'>
+                        <th class="w-[18%] py-2 px-4 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Name")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Teacher</span>
                                 <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
                             </div>
                         </th>
-                        <th class="w-[18%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Subject")'>
+                        <th class="w-[12%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Department")'>
                             <div class="flex items-center gap-1.5">
-                                <span>Subject / Dept</span>
-                                <span class="@_sortState.GetIndicatorClass("Subject")">@_sortState.GetIndicator("Subject")</span>
+                                <span>Department</span>
+                                <span class="@_sortState.GetIndicatorClass("Department")">@_sortState.GetIndicator("Department")</span>
                             </div>
                         </th>
-                        <th class="w-[16%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Designation")'>
+                        <th class="w-[13%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Specialization")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Specialization</span>
+                                <span class="@_sortState.GetIndicatorClass("Specialization")">@_sortState.GetIndicator("Specialization")</span>
+                            </div>
+                        </th>
+                        <th class="w-[12%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Designation")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Designation</span>
                                 <span class="@_sortState.GetIndicatorClass("Designation")">@_sortState.GetIndicator("Designation")</span>
                             </div>
                         </th>
-                        <th class="w-[16%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Mobile")'>
+                        <th class="w-[9%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("HighestQualification")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Qualification</span>
+                                <span class="@_sortState.GetIndicatorClass("HighestQualification")">@_sortState.GetIndicator("HighestQualification")</span>
+                            </div>
+                        </th>
+                        <th class="w-[13%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Mobile")'>
                             <div class="flex items-center gap-1.5">
                                 <span>Contact</span>
                                 <span class="@_sortState.GetIndicatorClass("Mobile")">@_sortState.GetIndicator("Mobile")</span>
                             </div>
                         </th>
                         <th class="w-[10%] py-2 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Status")'>
-                            <div class="flex items-center justify-center gap-1.5">
+                            <div class="flex items-center justify-center gap-1">
                                 <span>Status</span>
                                 <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
                             </div>
                         </th>
-                        <th class="w-[14%] py-2 px-5 text-right select-none">Actions</th>
+                        <th class="w-[13%] py-2 px-4 text-right select-none">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _teachers.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
                     @if (_isLoading && !_teachers.Any())
                     {
-                        <TableSkeletonRows Columns="6" Rows="8" />
+                        <TableSkeletonRows Columns="8" Rows="8" />
                     }
                     else if (_teachers.Any())
                     {
@@ -224,16 +236,42 @@
                                     </div>
                                 </td>
 
-                                <!-- Subject -->
+                                <!-- Department -->
                                 <td class="py-1.5 px-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300">
-                                        @(!string.IsNullOrEmpty(teacher.Subject) ? teacher.Subject : (!string.IsNullOrEmpty(teacher.Department) ? teacher.Department : "—"))
-                                    </span>
+                                    @if (!string.IsNullOrEmpty(teacher.Department))
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+                                            @teacher.Department
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400 text-xs">—</span>
+                                    }
+                                </td>
+
+                                <!-- Specialization -->
+                                <td class="py-1.5 px-3">
+                                    @if (!string.IsNullOrEmpty(teacher.Specialization))
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-teal-50 dark:bg-teal-950/70 border border-teal-200/80 dark:border-teal-800 text-teal-700 dark:text-teal-300 truncate max-w-[130px]" title="@teacher.Specialization">
+                                            @teacher.Specialization
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400 text-xs">—</span>
+                                    }
                                 </td>
 
                                 <!-- Designation -->
-                                <td class="py-1.5 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                                    @(!string.IsNullOrEmpty(teacher.Designation) ? teacher.Designation : "—")
+                                <td class="py-1.5 px-3 font-semibold text-slate-700 dark:text-slate-300 truncate" title="@teacher.DesignationDisplay">
+                                    @(!string.IsNullOrEmpty(teacher.DesignationDisplay) ? teacher.DesignationDisplay : "—")
+                                </td>
+
+                                <!-- Qualification -->
+                                <td class="py-1.5 px-3 font-medium text-slate-600 dark:text-slate-400">
+                                    @(!string.IsNullOrEmpty(teacher.HighestQualificationDisplay) ? teacher.HighestQualificationDisplay : "—")
                                 </td>
 
                                 <!-- Contact Details -->
@@ -247,7 +285,7 @@
                                 </td>
 
                                 <!-- Status Badge -->
-                                <td class="py-1.5 px-3 text-center">
+                                <td class="py-1.5 px-3 text-center whitespace-nowrap">
                                     @if (teacher.IsActive)
                                     {
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
@@ -265,7 +303,7 @@
                                 </td>
 
                                 <!-- Actions Column: Direct Action Buttons with Isolated Tooltips -->
-                                <td class="py-1.5 px-5 text-right">
+                                <td class="py-1.5 px-4 text-right whitespace-nowrap">
                                     <div class="flex items-center justify-end gap-1">
                                         
                                         <!-- Action 1: View Profile -->
@@ -364,7 +402,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="6" class="py-12 text-center text-slate-400">
+                            <td colspan="8" class="py-12 text-center text-slate-400">
                                 <div class="max-w-xs mx-auto space-y-2">
                                     <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -506,11 +544,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div class="space-y-1">
                             <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Department</label>
-                            <CustomSelect @bind-Value="_modalModel.Department" Options="_drawerSubjectOptions" Placeholder="Select Department" Class="w-full" />
+                            <CustomSelect @bind-Value="_modalModel.Department" Options="_drawerDepartmentOptions" Placeholder="Select Department" Class="w-full" />
                         </div>
                         <div class="space-y-1">
                             <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Designation</label>
-                            <CustomSelect @bind-Value="_modalModel.Designation" Options="_drawerDesignationOptions" Placeholder="Select Designation" Class="w-full" />
+                            <CustomSelect @bind-Value="_selectedModalDesignation" Options="_drawerDesignationOptions" Placeholder="Select Designation" Class="w-full" />
                         </div>
                     </div>
 
@@ -529,7 +567,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div class="space-y-1">
                             <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Highest Qualification</label>
-                            <CustomSelect @bind-Value="_modalModel.HighestQualification" Options="_drawerQualificationOptions" Placeholder="Select Qualification" Class="w-full" />
+                            <CustomSelect @bind-Value="_selectedModalQualification" Options="_drawerQualificationOptions" Placeholder="Select Qualification" Class="w-full" />
                         </div>
                         <div class="space-y-1">
                             <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Specialization / Subject</label>
@@ -637,7 +675,7 @@
 {
     <Modal IsOpen="true" 
            Title="Teacher Profile" 
-           Subtitle="@($"{_selectedProfileTeacher.Designation} • {_selectedProfileTeacher.Subject}")" 
+           Subtitle="@($"{_selectedProfileTeacher.DesignationDisplay} • {_selectedProfileTeacher.Department}")" 
            MaxWidth="max-w-xl" 
            OnClose="() => _selectedProfileTeacher = null">
         <ChildContent>
@@ -648,7 +686,7 @@
                     </div>
                     <div>
                         <h4 class="text-base font-bold text-slate-900 dark:text-white">@_selectedProfileTeacher.FullName</h4>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">@_selectedProfileTeacher.EmployeeCode • @(!string.IsNullOrEmpty(_selectedProfileTeacher.HighestQualification) ? _selectedProfileTeacher.HighestQualification : _selectedProfileTeacher.Qualification)</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 font-medium font-mono">@_selectedProfileTeacher.EmployeeCode • @(!string.IsNullOrEmpty(_selectedProfileTeacher.HighestQualificationDisplay) ? _selectedProfileTeacher.HighestQualificationDisplay : "—")</p>
                         <div class="mt-1 flex items-center gap-2">
                             <Badge Text="@(_selectedProfileTeacher.IsActive ? "Active" : "Inactive")" 
                                    Variant="@(_selectedProfileTeacher.IsActive ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" 
@@ -665,11 +703,11 @@
                     <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
                         <div>
                             <span class="text-slate-400 dark:text-slate-500 font-medium">Department:</span>
-                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.Department) ? _selectedProfileTeacher.Department : _selectedProfileTeacher.Subject)</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@(!string.IsNullOrEmpty(_selectedProfileTeacher.Department) ? _selectedProfileTeacher.Department : "—")</span>
                         </div>
                         <div>
                             <span class="text-slate-400 dark:text-slate-500 font-medium">Designation:</span>
-                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.Designation</span>
+                            <span class="ml-1 font-bold text-slate-800 dark:text-slate-200">@_selectedProfileTeacher.DesignationDisplay</span>
                         </div>
                     </div>
 
@@ -743,29 +781,31 @@
     private bool _isLoading = true;
     private bool _isSaving = false;
     private string _searchQuery = string.Empty;
-    private string _selectedSubject = string.Empty;
+    private string _selectedDepartment = string.Empty;
     private string _selectedDesignation = string.Empty;
     private string _selectedStatus = string.Empty;
     private TableSortState _sortState => _query.SortState;
 
-    private readonly List<CustomSelect.CustomSelectOption> _subjectFilterOptions = new()
+    private readonly List<CustomSelect.CustomSelectOption> _departmentFilterOptions = new()
     {
-        new("", "All Subjects"),
+        new("", "All Departments"),
+        new("Computer Science", "Computer Science"),
         new("Mathematics", "Mathematics"),
         new("Physics", "Physics"),
         new("Chemistry", "Chemistry"),
         new("Biology", "Biology"),
-        new("English", "English"),
-        new("Computer Science", "Computer Science")
+        new("English", "English")
     };
 
     private readonly List<CustomSelect.CustomSelectOption> _designationFilterOptions = new()
     {
         new("", "All Designations"),
-        new("HOD", "HOD"),
+        new("Teacher", "Teacher"),
         new("Senior Teacher", "Senior Teacher"),
+        new("HOD", "HOD"),
         new("Assistant Teacher", "Assistant Teacher"),
-        new("Guest Lecturer", "Guest Lecturer")
+        new("Guest Lecturer", "Guest Lecturer"),
+        new("Principal", "Principal")
     };
 
     private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
@@ -775,38 +815,30 @@
         new("Inactive", "Inactive Only")
     };
 
-    private readonly List<CustomSelect.CustomSelectOption> _drawerDesignationOptions = new()
+    private readonly List<CustomSelect.CustomSelectOption> _drawerDepartmentOptions = new()
     {
-        new("HOD", "HOD"),
-        new("Senior Teacher", "Senior Teacher"),
-        new("Assistant Teacher", "Assistant Teacher"),
-        new("Guest Lecturer", "Guest Lecturer")
-    };
-
-    private readonly List<CustomSelect.CustomSelectOption> _drawerSubjectOptions = new()
-    {
+        new("Computer Science", "Computer Science"),
         new("Mathematics", "Mathematics"),
         new("Physics", "Physics"),
         new("Chemistry", "Chemistry"),
         new("Biology", "Biology"),
-        new("English", "English"),
-        new("Computer Science", "Computer Science")
+        new("English", "English")
     };
 
-    private readonly List<CustomSelect.CustomSelectOption> _drawerQualificationOptions = new()
-    {
-        new("Ph.D.", "Ph.D."),
-        new("M.Sc.", "M.Sc."),
-        new("M.A.", "M.A."),
-        new("M.Ed.", "M.Ed."),
-        new("B.Ed.", "B.Ed."),
-        new("B.Tech.", "B.Tech.")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _drawerDesignationOptions = Enum.GetValues<Designation>()
+        .Select(d => new CustomSelect.CustomSelectOption(d.ToString(), d.GetDisplayName()))
+        .ToList();
+
+    private readonly List<CustomSelect.CustomSelectOption> _drawerQualificationOptions = Enum.GetValues<HighestQualification>()
+        .Select(q => new CustomSelect.CustomSelectOption(q.ToString(), q.GetDisplayName()))
+        .ToList();
 
     private bool _showDrawer = false;
     private bool _isDrawerOpen = false;
     private TeacherDto? _editingTeacher;
     private TeacherDto _modalModel = new();
+    private string _selectedModalDesignation = Designation.Teacher.ToString();
+    private string _selectedModalQualification = HighestQualification.BEd.ToString();
     private TeacherDto? _selectedProfileTeacher;
 
     private List<TeacherDto> _teachers = new();
@@ -844,7 +876,7 @@
 
             var response = await TeacherService.GetTeachersPagedAsync(
                 pagedRequest,
-                department: string.IsNullOrWhiteSpace(_selectedSubject) ? null : _selectedSubject,
+                department: string.IsNullOrWhiteSpace(_selectedDepartment) ? null : _selectedDepartment,
                 designation: string.IsNullOrWhiteSpace(_selectedDesignation) ? null : _selectedDesignation,
                 isActive: isActive);
 
@@ -884,9 +916,9 @@
         await LoadTeachersAsync(1);
     }
 
-    private async Task HandleSubjectChanged(string val)
+    private async Task HandleDepartmentChanged(string val)
     {
-        _selectedSubject = val;
+        _selectedDepartment = val;
         await LoadTeachersAsync(1);
     }
 
@@ -917,15 +949,14 @@
             LastName = string.Empty,
             Country = "India",
             JoiningDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            Designation = "Assistant Teacher",
-            Department = "Mathematics",
-            Subject = "Mathematics",
-            Specialization = "Mathematics",
-            Qualification = "B.Ed.",
-            HighestQualification = "B.Ed.",
+            Department = "Computer Science",
+            Specialization = string.Empty,
             Status = "Active",
             IsActive = true
         };
+
+        _selectedModalDesignation = Designation.Teacher.ToString();
+        _selectedModalQualification = HighestQualification.BEd.ToString();
 
         // Auto-fetch generated Employee Code (EMP-YY00001)
         try
@@ -981,9 +1012,7 @@
             Mobile = teacher.Mobile,
             Designation = teacher.Designation,
             Department = teacher.Department,
-            Qualification = teacher.Qualification,
             HighestQualification = teacher.HighestQualification,
-            Subject = teacher.Subject,
             Specialization = teacher.Specialization,
             TeachingExperienceYears = teacher.TeachingExperienceYears,
             Address = teacher.Address,
@@ -998,6 +1027,13 @@
             IsActive = teacher.IsActive,
             JoiningDate = teacher.JoiningDate
         };
+
+        _selectedModalDesignation = teacher.Designation?.ToString()
+            ?? (DesignationExtensions.ParseDesignation(teacher.DesignationDisplay)?.ToString() ?? Designation.Teacher.ToString());
+
+        _selectedModalQualification = teacher.HighestQualification?.ToString()
+            ?? (HighestQualificationExtensions.ParseQualification(teacher.HighestQualificationDisplay)?.ToString() ?? HighestQualification.BEd.ToString());
+
         _showDrawer = true;
         await Task.Yield();
         _isDrawerOpen = true;
@@ -1031,6 +1067,9 @@
             if (string.IsNullOrWhiteSpace(firstName)) firstName = "Teacher";
             if (string.IsNullOrWhiteSpace(lastName)) lastName = ".";
 
+            var designation = DesignationExtensions.ParseDesignation(_selectedModalDesignation);
+            var highestQualification = HighestQualificationExtensions.ParseQualification(_selectedModalQualification);
+
             if (_editingTeacher == null)
             {
                 var req = new CreateTeacherRequest
@@ -1041,10 +1080,10 @@
                     Mobile = string.IsNullOrWhiteSpace(_modalModel.Mobile) ? (string.IsNullOrWhiteSpace(_modalModel.Phone) ? null : _modalModel.Phone.Trim()) : _modalModel.Mobile.Trim(),
                     EmployeeCode = string.IsNullOrWhiteSpace(_modalModel.EmployeeCode) ? (string.IsNullOrWhiteSpace(_modalModel.EmployeeId) ? null : _modalModel.EmployeeId.Trim()) : _modalModel.EmployeeCode.Trim(),
                     JoiningDate = _modalModel.JoiningDate,
-                    Department = string.IsNullOrWhiteSpace(_modalModel.Department) ? _modalModel.Subject : _modalModel.Department.Trim(),
-                    Designation = string.IsNullOrWhiteSpace(_modalModel.Designation) ? "Faculty" : _modalModel.Designation.Trim(),
-                    HighestQualification = string.IsNullOrWhiteSpace(_modalModel.HighestQualification) ? _modalModel.Qualification : _modalModel.HighestQualification.Trim(),
-                    Specialization = string.IsNullOrWhiteSpace(_modalModel.Specialization) ? _modalModel.Subject : _modalModel.Specialization.Trim(),
+                    Department = _modalModel.Department?.Trim(),
+                    Designation = designation,
+                    HighestQualification = highestQualification,
+                    Specialization = _modalModel.Specialization?.Trim(),
                     TeachingExperienceYears = _modalModel.TeachingExperienceYears,
                     Address = string.IsNullOrWhiteSpace(_modalModel.Address) ? null : _modalModel.Address.Trim(),
                     City = string.IsNullOrWhiteSpace(_modalModel.City) ? null : _modalModel.City.Trim(),
@@ -1080,10 +1119,10 @@
                     Mobile = string.IsNullOrWhiteSpace(_modalModel.Mobile) ? (string.IsNullOrWhiteSpace(_modalModel.Phone) ? null : _modalModel.Phone.Trim()) : _modalModel.Mobile.Trim(),
                     EmployeeCode = string.IsNullOrWhiteSpace(_modalModel.EmployeeCode) ? (string.IsNullOrWhiteSpace(_modalModel.EmployeeId) ? null : _modalModel.EmployeeId.Trim()) : _modalModel.EmployeeCode.Trim(),
                     JoiningDate = _modalModel.JoiningDate,
-                    Department = string.IsNullOrWhiteSpace(_modalModel.Department) ? _modalModel.Subject : _modalModel.Department.Trim(),
-                    Designation = string.IsNullOrWhiteSpace(_modalModel.Designation) ? "Faculty" : _modalModel.Designation.Trim(),
-                    HighestQualification = string.IsNullOrWhiteSpace(_modalModel.HighestQualification) ? _modalModel.Qualification : _modalModel.HighestQualification.Trim(),
-                    Specialization = string.IsNullOrWhiteSpace(_modalModel.Specialization) ? _modalModel.Subject : _modalModel.Specialization.Trim(),
+                    Department = _modalModel.Department?.Trim(),
+                    Designation = designation,
+                    HighestQualification = highestQualification,
+                    Specialization = _modalModel.Specialization?.Trim(),
                     TeachingExperienceYears = _modalModel.TeachingExperienceYears,
                     Address = string.IsNullOrWhiteSpace(_modalModel.Address) ? null : _modalModel.Address.Trim(),
                     City = string.IsNullOrWhiteSpace(_modalModel.City) ? null : _modalModel.City.Trim(),

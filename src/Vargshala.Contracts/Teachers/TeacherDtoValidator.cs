@@ -32,7 +32,10 @@ public class TeacherDtoValidator : AbstractValidator<TeacherDto>
             .MaximumLength(100).WithMessage("Department cannot exceed 100 characters.");
 
         RuleFor(x => x.Designation)
-            .MaximumLength(100).WithMessage("Designation cannot exceed 100 characters.");
+            .IsInEnum().When(x => x.Designation.HasValue).WithMessage("Invalid designation selected.");
+
+        RuleFor(x => x.HighestQualification)
+            .IsInEnum().When(x => x.HighestQualification.HasValue).WithMessage("Invalid qualification selected.");
 
         RuleFor(x => x.AadharNumber)
             .MaximumLength(20).WithMessage("Aadhar number cannot exceed 20 characters.");

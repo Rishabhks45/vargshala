@@ -18,4 +18,6 @@ public class Batch : BaseEntity
     public Subject Subject { get; set; } = null!;
     public ICollection<BatchTeacher> BatchTeachers { get; set; } = new List<BatchTeacher>();
     public ICollection<BatchStudent> BatchStudents { get; set; } = new List<BatchStudent>();
+    public ICollection<BatchSchedule> BatchSchedules { get; set; } = new List<BatchSchedule>();
+    public ICollection<ClassSession> ClassSessions { get; set; } = new List<ClassSession>();
 }

@@ -1,3 +1,4 @@
+using Vargshala.Contracts.Teachers;
 using Vargshala.Domain.Common;
 
 namespace Vargshala.Domain.Entities;
@@ -10,10 +11,10 @@ public class Teacher : BaseEntity
     public string? EmployeeCode { get; set; }
     public DateOnly? JoiningDate { get; set; }
     public string? Department { get; set; }
-    public string? Designation { get; set; }
+    public Designation? Designation { get; set; }
 
     // Qualification Details
-    public string? HighestQualification { get; set; }
+    public HighestQualification? HighestQualification { get; set; }
     public string? Specialization { get; set; }
     public decimal? TeachingExperienceYears { get; set; }
 
@@ -32,4 +33,5 @@ public class Teacher : BaseEntity
     // Navigation
     public User User { get; set; } = null!;
     public ICollection<BatchTeacher> BatchTeachers { get; set; } = new List<BatchTeacher>();
+    public ICollection<ClassSession> ClassSessions { get; set; } = new List<ClassSession>();
 }

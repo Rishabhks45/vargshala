@@ -53,15 +53,36 @@ public class TeacherDto
     }
     public DateOnly? JoiningDate { get; set; }
     public string? Department { get; set; }
-    public string? Designation { get; set; }
 
-    // Qualification Details
-    public string? HighestQualification { get; set; }
+    // Designation (Enum + Display)
+    public Designation? Designation { get; set; }
+    public string DesignationDisplay => Designation?.GetDisplayName() ?? (!string.IsNullOrWhiteSpace(_designationString) ? _designationString : string.Empty);
+    public string DesignationName
+    {
+        get => DesignationDisplay;
+        set
+        {
+            _designationString = value;
+            var parsed = DesignationExtensions.ParseDesignation(value);
+            if (parsed.HasValue) Designation = parsed.Value;
+        }
+    }
+    private string? _designationString;
+
+    // Qualification Details (Enum + Display)
+    public HighestQualification? HighestQualification { get; set; }
+    public string HighestQualificationDisplay => HighestQualification?.GetDisplayName() ?? (!string.IsNullOrWhiteSpace(_qualificationString) ? _qualificationString : string.Empty);
     public string Qualification
     {
-        get => HighestQualification ?? string.Empty;
-        set => HighestQualification = value;
+        get => HighestQualificationDisplay;
+        set
+        {
+            _qualificationString = value;
+            var parsed = HighestQualificationExtensions.ParseQualification(value);
+            if (parsed.HasValue) HighestQualification = parsed.Value;
+        }
     }
+    private string? _qualificationString;
 
     public string? Specialization { get; set; }
     public string Subject
@@ -117,11 +138,29 @@ public class CreateTeacherRequest
     public string? EmployeeCode { get; set; }
     public DateOnly? JoiningDate { get; set; }
     public string? Department { get; set; }
-    public string? Designation { get; set; }
+
+    public Designation? Designation { get; set; }
+    public string? DesignationName
+    {
+        get => Designation?.GetDisplayName();
+        set => Designation = DesignationExtensions.ParseDesignation(value);
+    }
 
     // Qualification Details
-    public string? HighestQualification { get; set; }
+    public HighestQualification? HighestQualification { get; set; }
+    public string? Qualification
+    {
+        get => HighestQualification?.GetDisplayName();
+        set => HighestQualification = HighestQualificationExtensions.ParseQualification(value);
+    }
+
     public string? Specialization { get; set; }
+    public string? Subject
+    {
+        get => Specialization;
+        set => Specialization = value;
+    }
+
     public decimal? TeachingExperienceYears { get; set; }
 
     // Address
@@ -167,7 +206,10 @@ public class CreateTeacherRequestValidator : AbstractValidator<CreateTeacherRequ
             .MaximumLength(100).WithMessage("Department cannot exceed 100 characters.");
 
         RuleFor(x => x.Designation)
-            .MaximumLength(100).WithMessage("Designation cannot exceed 100 characters.");
+            .IsInEnum().When(x => x.Designation.HasValue).WithMessage("Select a valid designation.");
+
+        RuleFor(x => x.HighestQualification)
+            .IsInEnum().When(x => x.HighestQualification.HasValue).WithMessage("Select a valid qualification.");
     }
 }
 #endregion
@@ -187,11 +229,29 @@ public class UpdateTeacherRequest
     public string? EmployeeCode { get; set; }
     public DateOnly? JoiningDate { get; set; }
     public string? Department { get; set; }
-    public string? Designation { get; set; }
+
+    public Designation? Designation { get; set; }
+    public string? DesignationName
+    {
+        get => Designation?.GetDisplayName();
+        set => Designation = DesignationExtensions.ParseDesignation(value);
+    }
 
     // Qualification Details
-    public string? HighestQualification { get; set; }
+    public HighestQualification? HighestQualification { get; set; }
+    public string? Qualification
+    {
+        get => HighestQualification?.GetDisplayName();
+        set => HighestQualification = HighestQualificationExtensions.ParseQualification(value);
+    }
+
     public string? Specialization { get; set; }
+    public string? Subject
+    {
+        get => Specialization;
+        set => Specialization = value;
+    }
+
     public decimal? TeachingExperienceYears { get; set; }
 
     // Address
@@ -240,7 +300,10 @@ public class UpdateTeacherRequestValidator : AbstractValidator<UpdateTeacherRequ
             .MaximumLength(100).WithMessage("Department cannot exceed 100 characters.");
 
         RuleFor(x => x.Designation)
-            .MaximumLength(100).WithMessage("Designation cannot exceed 100 characters.");
+            .IsInEnum().When(x => x.Designation.HasValue).WithMessage("Select a valid designation.");
+
+        RuleFor(x => x.HighestQualification)
+            .IsInEnum().When(x => x.HighestQualification.HasValue).WithMessage("Select a valid qualification.");
     }
 }
 #endregion
@@ -251,4 +314,3 @@ public class GeneratedTeacherCodeDto
     public string EmployeeCode { get; set; } = string.Empty;
 }
 #endregion
-

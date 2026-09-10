@@ -98,6 +98,9 @@ public class CreateTeacherCommandHandler : IRequestHandler<CreateTeacherCommand,
         await _db.Users.AddAsync(user, cancellationToken);
 
         // 2. Create Teacher
+        var designation = req.Designation ?? DesignationExtensions.ParseDesignation(req.DesignationName);
+        var highestQualification = req.HighestQualification ?? HighestQualificationExtensions.ParseQualification(req.Qualification);
+
         var teacher = new Teacher
         {
             Id = Guid.NewGuid(),
@@ -106,8 +109,8 @@ public class CreateTeacherCommandHandler : IRequestHandler<CreateTeacherCommand,
             EmployeeCode = employeeCode,
             JoiningDate = req.JoiningDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
             Department = req.Department?.Trim(),
-            Designation = req.Designation?.Trim(),
-            HighestQualification = req.HighestQualification?.Trim(),
+            Designation = designation,
+            HighestQualification = highestQualification,
             Specialization = req.Specialization?.Trim(),
             TeachingExperienceYears = req.TeachingExperienceYears,
             Address = req.Address?.Trim(),

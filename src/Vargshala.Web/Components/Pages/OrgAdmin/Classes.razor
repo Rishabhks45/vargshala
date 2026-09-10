@@ -132,54 +132,48 @@
         </div>
     </div>
 
-    <!-- Filter & Search Toolbar -->
-    <div class="shrink-0 p-3 card-surface border border-tealborder rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 shadow-2xs">
-        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-            <!-- Search Input -->
-            <div class="relative min-w-[240px] max-w-sm w-full">
-                <input type="text" 
-                       @bind="_searchQuery" 
-                       @bind:event="oninput"
-                       @onkeyup="HandleSearchKeyUp"
-                       placeholder="Search by name or code..." 
-                       class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all shadow-2xs" />
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                @if (!string.IsNullOrWhiteSpace(_searchQuery))
-                {
-                    <button type="button" @onclick="ClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                }
-            </div>
-
-            <!-- Branch Filter -->
-            <div class="min-w-[170px]">
-                <select @onchange="HandleBranchChange"
-                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
-                    <option value="">All Branches</option>
-                    @foreach (var branch in _branches)
-                    {
-                        <option value="@branch.Id">@branch.Name</option>
-                    }
-                </select>
-            </div>
-
-            <!-- Status Filter -->
-            <div class="min-w-[130px]">
-                <select @onchange="HandleStatusChange"
-                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
-                    <option value="">All Statuses</option>
-                    <option value="true">Active Only</option>
-                    <option value="false">Inactive Only</option>
-                </select>
-            </div>
+    <!-- Search & Filter Controls (Matched with Students.razor) -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        
+        <!-- Search Input with Debounce (Matched with Students.razor) -->
+        <div class="relative w-full md:w-72 lg:w-80 shrink-0">
+            <input type="text" 
+                   @bind="_searchQuery" 
+                   @bind:event="oninput"
+                   @onkeyup="HandleSearchKeyUp"
+                   placeholder="Search by name or code..." 
+                   class="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-white transition-all shadow-xs" />
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            @if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                <button type="button" @onclick="ClearSearch" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            }
         </div>
 
-        <!-- View Mode Toggle -->
-        <div class="flex items-center gap-2 self-end md:self-auto">
-            <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] p-0.5 shadow-2xs">
+        <!-- Filter Dropdowns & View Mode Controls -->
+        <div class="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap justify-end">
+            <!-- Branch Filter with CustomSelect -->
+            <div class="w-36">
+                <CustomSelect Value="@(_selectedBranchId?.ToString() ?? "")"
+                              ValueChanged="HandleBranchChanged"
+                              Options="_branchFilterOptions"
+                              Placeholder="All Branches" />
+            </div>
+
+            <!-- Status Filter with CustomSelect -->
+            <div class="w-32">
+                <CustomSelect Value="@(_selectedStatus.HasValue ? _selectedStatus.Value.ToString().ToLower() : "")"
+                              ValueChanged="HandleStatusChanged"
+                              Options="_statusFilterOptions"
+                              Placeholder="All Statuses" />
+            </div>
+
+            <!-- View Mode Toggle -->
+            <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] p-0.5 shadow-2xs shrink-0">
                 <button type="button" @onclick='() => _viewMode = "table"'
                         class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "table" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
                         title="Table View">
@@ -194,132 +188,219 @@
         </div>
     </div>
 
-    <!-- Main Data Container -->
-    <div class="flex-1 min-h-0 card-surface border border-tealborder rounded-2xl shadow-2xs flex flex-col overflow-hidden">
-        @if (_isLoading)
-        {
-            <div class="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
-                <div class="w-8 h-8 border-3 border-[#009488] border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-xs font-semibold">Loading classes...</p>
-            </div>
-        }
-        else if (_classes.Count == 0)
-        {
-            <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                <div class="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#009488] flex items-center justify-center mb-3">
-                    <svg class="w-8 h-8 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                    </svg>
-                </div>
-                <h3 class="text-sm font-bold text-slate-800 dark:text-white">No Classes Found</h3>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
-                    No classes match your current search filters or none have been created yet.
-                </p>
-                <button type="button" @onclick="OpenAddDrawerAsync"
-                        class="mt-4 px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-md shadow-[#004D40]/20 hover:scale-[1.02] transition-all cursor-pointer">
-                    Add First Class
-                </button>
-            </div>
-        }
-        else if (_viewMode == "table")
+    <!-- Main Data Container (Matched with Students.razor skeleton loading) -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        @if (_viewMode == "table")
         {
             <!-- Table View -->
             <div class="flex-1 overflow-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-[#142025] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10">
-                            <th class="py-3 px-4">Class Details</th>
-                            <th class="py-3 px-4">Branch</th>
-                            <th class="py-3 px-4">Description</th>
-                            <th class="py-3 px-4 text-center">Batches</th>
-                            <th class="py-3 px-4 text-center">Status</th>
-                            <th class="py-3 px-4 text-right">Actions</th>
+                <table class="w-full min-w-[950px] text-left border-collapse table-fixed">
+                    <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                        <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                            <th class="w-[26%] py-2 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Name")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Class Details</span>
+                                    <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
+                                </div>
+                            </th>
+                            <th class="w-[18%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Branch")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Branch</span>
+                                    <span class="@_sortState.GetIndicatorClass("Branch")">@_sortState.GetIndicator("Branch")</span>
+                                </div>
+                            </th>
+                            <th class="w-[22%] py-2 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Description")'>
+                                <div class="flex items-center gap-1.5">
+                                    <span>Description</span>
+                                    <span class="@_sortState.GetIndicatorClass("Description")">@_sortState.GetIndicator("Description")</span>
+                                </div>
+                            </th>
+                            <th class="w-[10%] py-2 px-3 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <span>Batches</span>
+                                </div>
+                            </th>
+                            <th class="w-[10%] py-2 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Status")'>
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <span>Status</span>
+                                    <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
+                                </div>
+                            </th>
+                            <th class="w-[14%] min-w-[130px] py-2 px-4 text-right select-none whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-                        @foreach (var cls in _classes)
+                    <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _classes.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                        @if (_isLoading && !_classes.Any())
                         {
-                            <tr class="hover:bg-slate-50/50 dark:hover:bg-[#18262c]/50 transition-colors">
-                                <!-- Class Info -->
-                                <td class="py-3 px-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 dark:border-teal-800 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-                                            @GetInitials(cls.Name)
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="font-bold text-slate-900 dark:text-white truncate">@cls.Name</p>
-                                            <span class="inline-block uppercase font-mono text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 rounded border border-teal-200/80 dark:border-teal-800/80 mt-0.5">
-                                                @cls.Code
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- Branch -->
-                                <td class="py-3 px-4">
-                                    <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold">
-                                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
-                                        <span class="truncate">@(string.IsNullOrWhiteSpace(cls.BranchName) ? "Default Branch" : cls.BranchName)</span>
-                                    </div>
-                                </td>
-
-                                <!-- Description -->
-                                <td class="py-3 px-4 max-w-[220px]">
-                                    <p class="text-slate-500 dark:text-slate-400 truncate text-[11px]" title="@cls.Description">
-                                        @(string.IsNullOrWhiteSpace(cls.Description) ? "—" : cls.Description)
-                                    </p>
-                                </td>
-
-                                <!-- Batches Count -->
-                                <td class="py-3 px-4 text-center">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold @(cls.BatchesCount > 0 ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
-                                        <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                                        @cls.BatchesCount
-                                    </span>
-                                </td>
-
-                                <!-- Status -->
-                                <td class="py-3 px-4 text-center">
-                                    <button type="button" @onclick="() => ToggleStatusAsync(cls)"
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer @(cls.IsActive ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200")"
-                                            title="Click to toggle status">
-                                        <span class="w-1.5 h-1.5 rounded-full @(cls.IsActive ? "bg-emerald-500" : "bg-slate-400")"></span>
-                                        @(cls.IsActive ? "Active" : "Inactive")
-                                    </button>
-                                </td>
-
-                                <!-- Actions -->
-                                <td class="py-3 px-4 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        <button type="button" @onclick="() => OpenViewModal(cls)"
-                                                class="p-1.5 rounded-lg text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors cursor-pointer"
-                                                title="View Details">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                        </button>
-                                        <button type="button" @onclick="() => OpenEditDrawerAsync(cls)"
-                                                class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
-                                                title="Edit Class">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        </button>
-                                        <button type="button" @onclick="() => ConfirmDelete(cls)"
-                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                                                title="Delete Class">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <TableSkeletonRows Columns="6" Rows="8" />
                         }
-                    </tbody>
+                        else if (_classes.Any())
+                        {
+                            @foreach (var cls in _classes)
+                            {
+                                <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors">
+                                    <!-- Class Info -->
+                                    <td class="py-2.5 px-5">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 dark:border-teal-800 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                                                @GetInitials(cls.Name)
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="font-bold text-slate-900 dark:text-white truncate" title="@cls.Name">@cls.Name</p>
+                                                <span class="inline-block uppercase font-mono text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 rounded border border-teal-200/80 dark:border-teal-800/80 mt-0.5">
+                                                    @cls.Code
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Branch -->
+                                    <td class="py-2.5 px-3">
+                                        <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold truncate" title="@(string.IsNullOrWhiteSpace(cls.BranchName) ? "Default Branch" : cls.BranchName)">
+                                            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+                                            <span class="truncate">@(string.IsNullOrWhiteSpace(cls.BranchName) ? "Default Branch" : cls.BranchName)</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Description -->
+                                    <td class="py-2.5 px-3">
+                                        <p class="text-slate-500 dark:text-slate-400 truncate text-[11px]" title="@cls.Description">
+                                            @(string.IsNullOrWhiteSpace(cls.Description) ? "—" : cls.Description)
+                                        </p>
+                                    </td>
+
+                                    <!-- Batches Count -->
+                                    <td class="py-2.5 px-3 text-center">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold @(cls.BatchesCount > 0 ? "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                                            <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                            @cls.BatchesCount
+                                        </span>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="py-2.5 px-3 text-center">
+                                        <button type="button" @onclick="() => ToggleStatusAsync(cls)"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer @(cls.IsActive ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-200")"
+                                                title="Click to toggle status">
+                                            <span class="w-1.5 h-1.5 rounded-full @(cls.IsActive ? "bg-emerald-500" : "bg-slate-400")"></span>
+                                            @(cls.IsActive ? "Active" : "Inactive")
+                                        </button>
+                                    </td>
+
+                                    <!-- Actions (Consistent Students.razor colors and tooltips) -->
+                                    <td class="py-2.5 px-4 text-right whitespace-nowrap">
+                                        <div class="flex items-center justify-end gap-1">
+                                            <!-- View Details -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => OpenViewModal(cls)"
+                                                        class="p-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="View Details"
+                                                        aria-label="View Details">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-[#004D40] text-teal-100 border border-teal-500/50 shadow-lg tracking-wide">
+                                                        View Details
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#004D40] border-r border-b border-teal-500/50"></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Edit Class -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => OpenEditDrawerAsync(cls)"
+                                                        class="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="Edit Class"
+                                                        aria-label="Edit Class">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-amber-600 text-white border border-amber-400/50 shadow-lg tracking-wide">
+                                                        Edit Class
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-amber-600 border-r border-b border-amber-400/50"></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Delete Class -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => ConfirmDelete(cls)"
+                                                        class="p-1.5 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="Delete Class"
+                                                        aria-label="Delete Class">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-rose-600 text-white border border-rose-400/50 shadow-lg tracking-wide">
+                                                        Delete Class
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-rose-600 border-r border-b border-rose-400/50"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                                        else
+                    {
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-400">
+                                <div class="max-w-xs mx-auto space-y-2">
+                                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                                    </svg>
+                                    <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No classes found</p>
+                                    <p class="text-xs text-slate-400">Try changing your current search filters or none have been created yet.</p>
+                                    <button type="button" @onclick="OpenAddDrawerAsync"
+                                            class="mt-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-xs hover:scale-[1.02] transition-all cursor-pointer">
+                                        Add First Class
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
                 </table>
             </div>
         }
         else
         {
             <!-- Grid View -->
-            <div class="flex-1 overflow-auto p-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    @foreach (var cls in _classes)
+            <div class="flex-1 overflow-auto p-4 scrollbar-hidden @(_isLoading && _classes.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                @if (_isLoading && !_classes.Any())
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <div class="card-surface p-4 border border-tealborder rounded-2xl shadow-2xs animate-pulse space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28"></div>
+                                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-14"></div>
+                                </div>
+                                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-36"></div>
+                                <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex justify-between">
+                                    <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+                                    <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (_classes.Any())
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        @foreach (var cls in _classes)
                     {
                         <div class="card-surface p-4 border border-tealborder rounded-2xl shadow-2xs hover:border-[#009488]/40 transition-all flex flex-col justify-between group">
                             <div>
@@ -379,19 +460,37 @@
                             </div>
                         </div>
                     }
-                </div>
+                                    </div>
+                }
+                else
+                {
+                    <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                        <div class="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#009488] flex items-center justify-center mb-3">
+                            <svg class="w-8 h-8 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">No Classes Found</h3>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
+                            No classes match your current search filters or none have been created yet.
+                        </p>
+                        <button type="button" @onclick="OpenAddDrawerAsync"
+                                class="mt-4 px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-md shadow-[#004D40]/20 hover:scale-[1.02] transition-all cursor-pointer">
+                            Add First Class
+                        </button>
+                    </div>
+                }
             </div>
         }
-
         <!-- Reusable Server-Side Table Pagination Component -->
         <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
-            <TablePagination PageNumber="@_currentPage" 
-                             PageSize="@_pageSize" 
-                             TotalRecords="@_totalRecords" 
+            <TablePagination PageNumber="_query.PageNumber"
+                             PageSize="_query.PageSize"
+                             TotalRecords="_totalRecords"
                              ItemLabel="classes"
-                             IsLoading="@_isLoading"
-                             OnPageChanged="HandlePageChanged"
-                             OnPageSizeChanged="HandlePageSizeChanged" />
+                             IsLoading="_isLoading"
+                             OnPageChanged="LoadClassesAsync"
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
         </div>
     </div>
 </div>
@@ -445,13 +544,11 @@
                 <!-- Branch Selection -->
                 <div class="space-y-1">
                     <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch *</label>
-                    <select @bind="_formModel.BranchId" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all font-medium cursor-pointer">
-                        <option value="@Guid.Empty">-- Select Branch --</option>
-                        @foreach (var b in _branches)
-                        {
-                            <option value="@b.Id">@b.Name</option>
-                        }
-                    </select>
+                    <CustomSelect Value="@(_formModel.BranchId == Guid.Empty ? "" : _formModel.BranchId.ToString())"
+                                  ValueChanged="@((string v) => _formModel.BranchId = string.IsNullOrEmpty(v) ? Guid.Empty : Guid.Parse(v))"
+                                  Options="_drawerBranchOptions"
+                                  Placeholder="Select Branch"
+                                  Class="w-full" />
                     @if (_formModel.BranchId == Guid.Empty && _submitted)
                     {
                         <p class="text-[10px] text-rose-500 font-semibold">Please select a branch.</p>
@@ -629,17 +726,26 @@
 @code {
     private List<ClassDto> _classes = new();
     private List<BranchDto> _branches = new();
+
+    // CustomSelect Filter Options
+    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new() { new("", "All Branches") };
+    private List<CustomSelect.CustomSelectOption> _drawerBranchOptions = new();
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("", "All Statuses"),
+        new("true", "Active Only"),
+        new("false", "Inactive Only")
+    };
     private bool _isLoading = true;
     private string _viewMode = "table";
 
     // Filters & Pagination State
+    private readonly TableQueryState _query = new();
+    private TableSortState _sortState => _query.SortState;
     private string _searchQuery = string.Empty;
     private Guid? _selectedBranchId;
     private bool? _selectedStatus;
-    private int _currentPage = 1;
-    private int _pageSize = 10;
     private int _totalRecords = 0;
-    private int _totalPages => _pageSize > 0 ? (int)Math.Ceiling((double)_totalRecords / _pageSize) : 1;
 
     // Slide-over Drawer State
     private bool _showAddEditModal = false;
@@ -668,6 +774,9 @@
             if (res.Success && res.Data != null)
             {
                 _branches = res.Data;
+                _branchFilterOptions = new() { new("", "All Branches") };
+                _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
+                _drawerBranchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
             }
         }
         catch (Exception ex)
@@ -676,21 +785,23 @@
         }
     }
 
-    private async Task LoadClassesAsync()
+    private async Task LoadClassesAsync(int page = 1)
     {
         _isLoading = true;
+        _query.PageNumber = page;
+
         try
         {
-            var req = new PagedRequest
+            var pagedRequest = new PagedRequest
             {
-                PageNumber = _currentPage,
-                PageSize = _pageSize,
-                Search = _searchQuery,
-                SortBy = "Name",
-                SortDirection = "asc"
+                PageNumber = _query.PageNumber,
+                PageSize = _query.PageSize,
+                Search = string.IsNullOrWhiteSpace(_searchQuery) ? null : _searchQuery.Trim(),
+                SortBy = _sortState.Column,
+                SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : (_sortState.Direction == SortDirection.Ascending ? "asc" : null)
             };
 
-            var res = await ClassService.GetClassesPagedAsync(req, _selectedBranchId, _selectedStatus);
+            var res = await ClassService.GetClassesPagedAsync(pagedRequest, _selectedBranchId, _selectedStatus);
             if (res.Success && res.Data != null)
             {
                 _classes = res.Data.Items;
@@ -711,49 +822,42 @@
         }
     }
 
+    private async Task HandleSortAsync(string column)
+    {
+        _sortState.Toggle(column);
+        await LoadClassesAsync(1);
+    }
+
+    private async Task HandlePageSizeChangedAsync(int size)
+    {
+        _query.PageSize = size;
+        await LoadClassesAsync(1);
+    }
+
     private async Task HandleSearchKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            _currentPage = 1;
-            await LoadClassesAsync();
+            await LoadClassesAsync(1);
         }
     }
 
     private async Task ClearSearch()
     {
         _searchQuery = string.Empty;
-        _currentPage = 1;
-        await LoadClassesAsync();
+        await LoadClassesAsync(1);
     }
 
-    private async Task HandleBranchChange(ChangeEventArgs e)
+    private async Task HandleBranchChanged(string val)
     {
-        var val = e.Value?.ToString();
         _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
-        _currentPage = 1;
-        await LoadClassesAsync();
+        await LoadClassesAsync(1);
     }
 
-    private async Task HandleStatusChange(ChangeEventArgs e)
+    private async Task HandleStatusChanged(string val)
     {
-        var val = e.Value?.ToString();
         _selectedStatus = string.IsNullOrWhiteSpace(val) ? null : bool.Parse(val);
-        _currentPage = 1;
-        await LoadClassesAsync();
-    }
-
-    private async Task HandlePageChanged(int page)
-    {
-        _currentPage = page;
-        await LoadClassesAsync();
-    }
-
-    private async Task HandlePageSizeChanged(int size)
-    {
-        _pageSize = size;
-        _currentPage = 1;
-        await LoadClassesAsync();
+        await LoadClassesAsync(1);
     }
 
     private async Task OpenAddDrawerAsync()

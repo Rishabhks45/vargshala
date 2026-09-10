@@ -13,11 +13,11 @@
   </ItemGroup>
 
   <!-- Auto-compile Tailwind CSS on dotnet build -->
-  <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
+  <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild" Condition="Exists('$(ProjectDir)tailwindcss.exe')">
     <Message Importance="high" Text="Building Tailwind CSS..." />
     <Exec Command="&quot;$(ProjectDir)tailwindcss.exe&quot; -i &quot;$(ProjectDir)Styles\app.css&quot; -o &quot;$(ProjectDir)wwwroot\app.css&quot; $(TailwindMinifyFlag)"
           WorkingDirectory="$(ProjectDir)"
-          ContinueOnError="false" />
+          ContinueOnError="true" />
   </Target>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

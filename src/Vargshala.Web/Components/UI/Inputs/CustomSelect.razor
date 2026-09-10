@@ -2,7 +2,8 @@
     <!-- Trigger Button (Full Responsive with Exact SearchBox Focus Color) -->
     <button type="button" 
             @onclick="ToggleDropdown"
-            class="custom-select-trigger w-full flex items-center justify-between gap-2 @TriggerStyleClass cursor-pointer select-none outline-none focus:outline-none focus-visible:outline-none">
+            disabled="@Disabled"
+            class="custom-select-trigger w-full flex items-center justify-between gap-2 @TriggerStyleClass @(Disabled ? "opacity-60 cursor-not-allowed bg-slate-100 dark:bg-[#111c21]" : "cursor-pointer") select-none outline-none focus:outline-none focus-visible:outline-none">
         <span class="truncate @(string.IsNullOrEmpty(Value) ? "text-slate-400 dark:text-slate-500" : (IsFormMode ? "text-slate-900 dark:text-white font-medium" : "text-slate-800 dark:text-white font-semibold"))">
             @(SelectedLabel)
         </span>
@@ -50,6 +51,7 @@
     [Parameter] public string Align { get; set; } = "auto";
     [Parameter] public string MenuWidthClass { get; set; } = "min-w-[160px]";
     [Parameter] public string TriggerClass { get; set; } = string.Empty;
+    [Parameter] public bool Disabled { get; set; } = false;
 
     private bool _isOpen = false;
 
@@ -117,6 +119,7 @@
 
     private void ToggleDropdown()
     {
+        if (Disabled) return;
         _isOpen = !_isOpen;
     }
 
