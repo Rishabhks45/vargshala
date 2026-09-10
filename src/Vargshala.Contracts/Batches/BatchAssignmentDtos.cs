@@ -9,6 +9,9 @@ public class BatchTeacherDto
     public string TeacherCode { get; set; } = string.Empty;
     public string? TeacherEmail { get; set; }
     public string? TeacherMobile { get; set; }
+    public string? Department { get; set; }
+    public string? Designation { get; set; }
+    public string? Specialization { get; set; }
     public DateTime AssignedAt { get; set; }
     public DateTime? RemovedAt { get; set; }
     public bool IsActive { get; set; }

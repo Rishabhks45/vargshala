@@ -10,6 +10,7 @@ public interface ITeacherService
         string? department = null,
         string? designation = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default);
 
     Task<ApiResponse<TeacherDto>> GetTeacherByIdAsync(

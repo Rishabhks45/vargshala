@@ -195,7 +195,7 @@ public class BatchService : IBatchService
         }
     }
 
-    public async Task<ApiResponse<bool>> AssignTeacherToBatchAsync(
+    public async Task<ApiResponse<BatchTeacherDto>> AssignTeacherToBatchAsync(
         Guid id,
         AssignTeacherToBatchRequest request,
         CancellationToken cancellationToken = default)
@@ -203,13 +203,13 @@ public class BatchService : IBatchService
         try
         {
             var response = await _httpClient.PostAsJsonAsync($"api/v1/orgadmin/batches/{id}/teachers", request, cancellationToken);
-            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
-            return result ?? ApiResponse<bool>.FailureResponse("Failed to assign teacher.");
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<BatchTeacherDto>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<BatchTeacherDto>.FailureResponse("Failed to assign teacher.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning teacher to batch {BatchId}", id);
-            return ApiResponse<bool>.FailureResponse(ex.Message);
+            return ApiResponse<BatchTeacherDto>.FailureResponse(ex.Message);
         }
     }
 

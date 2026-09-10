@@ -42,7 +42,7 @@ public interface IBatchService
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<ApiResponse<bool>> AssignTeacherToBatchAsync(
+    Task<ApiResponse<BatchTeacherDto>> AssignTeacherToBatchAsync(
         Guid id,
         AssignTeacherToBatchRequest request,
         CancellationToken cancellationToken = default);

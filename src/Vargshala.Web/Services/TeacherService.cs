@@ -22,6 +22,7 @@ public class TeacherService : ITeacherService
         string? department = null,
         string? designation = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -38,6 +39,8 @@ public class TeacherService : ITeacherService
                 queryParams += $"&designation={Uri.EscapeDataString(designation)}";
             if (isActive.HasValue)
                 queryParams += $"&isActive={isActive.Value.ToString().ToLowerInvariant()}";
+            if (branchId.HasValue && branchId.Value != Guid.Empty)
+                queryParams += $"&branchId={branchId.Value}";
 
             var response = await _httpClient.GetAsync($"api/v1/orgadmin/teachers{queryParams}", cancellationToken);
 

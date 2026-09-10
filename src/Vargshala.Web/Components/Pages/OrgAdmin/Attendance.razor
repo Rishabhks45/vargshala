@@ -20,7 +20,7 @@
 @inject INotificationService Toast
 @inject NavigationManager Navigation
 
-<div class="flex-1 min-h-0 h-full overflow-y-auto scrollbar-hidden space-y-4 transition-colors duration-200 pb-20 pr-1 select-text">
+<div class="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar scrollbar-hidden space-y-4 transition-colors duration-200 pb-20 pr-1 select-text" style="scrollbar-width: none; -ms-overflow-style: none;">
 
 <!-- Top Header: Title & Description on Left, Filters Toolbar & "+ Take Attendance" Action on Right in ONE SINGLE LINE -->
 <div class="flex items-center justify-between gap-3.5 w-full">
@@ -179,7 +179,7 @@
     <div class="lg:col-span-8 space-y-3.5">
         <!-- Navigation Tabs Bar -->
         <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
-            <button type="button" @onclick='() => SetActiveTab("student")'
+            <button type="button" @onclick='() => SetActiveTabAsync("student")'
                     class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "student" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -187,21 +187,21 @@
                 </svg>
                 <span>Student Attendance</span>
             </button>
-            <button type="button" @onclick='() => SetActiveTab("batch")'
+            <button type="button" @onclick='() => SetActiveTabAsync("batch")'
                     class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "batch" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span>Batch Overview</span>
             </button>
-            <button type="button" @onclick='() => SetActiveTab("date")'
+            <button type="button" @onclick='() => SetActiveTabAsync("date")'
                     class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "date" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>Date-wise Report</span>
             </button>
-            <button type="button" @onclick='() => SetActiveTab("student-report")'
+            <button type="button" @onclick='() => SetActiveTabAsync("student-report")'
                     class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "student-report" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -341,7 +341,7 @@
                 }
 
                 <!-- Student Attendance Table (Pixel-perfect matching reference image) -->
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
@@ -575,7 +575,7 @@
                 </div>
 
                 <!-- 7-Day Table Breakdown -->
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -634,7 +634,7 @@
                     </button>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
@@ -649,10 +649,18 @@
                                 <th class="py-3 px-3 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @if (_isLoadingDateReports)
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 @(_isLoadingDateReports && _dateReports.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                            @if (_isLoadingDateReports && !_dateReports.Any())
                             {
                                 <TableSkeletonRows Columns="9" Rows="6" />
+                            }
+                            else if (string.IsNullOrEmpty(_selectedBatchId))
+                            {
+                                <tr>
+                                    <td colspan="9" class="p-12 text-center text-xs text-slate-400">
+                                        Please select a batch above to view the date-wise attendance report.
+                                    </td>
+                                </tr>
                             }
                             else if (_dateReports.Count == 0)
                             {
@@ -705,7 +713,7 @@
                     </button>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
@@ -718,10 +726,18 @@
                                 <th class="py-3 px-4">Attendance Rate</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @if (_isLoadingStudentReports)
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 @(_isLoadingStudentReports && _studentReports.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                            @if (_isLoadingStudentReports && !_studentReports.Any())
                             {
                                 <TableSkeletonRows Columns="7" Rows="6" />
+                            }
+                            else if (string.IsNullOrEmpty(_selectedBatchId))
+                            {
+                                <tr>
+                                    <td colspan="7" class="p-12 text-center text-xs text-slate-400">
+                                        Please select a batch above to view the student-wise attendance report.
+                                    </td>
+                                </tr>
                             }
                             else if (_studentReports.Count == 0)
                             {
@@ -943,7 +959,7 @@
                     </div>
                     <h3 class="text-xs font-bold text-slate-800 dark:text-white">Recent Attendance Activity</h3>
                 </div>
-                <button type="button" @onclick='() => SetActiveTab("student")'
+                <button type="button" @onclick='() => SetActiveTabAsync("student")'
                         class="text-[11px] font-bold text-[#009488] hover:underline cursor-pointer">
                     View All
                 </button>
@@ -1035,7 +1051,7 @@
         </div>
 
         <!-- Drawer Body Scrollable Content -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs scrollbar-hidden">
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs no-scrollbar scrollbar-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
             <!-- Step 1: Branch -->
             <div class="space-y-1">
                 <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 1: Branch</label>
@@ -1413,7 +1429,6 @@ protected override async Task OnInitializedAsync()
     _isLoadingSheet = true;
     try
     {
-        await Task.Delay(2000);
         await LoadBranchesAsync();
         await LoadClassesAsync();
         await LoadBatchesAsync();
@@ -1548,6 +1563,10 @@ private void SetDateToToday()
 
 private async Task OnBatchSelectedAsync(Guid batchId)
 {
+    // Clear previously cached reports for other batches
+    _dateReports.Clear();
+    _studentReports.Clear();
+
     // 1. Load Batch Overview (Timings, 7-day trend, recent activities)
     await LoadBatchOverviewAsync(batchId);
 
@@ -1644,29 +1663,51 @@ private async Task LoadAttendanceSheetAsync(Guid sessionId)
     }
 }
 
-private void SetActiveTab(string tab)
+private async Task SetActiveTabAsync(string tab)
 {
     _activeTab = tab;
-    if (tab == "date" && _dateReports.Count == 0 && Guid.TryParse(_selectedBatchId, out var bId1))
+    if (tab == "date")
     {
-        _ = ReloadDateWiseReportAsync();
+        if (Guid.TryParse(_selectedBatchId, out _))
+        {
+            if (_dateReports.Count == 0)
+            {
+                await ReloadDateWiseReportAsync();
+            }
+        }
     }
-    else if (tab == "student-report" && _studentReports.Count == 0 && Guid.TryParse(_selectedBatchId, out var bId2))
+    else if (tab == "student-report")
     {
-        _ = ReloadStudentWiseReportAsync();
+        if (Guid.TryParse(_selectedBatchId, out _))
+        {
+            if (_studentReports.Count == 0)
+            {
+                await ReloadStudentWiseReportAsync();
+            }
+        }
     }
 }
 
 private async Task ReloadDateWiseReportAsync()
 {
-    if (!Guid.TryParse(_selectedBatchId, out var batchId)) return;
+    if (!Guid.TryParse(_selectedBatchId, out var batchId))
+    {
+        _isLoadingDateReports = false;
+        return;
+    }
+
     _isLoadingDateReports = true;
+    await InvokeAsync(StateHasChanged);
     try
     {
         var res = await AttendanceService.GetDateWiseReportAsync(batchId);
         if (res.Success && res.Data != null)
         {
             _dateReports = res.Data;
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to load date-wise report.");
         }
     }
     catch (Exception ex)
@@ -1676,19 +1717,30 @@ private async Task ReloadDateWiseReportAsync()
     finally
     {
         _isLoadingDateReports = false;
+        await InvokeAsync(StateHasChanged);
     }
 }
 
 private async Task ReloadStudentWiseReportAsync()
 {
-    if (!Guid.TryParse(_selectedBatchId, out var batchId)) return;
+    if (!Guid.TryParse(_selectedBatchId, out var batchId))
+    {
+        _isLoadingStudentReports = false;
+        return;
+    }
+
     _isLoadingStudentReports = true;
+    await InvokeAsync(StateHasChanged);
     try
     {
         var res = await AttendanceService.GetStudentWiseReportAsync(batchId);
         if (res.Success && res.Data != null)
         {
             _studentReports = res.Data;
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to load student-wise report.");
         }
     }
     catch (Exception ex)
@@ -1698,6 +1750,7 @@ private async Task ReloadStudentWiseReportAsync()
     finally
     {
         _isLoadingStudentReports = false;
+        await InvokeAsync(StateHasChanged);
     }
 }
 

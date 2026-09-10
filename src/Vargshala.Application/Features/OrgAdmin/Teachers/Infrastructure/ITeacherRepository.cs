@@ -16,6 +16,7 @@ public interface ITeacherRepository
         string? department = null,
         string? designation = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default);
     Task AddAsync(Teacher teacher, CancellationToken cancellationToken = default);
     void Update(Teacher teacher);

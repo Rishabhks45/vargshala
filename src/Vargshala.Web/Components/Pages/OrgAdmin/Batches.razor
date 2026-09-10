@@ -49,6 +49,14 @@
         </div>
 
         <div class="flex items-center gap-2.5">
+            <a href="/batches/assign-teachers"
+               class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-teal-200 dark:border-teal-800 text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>Assign Teachers</span>
+            </a>
+
             <button type="button" 
                     @onclick="ExportCsv"
                     class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
@@ -388,6 +396,24 @@
                                     <!-- Actions (Consistent Students.razor colors and tooltips) -->
                                     <td class="py-2.5 px-4 text-right whitespace-nowrap">
                                         <div class="flex items-center justify-end gap-1">
+                                            <!-- Assign Teachers Page Link -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <a href="/batches/assign-teachers/@b.Id"
+                                                   class="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                   title="Assign Teachers"
+                                                   aria-label="Assign Teachers">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                    </svg>
+                                                </a>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-blue-700 text-white border border-blue-500/50 shadow-lg tracking-wide">
+                                                        Assign Faculty
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-blue-700 border-r border-b border-blue-500/50"></span>
+                                                </div>
+                                            </div>
+
                                             <!-- View Details / Manage Roster -->
                                             <div class="relative group/act inline-flex items-center justify-center">
                                                 <button type="button"
@@ -823,46 +849,152 @@
                 @if (_rosterTab == "teachers")
                 {
                     <div class="space-y-3">
-                        <!-- Add Teacher Form -->
-                        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700">
-                            <div class="flex-1 min-w-0">
-                                <CustomSelect Value="@(_selectedTeacherIdToAssign == Guid.Empty ? "" : _selectedTeacherIdToAssign.ToString())"
-                                              ValueChanged="@((string v) => _selectedTeacherIdToAssign = string.IsNullOrEmpty(v) ? Guid.Empty : Guid.Parse(v))"
-                                              Options="_rosterTeacherOptions"
-                                              Placeholder="Select Teacher to Assign"
-                                              Class="w-full" />
+                        <!-- Header with + Assign Teacher Button -->
+                        <div class="flex items-center justify-between pb-1">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-[#009488]"></span>
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+                                    Faculty Members
+                                </h4>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/50">
+                                    @_selectedBatchDetail.Teachers.Count(t => t.IsActive) Active
+                                </span>
                             </div>
-                            <button type="button" @onclick="AssignTeacherAsync"
-                                    class="h-10 px-3.5 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl transition-all cursor-pointer shrink-0 shadow-sm">
-                                Assign Teacher
+
+                            <button type="button" 
+                                    @onclick="() => { _showAssignTeacherForm = !_showAssignTeacherForm; _selectedTeacherIdToAssign = Guid.Empty; }"
+                                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer @(_showAssignTeacherForm ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200" : "bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white shadow-teal-900/10")">
+                                @if (_showAssignTeacherForm)
+                                {
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    <span>Cancel</span>
+                                }
+                                else
+                                {
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                    <span>+ Assign Teacher</span>
+                                }
                             </button>
                         </div>
 
+                        <!-- Assign Teacher Form Card (Collapsible) -->
+                        @if (_showAssignTeacherForm)
+                        {
+                            <div class="p-3.5 rounded-2xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200/70 dark:border-teal-800/60 space-y-3 transition-all">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                                        <svg class="w-4 h-4 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                                        <span>Assign Faculty (@_selectedBatchDetail.Batch.BranchName)</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Active branch faculty only</span>
+                                </div>
+
+                                @if (_rosterTeacherOptions.Count == 0)
+                                {
+                                    <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-center">
+                                        <p class="text-xs text-amber-800 dark:text-amber-200 font-medium">
+                                            All active teachers in @_selectedBatchDetail.Batch.BranchName branch are already assigned to this batch, or no active teachers are available.
+                                        </p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                        <div class="flex-1 min-w-0">
+                                            <CustomSelect Value="@(_selectedTeacherIdToAssign == Guid.Empty ? "" : _selectedTeacherIdToAssign.ToString())"
+                                                          ValueChanged="@((string v) => _selectedTeacherIdToAssign = string.IsNullOrEmpty(v) ? Guid.Empty : Guid.Parse(v))"
+                                                          Options="_rosterTeacherOptions"
+                                                          Placeholder="-- Select Active Teacher --"
+                                                          Class="w-full" />
+                                        </div>
+                                        <button type="button" 
+                                                @onclick="AssignTeacherAsync"
+                                                disabled="@(_selectedTeacherIdToAssign == Guid.Empty || _isAssigningTeacher)"
+                                                class="h-10 px-4 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            @if (_isAssigningTeacher)
+                                            {
+                                                <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            }
+                                            <span>Assign to Batch</span>
+                                        </button>
+                                    </div>
+
+                                    @if (_selectedTeacherIdToAssign != Guid.Empty)
+                                    {
+                                        var previewTeacher = _activeBranchTeachers.FirstOrDefault(t => t.Id == _selectedTeacherIdToAssign);
+                                        if (previewTeacher != null)
+                                        {
+                                            <div class="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-[#18262c] border border-teal-200/50 dark:border-teal-900/50 text-[11px] text-slate-600 dark:text-slate-300">
+                                                <span class="font-bold text-slate-800 dark:text-white">@previewTeacher.FullName</span>
+                                                @if (!string.IsNullOrWhiteSpace(previewTeacher.Department))
+                                                {
+                                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-medium text-slate-600 dark:text-slate-400">@previewTeacher.Department</span>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(previewTeacher.EmployeeCode))
+                                                {
+                                                    <span class="text-[10px] text-slate-400">Code: @previewTeacher.EmployeeCode</span>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(previewTeacher.Specialization))
+                                                {
+                                                    <span class="text-[10px] text-teal-600 dark:text-teal-400">• @previewTeacher.Specialization</span>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        }
+
                         <!-- Teachers List -->
-                        <div class="max-h-60 overflow-y-auto space-y-2 pr-1">
-                            @if (_selectedBatchDetail.Teachers.Count == 0)
+                        <div class="max-h-72 overflow-y-auto space-y-2 pr-1">
+                            @if (_selectedBatchDetail.Teachers.Count(t => t.IsActive) == 0)
                             {
-                                <p class="text-xs text-slate-400 text-center py-4">No teachers assigned yet.</p>
+                                <div class="text-center py-8 px-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#142025]">
+                                    <div class="w-10 h-10 mx-auto rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#009488] flex items-center justify-center mb-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                    </div>
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">No teachers assigned to this batch yet</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Click "+ Assign Teacher" above to assign faculty from @_selectedBatchDetail.Batch.BranchName branch.</p>
+                                </div>
                             }
                             else
                             {
-                                @foreach (var t in _selectedBatchDetail.Teachers)
+                                @foreach (var t in _selectedBatchDetail.Teachers.Where(t => t.IsActive))
                                 {
-                                    <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-[#18262c]">
-                                        <div class="flex items-center gap-2.5">
-                                            <div class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] font-bold text-xs flex items-center justify-center">
+                                    <div class="flex items-center justify-between p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-[#18262c] shadow-2xs hover:border-teal-200 dark:hover:border-teal-900 transition-all">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
                                                 @(string.IsNullOrWhiteSpace(t.TeacherName) ? "T" : t.TeacherName[0].ToString().ToUpper())
                                             </div>
                                             <div>
-                                                <h5 class="text-xs font-bold text-slate-800 dark:text-white">@t.TeacherName</h5>
-                                                <p class="text-[10px] text-slate-400">@t.TeacherEmail • Code: @t.TeacherCode</p>
+                                                <div class="flex items-center gap-2">
+                                                    <h5 class="text-xs font-bold text-slate-800 dark:text-white">@t.TeacherName</h5>
+                                                    <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-200 dark:border-emerald-900">Active</span>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-x-2 text-[10px] text-slate-400 mt-0.5">
+                                                    @if (!string.IsNullOrWhiteSpace(t.TeacherCode))
+                                                    {
+                                                        <span>Code: @t.TeacherCode</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(t.Department))
+                                                    {
+                                                        <span>• @t.Department</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(t.Designation))
+                                                    {
+                                                        <span>• @t.Designation</span>
+                                                    }
+                                                    <span>• Assigned: @t.AssignedAt.ToString("dd MMM yyyy")</span>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <button type="button" @onclick="() => RemoveTeacherAsync(t.TeacherId)"
-                                                title="Remove Teacher"
-                                                class="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        <button type="button" 
+                                                @onclick="() => RemoveTeacherAsync(t.TeacherId)"
+                                                title="Remove Teacher from Batch"
+                                                class="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all cursor-pointer flex items-center gap-1 text-[11px] font-semibold">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            <span class="hidden sm:inline">Remove</span>
                                         </button>
                                     </div>
                                 }
@@ -1042,6 +1174,9 @@
     private string _rosterTab = "teachers";
     private Guid _selectedTeacherIdToAssign = Guid.Empty;
     private Guid _selectedStudentIdToEnroll = Guid.Empty;
+    private bool _showAssignTeacherForm = false;
+    private bool _isAssigningTeacher = false;
+    private List<TeacherDto> _activeBranchTeachers = new();
 
     // Delete modal
     private BatchDto? _batchToDelete;
@@ -1364,11 +1499,56 @@
             _rosterTab = "teachers";
             _selectedTeacherIdToAssign = Guid.Empty;
             _selectedStudentIdToEnroll = Guid.Empty;
+            _showAssignTeacherForm = false;
+            await LoadBranchTeachersForBatchAsync(b.BranchId);
         }
         catch (Exception ex)
         {
             Toast.Error("Error loading batch details: " + ex.Message);
         }
+    }
+
+    private async Task LoadBranchTeachersForBatchAsync(Guid branchId)
+    {
+        try
+        {
+            var res = await TeacherService.GetTeachersPagedAsync(
+                new PagedRequest { PageSize = 200 },
+                isActive: true,
+                branchId: branchId);
+
+            if (res.Success && res.Data != null)
+            {
+                _activeBranchTeachers = res.Data.Items.Where(t => t.IsActive).ToList();
+            }
+            else
+            {
+                _activeBranchTeachers = new();
+            }
+            UpdateRosterTeacherOptions();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading branch faculty: " + ex.Message);
+        }
+    }
+
+    private void UpdateRosterTeacherOptions()
+    {
+        var assignedTeacherIds = _selectedBatchDetail?.Teachers
+            .Where(t => t.IsActive)
+            .Select(t => t.TeacherId)
+            .ToHashSet() ?? new HashSet<Guid>();
+
+        var unassignedTeachers = _activeBranchTeachers
+            .Where(t => !assignedTeacherIds.Contains(t.Id))
+            .ToList();
+
+        _rosterTeacherOptions = unassignedTeachers
+            .Select(t => new CustomSelect.CustomSelectOption(
+                t.Id.ToString(),
+                $"{t.FullName}{(string.IsNullOrWhiteSpace(t.Department) ? "" : $" ({t.Department})")}{(string.IsNullOrWhiteSpace(t.EmployeeCode) ? "" : $" • {t.EmployeeCode}")}{(t.BatchCount > 0 ? $" • {(t.BatchCount == 1 ? "1 Batch" : $"{t.BatchCount} Batches")}" : "")}"))
+            .ToList();
     }
 
     private async Task AssignTeacherAsync()
@@ -1379,16 +1559,22 @@
             return;
         }
 
+        _isAssigningTeacher = true;
         try
         {
             var res = await BatchService.AssignTeacherToBatchAsync(_selectedBatchDetail.Batch.Id, new AssignTeacherToBatchRequest { TeacherId = _selectedTeacherIdToAssign });
             if (res.Success)
             {
-                Toast.Success("Teacher assigned successfully.");
+                Toast.Success("Teacher assigned to batch successfully.");
                 var refresh = await BatchService.GetBatchByIdAsync(_selectedBatchDetail.Batch.Id);
                 if (refresh.Success && refresh.Data != null)
+                {
                     _selectedBatchDetail = refresh.Data;
+                }
                 _selectedTeacherIdToAssign = Guid.Empty;
+                _showAssignTeacherForm = false;
+                await LoadBranchTeachersForBatchAsync(_selectedBatchDetail.Batch.BranchId);
+                UpdateRosterTeacherOptions();
                 await LoadBatchesAsync();
             }
             else
@@ -1399,6 +1585,10 @@
         catch (Exception ex)
         {
             Toast.Error("Error assigning teacher: " + ex.Message);
+        }
+        finally
+        {
+            _isAssigningTeacher = false;
         }
     }
 
@@ -1413,7 +1603,11 @@
                 Toast.Success("Teacher removed from batch.");
                 var refresh = await BatchService.GetBatchByIdAsync(_selectedBatchDetail.Batch.Id);
                 if (refresh.Success && refresh.Data != null)
+                {
                     _selectedBatchDetail = refresh.Data;
+                }
+                await LoadBranchTeachersForBatchAsync(_selectedBatchDetail.Batch.BranchId);
+                UpdateRosterTeacherOptions();
                 await LoadBatchesAsync();
             }
             else

@@ -1,4 +1,5 @@
 using Vargshala.Contracts.Batches;
+using Vargshala.Contracts.Teachers;
 using Vargshala.Domain.Entities;
 
 namespace Vargshala.Application.Features.OrgAdmin.Batches;
@@ -21,7 +22,6 @@ public static class BatchMappingExtensions
             Id = b.Id,
             ClassId = b.ClassId,
             ClassName = className,
-            Grade = className,
             BranchId = b.Class?.BranchId ?? Guid.Empty,
             BranchName = b.Class?.Branch?.Name ?? string.Empty,
             SubjectId = b.SubjectId,
@@ -31,12 +31,13 @@ public static class BatchMappingExtensions
             StartTime = b.StartTime,
             EndTime = b.EndTime,
             IsActive = b.IsActive,
-            Status = b.IsActive ? "Active" : "Archived",
-            RoomOrTiming = timing,
             AssignedTeachersCount = b.BatchTeachers?.Count(bt => bt.IsActive) ?? 0,
             EnrolledStudentsCount = studentCount,
-            StudentCount = studentCount,
+            Grade = className,
+            RoomOrTiming = timing,
             PrimaryTeacher = primaryTeacherName,
+            StudentCount = studentCount,
+            Status = b.IsActive ? "Active" : "Inactive",
             CreatedAt = b.CreatedAt,
             UpdatedAt = b.UpdatedAt
         };
@@ -54,6 +55,9 @@ public static class BatchMappingExtensions
             TeacherCode = bt.Teacher?.EmployeeCode ?? string.Empty,
             TeacherEmail = user?.Email,
             TeacherMobile = user?.Mobile,
+            Department = bt.Teacher?.Department,
+            Designation = bt.Teacher?.Designation?.GetDisplayName(),
+            Specialization = bt.Teacher?.Specialization,
             AssignedAt = bt.AssignedAt,
             RemovedAt = bt.RemovedAt,
             IsActive = bt.IsActive

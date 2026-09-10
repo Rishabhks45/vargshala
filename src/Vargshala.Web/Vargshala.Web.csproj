@@ -13,6 +13,13 @@
   </ItemGroup>
 
   <!-- Auto-compile Tailwind CSS on dotnet build -->
+  <Target Name="EnsureTailwindCompiler" BeforeTargets="BuildTailwindCss" Condition="!Exists('$(ProjectDir)tailwindcss.exe')">
+    <Message Importance="high" Text="Tailwind compiler not found. Auto-downloading standalone tailwindcss.exe..." />
+    <Exec Command="curl.exe -s -L -o &quot;$(ProjectDir)tailwindcss.exe&quot; &quot;https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-windows-x64.exe&quot;"
+          WorkingDirectory="$(ProjectDir)"
+          ContinueOnError="true" />
+  </Target>
+
   <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild" Condition="Exists('$(ProjectDir)tailwindcss.exe')">
     <Message Importance="high" Text="Building Tailwind CSS..." />
     <Exec Command="&quot;$(ProjectDir)tailwindcss.exe&quot; -i &quot;$(ProjectDir)Styles\app.css&quot; -o &quot;$(ProjectDir)wwwroot\app.css&quot; $(TailwindMinifyFlag)"

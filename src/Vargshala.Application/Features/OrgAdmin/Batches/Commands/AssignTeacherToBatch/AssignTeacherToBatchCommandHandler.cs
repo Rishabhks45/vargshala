@@ -1,6 +1,7 @@
 using MediatR;
 using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Features.OrgAdmin.Batches.Infrastructure;
+using Vargshala.Application.Features.OrgAdmin.Branches.Infrastructure;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Infrastructure;
 using Vargshala.Contracts.Batches;
 using Vargshala.Contracts.Common;
@@ -12,15 +13,18 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
 {
     private readonly IBatchRepository _batchRepository;
     private readonly ITeacherRepository _teacherRepository;
+    private readonly IBranchRepository _branchRepository;
     private readonly ICurrentUser _currentUser;
 
     public AssignTeacherToBatchCommandHandler(
         IBatchRepository batchRepository,
         ITeacherRepository teacherRepository,
+        IBranchRepository branchRepository,
         ICurrentUser currentUser)
     {
         _batchRepository = batchRepository;
         _teacherRepository = teacherRepository;
+        _branchRepository = branchRepository;
         _currentUser = currentUser;
     }
 
@@ -32,10 +36,20 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
             return ApiResponse<BatchTeacherDto>.FailureResponse("Batch not found.");
         }
 
-        var teacher = await _teacherRepository.GetByIdAsync(command.Request.TeacherId, cancellationToken);
-        if (teacher == null)
+        var teacher = await _teacherRepository.GetByIdWithUserAsync(command.Request.TeacherId, cancellationToken);
+        if (teacher == null || teacher.IsDeleted || !teacher.IsActive || (teacher.User != null && (!teacher.User.IsActive || teacher.User.IsDeleted)))
         {
-            return ApiResponse<BatchTeacherDto>.FailureResponse("Teacher not found.");
+            return ApiResponse<BatchTeacherDto>.FailureResponse("Teacher not found or is inactive.");
+        }
+
+        // Branch authorization check: if teacher has specific branch access, ensure batch's branch is allowed
+        if (batch.Class != null)
+        {
+            var userBranches = await _branchRepository.GetUserBranchesAsync(teacher.UserId, cancellationToken);
+            if (userBranches.Any() && !userBranches.Any(ub => ub.BranchId == batch.Class.BranchId))
+            {
+                return ApiResponse<BatchTeacherDto>.FailureResponse("This teacher is not authorized for the batch's branch.");
+            }
         }
 
         var existing = await _batchRepository.GetBatchTeacherAsync(command.BatchId, command.Request.TeacherId, cancellationToken);

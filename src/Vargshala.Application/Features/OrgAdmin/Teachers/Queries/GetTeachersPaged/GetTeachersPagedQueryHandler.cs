@@ -36,6 +36,7 @@ public class GetTeachersPagedQueryHandler : IRequestHandler<GetTeachersPagedQuer
             query.Department,
             query.Designation,
             query.IsActive,
+            query.BranchId,
             cancellationToken);
 
         var dtos = teachers.Select(t => t.ToDto()).ToList();

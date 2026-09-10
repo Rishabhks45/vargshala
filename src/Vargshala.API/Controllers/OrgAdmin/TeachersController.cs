@@ -36,9 +36,10 @@ public class TeachersController : ControllerBase
         [FromQuery] PagedRequest request,
         [FromQuery] string? department = null,
         [FromQuery] string? designation = null,
-        [FromQuery] bool? isActive = null)
+        [FromQuery] bool? isActive = null,
+        [FromQuery] Guid? branchId = null)
     {
-        var query = new GetTeachersPagedQuery(request, department, designation, isActive);
+        var query = new GetTeachersPagedQuery(request, department, designation, isActive, branchId);
         var result = await _mediator.Send(query);
 
         if (!result.Success)

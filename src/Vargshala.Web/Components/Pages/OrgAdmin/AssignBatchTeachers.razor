@@ -1,0 +1,1284 @@
+@page "/batches/assign-teachers"
+@page "/batches/assign-teachers/{BatchId:guid}"
+@page "/batches/{BatchId:guid}/assign-teachers"
+@attribute [Authorize(Roles = "OrganizationAdmin,SuperAdmin,BranchAdmin,1,1001,4")]
+@using Microsoft.AspNetCore.Components.Web
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Batches
+@using Vargshala.Contracts.Classes
+@using Vargshala.Contracts.Subjects
+@using Vargshala.Contracts.Branches
+@using Vargshala.Contracts.Teachers
+@using Vargshala.Contracts.Students
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
+@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Skeletons
+@using Vargshala.Web.Services
+@inject IBatchService BatchService
+@inject IBranchService BranchService
+@inject IClassService ClassService
+@inject ISubjectService SubjectService
+@inject ITeacherService TeacherService
+@inject INotificationService Toast
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Assign Teachers to Batch | Vargshala</PageTitle>
+
+<div class="flex-1 min-h-0 flex flex-col gap-4 transition-colors duration-200 h-full overflow-y-auto no-scrollbar pb-10" style="scrollbar-width: none; -ms-overflow-style: none;">
+
+    <!-- Top Header & Action Controls (Strictly aligned with Students.razor) -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shadow-[#004D40]/20 shrink-0">
+                <svg class="w-5 h-5 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Assign Teachers to Batch
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Drag and drop teachers or click assign to map faculty members to batches and subjects.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5 shrink-0">
+            <button type="button" 
+                    @onclick="NavigateBack"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Back to Batches</span>
+            </button>
+
+            <button type="button" 
+                    @onclick="SaveAssignmentsAsync"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Save Assignments</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Batch Selection Toolbar (Strictly matching Students.razor Filter Toolbar) -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <div class="w-48">
+                <CustomSelect Value="@(_selectedBranchId == Guid.Empty ? "" : _selectedBranchId.ToString())"
+                              ValueChanged="OnBranchChanged"
+                              Options="_branchOptions"
+                              Placeholder="Select Branch" />
+            </div>
+            <div class="w-56">
+                <CustomSelect Value="@(_selectedBatchId == Guid.Empty ? "" : _selectedBatchId.ToString())"
+                              ValueChanged="OnBatchChanged"
+                              Options="_batchOptions"
+                              Placeholder="Select Batch" />
+            </div>
+            <div class="w-32">
+                <CustomSelect Value="@_selectedSession"
+                              ValueChanged="@((string v) => _selectedSession = v)"
+                              Options="_sessionOptions"
+                              Placeholder="Academic Session" />
+            </div>
+        </div>
+
+        @if (_isLoadingBatch && _selectedBatchDetail == null)
+        {
+            <div class="flex items-center gap-3 shrink-0">
+                <Skeleton Width="90px" Height="16px" />
+                <Skeleton Width="80px" Height="16px" />
+                <Skeleton Width="60px" Height="18px" Shape="Skeleton.SkeletonShape.Pill" />
+            </div>
+        }
+        else if (_selectedBatchDetail != null)
+        {
+            <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0">
+                <span>Class: <strong class="text-slate-800 dark:text-white">@_selectedBatchDetail.Batch.ClassName</strong></span>
+                <span class="text-slate-300 dark:text-slate-600">•</span>
+                <span>Students: <strong class="text-slate-800 dark:text-white">@_selectedBatchDetail.Batch.StudentCount</strong></span>
+                <span class="text-slate-300 dark:text-slate-600">•</span>
+                @if (_selectedBatchDetail.Batch.IsActive)
+                {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
+                        Active
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>
+                        Inactive
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- 3-Column Main Canvas (Strictly side-by-side on desktop: 3 + 6 + 3 = 12) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 items-start">
+
+        <!-- ========================================================================= -->
+        <!-- COLUMN 1: Available Teachers (Left Panel - 3 cols) -->
+        <!-- ========================================================================= -->
+        <div class="lg:col-span-3 min-w-0 card-surface p-4 border border-tealborder shadow-2xs flex flex-col gap-3">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+                        Available Teachers
+                    </h2>
+                </div>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/50">
+                    @FilteredAvailableTeachers.Count() Teachers
+                </span>
+            </div>
+
+            <!-- Search input using reusable SearchInput with debounce -->
+            <SearchInput @bind-Value="_teacherSearchQuery"
+                         Placeholder="Search by name, subject, code..." />
+
+            <!-- Filter Controls -->
+            <div class="grid grid-cols-2 gap-2">
+                <CustomSelect Value="@_selectedSubjectFilter"
+                              ValueChanged="@((string v) => _selectedSubjectFilter = v)"
+                              Options="_subjectFilterOptions"
+                              Placeholder="All Subjects"
+                              Class="w-full text-xs" />
+
+                <CustomSelect Value="@_selectedStatusFilter"
+                              ValueChanged="@((string v) => _selectedStatusFilter = v)"
+                              Options="_teacherStatusOptions"
+                              Placeholder="All Faculty"
+                              Class="w-full text-xs" />
+            </div>
+
+            <!-- Teacher Cards Scrollable List with Skeletons on Initial Load -->
+            <div class="space-y-2 max-h-[580px] overflow-y-auto no-scrollbar pr-1 @(_isLoadingTeachers && _availableTeachers.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")" style="scrollbar-width: none; -ms-overflow-style: none;">
+                @if (_isLoadingTeachers && !_availableTeachers.Any())
+                {
+                    <SkeletonTeacherCards Count="5" />
+                }
+                else if (!FilteredAvailableTeachers.Any())
+                {
+                    <div class="py-10 text-center text-slate-400 rounded-xl bg-slate-50 dark:bg-[#142025] border border-dashed border-slate-200 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-600 dark:text-slate-300">No teachers found</p>
+                        <p class="text-[10px] mt-1 text-slate-400">Try changing branch or search filters.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var teacher in FilteredAvailableTeachers)
+                    {
+                        var isAssignedToCurrent = _currentAssignedTeacherIds.Contains(teacher.Id);
+                        <div draggable="true"
+                             @ondragstart="() => OnDragStart(teacher)"
+                             class="group p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#142025] hover:border-[#009488]/50 hover:shadow-xs transition-all flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <!-- Clean Theme 4 Avatar Initials / Photo (Students.razor standard) -->
+                                @if (!string.IsNullOrWhiteSpace(teacher.ProfilePictureUrl))
+                                {
+                                    <img src="@teacher.ProfilePictureUrl"
+                                         alt="@teacher.FullName"
+                                         class="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-100 dark:border-slate-700" />
+                                }
+                                else
+                                {
+                                    <div class="w-8 h-8 rounded-lg bg-teal-500/10 text-[#009488] font-bold text-xs flex items-center justify-center shrink-0">
+                                        @teacher.Initials
+                                    </div>
+                                }
+
+                                <div class="min-w-0">
+                                    <h3 class="text-xs font-bold text-slate-800 dark:text-white truncate">@teacher.FullName</h3>
+                                    <div class="flex flex-wrap items-center gap-1 mt-0.5">
+                                        @if (!string.IsNullOrWhiteSpace(teacher.Department))
+                                        {
+                                            <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded-md @GetSubjectBadgeClass(teacher.Department)">
+                                                @teacher.Department
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(teacher.Specialization) && !string.Equals(teacher.Specialization, teacher.Department, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded-md @GetSubjectBadgeClass(teacher.Specialization)">
+                                                @teacher.Specialization
+                                            </span>
+                                        }
+                                        @if (teacher.BatchCount > 0)
+                                        {
+                                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60" title="@teacher.BatchesDisplay">
+                                                @(teacher.BatchCount == 1 ? "1 Batch" : $"{teacher.BatchCount} Batches")
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 shrink-0">
+                                @if (isAssignedToCurrent)
+                                {
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 flex items-center gap-1 shadow-2xs">
+                                        <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>In this Batch</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            @onclick="() => AssignTeacherDirectlyAsync(teacher.Id)"
+                                            title="Click to assign to batch"
+                                            class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 transition-all cursor-pointer">
+                                        + Assign
+                                    </button>
+                                }
+
+                                <!-- Drag Handle dots (6 dots vertical) -->
+                                <div class="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 p-0.5 cursor-grab">
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M9 5a2 2 0 11-4 0 2 2 0 014 0zM9 12a2 2 0 11-4 0 2 2 0 014 0zM9 19a2 2 0 11-4 0 2 2 0 014 0zM19 5a2 2 0 11-4 0 2 2 0 014 0zM19 12a2 2 0 11-4 0 2 2 0 014 0zM19 19a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- COLUMN 2: Batch Subjects Canvas (Middle Panel - 6 cols) -->
+        <!-- ========================================================================= -->
+        <div class="lg:col-span-6 min-w-0 card-surface p-4 sm:p-5 border border-tealborder shadow-2xs flex flex-col gap-3.5">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+                        Batch Subjects & Faculty Mapping
+                    </h2>
+                </div>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/50">
+                    @_displaySubjects.Count Subjects
+                </span>
+            </div>
+
+            <!-- Instruction Alert matching Reference Mockup -->
+            <div class="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 text-blue-700 dark:text-blue-300 text-xs flex items-center gap-2.5">
+                <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Drag faculty members from the left panel and drop them on subject cards, or click "+ Assign". Faculty members can be assigned to multiple batches across the institute.</span>
+            </div>
+
+            <!-- Subjects List with Skeletons on Initial Load -->
+            <div class="space-y-3 max-h-[580px] overflow-y-auto no-scrollbar pr-1 @(_isLoadingBatch && _displaySubjects.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")" style="scrollbar-width: none; -ms-overflow-style: none;">
+                @if (_isLoadingBatch && !_displaySubjects.Any())
+                {
+                    <SkeletonSubjectCards Count="3" />
+                }
+                else if (_selectedBatchDetail == null)
+                {
+                    <div class="py-16 text-center text-slate-400">
+                        <p class="text-xs font-semibold">Select a batch to begin assigning teachers.</p>
+                    </div>
+                }
+                else if (!_displaySubjects.Any())
+                {
+                    <div class="py-16 text-center text-slate-400">
+                        <p class="text-xs font-bold">No subjects configured for this batch.</p>
+                        <p class="text-[10px] mt-1">Please add subjects under the Subjects Directory.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var subj in _displaySubjects)
+                    {
+                        var isDraggingOver = _dragOverSubjectId == subj.Id;
+                        var assignedForSubj = GetTeachersForSubject(subj);
+
+                        <div ondragover="event.preventDefault();"
+                             @ondragenter="() => _dragOverSubjectId = subj.Id"
+                             @ondragleave="() => { if (_dragOverSubjectId == subj.Id) _dragOverSubjectId = null; }"
+                             @ondrop="() => OnDropTeacherAsync(subj.Id)"
+                             class="relative overflow-hidden p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col gap-3 shadow-2xs @(isDraggingOver ? "border-2 border-[#009488] bg-teal-50/50 dark:bg-teal-950/40 ring-4 ring-teal-500/15 scale-[1.005]" : "border-slate-200/70 dark:border-slate-800 bg-white dark:bg-[#142025] hover:border-slate-300 dark:hover:border-slate-700")">
+
+                            <!-- Distinct Colored Vertical Accent Bar on the Left -->
+                            <div class="w-1.5 absolute left-0 top-0 bottom-0 rounded-l-2xl @subj.AccentBg"></div>
+
+                            <!-- Subject Header Row -->
+                            <div class="flex items-center justify-between pl-2">
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <div class="w-9 h-9 rounded-xl @subj.IconBg flex items-center justify-center shrink-0 shadow-2xs">
+                                        @((MarkupString)subj.IconSvg)
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h3 class="text-xs font-bold text-slate-900 dark:text-white">@subj.Name</h3>
+                                            @if (subj.IsPrimary)
+                                            {
+                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60">
+                                                    Primary
+                                                </span>
+                                            }
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 font-medium">@_selectedBatchDetail.Batch.ClassName • Code: @subj.Code</p>
+                                    </div>
+                                </div>
+
+                                <div class="text-[11px] font-semibold text-slate-400">
+                                    @(assignedForSubj.Count) Assigned
+                                </div>
+                            </div>
+
+                            <!-- Assigned Teachers and Drop Area -->
+                            <div class="flex flex-wrap items-center gap-2 pl-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                                @foreach (var t in assignedForSubj)
+                                {
+                                    <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                        <div class="w-6 h-6 rounded-lg bg-teal-500/10 text-[#009488] font-bold text-[10px] flex items-center justify-center shrink-0">
+                                            @(string.IsNullOrWhiteSpace(t.TeacherName) ? "T" : t.TeacherName[0].ToString().ToUpper())
+                                        </div>
+                                        <span class="text-xs font-semibold text-slate-800 dark:text-slate-100">@t.TeacherName</span>
+                                        <button type="button"
+                                                @onclick="() => RemoveTeacherAsync(t.TeacherId)"
+                                                title="Remove teacher"
+                                                class="w-4 h-4 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-950/60 flex items-center justify-center transition-colors cursor-pointer ml-0.5">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                }
+
+                                <!-- Drop Zone / Assign Placeholder -->
+                                @if (assignedForSubj.Any())
+                                {
+                                    <div class="h-9 px-3.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-[#009488] hover:border-[#009488] hover:bg-teal-50/20 dark:hover:bg-teal-950/20 transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                                         @onclick="() => PromptAssignModal(subj.Id)">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span>Drop another teacher here</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="h-10 px-5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:text-[#009488] hover:border-[#009488] hover:bg-teal-50/20 dark:hover:bg-teal-950/20 transition-all flex items-center justify-center gap-1.5 text-xs font-medium cursor-pointer w-full"
+                                         @onclick="() => PromptAssignModal(subj.Id)">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span>Drop teacher here</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- COLUMN 3: Batch Info, Assigned Teachers & Quick Actions (3 cols) -->
+        <!-- ========================================================================= -->
+        <div class="lg:col-span-3 min-w-0 space-y-3.5">
+
+            <!-- Card 1: Batch Information with Skeletons on Initial Load -->
+            <div class="card-surface p-4 border border-tealborder shadow-2xs @(_isLoadingBatch && _selectedBatchDetail != null ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">Batch Information</h3>
+                    </div>
+                    <button type="button"
+                            @onclick="NavigateBack"
+                            class="text-xs font-semibold text-slate-400 hover:text-[#009488] cursor-pointer flex items-center gap-1 transition-colors">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        <span>Edit</span>
+                    </button>
+                </div>
+
+                @if (_isLoadingBatch && _selectedBatchDetail == null)
+                {
+                    <div class="space-y-3 py-1">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <div class="flex items-center justify-between">
+                                <Skeleton Width="85px" Height="12px" />
+                                <Skeleton Width="110px" Height="12px" />
+                            </div>
+                        }
+                    </div>
+                }
+                else if (_selectedBatchDetail != null)
+                {
+                    <div class="space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 font-medium">Batch Name</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedBatchDetail.Batch.Name</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 font-medium">Class</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedBatchDetail.Batch.ClassName</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 font-medium">Branch</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedBatchDetail.Batch.BranchName</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 font-medium">Total Students</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedBatchDetail.Batch.StudentCount</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 font-medium">Start Time</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">
+                                @(_selectedBatchDetail.Batch.StartTime.HasValue ? _selectedBatchDetail.Batch.StartTime.Value.ToString("hh:mm tt") : "—")
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 font-medium">End Time</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200">
+                                @(_selectedBatchDetail.Batch.EndTime.HasValue ? _selectedBatchDetail.Batch.EndTime.Value.ToString("hh:mm tt") : "—")
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 font-medium">Status</span>
+                            @if (_selectedBatchDetail.Batch.IsActive)
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
+                                    Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>
+                                    Inactive
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Card 2: Assigned Teachers List matching Reference Mockup -->
+            <div class="card-surface p-4 border border-tealborder shadow-2xs @(_isLoadingBatch && _selectedBatchDetail != null ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+                            Assigned Teachers (@(_selectedBatchDetail?.Teachers.Count(t => t.IsActive) ?? 0))
+                        </h3>
+                    </div>
+                </div>
+
+                @if (_isLoadingBatch && _selectedBatchDetail == null)
+                {
+                    <div class="space-y-2 py-1">
+                        @for (int i = 0; i < 3; i++)
+                        {
+                            <div class="flex items-center justify-between py-1.5">
+                                <div class="flex items-center gap-2">
+                                    <Skeleton Width="28px" Height="28px" Shape="Skeleton.SkeletonShape.Rounded" />
+                                    <Skeleton Width="100px" Height="12px" />
+                                </div>
+                                <Skeleton Width="55px" Height="18px" Shape="Skeleton.SkeletonShape.Pill" />
+                            </div>
+                        }
+                    </div>
+                }
+                else if (_selectedBatchDetail == null || !_selectedBatchDetail.Teachers.Any(t => t.IsActive))
+                {
+                    <p class="text-xs text-slate-400 text-center py-5">No teachers assigned yet.</p>
+                }
+                else
+                {
+                    <div class="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar pr-1" style="scrollbar-width: none; -ms-overflow-style: none;">
+                        @foreach (var t in _selectedBatchDetail.Teachers.Where(t => t.IsActive))
+                        {
+                            var subjName = GetTeacherAssignedSubjectName(t);
+                            <div class="flex items-center justify-between py-1.5 px-1 border-b border-slate-50 dark:border-slate-800/60 last:border-0">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <div class="w-6 h-6 rounded-lg bg-teal-500/10 text-[#009488] font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        @(string.IsNullOrWhiteSpace(t.TeacherName) ? "T" : t.TeacherName[0].ToString().ToUpper())
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white truncate">@t.TeacherName</span>
+                                </div>
+
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md @GetSubjectBadgeClass(subjName)">
+                                        @subjName
+                                    </span>
+                                    <button type="button"
+                                            @onclick="() => RemoveTeacherAsync(t.TeacherId)"
+                                            title="Remove teacher"
+                                            class="p-1 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Card 3: Quick Actions matching Reference Mockup -->
+            <div class="card-surface p-4 border border-tealborder shadow-2xs space-y-2.5">
+                <div class="flex items-center gap-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">Quick Actions</h3>
+                </div>
+
+                <!-- Save Assignments Button -->
+                <button type="button"
+                        @onclick="SaveAssignmentsAsync"
+                        class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Save Assignments</span>
+                </button>
+
+                <!-- Clear All Button -->
+                <button type="button"
+                        @onclick="ClearAllAssignmentsAsync"
+                        class="w-full py-2 px-4 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#18262c] hover:bg-slate-50 dark:hover:bg-[#1f3037] border border-slate-200 dark:border-slate-700 transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Clear All</span>
+                </button>
+
+                <!-- Auto Assign (AI) Button -->
+                <button type="button"
+                        @onclick="AutoAssignAsync"
+                        class="w-full py-2 px-4 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#18262c] hover:bg-slate-50 dark:hover:bg-[#1f3037] border border-slate-200 dark:border-slate-700 transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    <span>Auto Assign (AI)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? BatchId { get; set; }
+
+    private Guid _selectedBranchId = Guid.Empty;
+    private Guid _selectedBatchId = Guid.Empty;
+    private string _selectedSession = "2026-27";
+
+    private List<BranchDto> _branches = new();
+    private List<BatchDto> _batches = new();
+    private List<TeacherDto> _availableTeachers = new();
+    private BatchDetailDto? _selectedBatchDetail;
+    private HashSet<Guid> _currentAssignedTeacherIds = new();
+    private Dictionary<(Guid BatchId, Guid TeacherId), Guid> _teacherSubjectMap = new();
+
+    private List<CustomSelect.CustomSelectOption> _branchOptions = new();
+    private List<CustomSelect.CustomSelectOption> _batchOptions = new();
+    private List<CustomSelect.CustomSelectOption> _sessionOptions = new()
+    {
+        new("2026-27", "2026-27"),
+        new("2025-26", "2025-26"),
+        new("2027-28", "2027-28")
+    };
+
+    private string _teacherSearchQuery = string.Empty;
+    private string _selectedSubjectFilter = "";
+    private string _selectedStatusFilter = "";
+    private List<CustomSelect.CustomSelectOption> _subjectFilterOptions = new() { new("", "All Subjects") };
+    private readonly List<CustomSelect.CustomSelectOption> _teacherStatusOptions = new()
+    {
+        new("", "All Faculty"),
+        new("available", "Not in this Batch"),
+        new("assigned", "In this Batch")
+    };
+
+    private bool _isLoadingTeachers = false;
+    private bool _isLoadingBatch = false;
+    private TeacherDto? _draggedTeacher = null;
+    private Guid? _dragOverSubjectId = null;
+    private List<SubjectDto> _allOrgSubjects = new();
+
+    private class SubjectDisplayModel
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+        public bool IsPrimary { get; set; }
+        public string IconSvg { get; set; } = string.Empty;
+        public string IconBg { get; set; } = string.Empty;
+        public string AccentBg { get; set; } = string.Empty;
+    }
+
+    private List<SubjectDisplayModel> _displaySubjects = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInitialDataAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (BatchId.HasValue && BatchId.Value != Guid.Empty && BatchId.Value != _selectedBatchId)
+        {
+            _selectedBatchId = BatchId.Value;
+            await LoadBatchDetailAsync(_selectedBatchId);
+        }
+    }
+
+    private async Task LoadInitialDataAsync()
+    {
+        _isLoadingBatch = true;
+        _isLoadingTeachers = true;
+        try
+        {
+            var branchRes = await BranchService.GetAllActiveBranchesAsync();
+            if (branchRes.Success && branchRes.Data != null)
+            {
+                _branches = branchRes.Data;
+                _branchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
+            }
+
+            var subjRes = await SubjectService.GetAllActiveSubjectsAsync();
+            if (subjRes.Success && subjRes.Data != null)
+            {
+                _allOrgSubjects = subjRes.Data;
+            }
+
+            if (_selectedBranchId == Guid.Empty && _branches.Any())
+            {
+                _selectedBranchId = _branches[0].Id;
+            }
+
+            await LoadBatchesForBranchAsync(_selectedBranchId);
+
+            if (BatchId.HasValue && BatchId.Value != Guid.Empty)
+            {
+                _selectedBatchId = BatchId.Value;
+            }
+            else if (_batches.Any())
+            {
+                _selectedBatchId = _batches[0].Id;
+            }
+
+            if (_selectedBatchId != Guid.Empty)
+            {
+                await LoadBatchDetailAsync(_selectedBatchId);
+            }
+
+            await LoadAvailableTeachersAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading initialization data: " + ex.Message);
+        }
+        finally
+        {
+            _isLoadingBatch = false;
+        }
+    }
+
+    private async Task LoadBatchesForBranchAsync(Guid branchId)
+    {
+        try
+        {
+            var res = await BatchService.GetBatchesPagedAsync(
+                new PagedRequest { PageSize = 100 },
+                branchId: branchId != Guid.Empty ? branchId : null,
+                isActive: true);
+
+            if (res.Success && res.Data != null)
+            {
+                _batches = res.Data.Items;
+                _batchOptions = _batches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), $"{b.Name} ({b.Grade})")).ToList();
+            }
+            else
+            {
+                _batches = new();
+                _batchOptions = new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error fetching batches: " + ex.Message);
+        }
+    }
+
+    private async Task LoadAvailableTeachersAsync()
+    {
+        _isLoadingTeachers = true;
+        try
+        {
+            var res = await TeacherService.GetTeachersPagedAsync(
+                new PagedRequest { PageSize = 200 },
+                isActive: true,
+                branchId: _selectedBranchId != Guid.Empty ? _selectedBranchId : null);
+
+            if (res.Success && res.Data != null)
+            {
+                _availableTeachers = res.Data.Items.Where(t => t.IsActive).ToList();
+
+                _subjectFilterOptions = new() { new("", "All Subjects") };
+                if (_allOrgSubjects.Any())
+                {
+                    _subjectFilterOptions.AddRange(_allOrgSubjects.Select(s => new CustomSelect.CustomSelectOption(s.Name, s.Name)));
+                }
+                else
+                {
+                    var subjects = _availableTeachers
+                        .Select(t => t.Department)
+                        .Where(d => !string.IsNullOrWhiteSpace(d))
+                        .Distinct()
+                        .OrderBy(d => d)
+                        .ToList();
+                    _subjectFilterOptions.AddRange(subjects.Select(s => new CustomSelect.CustomSelectOption(s!, s!)));
+                }
+            }
+            else
+            {
+                _availableTeachers = new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading teachers: " + ex.Message);
+        }
+        finally
+        {
+            _isLoadingTeachers = false;
+        }
+    }
+
+    private async Task LoadBatchDetailAsync(Guid batchId)
+    {
+        _isLoadingBatch = true;
+        try
+        {
+            var res = await BatchService.GetBatchByIdAsync(batchId);
+            if (res.Success && res.Data != null)
+            {
+                _selectedBatchDetail = res.Data;
+
+                if (_selectedBatchDetail.Batch.BranchId != Guid.Empty && _selectedBatchDetail.Batch.BranchId != _selectedBranchId)
+                {
+                    _selectedBranchId = _selectedBatchDetail.Batch.BranchId;
+                    await LoadAvailableTeachersAsync();
+                }
+
+                _currentAssignedTeacherIds = _selectedBatchDetail.Teachers
+                    .Where(t => t.IsActive)
+                    .Select(t => t.TeacherId)
+                    .ToHashSet();
+
+                BuildDisplaySubjects();
+
+                var bId = _selectedBatchDetail.Batch.Id;
+                foreach (var t in _selectedBatchDetail.Teachers.Where(t => t.IsActive))
+                {
+                    if (!_teacherSubjectMap.ContainsKey((bId, t.TeacherId)))
+                    {
+                        var matchedSubj = _displaySubjects.FirstOrDefault(s =>
+                            !string.IsNullOrWhiteSpace(t.Department) &&
+                            string.Equals(s.Name, t.Department, StringComparison.OrdinalIgnoreCase));
+                        _teacherSubjectMap[(bId, t.TeacherId)] = matchedSubj?.Id ?? _selectedBatchDetail.Batch.SubjectId;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading batch details: " + ex.Message);
+        }
+        finally
+        {
+            _isLoadingBatch = false;
+        }
+    }
+
+    private (string iconBg, string accentBg, string iconSvg) GetSubjectStyling(string subjectName, int index)
+    {
+        var name = (subjectName ?? "").ToLowerInvariant();
+
+        // 1. Physics: Indigo/Purple (Atom / Molecule Icon)
+        if (name.Contains("physic") || name.Contains("mechanic"))
+        {
+            return (
+                "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400",
+                "bg-indigo-600",
+                "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13 10V3L4 14h7v7l9-11h-7z'/></svg>"
+            );
+        }
+
+        // 2. Chemistry: Emerald/Green (Flask / Beaker Icon)
+        if (name.Contains("chem") || name.Contains("organ"))
+        {
+            return (
+                "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400",
+                "bg-emerald-500",
+                "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z'/></svg>"
+            );
+        }
+
+        // 3. Mathematics: Blue (Sigma / Math Icon)
+        if (name.Contains("math") || name.Contains("calc") || name.Contains("algeb") || name.Contains("trig"))
+        {
+            return (
+                "bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400",
+                "bg-blue-600",
+                "<svg class='w-5 h-5 font-bold' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'/></svg>"
+            );
+        }
+
+        // 4. Biology: Pink (Leaf / Heart Icon)
+        if (name.Contains("bio") || name.Contains("botan") || name.Contains("zool") || name.Contains("medic"))
+        {
+            return (
+                "bg-pink-50 text-pink-600 dark:bg-pink-950/60 dark:text-pink-400",
+                "bg-pink-500",
+                "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'/></svg>"
+            );
+        }
+
+        // 5. English / Language: Amber / Orange (Open Book Icon)
+        if (name.Contains("eng") || name.Contains("hind") || name.Contains("sans") || name.Contains("lang") || name.Contains("liter"))
+        {
+            return (
+                "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400",
+                "bg-amber-500",
+                "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'/></svg>"
+            );
+        }
+
+        // 6. Reasoning / Computer / Logic: Rose (Brain / Bulb Icon)
+        if (name.Contains("reason") || name.Contains("aptitud") || name.Contains("logic") || name.Contains("comp") || name.Contains("it") || name.Contains("code"))
+        {
+            return (
+                "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400",
+                "bg-rose-500",
+                "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'/></svg>"
+            );
+        }
+
+        // Default cycling colors matching design palette
+        var palettes = new[]
+        {
+            ("bg-teal-50 text-[#009488] dark:bg-teal-950/60 dark:text-teal-300", "bg-[#009488]"),
+            ("bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400", "bg-purple-500"),
+            ("bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400", "bg-sky-500"),
+            ("bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400", "bg-rose-500")
+        };
+        var selectedPalette = palettes[Math.Abs(index) % palettes.Length];
+        return (
+            selectedPalette.Item1,
+            selectedPalette.Item2,
+            "<svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25'/></svg>"
+        );
+    }
+
+    private string GetSubjectBadgeClass(string? subjectName)
+    {
+        var name = (subjectName ?? "").ToLowerInvariant();
+        if (name.Contains("math") || name.Contains("calc") || name.Contains("algeb"))
+            return "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60";
+        if (name.Contains("physic") || name.Contains("mechanic"))
+            return "bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200/60";
+        if (name.Contains("chem") || name.Contains("organ"))
+            return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60";
+        if (name.Contains("bio") || name.Contains("botan"))
+            return "bg-pink-50 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300 border border-pink-200/60";
+        if (name.Contains("eng") || name.Contains("hind") || name.Contains("lang"))
+            return "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/60";
+        return "bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200/60";
+    }
+
+    private void BuildDisplaySubjects()
+    {
+        _displaySubjects.Clear();
+        if (_selectedBatchDetail == null) return;
+
+        int index = 0;
+        var primarySubjId = _selectedBatchDetail.Batch.SubjectId;
+        var primarySubjName = _selectedBatchDetail.Batch.SubjectName;
+
+        var primarySubjObj = _allOrgSubjects.FirstOrDefault(s => s.Id == primarySubjId);
+        var finalPrimaryName = primarySubjObj?.Name ?? (!string.IsNullOrWhiteSpace(primarySubjName) ? primarySubjName : "Primary Subject");
+
+        var primaryStyle = GetSubjectStyling(finalPrimaryName, index++);
+        _displaySubjects.Add(new SubjectDisplayModel
+        {
+            Id = primarySubjId,
+            Name = finalPrimaryName,
+            Code = primarySubjObj?.Code ?? _selectedBatchDetail.Batch.Code,
+            IsPrimary = true,
+            IconBg = primaryStyle.iconBg,
+            AccentBg = primaryStyle.accentBg,
+            IconSvg = primaryStyle.iconSvg
+        });
+
+        // Dynamic active subjects from database
+        foreach (var subj in _allOrgSubjects.Where(s => s.Id != primarySubjId))
+        {
+            var style = GetSubjectStyling(subj.Name, index++);
+            _displaySubjects.Add(new SubjectDisplayModel
+            {
+                Id = subj.Id,
+                Name = subj.Name,
+                Code = subj.Code,
+                IsPrimary = false,
+                IconBg = style.iconBg,
+                AccentBg = style.accentBg,
+                IconSvg = style.iconSvg
+            });
+        }
+    }
+
+    private List<BatchTeacherDto> GetTeachersForSubject(SubjectDisplayModel subj)
+    {
+        if (_selectedBatchDetail == null) return new();
+
+        var batchId = _selectedBatchDetail.Batch.Id;
+        var list = _selectedBatchDetail.Teachers
+            .Where(t => t.IsActive && (
+                (_teacherSubjectMap.TryGetValue((batchId, t.TeacherId), out var mappedSubjId) && mappedSubjId == subj.Id)
+                || (!_teacherSubjectMap.ContainsKey((batchId, t.TeacherId)) && string.Equals(t.Department, subj.Name, StringComparison.OrdinalIgnoreCase))
+            ))
+            .ToList();
+
+        // For the primary subject card, also catch any unassigned faculty if none matched specifically
+        if (subj.IsPrimary)
+        {
+            var otherSubjNames = _displaySubjects.Where(s => !s.IsPrimary).Select(s => s.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var unmapped = _selectedBatchDetail.Teachers
+                .Where(t => t.IsActive
+                    && !_teacherSubjectMap.ContainsKey((batchId, t.TeacherId))
+                    && (string.IsNullOrWhiteSpace(t.Department) || !otherSubjNames.Contains(t.Department)))
+                .ToList();
+
+            foreach (var item in unmapped)
+            {
+                if (!list.Any(x => x.TeacherId == item.TeacherId))
+                {
+                    list.Add(item);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    private string GetTeacherAssignedSubjectName(BatchTeacherDto teacher)
+    {
+        if (_selectedBatchDetail != null && _teacherSubjectMap.TryGetValue((_selectedBatchDetail.Batch.Id, teacher.TeacherId), out var subjId))
+        {
+            var matched = _displaySubjects.FirstOrDefault(s => s.Id == subjId);
+            if (matched != null) return matched.Name;
+        }
+
+        if (!string.IsNullOrWhiteSpace(teacher.Department))
+        {
+            return teacher.Department;
+        }
+
+        return _selectedBatchDetail?.Batch.SubjectName ?? "General";
+    }
+
+    private IEnumerable<TeacherDto> FilteredAvailableTeachers
+    {
+        get
+        {
+            var list = _availableTeachers.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_teacherSearchQuery))
+            {
+                var query = _teacherSearchQuery.Trim().ToLower();
+                list = list.Where(t => t.FullName.ToLower().Contains(query)
+                    || (t.Department != null && t.Department.ToLower().Contains(query))
+                    || (t.Specialization != null && t.Specialization.ToLower().Contains(query))
+                    || (t.EmployeeCode != null && t.EmployeeCode.ToLower().Contains(query)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedSubjectFilter))
+            {
+                list = list.Where(t => string.Equals(t.Department, _selectedSubjectFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (_selectedStatusFilter == "available")
+            {
+                list = list.Where(t => !_currentAssignedTeacherIds.Contains(t.Id));
+            }
+            else if (_selectedStatusFilter == "assigned")
+            {
+                list = list.Where(t => _currentAssignedTeacherIds.Contains(t.Id));
+            }
+
+            return list;
+        }
+    }
+
+    private async Task OnBranchChanged(string value)
+    {
+        if (Guid.TryParse(value, out var branchId))
+        {
+            _selectedBranchId = branchId;
+            await LoadBatchesForBranchAsync(branchId);
+            if (_batches.Any())
+            {
+                _selectedBatchId = _batches[0].Id;
+                await LoadBatchDetailAsync(_selectedBatchId);
+            }
+            else
+            {
+                _selectedBatchId = Guid.Empty;
+                _selectedBatchDetail = null;
+            }
+            await LoadAvailableTeachersAsync();
+        }
+    }
+
+    private async Task OnBatchChanged(string value)
+    {
+        if (Guid.TryParse(value, out var batchId))
+        {
+            _selectedBatchId = batchId;
+            await LoadBatchDetailAsync(batchId);
+        }
+    }
+
+    private void OnDragStart(TeacherDto teacher)
+    {
+        _draggedTeacher = teacher;
+    }
+
+    private async Task OnDropTeacherAsync(Guid subjectId)
+    {
+        _dragOverSubjectId = null;
+        if (_draggedTeacher == null || _selectedBatchDetail == null) return;
+
+        var teacherToAssign = _draggedTeacher;
+        _draggedTeacher = null;
+
+        _teacherSubjectMap[(_selectedBatchDetail.Batch.Id, teacherToAssign.Id)] = subjectId;
+        await AssignTeacherDirectlyAsync(teacherToAssign.Id);
+    }
+
+    private async Task AssignTeacherDirectlyAsync(Guid teacherId)
+    {
+        if (_selectedBatchDetail == null)
+        {
+            Toast.Warning("Please select a batch first.");
+            return;
+        }
+
+        try
+        {
+            var batchId = _selectedBatchDetail.Batch.Id;
+            if (!_teacherSubjectMap.ContainsKey((batchId, teacherId)))
+            {
+                var teacher = _availableTeachers.FirstOrDefault(t => t.Id == teacherId);
+                var matchedSubj = _displaySubjects.FirstOrDefault(s =>
+                    !string.IsNullOrWhiteSpace(teacher?.Department) &&
+                    string.Equals(s.Name, teacher?.Department, StringComparison.OrdinalIgnoreCase));
+
+                _teacherSubjectMap[(batchId, teacherId)] = matchedSubj?.Id ?? _selectedBatchDetail.Batch.SubjectId;
+            }
+
+            var res = await BatchService.AssignTeacherToBatchAsync(batchId, new AssignTeacherToBatchRequest { TeacherId = teacherId });
+            if (res.Success)
+            {
+                Toast.Success("Teacher assigned successfully.");
+                await LoadBatchDetailAsync(batchId);
+                await LoadAvailableTeachersAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to assign teacher.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error assigning teacher: " + ex.Message);
+        }
+    }
+
+    private async Task RemoveTeacherAsync(Guid teacherId)
+    {
+        if (_selectedBatchDetail == null) return;
+        try
+        {
+            var batchId = _selectedBatchDetail.Batch.Id;
+            _teacherSubjectMap.Remove((batchId, teacherId));
+            var res = await BatchService.RemoveTeacherFromBatchAsync(batchId, teacherId);
+            if (res.Success)
+            {
+                Toast.Success("Teacher removed from batch.");
+                await LoadBatchDetailAsync(batchId);
+                await LoadAvailableTeachersAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to remove teacher.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error removing teacher: " + ex.Message);
+        }
+    }
+
+    private void PromptAssignModal(Guid subjectId)
+    {
+        if (_selectedBatchDetail == null) return;
+        var firstAvailable = FilteredAvailableTeachers.FirstOrDefault(t => !_currentAssignedTeacherIds.Contains(t.Id));
+        if (firstAvailable != null)
+        {
+            _teacherSubjectMap[(_selectedBatchDetail.Batch.Id, firstAvailable.Id)] = subjectId;
+            _ = AssignTeacherDirectlyAsync(firstAvailable.Id);
+        }
+        else
+        {
+            Toast.Info("Pick a teacher from the left panel to assign.");
+        }
+    }
+
+    private async Task SaveAssignmentsAsync()
+    {
+        if (_selectedBatchDetail == null) return;
+        Toast.Success("Batch teacher assignments are saved and active.");
+    }
+
+    private async Task ClearAllAssignmentsAsync()
+    {
+        if (_selectedBatchDetail == null || !_selectedBatchDetail.Teachers.Any(t => t.IsActive))
+        {
+            Toast.Info("No teachers are assigned to this batch.");
+            return;
+        }
+
+        var batchId = _selectedBatchDetail.Batch.Id;
+        var activeTeachers = _selectedBatchDetail.Teachers.Where(t => t.IsActive).ToList();
+        foreach (var t in activeTeachers)
+        {
+            _teacherSubjectMap.Remove((batchId, t.TeacherId));
+            await BatchService.RemoveTeacherFromBatchAsync(batchId, t.TeacherId);
+        }
+
+        Toast.Success("All teacher assignments cleared for this batch.");
+        await LoadBatchDetailAsync(batchId);
+        await LoadAvailableTeachersAsync();
+    }
+
+    private async Task AutoAssignAsync()
+    {
+        if (_selectedBatchDetail == null) return;
+
+        int assignedCount = 0;
+        var batchId = _selectedBatchDetail.Batch.Id;
+        var unassigned = _availableTeachers
+            .Where(t => t.IsActive && !_currentAssignedTeacherIds.Contains(t.Id))
+            .ToList();
+
+        if (!unassigned.Any())
+        {
+            Toast.Info("All faculty members are already assigned to this batch.");
+            return;
+        }
+
+        // Match teacher's Department with one of our dynamic batch subjects
+        foreach (var subj in _displaySubjects)
+        {
+            var match = unassigned.FirstOrDefault(t =>
+                !string.IsNullOrWhiteSpace(t.Department) &&
+                string.Equals(t.Department, subj.Name, StringComparison.OrdinalIgnoreCase) &&
+                !_currentAssignedTeacherIds.Contains(t.Id));
+
+            if (match != null)
+            {
+                _teacherSubjectMap[(batchId, match.Id)] = subj.Id;
+                var res = await BatchService.AssignTeacherToBatchAsync(batchId, new AssignTeacherToBatchRequest { TeacherId = match.Id });
+                if (res.Success)
+                {
+                    assignedCount++;
+                    _currentAssignedTeacherIds.Add(match.Id);
+                }
+            }
+        }
+
+        if (assignedCount > 0)
+        {
+            Toast.Success($"Auto-assigned {assignedCount} matching faculty members.");
+            await LoadBatchDetailAsync(batchId);
+            await LoadAvailableTeachersAsync();
+        }
+        else
+        {
+            // Fallback: assign first available to primary subject
+            var first = unassigned.FirstOrDefault();
+            if (first != null)
+            {
+                var primary = _displaySubjects.FirstOrDefault(s => s.IsPrimary) ?? _displaySubjects.FirstOrDefault();
+                if (primary != null)
+                {
+                    _teacherSubjectMap[(batchId, first.Id)] = primary.Id;
+                }
+                var res = await BatchService.AssignTeacherToBatchAsync(batchId, new AssignTeacherToBatchRequest { TeacherId = first.Id });
+                if (res.Success)
+                {
+                    Toast.Success("Auto-assigned faculty member.");
+                    await LoadBatchDetailAsync(batchId);
+                    await LoadAvailableTeachersAsync();
+                    return;
+                }
+            }
+            Toast.Info("No matching faculty members could be assigned.");
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/batches");
+    }
+}

@@ -70,6 +70,8 @@ public class TeacherRepository : ITeacherRepository
         return await _db.Teachers
             .AsNoTracking()
             .Include(t => t.User)
+            .Include(t => t.BatchTeachers.Where(bt => bt.IsActive))
+                .ThenInclude(bt => bt.Batch)
             .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted, cancellationToken);
     }
 
@@ -112,11 +114,14 @@ public class TeacherRepository : ITeacherRepository
         string? department = null,
         string? designation = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Teachers
             .AsNoTracking()
             .Include(t => t.User)
+            .Include(t => t.BatchTeachers.Where(bt => bt.IsActive))
+                .ThenInclude(bt => bt.Batch)
             .Where(t => !t.IsDeleted && t.User.OrganizationId == organizationId);
 
         if (!string.IsNullOrWhiteSpace(department))
@@ -136,6 +141,13 @@ public class TeacherRepository : ITeacherRepository
         if (isActive.HasValue)
         {
             query = query.Where(t => t.IsActive == isActive.Value);
+        }
+
+        if (branchId.HasValue && branchId.Value != Guid.Empty)
+        {
+            query = query.Where(t => 
+                _db.UserBranchAccesses.Any(uba => uba.UserId == t.UserId && uba.BranchId == branchId.Value && uba.IsActive)
+                || !_db.UserBranchAccesses.Any(uba => uba.UserId == t.UserId && uba.IsActive));
         }
 
         return await query.ToPagedResultAsync(
