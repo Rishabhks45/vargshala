@@ -9,6 +9,7 @@
 @using Vargshala.Contracts.Attendances
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Skeletons
 @using Vargshala.Web.Services
 @inject IBranchService BranchService
 @inject IClassService ClassService
@@ -55,9 +56,9 @@
                           Placeholder="Physics Batch 2" />
         </div>
 
-        <!-- Date Picker: Styled pill with calendar icon and up-down arrows matching snapshot -->
-        <div class="relative flex items-center h-10 px-3 py-2 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xs gap-2 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Date Picker: Styled pill with calendar icon matching Students.razor control height -->
+        <div class="relative flex items-center px-3.5 py-2 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xs gap-2 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 select-none whitespace-nowrap">
@@ -72,10 +73,11 @@
                    class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
         </div>
 
-        <!-- Primary Action: + Take Attendance (Dark forest green matching snapshot) -->
-        <button type="button" @onclick="OpenTakeAttendanceModal"
-                class="h-10 px-4 rounded-xl text-xs font-bold text-white bg-[#004D40] hover:bg-[#00382E] active:scale-98 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer shrink-0">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+        <!-- Primary Action: + Take Attendance (Exact Match with Students.razor Add Student button) -->
+        <button type="button" 
+                @onclick="OpenTakeAttendanceModal"
+                class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] shrink-0">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
             </svg>
             <span>Take Attendance</span>
@@ -296,7 +298,7 @@
                     <!-- Filter Pills & Ellipsis Action Menu (Right Aligned) -->
                     <div class="flex items-center gap-1.5">
                         <button type="button" @onclick='() => _statusFilter = "ALL"'
-                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer @(_statusFilter == "ALL" ? "bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-2xs" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200")">
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer @(_statusFilter == "ALL" ? "bg-[#009488] text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
                             All (@(_sheet?.Students.Count ?? 0))
                         </button>
                         <button type="button" @onclick='() => _statusFilter = AttendanceStatus.Present'
@@ -320,85 +322,90 @@
                 </div>
 
                 <!-- Attendance Table Content -->
-                @if (_isLoadingSheet)
-                {
-                    <div class="p-12 flex flex-col items-center justify-center text-center">
-                        <div class="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p class="text-xs font-semibold text-slate-500 mt-3">Loading session attendance records...</p>
-                    </div>
-                }
-                else if (string.IsNullOrEmpty(_selectedSessionId) && _daySessions.Count == 0)
-                {
-                    <!-- Requirement #23: NO SESSION CASE -->
-                    <div class="p-12 flex flex-col items-center justify-center text-center">
-                        <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mb-3">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Class Session Found</h4>
-                        <p class="text-xs text-slate-400 max-w-sm mt-1">No class session found for this batch on @_selectedDate.ToString("dd MMMM yyyy").</p>
-                        <div class="mt-4 flex items-center gap-2">
-                            <button type="button" @onclick='() => Navigation.NavigateTo("class-sessions")'
-                                    class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] shadow-xs transition-all cursor-pointer">
-                                Create Class Session
-                            </button>
-                            <button type="button" @onclick="SetDateToToday"
-                                    class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all cursor-pointer">
-                                Select Today's Date
-                            </button>
-                        </div>
-                    </div>
-                }
-                else if (_sheet == null || _sheet.Students.Count == 0)
-                {
-                    <div class="p-12 flex flex-col items-center justify-center text-center">
-                        <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Enrolled Students</h4>
-                        <p class="text-xs text-slate-400 max-w-sm mt-1">This batch does not have any active enrolled students yet.</p>
-                        <button type="button" @onclick='() => Navigation.NavigateTo("batches")'
-                                class="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] shadow-xs transition-all cursor-pointer">
-                            Enroll Students in Batch
-                        </button>
-                    </div>
-                }
-                else
+                @if (_sheet?.IsAttendanceMarked == true && !_isLoadingSheet)
                 {
                     <!-- Requirement #24: ALREADY MARKED NOTICE -->
-                    @if (_sheet.IsAttendanceMarked)
-                    {
-                        <div class="px-4 py-2 bg-emerald-50/80 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/40 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                                Attendance already recorded for this session. Changes will update existing records.
-                            </span>
-                        </div>
-                    }
+                    <div class="px-4 py-2 bg-emerald-50/80 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/40 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                            Attendance already recorded for this session. Changes will update existing records.
+                        </span>
+                    </div>
+                }
 
-                    <!-- Student Attendance Table (Pixel-perfect matching reference image) -->
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
-                                    <th class="py-3 px-3 w-10 text-center">
-                                        <input type="checkbox" @bind="_selectAllChecked" @bind:after="OnSelectAllToggled"
-                                               class="rounded border-slate-300 text-[#009488] focus:ring-0 cursor-pointer" />
-                                    </th>
-                                    <th class="py-3 px-2 w-10 text-center">#</th>
-                                    <th class="py-3 px-3 w-20">Roll No.</th>
-                                    <th class="py-3 px-4">Student Name</th>
-                                    <th class="py-3 px-4">Attendance Status</th>
-                                    <th class="py-3 px-4">Check-in Time</th>
-                                    <th class="py-3 px-4">Remarks</th>
-                                    <th class="py-3 px-3 w-12 text-center">Action</th>
+                <!-- Student Attendance Table (Pixel-perfect matching reference image) -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
+                                <th class="py-3 px-3 w-10 text-center">
+                                    <input type="checkbox" @bind="_selectAllChecked" @bind:after="OnSelectAllToggled"
+                                           class="rounded border-slate-300 text-[#009488] focus:ring-0 cursor-pointer" />
+                                </th>
+                                <th class="py-3 px-2 w-10 text-center">#</th>
+                                <th class="py-3 px-3 w-20">Roll No.</th>
+                                <th class="py-3 px-4">Student Name</th>
+                                <th class="py-3 px-4">Attendance Status</th>
+                                <th class="py-3 px-4">Check-in Time</th>
+                                <th class="py-3 px-4">Remarks</th>
+                                <th class="py-3 px-3 w-12 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs @(_isLoadingSheet && _sheet?.Students.Any() == true ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                            @if (_isLoadingSheet)
+                            {
+                                <TableSkeletonRows Columns="8" Rows="8" />
+                            }
+                            else if (string.IsNullOrEmpty(_selectedSessionId) && _daySessions.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="8" class="p-0">
+                                        <!-- Requirement #23: NO SESSION CASE -->
+                                        <div class="p-12 flex flex-col items-center justify-center text-center">
+                                            <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mb-3">
+                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Class Session Found</h4>
+                                            <p class="text-xs text-slate-400 max-w-sm mt-1">No class session found for this batch on @_selectedDate.ToString("dd MMMM yyyy").</p>
+                                            <div class="mt-4 flex items-center gap-2">
+                                                <button type="button" @onclick='() => Navigation.NavigateTo("class-sessions")'
+                                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] shadow-xs transition-all cursor-pointer">
+                                                    Create Class Session
+                                                </button>
+                                                <button type="button" @onclick="SetDateToToday"
+                                                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all cursor-pointer">
+                                                    Select Today's Date
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                                @for (int i = 0; i < FilteredStudents.Count; i++)
+                            }
+                            else if (_sheet == null || _sheet.Students.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="8" class="p-0">
+                                        <div class="p-12 flex flex-col items-center justify-center text-center">
+                                            <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
+                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Enrolled Students</h4>
+                                            <p class="text-xs text-slate-400 max-w-sm mt-1">This batch does not have any active enrolled students yet.</p>
+                                            <button type="button" @onclick='() => Navigation.NavigateTo("batches")'
+                                                    class="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] shadow-xs transition-all cursor-pointer">
+                                                Enroll Students in Batch
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+@for (int i = 0; i < FilteredStudents.Count; i++)
                                 {
                                     var studentIndex = i;
                                     var s = FilteredStudents[studentIndex];
@@ -483,22 +490,25 @@
                                         </td>
                                     </tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
 
+                @if (!_isLoadingSheet && _sheet?.Students.Count > 0)
+                {
                     <!-- Pagination Footer -->
                     <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
                         <span>Showing 1 to @FilteredStudents.Count of @(_sheet?.Students.Count ?? 0) students</span>
                         <div class="flex items-center gap-1">
                             <button type="button" class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-40">
-                                ‹
+                                &larr;
                             </button>
                             <button type="button" class="w-7 h-7 rounded-lg bg-[#004D40] text-white font-bold flex items-center justify-center cursor-pointer">
                                 1
                             </button>
                             <button type="button" class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-40">
-                                ›
+                                &rarr;
                             </button>
                         </div>
                     </div>
@@ -549,7 +559,11 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                            @if (_overview?.DailyTrends != null)
+                            @if (_isLoadingSheet && _overview == null)
+                            {
+                                <TableSkeletonRows Columns="6" Rows="5" />
+                            }
+                            else if (_overview?.DailyTrends != null)
                             {
                                 @foreach (var t in _overview.DailyTrends)
                                 {
@@ -591,38 +605,37 @@
                     </button>
                 </div>
 
-                @if (_isLoadingDateReports)
-                {
-                    <div class="p-12 flex flex-col items-center justify-center text-center">
-                        <div class="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p class="text-xs font-semibold text-slate-500 mt-3">Loading historical date reports...</p>
-                    </div>
-                }
-                else if (_dateReports.Count == 0)
-                {
-                    <div class="p-12 text-center text-xs text-slate-400">
-                        No class sessions recorded yet for this batch.
-                    </div>
-                }
-                else
-                {
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
-                                    <th class="py-3 px-3">Date</th>
-                                    <th class="py-3 px-3">Session Timing</th>
-                                    <th class="py-3 px-3">Faculty</th>
-                                    <th class="py-3 px-3">Total</th>
-                                    <th class="py-3 px-3 text-emerald-600">Present</th>
-                                    <th class="py-3 px-3 text-rose-600">Absent</th>
-                                    <th class="py-3 px-3 text-amber-600">Late</th>
-                                    <th class="py-3 px-3">Rate</th>
-                                    <th class="py-3 px-3 text-center">Action</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
+                                <th class="py-3 px-3">Date</th>
+                                <th class="py-3 px-3">Session Timing</th>
+                                <th class="py-3 px-3">Faculty</th>
+                                <th class="py-3 px-3">Total</th>
+                                <th class="py-3 px-3 text-emerald-600">Present</th>
+                                <th class="py-3 px-3 text-rose-600">Absent</th>
+                                <th class="py-3 px-3 text-amber-600">Late</th>
+                                <th class="py-3 px-3">Rate</th>
+                                <th class="py-3 px-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @if (_isLoadingDateReports)
+                            {
+                                <TableSkeletonRows Columns="9" Rows="6" />
+                            }
+                            else if (_dateReports.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="9" class="p-12 text-center text-xs text-slate-400">
+                                        No class sessions recorded yet for this batch.
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                @foreach (var r in _dateReports)
+                            }
+                            else
+                            {
+@foreach (var r in _dateReports)
                                 {
                                     <tr class="hover:bg-slate-50/50 dark:hover:bg-[#142025]/50">
                                         <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">@r.SessionDate.ToString("dd MMM yyyy")</td>
@@ -641,10 +654,10 @@
                                         </td>
                                     </tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         }
 
@@ -663,36 +676,35 @@
                     </button>
                 </div>
 
-                @if (_isLoadingStudentReports)
-                {
-                    <div class="p-12 flex flex-col items-center justify-center text-center">
-                        <div class="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p class="text-xs font-semibold text-slate-500 mt-3">Loading student reports...</p>
-                    </div>
-                }
-                else if (_studentReports.Count == 0)
-                {
-                    <div class="p-12 text-center text-xs text-slate-400">
-                        No student records found for this batch.
-                    </div>
-                }
-                else
-                {
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
-                                    <th class="py-3 px-3">Roll No.</th>
-                                    <th class="py-3 px-4">Student Name</th>
-                                    <th class="py-3 px-3 text-center">Total Classes</th>
-                                    <th class="py-3 px-3 text-center text-emerald-600">Present</th>
-                                    <th class="py-3 px-3 text-center text-rose-600">Absent</th>
-                                    <th class="py-3 px-3 text-center text-amber-600">Late</th>
-                                    <th class="py-3 px-4">Attendance Rate</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
+                                <th class="py-3 px-3">Roll No.</th>
+                                <th class="py-3 px-4">Student Name</th>
+                                <th class="py-3 px-3 text-center">Total Classes</th>
+                                <th class="py-3 px-3 text-center text-emerald-600">Present</th>
+                                <th class="py-3 px-3 text-center text-rose-600">Absent</th>
+                                <th class="py-3 px-3 text-center text-amber-600">Late</th>
+                                <th class="py-3 px-4">Attendance Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @if (_isLoadingStudentReports)
+                            {
+                                <TableSkeletonRows Columns="7" Rows="6" />
+                            }
+                            else if (_studentReports.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="7" class="p-12 text-center text-xs text-slate-400">
+                                        No student records found for this batch.
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                @foreach (var sr in _studentReports)
+                            }
+                            else
+                            {
+@foreach (var sr in _studentReports)
                                 {
                                     <tr class="hover:bg-slate-50/50 dark:hover:bg-[#142025]/50">
                                         <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
@@ -718,10 +730,10 @@
                                         </td>
                                     </tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         }
     </div>
@@ -763,6 +775,16 @@
                                 <!-- Vertical Bar (Teal green rounded bar matching reference) -->
                                 <div class="w-full max-w-[28px] rounded-t-lg transition-all duration-500 @(day.Percentage > 0 ? "bg-[#10B981] hover:bg-[#059669]" : "bg-slate-100 dark:bg-slate-800")"
                                      style="height: @(Math.Max(day.Percentage, 4))%;"></div>
+                            </div>
+                        }
+                    }
+                    else if (_isLoadingSheet)
+                    {
+                        @for (int s = 0; s < 7; s++)
+                        {
+                            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end animate-pulse">
+                                <div class="w-6 h-2 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                                <div class="w-full max-w-[28px] bg-slate-200 dark:bg-slate-800 rounded-t-lg" style="height: @(20 + (s * 8))%;"></div>
                             </div>
                         }
                     }
@@ -916,6 +938,19 @@
                         </div>
                     }
                 }
+                else if (_isLoadingSheet)
+                {
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="flex items-center justify-between text-xs py-1.5 animate-pulse">
+                            <div class="flex items-center gap-2 flex-1">
+                                <div class="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+                                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                            </div>
+                            <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-12 ml-2"></div>
+                        </div>
+                    }
+                }
                 else
                 {
                     <div class="text-center py-4 text-xs text-slate-400">
@@ -1063,7 +1098,7 @@ private List<DateAttendanceReportDto> _dateReports = new();
 private List<StudentAttendanceReportDto> _studentReports = new();
 
 // UI Loading & Filter states
-private bool _isLoadingSheet = false;
+private bool _isLoadingSheet = true;
 private bool _isLoadingDateReports = false;
 private bool _isLoadingStudentReports = false;
 private bool _isSaving = false;
@@ -1138,9 +1173,21 @@ private double LateDash => Math.Round(CurrentLatePercentage * 0.88, 1);
 
 protected override async Task OnInitializedAsync()
 {
-    await LoadBranchesAsync();
-    await LoadClassesAsync();
-    await LoadBatchesAsync();
+    _isLoadingSheet = true;
+    try
+    {
+        await Task.Delay(2000);
+        await LoadBranchesAsync();
+        await LoadClassesAsync();
+        await LoadBatchesAsync();
+    }
+    finally
+    {
+        if (_batches.Count == 0)
+        {
+            _isLoadingSheet = false;
+        }
+    }
 }
 
 private async Task LoadBranchesAsync()
@@ -1195,10 +1242,19 @@ private async Task LoadBatchesAsync(Guid? classId = null)
                 _selectedBatchId = _batches[0].Id.ToString();
                 await OnBatchSelectedAsync(Guid.Parse(_selectedBatchId));
             }
+            else if (_batches.Count == 0)
+            {
+                _isLoadingSheet = false;
+            }
+        }
+        else
+        {
+            _isLoadingSheet = false;
         }
     }
     catch (Exception ex)
     {
+        _isLoadingSheet = false;
         Toast.Error("Failed to load batches: " + ex.Message);
     }
 }
