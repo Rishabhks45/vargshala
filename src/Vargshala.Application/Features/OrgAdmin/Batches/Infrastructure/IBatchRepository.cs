@@ -32,6 +32,7 @@ public interface IBatchRepository
     // Student enrollment
     Task<List<BatchStudent>> GetStudentsByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
     Task<BatchStudent?> GetBatchStudentAsync(Guid batchId, Guid studentId, CancellationToken cancellationToken = default);
+    Task<List<BatchStudent>> GetBatchesByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default);
     Task AddStudentAsync(BatchStudent batchStudent, CancellationToken cancellationToken = default);
     void UpdateStudent(BatchStudent batchStudent);
 }

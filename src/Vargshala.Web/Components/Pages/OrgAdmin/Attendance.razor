@@ -313,6 +313,13 @@
                                 class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer @(_statusFilter == AttendanceStatus.Late ? "bg-amber-600 text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
                             Late (@CurrentLateCount)
                         </button>
+                        @if (CurrentUnmarkedCount > 0)
+                        {
+                            <button type="button" @onclick='() => _statusFilter = AttendanceStatus.Unmarked'
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer @(_statusFilter == AttendanceStatus.Unmarked ? "bg-slate-600 text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
+                                Unmarked (@CurrentUnmarkedCount)
+                            </button>
+                        }
                         <button type="button" class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer ml-0.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -339,7 +346,7 @@
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
                                 <th class="py-3 px-3 w-10 text-center">
-                                    <input type="checkbox" @bind="_selectAllChecked" @bind:after="OnSelectAllToggled"
+                                    <input type="checkbox" checked="@IsAllPresent" @onchange="(e) => ToggleAllAttendance((bool)(e.Value ?? false))"
                                            class="rounded border-slate-300 text-[#009488] focus:ring-0 cursor-pointer" />
                                 </th>
                                 <th class="py-3 px-2 w-10 text-center">#</th>
@@ -411,8 +418,8 @@
                                     var s = FilteredStudents[studentIndex];
                                     <tr class="hover:bg-slate-50/80 dark:hover:bg-[#142025]/40 transition-colors">
                                         <td class="py-3 px-3 text-center">
-                                            <input type="checkbox" checked="@_selectedStudentIds.Contains(s.StudentId)"
-                                                   @onchange="(e) => ToggleStudentSelected(s.StudentId, (bool)(e.Value ?? false))"
+                                            <input type="checkbox" checked="@(s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)"
+                                                   @onchange="(e) => ToggleStudentAttendance(s, (bool)(e.Value ?? false))"
                                                    class="rounded border-slate-300 text-[#009488] focus:ring-0 cursor-pointer" />
                                         </td>
                                         <td class="py-3 px-2 text-center font-medium text-slate-400">@(studentIndex + 1)</td>
@@ -449,12 +456,20 @@
                                                     Late
                                                 </button>
                                             }
-                                            else
+                                            else if (s.Status == AttendanceStatus.Excused)
                                             {
                                                 <button type="button" @onclick="() => CycleStudentStatus(s)"
                                                         title="Click to toggle status"
                                                         class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 hover:ring-2 hover:ring-blue-400/30 transition-all cursor-pointer">
                                                     Excused
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" @onclick="() => CycleStudentStatus(s)"
+                                                        title="Click to mark attendance"
+                                                        class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#18262c] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-teal-400 hover:text-[#009488] transition-all cursor-pointer">
+                                                    Not Marked
                                                 </button>
                                             }
                                         </td>
@@ -473,16 +488,30 @@
 
                                         <!-- Remarks -->
                                         <td class="py-3 px-4 min-w-[140px]">
-                                            <input type="text" @bind="s.Remarks"
-                                                   placeholder="-"
-                                                   class="w-full px-2 py-1 text-xs bg-transparent border-0 focus:outline-none focus:bg-slate-50 dark:focus:bg-[#142025] rounded-md text-slate-600 dark:text-slate-300" />
+                                            @if (string.IsNullOrWhiteSpace(s.Remarks))
+                                            {
+                                                <button type="button" @onclick="() => OpenRemarksModal(s)"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-dashed border-slate-200 dark:border-slate-700 transition-all cursor-pointer">
+                                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                    <span>Add reason</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" @onclick="() => OpenRemarksModal(s)"
+                                                        title="@s.Remarks (Click to edit)"
+                                                        class="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-[#009488] hover:text-[#009488] transition-all cursor-pointer max-w-[160px]">
+                                                    <span class="truncate">@s.Remarks</span>
+                                                    <svg class="w-3 h-3 text-slate-400 group-hover:text-[#009488] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                            }
                                         </td>
 
-                                        <!-- Action Menu Button -->
+                                        <!-- Action Menu Button (Opens Remarks / Reason Dialog) -->
                                         <td class="py-3 px-3 text-center">
-                                            <button type="button" @onclick="() => CycleStudentStatus(s)"
-                                                    title="Change Status"
-                                                    class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                            <button type="button" @onclick="() => OpenRemarksModal(s)"
+                                                    title="Add Attendance Reason / Remarks"
+                                                    class="p-1.5 text-slate-400 hover:text-[#009488] dark:hover:text-teal-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                                 </svg>
@@ -964,63 +993,91 @@
 
 </div>
 
-<!-- TAKE ATTENDANCE MODAL (Requirement #22) -->
-
+<!-- ========================================================================= -->
+<!-- DRAWER: Take Attendance Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
 @if (_showTakeAttendanceModal)
 {
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-<div class="bg-white dark:bg-[#111c21] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95">
-<div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-<div>
-<h3 class="text-base font-bold text-slate-800 dark:text-white">Take Attendance Flow</h3>
-<p class="text-xs text-slate-400 mt-0.5">Guided step-by-step attendance setup</p>
-</div>
-<button type="button" @onclick="() => _showTakeAttendanceModal = false"
-class="text-slate-400 hover dark:hover p-1 rounded-lg">
-✕
-</button>
-</div>
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isTakeAttendanceDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseTakeAttendanceDrawerAsync"></div>
 
-        <div class="p-5 space-y-4 text-xs">
+    <!-- Right Slide-Over Drawer Container with Bidirectional Smooth Slide Transition -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isTakeAttendanceDrawerOpen ? "translate-x-0" : "translate-x-full") select-text overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient & Icon -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-2 flex items-center justify-center shadow-md shrink-0">
+                    <svg class="w-5 h-5 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        Take Attendance
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Guided step-by-step attendance setup
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseTakeAttendanceDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs scrollbar-hidden">
             <!-- Step 1: Branch -->
-            <div>
-                <label class="block text-slate-600 dark:text-slate-300 font-bold mb-1">Step 1: Branch</label>
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 1: Branch</label>
                 <CustomSelect Value="@_modalBranchId"
                               ValueChanged="OnModalBranchChanged"
                               Options="@_branchOptions"
-                              Placeholder="Select Branch" />
+                              Placeholder="Select Branch"
+                              Class="w-full" />
             </div>
 
             <!-- Step 2: Class -->
-            <div>
-                <label class="block text-slate-600 dark:text-slate-300 font-bold mb-1">Step 2: Class</label>
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 2: Class</label>
                 <CustomSelect Value="@_modalClassId"
                               ValueChanged="OnModalClassChanged"
                               Options="@_modalClassOptions"
-                              Placeholder="Select Class" />
+                              Placeholder="Select Class"
+                              Class="w-full" />
             </div>
 
             <!-- Step 3: Batch -->
-            <div>
-                <label class="block text-slate-600 dark:text-slate-300 font-bold mb-1">Step 3: Batch</label>
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 3: Batch</label>
                 <CustomSelect Value="@_modalBatchId"
                               ValueChanged="OnModalBatchChanged"
                               Options="@_modalBatchOptions"
-                              Placeholder="Select Batch" />
+                              Placeholder="Select Batch"
+                              Class="w-full" />
             </div>
 
-            <!-- Step 4: Date -->
-            <div>
-                <label class="block text-slate-600 dark:text-slate-300 font-bold mb-1">Step 4: Session Date</label>
+            <!-- Step 4: Session Date -->
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 4: Session Date</label>
                 <input type="date"
                        value="@_modalDate.ToString("yyyy-MM-dd")"
                        @onchange="OnModalDateChanged"
-                       class="w-full h-10 px-3 py-2 bg-slate-50 dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl font-medium focus:outline-none focus:border-[#009488]" />
+                       class="w-full h-10 px-3.5 py-2.5 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white transition-all" />
             </div>
 
-            <!-- Step 5: Class Session Detection -->
-            <div>
-                <label class="block text-slate-600 dark:text-slate-300 font-bold mb-1">Step 5: Select Class Session</label>
+            <!-- Step 5: Class Session Selection -->
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 5: Select Class Session</label>
                 @if (_isModalLoadingSessions)
                 {
                     <div class="py-3 flex items-center gap-2 text-slate-400">
@@ -1030,11 +1087,11 @@ class="text-slate-400 hover dark:hover p-1 rounded-lg">
                 }
                 else if (_modalSessions.Count == 0)
                 {
-                    <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-200">
+                    <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-200 space-y-2">
                         <p class="font-bold">No class session found for this batch on this date.</p>
-                        <p class="text-[11px] mt-0.5 text-amber-700 dark:text-amber-300">You must create a ClassSession first before taking attendance.</p>
+                        <p class="text-[11px] text-amber-700 dark:text-amber-300">You must create a Class Session first before taking attendance.</p>
                         <button type="button" @onclick='() => Navigation.NavigateTo("class-sessions")'
-                                class="mt-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] cursor-pointer">
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] shadow-xs cursor-pointer transition-all">
                             Create Class Session
                         </button>
                     </div>
@@ -1044,25 +1101,148 @@ class="text-slate-400 hover dark:hover p-1 rounded-lg">
                     <CustomSelect Value="@_modalSessionId"
                                   ValueChanged="(val) => _modalSessionId = val"
                                   Options="@_modalSessionOptions"
-                                  Placeholder="Select Class Session" />
+                                  Placeholder="Select Class Session"
+                                  Class="w-full" />
                 }
             </div>
         </div>
 
-        <div class="p-4 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
-            <button type="button" @onclick="() => _showTakeAttendanceModal = false"
-                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer">
+        <!-- Drawer Footer with Cancel & Open Attendance Sheet Action -->
+        <div class="px-6 py-4 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseTakeAttendanceDrawerAsync"
+                    class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer">
                 Cancel
             </button>
-            <button type="button" @onclick="ApplyModalSelectionAndOpenSheetAsync"
+            <button type="button" 
+                    @onclick="ApplyModalSelectionAndOpenSheetAsync"
                     disabled="@(string.IsNullOrEmpty(_modalSessionId))"
-                    class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#004D40] hover:bg-[#00382E] shadow-xs transition-all cursor-pointer disabled:opacity-40">
+                    class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] shadow-md transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                 Open Attendance Sheet
             </button>
         </div>
     </div>
-</div>
+}
 
+
+<!-- ========================================================================= -->
+<!-- MODAL: Attendance Reason & Remarks Modal -->
+<!-- ========================================================================= -->
+@if (_showRemarksModal && _activeRemarksStudent != null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+         @onclick="CloseRemarksModal">
+        <div class="bg-white dark:bg-[#111c21] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95"
+             @onclick:stopPropagation="true">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-[#004D40] text-white flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <span>Attendance Reason &amp; Remarks</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 mt-0.5 font-medium">
+                        @_activeRemarksStudent.StudentName @(!string.IsNullOrWhiteSpace(_activeRemarksStudent.RollNumber) ? $"• Roll: {_activeRemarksStudent.RollNumber}" : "")
+                    </p>
+                </div>
+                <button type="button" @onclick="CloseRemarksModal" class="p-1 text-teal-200 hover:text-white rounded-lg transition-colors cursor-pointer" title="Close">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 space-y-4 text-xs">
+                <!-- Status Picker -->
+                <div>
+                    <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1.5">Attendance Status</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" @onclick='() => _remarksStatus = "Present"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Present" ? "bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] ring-2 ring-emerald-400/30" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Present
+                        </button>
+                        <button type="button" @onclick='() => _remarksStatus = "Absent"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Absent" ? "bg-[#FEE2E2] text-[#B91C1C] border-[#FCA5A5] ring-2 ring-rose-400/30" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Absent
+                        </button>
+                        <button type="button" @onclick='() => _remarksStatus = "Late"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Late" ? "bg-[#FEF3C7] text-[#B45309] border-[#FCD34D] ring-2 ring-amber-400/30" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Late
+                        </button>
+                        <button type="button" @onclick='() => _remarksStatus = "Excused"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Excused" ? "bg-blue-50 text-blue-700 border-blue-300 ring-2 ring-blue-400/30 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Excused
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Reason Chips -->
+                <div>
+                    <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1.5">Quick Reason Suggestions</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" @onclick='() => SetQuickReason("Sick Leave / Medical")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Sick Leave
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Family Function")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Family Function
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Traffic / Transport Delay")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Transport Delay
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Doctor Appointment")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Doctor Appointment
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Prior Leave Approved")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Prior Leave Approved
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Personal Emergency")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Personal Emergency
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reason / Remark Input -->
+                <div class="space-y-1">
+                    <label class="block text-slate-700 dark:text-slate-300 font-bold">Reason / Note</label>
+                    <textarea @bind="_remarksText" rows="3"
+                              placeholder="Type reason for absence, late arrival, or special notes..."
+                              class="w-full p-3 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                @if (!string.IsNullOrWhiteSpace(_remarksText))
+                {
+                    <button type="button" @onclick='() => _remarksText = string.Empty'
+                            class="text-xs text-rose-500 hover:text-rose-700 font-semibold cursor-pointer">
+                        Clear Reason
+                    </button>
+                }
+                else
+                {
+                    <div></div>
+                }
+
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @onclick="CloseRemarksModal"
+                            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" @onclick="SaveRemarksModalAsync"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] shadow-xs transition-all cursor-pointer flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Apply &amp; Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -1108,8 +1288,64 @@ private string _statusFilter = "ALL"; // ALL, Present, Absent, Late
 private bool _selectAllChecked = false;
 private HashSet<Guid> _selectedStudentIds = new();
 
-// Take Attendance Modal State
+// Attendance Remarks & Reason Modal State
+private bool _showRemarksModal = false;
+private StudentAttendanceItemDto? _activeRemarksStudent;
+private string _remarksStatus = "Present";
+private string _remarksText = string.Empty;
+
+private void OpenRemarksModal(StudentAttendanceItemDto student)
+{
+    _activeRemarksStudent = student;
+    _remarksStatus = student.Status;
+    _remarksText = student.Remarks ?? string.Empty;
+    _showRemarksModal = true;
+}
+
+private void CloseRemarksModal()
+{
+    _showRemarksModal = false;
+    _activeRemarksStudent = null;
+}
+
+private void SetQuickReason(string reason)
+{
+    _remarksText = reason;
+}
+
+private async Task SaveRemarksModalAsync()
+{
+    if (_activeRemarksStudent == null) return;
+
+    _activeRemarksStudent.Status = _remarksStatus;
+    _activeRemarksStudent.Remarks = string.IsNullOrWhiteSpace(_remarksText) ? null : _remarksText.Trim();
+
+    if (_activeRemarksStudent.Status == AttendanceStatus.Absent)
+    {
+        _activeRemarksStudent.MarkedAt = null;
+        _selectedStudentIds.Remove(_activeRemarksStudent.StudentId);
+    }
+    else
+    {
+        if (!_activeRemarksStudent.MarkedAt.HasValue) _activeRemarksStudent.MarkedAt = DateTime.UtcNow;
+        if (_activeRemarksStudent.Status == AttendanceStatus.Present || _activeRemarksStudent.Status == AttendanceStatus.Late)
+        {
+            _selectedStudentIds.Add(_activeRemarksStudent.StudentId);
+        }
+        else
+        {
+            _selectedStudentIds.Remove(_activeRemarksStudent.StudentId);
+        }
+    }
+    _selectAllChecked = IsAllPresent;
+
+    CloseRemarksModal();
+    await SaveAttendanceAsync();
+}
+
+// Take Attendance Drawer State
 private bool _showTakeAttendanceModal = false;
+private bool _isTakeAttendanceDrawerOpen = false;
 private string _modalBranchId = string.Empty;
 private string _modalClassId = string.Empty;
 private List<CustomSelect.CustomSelectOption> _modalClassOptions = new();
@@ -1152,6 +1388,7 @@ private List<StudentAttendanceItemDto> FilteredStudents
 private int CurrentPresentCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Present) ?? _overview?.TodayPresent ?? 0;
 private int CurrentAbsentCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Absent) ?? _overview?.TodayAbsent ?? 0;
 private int CurrentLateCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Late) ?? _overview?.TodayLate ?? 0;
+private int CurrentUnmarkedCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Unmarked) ?? 0;
 private int CurrentTotalStudents => _sheet?.TotalStudents ?? _overview?.TotalStudents ?? 0;
 
 private double CurrentPresentPercentage => CurrentTotalStudents > 0
@@ -1385,6 +1622,11 @@ private async Task LoadAttendanceSheetAsync(Guid sessionId)
         if (res.Success && res.Data != null)
         {
             _sheet = res.Data;
+            _selectedStudentIds = _sheet.Students
+                .Where(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)
+                .Select(s => s.StudentId)
+                .ToHashSet();
+            _selectAllChecked = IsAllPresent;
         }
         else
         {
@@ -1468,6 +1710,38 @@ private async Task SelectSessionFromReportAsync(Guid sessionId, DateOnly session
 }
 
 // Status Toggling & Actions
+private bool IsAllPresent => _sheet != null && _sheet.Students.Count > 0 && 
+    _sheet.Students.All(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late);
+
+private void ToggleStudentAttendance(StudentAttendanceItemDto s, bool isPresent)
+{
+    if (isPresent)
+    {
+        s.Status = AttendanceStatus.Present;
+        if (!s.MarkedAt.HasValue) s.MarkedAt = DateTime.UtcNow;
+        _selectedStudentIds.Add(s.StudentId);
+    }
+    else
+    {
+        s.Status = AttendanceStatus.Absent;
+        s.MarkedAt = null;
+        _selectedStudentIds.Remove(s.StudentId);
+    }
+    _selectAllChecked = IsAllPresent;
+}
+
+private void ToggleAllAttendance(bool isPresent)
+{
+    if (isPresent)
+    {
+        MarkAllPresent();
+    }
+    else
+    {
+        MarkAllAbsent();
+    }
+}
+
 private void CycleStudentStatus(StudentAttendanceItemDto student)
 {
     student.Status = student.Status switch
@@ -1481,11 +1755,21 @@ private void CycleStudentStatus(StudentAttendanceItemDto student)
     if (student.Status == AttendanceStatus.Absent)
     {
         student.MarkedAt = null;
+        _selectedStudentIds.Remove(student.StudentId);
     }
-    else if (!student.MarkedAt.HasValue)
+    else
     {
-        student.MarkedAt = DateTime.UtcNow;
+        if (!student.MarkedAt.HasValue) student.MarkedAt = DateTime.UtcNow;
+        if (student.Status == AttendanceStatus.Present || student.Status == AttendanceStatus.Late)
+        {
+            _selectedStudentIds.Add(student.StudentId);
+        }
+        else
+        {
+            _selectedStudentIds.Remove(student.StudentId);
+        }
     }
+    _selectAllChecked = IsAllPresent;
 }
 
 private void MarkAllPresent()
@@ -1497,6 +1781,8 @@ private void MarkAllPresent()
         s.Status = AttendanceStatus.Present;
         s.MarkedAt = now;
     }
+    _selectedStudentIds = _sheet.Students.Select(s => s.StudentId).ToHashSet();
+    _selectAllChecked = true;
     Toast.Info("All students set to Present. Click Save Attendance to commit.");
 }
 
@@ -1508,27 +1794,23 @@ private void MarkAllAbsent()
         s.Status = AttendanceStatus.Absent;
         s.MarkedAt = null;
     }
+    _selectedStudentIds.Clear();
+    _selectAllChecked = false;
     Toast.Info("All students set to Absent. Click Save Attendance to commit.");
 }
 
 private void OnSelectAllToggled()
 {
-    if (_sheet == null) return;
-    if (_selectAllChecked)
-    {
-        _selectedStudentIds = _sheet.Students.Select(s => s.StudentId).ToHashSet();
-    }
-    else
-    {
-        _selectedStudentIds.Clear();
-    }
+    ToggleAllAttendance(_selectAllChecked);
 }
 
 private void ToggleStudentSelected(Guid id, bool isSelected)
 {
-    if (isSelected) _selectedStudentIds.Add(id);
-    else _selectedStudentIds.Remove(id);
-    _selectAllChecked = _sheet != null && _sheet.Students.Count > 0 && _selectedStudentIds.Count == _sheet.Students.Count;
+    var s = _sheet?.Students.FirstOrDefault(st => st.StudentId == id);
+    if (s != null)
+    {
+        ToggleStudentAttendance(s, isSelected);
+    }
 }
 
 private async Task SaveAttendanceAsync()
@@ -1548,7 +1830,7 @@ private async Task SaveAttendanceAsync()
             Items = _sheet.Students.Select(s => new StudentAttendanceEntry
             {
                 StudentId = s.StudentId,
-                Status = s.Status,
+                Status = s.Status == AttendanceStatus.Unmarked ? AttendanceStatus.Absent : s.Status,
                 Remarks = s.Remarks
             }).ToList()
         };
@@ -1557,6 +1839,11 @@ private async Task SaveAttendanceAsync()
         if (res.Success && res.Data != null)
         {
             _sheet = res.Data;
+            _selectedStudentIds = _sheet.Students
+                .Where(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)
+                .Select(s => s.StudentId)
+                .ToHashSet();
+            _selectAllChecked = IsAllPresent;
             Toast.Success("Attendance saved successfully!");
 
             // Refresh overview to update 7-day trend and activity feed
@@ -1611,6 +1898,15 @@ private async Task OpenTakeAttendanceModal()
     }
 
     _showTakeAttendanceModal = true;
+    await Task.Yield();
+    _isTakeAttendanceDrawerOpen = true;
+}
+
+private async Task CloseTakeAttendanceDrawerAsync()
+{
+    _isTakeAttendanceDrawerOpen = false;
+    await Task.Delay(300);
+    _showTakeAttendanceModal = false;
 }
 
 private async Task OnModalBranchChanged(string branchIdStr)
@@ -1710,7 +2006,7 @@ private async Task ApplyModalSelectionAndOpenSheetAsync()
     _selectedBatchId = _modalBatchId;
     _selectedDate = _modalDate;
     _selectedSessionId = _modalSessionId;
-    _showTakeAttendanceModal = false;
+    await CloseTakeAttendanceDrawerAsync();
     _activeTab = "student";
 
     if (Guid.TryParse(_selectedBatchId, out var batchId))

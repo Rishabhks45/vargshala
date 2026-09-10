@@ -50,7 +50,11 @@ public class EnrollStudentToBatchCommandHandler : IRequestHandler<EnrollStudentT
             existing.IsActive = true;
             existing.IsPrimary = command.Request.IsPrimary;
             existing.EnrollmentType = string.IsNullOrWhiteSpace(command.Request.EnrollmentType) ? "Regular" : command.Request.EnrollmentType;
-            existing.JoinedAt = DateTime.UtcNow;
+            existing.JoinedAt = command.Request.JoinedAt.HasValue
+            ? (command.Request.JoinedAt.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(command.Request.JoinedAt.Value, DateTimeKind.Utc)
+                : command.Request.JoinedAt.Value.ToUniversalTime())
+            : DateTime.UtcNow;
             existing.LeftAt = null;
             existing.UpdatedAt = DateTime.UtcNow;
             existing.UpdatedBy = _currentUser.UserId;
@@ -69,7 +73,11 @@ public class EnrollStudentToBatchCommandHandler : IRequestHandler<EnrollStudentT
             StudentId = command.Request.StudentId,
             IsPrimary = command.Request.IsPrimary,
             EnrollmentType = string.IsNullOrWhiteSpace(command.Request.EnrollmentType) ? "Regular" : command.Request.EnrollmentType,
-            JoinedAt = DateTime.UtcNow,
+            JoinedAt = command.Request.JoinedAt.HasValue
+            ? (command.Request.JoinedAt.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(command.Request.JoinedAt.Value, DateTimeKind.Utc)
+                : command.Request.JoinedAt.Value.ToUniversalTime())
+            : DateTime.UtcNow,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = _currentUser.UserId

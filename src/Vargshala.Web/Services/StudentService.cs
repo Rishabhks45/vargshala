@@ -1,3 +1,4 @@
+using Vargshala.Contracts.Batches;
 using System.Net.Http.Json;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Students;
@@ -138,6 +139,22 @@ public class StudentService : IStudentService
         {
             _logger.LogError(ex, "Error generating student code");
             return ApiResponse<GeneratedStudentCodeDto>.FailureResponse($"Network or server error: {ex.Message}");
+        }
+    }
+    public async Task<ApiResponse<List<StudentBatchEnrollmentDto>>> GetStudentBatchesAsync(
+        Guid studentId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/v1/orgadmin/students/{studentId}/batches", cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<StudentBatchEnrollmentDto>>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<List<StudentBatchEnrollmentDto>>.FailureResponse("Received empty response.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching batches for student {StudentId}", studentId);
+            return ApiResponse<List<StudentBatchEnrollmentDto>>.FailureResponse(ex.Message);
         }
     }
 }

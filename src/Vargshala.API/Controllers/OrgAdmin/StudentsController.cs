@@ -6,6 +6,7 @@ using Vargshala.Application.Features.OrgAdmin.Students.Commands.DeleteStudent;
 using Vargshala.Application.Features.OrgAdmin.Students.Commands.UpdateStudent;
 using Vargshala.Application.Features.OrgAdmin.Students.Queries.GetNextStudentCode;
 using Vargshala.Application.Features.OrgAdmin.Students.Queries.GetStudentById;
+using Vargshala.Application.Features.OrgAdmin.Students.Queries.GetStudentBatches;
 using Vargshala.Application.Features.OrgAdmin.Students.Queries.GetStudentsPaged;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Students;
@@ -59,6 +60,13 @@ public class StudentsController : ControllerBase
             return NotFound(result);
         }
 
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/batches")]
+    public async Task<IActionResult> GetBatches(Guid id)
+    {
+        var result = await _mediator.Send(new GetStudentBatchesQuery(id));
         return Ok(result);
     }
 

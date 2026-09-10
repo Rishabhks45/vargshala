@@ -248,7 +248,7 @@ public class BatchService : IBatchService
         }
     }
 
-    public async Task<ApiResponse<bool>> EnrollStudentToBatchAsync(
+    public async Task<ApiResponse<BatchStudentDto>> EnrollStudentToBatchAsync(
         Guid id,
         EnrollStudentToBatchRequest request,
         CancellationToken cancellationToken = default)
@@ -256,13 +256,13 @@ public class BatchService : IBatchService
         try
         {
             var response = await _httpClient.PostAsJsonAsync($"api/v1/orgadmin/batches/{id}/students", request, cancellationToken);
-            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
-            return result ?? ApiResponse<bool>.FailureResponse("Failed to enroll student.");
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<BatchStudentDto>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<BatchStudentDto>.FailureResponse("Failed to enroll student.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error enrolling student to batch {BatchId}", id);
-            return ApiResponse<bool>.FailureResponse(ex.Message);
+            return ApiResponse<BatchStudentDto>.FailureResponse(ex.Message);
         }
     }
 

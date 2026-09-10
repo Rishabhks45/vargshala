@@ -1,3 +1,4 @@
+using Vargshala.Contracts.Batches;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Students;
 
@@ -29,5 +30,9 @@ public interface IStudentService
         CancellationToken cancellationToken = default);
 
     Task<ApiResponse<GeneratedStudentCodeDto>?> GenerateStudentCodeAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<List<StudentBatchEnrollmentDto>>> GetStudentBatchesAsync(
+        Guid studentId,
         CancellationToken cancellationToken = default);
 }

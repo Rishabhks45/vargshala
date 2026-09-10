@@ -56,7 +56,7 @@ public interface IBatchService
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<ApiResponse<bool>> EnrollStudentToBatchAsync(
+    Task<ApiResponse<BatchStudentDto>> EnrollStudentToBatchAsync(
         Guid id,
         EnrollStudentToBatchRequest request,
         CancellationToken cancellationToken = default);

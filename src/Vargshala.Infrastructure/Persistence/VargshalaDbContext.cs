@@ -68,6 +68,25 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
             }
         }
 
+        // Ensure all DateTime / DateTime? properties with Kind=Unspecified are converted to Utc for Npgsql timestamptz
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+            {
+                foreach (var property in entry.Properties)
+                {
+                    if (property.Metadata.ClrType == typeof(DateTime) && property.CurrentValue is DateTime dt && dt.Kind == DateTimeKind.Unspecified)
+                    {
+                        property.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                    }
+                    else if (property.Metadata.ClrType == typeof(DateTime?) && property.CurrentValue is DateTime dtNullable && dtNullable.Kind == DateTimeKind.Unspecified)
+                    {
+                        property.CurrentValue = DateTime.SpecifyKind(dtNullable, DateTimeKind.Utc);
+                    }
+                }
+            }
+        }
+
         return await base.SaveChangesAsync(cancellationToken);
     }
 }

@@ -74,7 +74,7 @@ public class GetSessionAttendanceSheetQueryHandler : IRequestHandler<GetSessionA
                     StudentCode = student.StudentCode,
                     RollNumber = student.RollNumber,
                     AttendanceId = null,
-                    Status = AttendanceStatus.Present,
+                    Status = AttendanceStatus.Unmarked,
                     Remarks = null,
                     MarkedAt = null
                 });

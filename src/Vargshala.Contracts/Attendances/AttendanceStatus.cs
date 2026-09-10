@@ -6,8 +6,9 @@ public static class AttendanceStatus
     public const string Absent = "Absent";
     public const string Late = "Late";
     public const string Excused = "Excused";
+    public const string Unmarked = "Unmarked";
 
-    public static readonly string[] All = { Present, Absent, Late, Excused };
+    public static readonly string[] All = { Present, Absent, Late, Excused, Unmarked };
 
     public static bool IsValid(string? status)
     {
@@ -15,18 +16,21 @@ public static class AttendanceStatus
                (status.Equals(Present, StringComparison.OrdinalIgnoreCase) ||
                 status.Equals(Absent, StringComparison.OrdinalIgnoreCase) ||
                 status.Equals(Late, StringComparison.OrdinalIgnoreCase) ||
-                status.Equals(Excused, StringComparison.OrdinalIgnoreCase));
+                status.Equals(Excused, StringComparison.OrdinalIgnoreCase) ||
+                status.Equals(Unmarked, StringComparison.OrdinalIgnoreCase));
     }
 
     public static string Normalize(string? status)
     {
-        if (string.IsNullOrWhiteSpace(status)) return Present;
+        if (string.IsNullOrWhiteSpace(status)) return Absent;
         return status.Trim().ToLowerInvariant() switch
         {
+            "present" => Present,
             "absent" => Absent,
             "late" => Late,
             "excused" => Excused,
-            _ => Present
+            "unmarked" => Absent,
+            _ => Absent
         };
     }
 }

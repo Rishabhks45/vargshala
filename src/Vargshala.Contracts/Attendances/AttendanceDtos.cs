@@ -20,7 +20,7 @@ public class StudentAttendanceItemDto
     public string? StudentCode { get; set; }
     public string? RollNumber { get; set; }
     public Guid? AttendanceId { get; set; }
-    public string Status { get; set; } = AttendanceStatus.Present; // Present, Absent, Late, Excused
+    public string Status { get; set; } = AttendanceStatus.Unmarked; // Unmarked, Present, Absent, Late, Excused
     public string? Remarks { get; set; }
     public DateTime? MarkedAt { get; set; }
     public string CheckInTimeFormatted => MarkedAt.HasValue ? MarkedAt.Value.ToString("hh:mm tt") : "-";
@@ -46,7 +46,8 @@ public class SessionAttendanceSheetDto
     public int AbsentCount => Students.Count(s => s.Status == AttendanceStatus.Absent);
     public int LateCount => Students.Count(s => s.Status == AttendanceStatus.Late);
     public int ExcusedCount => Students.Count(s => s.Status == AttendanceStatus.Excused);
-    public double AttendanceRate => TotalStudents > 0
+    public int UnmarkedCount => Students.Count(s => s.Status == AttendanceStatus.Unmarked);
+    public double AttendanceRate => TotalStudents > 0 && (PresentCount + LateCount) > 0
         ? Math.Round((double)(PresentCount + LateCount) / TotalStudents * 100, 1)
         : 0;
 

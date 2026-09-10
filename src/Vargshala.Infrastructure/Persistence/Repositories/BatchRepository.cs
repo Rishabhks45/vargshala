@@ -230,6 +230,20 @@ public class BatchRepository : IBatchRepository
             .FirstOrDefaultAsync(bs => bs.BatchId == batchId && bs.StudentId == studentId, cancellationToken);
     }
 
+    public async Task<List<BatchStudent>> GetBatchesByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
+    {
+        return await _db.BatchStudents
+            .AsNoTracking()
+            .Include(bs => bs.Batch)
+                .ThenInclude(b => b.Class)
+                    .ThenInclude(c => c.Branch)
+            .Include(bs => bs.Batch)
+                .ThenInclude(b => b.Subject)
+            .Where(bs => bs.StudentId == studentId && !bs.Batch.IsDeleted)
+            .OrderByDescending(bs => bs.JoinedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddStudentAsync(BatchStudent batchStudent, CancellationToken cancellationToken = default)
     {
         await _db.BatchStudents.AddAsync(batchStudent, cancellationToken);
