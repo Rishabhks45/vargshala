@@ -25,6 +25,7 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<BatchStudent> BatchStudents => Set<BatchStudent>();
     public DbSet<BatchSchedule> BatchSchedules => Set<BatchSchedule>();
     public DbSet<ClassSession> ClassSessions => Set<ClassSession>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

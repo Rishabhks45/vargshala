@@ -20,4 +20,6 @@ public class ClassSession : BaseEntity
     public Batch Batch { get; set; } = null!;
     public BatchSchedule? BatchSchedule { get; set; }
     public Teacher? Teacher { get; set; }
+
+    public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
 }

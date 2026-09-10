@@ -8,6 +8,7 @@
 @using Vargshala.Contracts.Classes
 @using Vargshala.Contracts.Batches
 @using Vargshala.Contracts.Teachers
+@using Vargshala.Contracts.Attendances
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Badges
 @using Vargshala.Web.Components.UI.Buttons
@@ -20,6 +21,7 @@
 @inject IClassService ClassService
 @inject IBatchService BatchService
 @inject ITeacherService TeacherService
+@inject IAttendanceService AttendanceService
 @inject INotificationService Toast
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -461,6 +463,25 @@
                                                 </div>
                                             }
 
+                                            <!-- Take / View Attendance -->
+                                            <div class="relative group/act inline-flex items-center justify-center">
+                                                <button type="button"
+                                                        @onclick="() => OpenAttendanceDrawerAsync(s)"
+                                                        class="p-1.5 text-[#009488] dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-lg transition-all cursor-pointer inline-flex items-center justify-center"
+                                                        title="Session Attendance"
+                                                        aria-label="Take Attendance">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                                    </svg>
+                                                </button>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/act:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                    <span class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-[#009488] text-white border border-teal-300/40 shadow-lg tracking-wide">
+                                                        Attendance
+                                                    </span>
+                                                    <span class="w-1.5 h-1.5 rotate-45 -mt-0.5 bg-[#009488] border-r border-b border-teal-300/40"></span>
+                                                </div>
+                                            </div>
+
                                             <!-- Edit Session -->
                                             <div class="relative group/act inline-flex items-center justify-center">
                                                 <button type="button"
@@ -601,6 +622,11 @@
                                             class="p-1 rounded text-slate-400 hover:text-[#009488] transition-colors cursor-pointer"
                                             title="View Details">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </button>
+                                    <button type="button" @onclick="() => OpenAttendanceDrawerAsync(s)"
+                                            class="p-1 rounded text-slate-400 hover:text-[#009488] transition-colors cursor-pointer"
+                                            title="Attendance">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                                     </button>
                                     <button type="button" @onclick="() => OpenEditDrawerAsync(s)"
                                             class="p-1 rounded text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
@@ -894,10 +920,16 @@
                         class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
                     Close
                 </button>
-                <button type="button" @onclick="async () => { var s = _selectedSession; _selectedSession = null; await OpenEditDrawerAsync(s); }"
-                        class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl transition-all cursor-pointer">
-                    Edit Session
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" @onclick="async () => { var s = _selectedSession; _selectedSession = null; await OpenAttendanceDrawerAsync(s); }"
+                            class="px-4 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-all cursor-pointer">
+                        Attendance
+                    </button>
+                    <button type="button" @onclick="async () => { var s = _selectedSession; _selectedSession = null; await OpenEditDrawerAsync(s); }"
+                            class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl transition-all cursor-pointer">
+                        Edit Session
+                    </button>
+                </div>
             </div>
         </FooterTemplate>
     </Modal>
@@ -1003,6 +1035,189 @@
     </Modal>
 }
 
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Session Attendance Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showAttendanceDrawer)
+{
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isAttendanceDrawerOpen ? "opacity-100" : "opacity-0")"
+         @onclick="CloseAttendanceDrawerAsync"></div>
+
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isAttendanceDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        <!-- Header -->
+        <div class="p-6 bg-gradient-to-r from-teal-900 via-teal-800 to-[#009488] text-white flex items-center justify-between shrink-0 shadow-md">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 class="text-base font-extrabold tracking-tight">Session Attendance</h3>
+                    @if (_attendanceSheet?.IsAttendanceMarked == true)
+                    {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 uppercase tracking-wider">Marked</span>
+                    }
+                    else
+                    {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-200 border border-amber-400/30 uppercase tracking-wider">Unmarked</span>
+                    }
+                </div>
+                <p class="text-xs text-teal-100/90 font-medium mt-0.5">
+                    @_selectedAttendanceSession?.BatchName &bull; @_selectedAttendanceSession?.SessionDate.ToString("dd MMM yyyy") &bull; @FormatSchedule(_selectedAttendanceSession?.StartTime, _selectedAttendanceSession?.EndTime)
+                </p>
+            </div>
+            <button type="button" @onclick="CloseAttendanceDrawerAsync"
+                    class="p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        @if (_isLoadingAttendance)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                <div class="w-10 h-10 border-3 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs font-semibold text-slate-500 mt-3">Loading session attendance sheet...</p>
+            </div>
+        }
+        else if (_attendanceSheet == null)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                <p class="text-xs text-rose-500 font-semibold">Failed to load attendance sheet.</p>
+            </div>
+        }
+        else
+        {
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 select-text text-slate-800 dark:text-slate-100">
+                <!-- Summary Stats Bar -->
+                <div class="grid grid-cols-5 gap-2 p-3 bg-slate-50 dark:bg-[#18262c] rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                    <div class="text-center">
+                        <span class="text-[10px] text-slate-400 block font-semibold uppercase">Total</span>
+                        <span class="text-sm font-extrabold text-slate-800 dark:text-white">@_attendanceSheet.TotalStudents</span>
+                    </div>
+                    <div class="text-center border-l border-slate-200 dark:border-slate-700">
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block font-semibold uppercase">Present</span>
+                        <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">@_attendanceSheet.PresentCount</span>
+                    </div>
+                    <div class="text-center border-l border-slate-200 dark:border-slate-700">
+                        <span class="text-[10px] text-rose-600 dark:text-rose-400 block font-semibold uppercase">Absent</span>
+                        <span class="text-sm font-extrabold text-rose-600 dark:text-rose-400">@_attendanceSheet.AbsentCount</span>
+                    </div>
+                    <div class="text-center border-l border-slate-200 dark:border-slate-700">
+                        <span class="text-[10px] text-amber-600 dark:text-amber-400 block font-semibold uppercase">Late</span>
+                        <span class="text-sm font-extrabold text-amber-600 dark:text-amber-400">@_attendanceSheet.LateCount</span>
+                    </div>
+                    <div class="text-center border-l border-slate-200 dark:border-slate-700">
+                        <span class="text-[10px] text-blue-600 dark:text-blue-400 block font-semibold uppercase">Excused</span>
+                        <span class="text-sm font-extrabold text-blue-600 dark:text-blue-400">@_attendanceSheet.ExcusedCount</span>
+                    </div>
+                </div>
+
+                <!-- Quick Action Bar -->
+                <div class="flex items-center justify-between gap-3 pt-1">
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Attendance Rate: <strong class="text-[#009488]">@_attendanceSheet.AttendanceRate%</strong>
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @onclick="MarkAllSessionPresent"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/80 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-all cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Mark All Present</span>
+                        </button>
+                        <button type="button" @onclick="MarkAllSessionAbsent"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300/80 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-all cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            <span>Mark All Absent</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Students Roster List -->
+                @if (_attendanceSheet.Students.Count == 0)
+                {
+                    <div class="p-8 text-center bg-slate-50 dark:bg-[#18262c] rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-600 dark:text-slate-300">No students are enrolled in this batch.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Enroll students into the batch from the Batches page first.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-2">
+                        @foreach (var student in _attendanceSheet.Students)
+                        {
+                            var s = student;
+                            <div class="p-3 bg-white dark:bg-[#18262c] border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xs hover:border-teal-500/40 transition-all space-y-2.5">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] font-bold text-xs flex items-center justify-center shrink-0 border border-teal-200/40 dark:border-teal-800/40">
+                                            @(string.IsNullOrWhiteSpace(s.StudentName) ? "S" : s.StudentName[0].ToString().ToUpper())
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h5 class="text-xs font-bold text-slate-800 dark:text-white truncate">@s.StudentName</h5>
+                                            <p class="text-[10px] text-slate-400 truncate">Roll: <span class="font-semibold text-slate-600 dark:text-slate-300">@(s.RollNumber ?? "N/A")</span> &bull; Code: @(s.StudentCode ?? "N/A")</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Pill Segmented Control -->
+                                    <div class="inline-flex p-1 bg-slate-100 dark:bg-[#142025] rounded-xl border border-slate-200 dark:border-slate-700/80 shrink-0">
+                                        <button type="button" @onclick='() => s.Status = AttendanceStatus.Present'
+                                                class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all cursor-pointer @(s.Status == AttendanceStatus.Present ? "bg-emerald-600 text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white")"
+                                                title="Present">
+                                            P
+                                        </button>
+                                        <button type="button" @onclick='() => s.Status = AttendanceStatus.Absent'
+                                                class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all cursor-pointer @(s.Status == AttendanceStatus.Absent ? "bg-rose-600 text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white")"
+                                                title="Absent">
+                                            A
+                                        </button>
+                                        <button type="button" @onclick='() => s.Status = AttendanceStatus.Late'
+                                                class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all cursor-pointer @(s.Status == AttendanceStatus.Late ? "bg-amber-600 text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white")"
+                                                title="Late">
+                                            L
+                                        </button>
+                                        <button type="button" @onclick='() => s.Status = AttendanceStatus.Excused'
+                                                class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all cursor-pointer @(s.Status == AttendanceStatus.Excused ? "bg-blue-600 text-white shadow-xs" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white")"
+                                                title="Excused / Medical Leave">
+                                            E
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Remarks input -->
+                                <div>
+                                    <input type="text" @bind="s.Remarks" placeholder="Optional remark (e.g. sick note, late 10m)..."
+                                           class="w-full px-3 py-1.5 text-[11px] bg-slate-50 dark:bg-[#142025] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-[#009488] focus:bg-white dark:focus:bg-[#111c21] transition-all" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Drawer Footer -->
+            <div class="px-6 py-4 bg-slate-50/90 dark:bg-[#142025] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <button type="button" @onclick="CloseAttendanceDrawerAsync"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" @onclick="SaveSessionAttendanceAsync"
+                        disabled="@(_isSavingAttendance || _attendanceSheet.Students.Count == 0)"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer disabled:opacity-50">
+                    @if (_isSavingAttendance)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Save Attendance</span>
+                    }
+                </button>
+            </div>
+        }
+    </div>
+}
+
 @code {
     private List<ClassSessionDto> _sessions = new();
     private List<BranchDto> _branches = new();
@@ -1060,6 +1275,14 @@
 
     // Generate Modal state
     private bool _showGenerateModal = false;
+
+    // Attendance Drawer State
+    private bool _showAttendanceDrawer = false;
+    private bool _isAttendanceDrawerOpen = false;
+    private bool _isLoadingAttendance = false;
+    private bool _isSavingAttendance = false;
+    private ClassSessionDto? _selectedAttendanceSession;
+    private SessionAttendanceSheetDto? _attendanceSheet;
     private GenerateFormModel _generateModel = new();
 
     // Details & Actions state
@@ -1507,9 +1730,10 @@
         Toast.Info("Exporting class sessions directory to CSV...");
     }
 
-    private string FormatSchedule(TimeOnly start, TimeOnly end)
+    private string FormatSchedule(TimeOnly? start, TimeOnly? end)
     {
-        return $"{start:HH:mm} - {end:HH:mm}";
+        if (!start.HasValue || !end.HasValue) return string.Empty;
+        return $"{start.Value:HH:mm} - {end.Value:HH:mm}";
     }
 
     private string GetStatusBadgeClass(string status) => status switch
@@ -1557,6 +1781,104 @@
         public string? Topic { get; set; }
         public string? Notes { get; set; }
         public string Status { get; set; } = ClassSessionStatusNames.Scheduled;
+    }
+
+
+    private async Task OpenAttendanceDrawerAsync(ClassSessionDto s)
+    {
+        _selectedAttendanceSession = s;
+        _showAttendanceDrawer = true;
+        _isLoadingAttendance = true;
+        await Task.Yield();
+        _isAttendanceDrawerOpen = true;
+
+        try
+        {
+            var res = await AttendanceService.GetSessionAttendanceSheetAsync(s.Id);
+            if (res.Success && res.Data != null)
+            {
+                _attendanceSheet = res.Data;
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to load attendance sheet.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading attendance: " + ex.Message);
+        }
+        finally
+        {
+            _isLoadingAttendance = false;
+        }
+    }
+
+    private async Task CloseAttendanceDrawerAsync()
+    {
+        _isAttendanceDrawerOpen = false;
+        await Task.Delay(250);
+        _showAttendanceDrawer = false;
+        _selectedAttendanceSession = null;
+        _attendanceSheet = null;
+    }
+
+    private void MarkAllSessionPresent()
+    {
+        if (_attendanceSheet == null) return;
+        foreach (var st in _attendanceSheet.Students)
+        {
+            st.Status = AttendanceStatus.Present;
+        }
+    }
+
+    private void MarkAllSessionAbsent()
+    {
+        if (_attendanceSheet == null) return;
+        foreach (var st in _attendanceSheet.Students)
+        {
+            st.Status = AttendanceStatus.Absent;
+        }
+    }
+
+    private async Task SaveSessionAttendanceAsync()
+    {
+        if (_attendanceSheet == null || _selectedAttendanceSession == null) return;
+
+        _isSavingAttendance = true;
+        try
+        {
+            var req = new MarkSessionAttendanceRequest
+            {
+                ClassSessionId = _selectedAttendanceSession.Id,
+                Items = _attendanceSheet.Students.Select(s => new StudentAttendanceEntry
+                {
+                    StudentId = s.StudentId,
+                    Status = s.Status,
+                    Remarks = s.Remarks
+                }).ToList()
+            };
+
+            var res = await AttendanceService.SaveSessionAttendanceAsync(_selectedAttendanceSession.Id, req);
+            if (res.Success && res.Data != null)
+            {
+                _attendanceSheet = res.Data;
+                Toast.Success("Attendance saved successfully!");
+                await CloseAttendanceDrawerAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to save attendance.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error saving attendance: " + ex.Message);
+        }
+        finally
+        {
+            _isSavingAttendance = false;
+        }
     }
 
     public class GenerateFormModel

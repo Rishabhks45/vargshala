@@ -82,6 +82,7 @@ public static class StartupExtensions
         builder.Services.AddScoped<IClassService, ClassService>();
         builder.Services.AddScoped<IBatchService, BatchService>();
         builder.Services.AddScoped<IClassSessionService, ClassSessionService>();
+        builder.Services.AddScoped<IAttendanceService, AttendanceService>();
         builder.Services.AddScoped<ITeacherService, TeacherService>();
         builder.Services.AddScoped<IBranchService, BranchService>();
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
