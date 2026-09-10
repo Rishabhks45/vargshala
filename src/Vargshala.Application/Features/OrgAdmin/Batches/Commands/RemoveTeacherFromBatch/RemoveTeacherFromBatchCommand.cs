@@ -3,4 +3,4 @@ using Vargshala.Contracts.Common;
 
 namespace Vargshala.Application.Features.OrgAdmin.Batches.Commands.RemoveTeacherFromBatch;
 
-public record RemoveTeacherFromBatchCommand(Guid BatchId, Guid TeacherId) : IRequest<ApiResponse<bool>>;
+public record RemoveTeacherFromBatchCommand(Guid BatchId, Guid TeacherId, Guid? SubjectId = null) : IRequest<ApiResponse<bool>>;

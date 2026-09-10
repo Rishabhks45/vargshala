@@ -6,6 +6,7 @@ public class BatchTeacher
 
     public Guid BatchId { get; set; }
     public Guid TeacherId { get; set; }
+    public Guid SubjectId { get; set; }
 
     public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
     public DateTime? RemovedAt { get; set; }
@@ -21,4 +22,5 @@ public class BatchTeacher
     // Navigation
     public Batch Batch { get; set; } = null!;
     public Teacher Teacher { get; set; } = null!;
+    public Subject Subject { get; set; } = null!;
 }

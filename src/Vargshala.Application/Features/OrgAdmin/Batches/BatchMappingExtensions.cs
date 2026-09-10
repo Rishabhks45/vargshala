@@ -31,7 +31,7 @@ public static class BatchMappingExtensions
             StartTime = b.StartTime,
             EndTime = b.EndTime,
             IsActive = b.IsActive,
-            AssignedTeachersCount = b.BatchTeachers?.Count(bt => bt.IsActive) ?? 0,
+            AssignedTeachersCount = b.BatchTeachers?.Where(bt => bt.IsActive).Select(bt => bt.TeacherId).Distinct().Count() ?? 0,
             EnrolledStudentsCount = studentCount,
             Grade = className,
             RoomOrTiming = timing,
@@ -58,6 +58,8 @@ public static class BatchMappingExtensions
             Department = bt.Teacher?.Department,
             Designation = bt.Teacher?.Designation?.GetDisplayName(),
             Specialization = bt.Teacher?.Specialization,
+            SubjectId = bt.SubjectId,
+            SubjectName = bt.Subject?.Name ?? string.Empty,
             AssignedAt = bt.AssignedAt,
             RemovedAt = bt.RemovedAt,
             IsActive = bt.IsActive

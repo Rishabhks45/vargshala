@@ -19,6 +19,7 @@
 @inject IAttendanceService AttendanceService
 @inject INotificationService Toast
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <div class="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar scrollbar-hidden space-y-4 transition-colors duration-200 pb-20 pr-1 select-text" style="scrollbar-width: none; -ms-overflow-style: none;">
 
@@ -265,21 +266,24 @@
                                 class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#B91C1C] bg-[#FEE2E2] hover:bg-[#FECACA] border border-rose-200 transition-all cursor-pointer">
                             Mark All Absent
                         </button>
-                        <button type="button" @onclick="SaveAttendanceAsync" disabled="@_isSaving"
-                                class="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] active:scale-98 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50">
-                            @if (_isSaving)
-                            {
-                                <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Saving...</span>
-                            }
-                            else
-                            {
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span>Save Attendance</span>
-                            }
-                        </button>
+                        @if (HasUnsavedChanges || _isSaving)
+                        {
+                            <button type="button" @onclick="SaveAttendanceAsync" disabled="@_isSaving"
+                                    class="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] active:scale-98 shadow-md shadow-[#009488]/20 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 animate-in fade-in zoom-in-95 duration-150">
+                                @if (_isSaving)
+                                {
+                                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Save Attendance</span>
+                                }
+                            </button>
+                        }
                     </div>
                 </div>
 
@@ -320,11 +324,80 @@
                                 Unmarked (@CurrentUnmarkedCount)
                             </button>
                         }
-                        <button type="button" class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all cursor-pointer ml-0.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                            </svg>
-                        </button>
+                        <!-- 3-Dot Options Action Menu -->
+                        <div class="relative inline-block text-left">
+                            <button type="button" 
+                                    @onclick="() => _isRosterMenuOpen = !_isRosterMenuOpen"
+                                    class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#18262c] transition-all cursor-pointer ml-0.5 @(_isRosterMenuOpen ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white" : "")"
+                                    title="More Roster Actions">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                            </button>
+
+                            @if (_isRosterMenuOpen)
+                            {
+                                <!-- Backdrop to close on click outside -->
+                                <div class="fixed inset-0 z-40" @onclick="() => _isRosterMenuOpen = false"></div>
+
+                                <!-- Dropdown Menu -->
+                                <div class="absolute right-0 top-full mt-1.5 w-56 bg-white dark:bg-[#18262c] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/80 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
+                                    <div class="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 mb-1">
+                                        Roster Options
+                                    </div>
+
+                                    <!-- Export CSV -->
+                                    <button type="button" @onclick="ExportSessionAttendanceCsvAsync"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/50 hover:text-[#009488] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <span>Export to CSV</span>
+                                    </button>
+
+                                    <!-- Revert Changes (if modified) -->
+                                    @if (HasUnsavedChanges)
+                                    {
+                                        <button type="button" @onclick="RevertChanges"
+                                                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                            </svg>
+                                            <span>Revert Unsaved Changes</span>
+                                        </button>
+                                    }
+
+                                    <!-- Mark All Unmarked -->
+                                    <button type="button" @onclick="MarkAllUnmarked"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#142025] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                        </svg>
+                                        <span>Reset to Unmarked</span>
+                                    </button>
+
+                                    <!-- Print Roster -->
+                                    <button type="button" @onclick="PrintRosterAsync"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#142025] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        <span>Print Sheet</span>
+                                    </button>
+
+                                    <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+
+                                    <!-- Reload from Server -->
+                                    <button type="button" @onclick="RefreshSheetAsync"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#142025] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        </svg>
+                                        <span>Reload from Server</span>
+                                    </button>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
 
@@ -1298,8 +1371,14 @@ private bool _isLoadingSheet = true;
 private bool _isLoadingDateReports = false;
 private bool _isLoadingStudentReports = false;
 private bool _isSaving = false;
-
+private bool _hasChanges = false;
+private bool _isRosterMenuOpen = false;
 private string _studentSearchQuery = string.Empty;
+private Dictionary<Guid, (string Status, string? Remarks)> _initialStudentStates = new();
+private bool HasUnsavedChanges => _hasChanges || (_initialStudentStates.Count > 0 && _sheet?.Students.Any(s => 
+    !_initialStudentStates.TryGetValue(s.StudentId, out var init) || 
+    init.Status != s.Status || 
+    (init.Remarks ?? "") != (s.Remarks ?? "")) == true);
 private string _statusFilter = "ALL"; // ALL, Present, Absent, Late
 private bool _selectAllChecked = false;
 private HashSet<Guid> _selectedStudentIds = new();
@@ -1646,6 +1725,8 @@ private async Task LoadAttendanceSheetAsync(Guid sessionId)
                 .Select(s => s.StudentId)
                 .ToHashSet();
             _selectAllChecked = IsAllPresent;
+            _hasChanges = false;
+            _initialStudentStates = _sheet.Students.ToDictionary(s => s.StudentId, s => (s.Status, s.Remarks));
         }
         else
         {
@@ -1897,6 +1978,8 @@ private async Task SaveAttendanceAsync()
                 .Select(s => s.StudentId)
                 .ToHashSet();
             _selectAllChecked = IsAllPresent;
+            _hasChanges = false;
+            _initialStudentStates = _sheet.Students.ToDictionary(s => s.StudentId, s => (s.Status, s.Remarks));
             Toast.Success("Attendance saved successfully!");
 
             // Refresh overview to update 7-day trend and activity feed
@@ -1918,6 +2001,112 @@ private async Task SaveAttendanceAsync()
     {
         _isSaving = false;
     }
+}
+
+// -------------------------------------------------------------
+// Roster Actions (3-Dot Action Menu)
+// -------------------------------------------------------------
+private void RevertChanges()
+{
+    _isRosterMenuOpen = false;
+    if (_sheet == null || _initialStudentStates.Count == 0) return;
+
+    foreach (var s in _sheet.Students)
+    {
+        if (_initialStudentStates.TryGetValue(s.StudentId, out var orig))
+        {
+            s.Status = orig.Status;
+            s.Remarks = orig.Remarks;
+        }
+    }
+    _selectedStudentIds = _sheet.Students
+        .Where(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)
+        .Select(s => s.StudentId)
+        .ToHashSet();
+    _selectAllChecked = IsAllPresent;
+    _hasChanges = false;
+    Toast.Info("Unsaved changes reverted.");
+}
+
+private void MarkAllUnmarked()
+{
+    _isRosterMenuOpen = false;
+    if (_sheet == null) return;
+    _hasChanges = true;
+    foreach (var s in _sheet.Students)
+    {
+        s.Status = AttendanceStatus.Unmarked;
+        s.MarkedAt = null;
+    }
+    _selectedStudentIds.Clear();
+    _selectAllChecked = false;
+    Toast.Info("All students reset to Unmarked. Click Save Attendance to commit.");
+}
+
+private async Task PrintRosterAsync()
+{
+    _isRosterMenuOpen = false;
+    await JS.InvokeVoidAsync("window.print");
+}
+
+private async Task RefreshSheetAsync()
+{
+    _isRosterMenuOpen = false;
+    if (Guid.TryParse(_selectedSessionId, out var sid))
+    {
+        await LoadAttendanceSheetAsync(sid);
+        Toast.Info("Attendance sheet reloaded from server.");
+    }
+}
+
+private async Task ExportSessionAttendanceCsvAsync()
+{
+    _isRosterMenuOpen = false;
+    if (_sheet == null || _sheet.Students.Count == 0)
+    {
+        Toast.Warning("No students in attendance roster to export.");
+        return;
+    }
+
+    try
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Roll No,Student Name,Student Code,Status,Marked At,Remarks");
+
+        foreach (var s in _sheet.Students)
+        {
+            var roll = EscapeCsv(s.RollNumber ?? "");
+            var name = EscapeCsv(s.StudentName ?? "");
+            var code = EscapeCsv(s.StudentCode ?? "");
+            var status = EscapeCsv(s.Status ?? "");
+            var markedAt = s.MarkedAt.HasValue ? s.MarkedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "";
+            var remarks = EscapeCsv(s.Remarks ?? "");
+            sb.AppendLine($"{roll},{name},{code},{status},{markedAt},{remarks}");
+        }
+
+        var batchName = _selectedBatch?.Name ?? "Batch";
+        var cleanBatchName = string.Concat(batchName.Split(System.IO.Path.GetInvalidFileNameChars())).Replace(" ", "_");
+        var fileName = $"Attendance_{cleanBatchName}_{_selectedDate:yyyyMMdd}.csv";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var base64 = Convert.ToBase64String(bytes);
+
+        await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, "text/csv;charset=utf-8;", base64);
+        Toast.Success($"Exported {_sheet.Students.Count} attendance records to CSV.");
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Failed to export CSV: " + ex.Message);
+    }
+}
+
+private static string EscapeCsv(string value)
+{
+    if (string.IsNullOrEmpty(value)) return "\"\"";
+    if (value.Contains(",") || value.Contains("\"") || value.Contains("\n") || value.Contains("\r"))
+    {
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+    return $"\"{value}\"";
 }
 
 // Modal Workflow Helpers (Requirement #22)

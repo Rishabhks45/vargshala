@@ -3,6 +3,7 @@ using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Features.OrgAdmin.Batches.Infrastructure;
 using Vargshala.Application.Features.OrgAdmin.Branches.Infrastructure;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Infrastructure;
+using Vargshala.Application.Features.Subjects.Infrastructure;
 using Vargshala.Contracts.Batches;
 using Vargshala.Contracts.Common;
 using Vargshala.Domain.Entities;
@@ -14,17 +15,20 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
     private readonly IBatchRepository _batchRepository;
     private readonly ITeacherRepository _teacherRepository;
     private readonly IBranchRepository _branchRepository;
+    private readonly ISubjectRepository _subjectRepository;
     private readonly ICurrentUser _currentUser;
 
     public AssignTeacherToBatchCommandHandler(
         IBatchRepository batchRepository,
         ITeacherRepository teacherRepository,
         IBranchRepository branchRepository,
+        ISubjectRepository subjectRepository,
         ICurrentUser currentUser)
     {
         _batchRepository = batchRepository;
         _teacherRepository = teacherRepository;
         _branchRepository = branchRepository;
+        _subjectRepository = subjectRepository;
         _currentUser = currentUser;
     }
 
@@ -52,12 +56,27 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
             }
         }
 
-        var existing = await _batchRepository.GetBatchTeacherAsync(command.BatchId, command.Request.TeacherId, cancellationToken);
+        var targetSubjectId = command.Request.SubjectId ?? batch.SubjectId;
+        Subject? subject = null;
+        if (batch.Subject != null && batch.SubjectId == targetSubjectId)
+        {
+            subject = batch.Subject;
+        }
+        else
+        {
+            subject = await _subjectRepository.GetByIdAsync(targetSubjectId, cancellationToken);
+            if (subject == null)
+            {
+                return ApiResponse<BatchTeacherDto>.FailureResponse("Subject not found.");
+            }
+        }
+
+        var existing = await _batchRepository.GetBatchTeacherAsync(command.BatchId, command.Request.TeacherId, targetSubjectId, cancellationToken);
         if (existing != null)
         {
             if (existing.IsActive)
             {
-                return ApiResponse<BatchTeacherDto>.FailureResponse("Teacher is already assigned to this batch.");
+                return ApiResponse<BatchTeacherDto>.FailureResponse("Teacher is already assigned to this subject in the batch.");
             }
 
             // Reactivate
@@ -70,6 +89,7 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
             await _batchRepository.SaveChangesAsync(cancellationToken);
 
             existing.Teacher = teacher;
+            existing.Subject = subject;
             return ApiResponse<BatchTeacherDto>.SuccessResponse(existing.ToDto(), "Teacher assigned to batch successfully.");
         }
 
@@ -78,6 +98,7 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
             Id = Guid.NewGuid(),
             BatchId = command.BatchId,
             TeacherId = command.Request.TeacherId,
+            SubjectId = targetSubjectId,
             AssignedAt = DateTime.UtcNow,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -88,6 +109,7 @@ public class AssignTeacherToBatchCommandHandler : IRequestHandler<AssignTeacherT
         await _batchRepository.SaveChangesAsync(cancellationToken);
 
         mapping.Teacher = teacher;
+        mapping.Subject = subject;
         return ApiResponse<BatchTeacherDto>.SuccessResponse(mapping.ToDto(), "Teacher assigned to batch successfully.");
     }
 }

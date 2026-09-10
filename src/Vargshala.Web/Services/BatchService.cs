@@ -216,11 +216,17 @@ public class BatchService : IBatchService
     public async Task<ApiResponse<bool>> RemoveTeacherFromBatchAsync(
         Guid id,
         Guid teacherId,
+        Guid? subjectId = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"api/v1/orgadmin/batches/{id}/teachers/{teacherId}", cancellationToken);
+            var url = $"api/v1/orgadmin/batches/{id}/teachers/{teacherId}";
+            if (subjectId.HasValue)
+            {
+                url += $"?subjectId={subjectId.Value}";
+            }
+            var response = await _httpClient.DeleteAsync(url, cancellationToken);
             var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
             return result ?? ApiResponse<bool>.FailureResponse("Failed to remove teacher.");
         }

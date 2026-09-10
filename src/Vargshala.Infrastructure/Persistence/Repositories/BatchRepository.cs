@@ -56,6 +56,8 @@ public class BatchRepository : IBatchRepository
             .Include(b => b.BatchTeachers)
                 .ThenInclude(bt => bt.Teacher)
                     .ThenInclude(t => t!.User)
+            .Include(b => b.BatchTeachers)
+                .ThenInclude(bt => bt.Subject)
             .Include(b => b.BatchStudents)
             .FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted, cancellationToken);
     }
@@ -76,6 +78,8 @@ public class BatchRepository : IBatchRepository
             .Include(b => b.BatchTeachers)
                 .ThenInclude(bt => bt.Teacher)
                     .ThenInclude(t => t!.User)
+            .Include(b => b.BatchTeachers)
+                .ThenInclude(bt => bt.Subject)
             .Include(b => b.BatchStudents)
                 .ThenInclude(bs => bs.Student)
                     .ThenInclude(s => s!.User)
@@ -112,6 +116,8 @@ public class BatchRepository : IBatchRepository
             .Include(b => b.BatchTeachers)
                 .ThenInclude(bt => bt.Teacher)
                     .ThenInclude(t => t!.User)
+            .Include(b => b.BatchTeachers)
+                .ThenInclude(bt => bt.Subject)
             .Include(b => b.BatchStudents)
             .Where(b => b.Class!.Branch!.OrganizationId == organizationId && !b.IsDeleted);
 
@@ -188,6 +194,7 @@ public class BatchRepository : IBatchRepository
     {
         return await _db.BatchTeachers
             .AsNoTracking()
+            .Include(bt => bt.Subject)
             .Include(bt => bt.Teacher)
                 .ThenInclude(t => t!.User)
             .Where(bt => bt.BatchId == batchId && bt.IsActive)
@@ -195,10 +202,30 @@ public class BatchRepository : IBatchRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<BatchTeacher?> GetBatchTeacherAsync(Guid batchId, Guid teacherId, CancellationToken cancellationToken = default)
+    public async Task<BatchTeacher?> GetBatchTeacherAsync(Guid batchId, Guid teacherId, Guid? subjectId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _db.BatchTeachers
+            .Include(bt => bt.Subject)
+            .Include(bt => bt.Teacher)
+                .ThenInclude(t => t!.User)
+            .Where(bt => bt.BatchId == batchId && bt.TeacherId == teacherId);
+
+        if (subjectId.HasValue)
+        {
+            query = query.Where(bt => bt.SubjectId == subjectId.Value);
+        }
+
+        return await query.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<List<BatchTeacher>> GetBatchTeachersByTeacherAsync(Guid batchId, Guid teacherId, CancellationToken cancellationToken = default)
     {
         return await _db.BatchTeachers
-            .FirstOrDefaultAsync(bt => bt.BatchId == batchId && bt.TeacherId == teacherId, cancellationToken);
+            .Include(bt => bt.Subject)
+            .Include(bt => bt.Teacher)
+                .ThenInclude(t => t!.User)
+            .Where(bt => bt.BatchId == batchId && bt.TeacherId == teacherId && bt.IsActive)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task AddTeacherAsync(BatchTeacher batchTeacher, CancellationToken cancellationToken = default)

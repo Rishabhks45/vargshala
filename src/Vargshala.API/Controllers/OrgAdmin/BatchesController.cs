@@ -147,9 +147,9 @@ public class BatchesController : ControllerBase
 
     [HttpDelete("{id:guid}/teachers/{teacherId:guid}")]
     [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
-    public async Task<IActionResult> RemoveTeacher(Guid id, Guid teacherId)
+    public async Task<IActionResult> RemoveTeacher(Guid id, Guid teacherId, [FromQuery] Guid? subjectId = null)
     {
-        var result = await _mediator.Send(new RemoveTeacherFromBatchCommand(id, teacherId));
+        var result = await _mediator.Send(new RemoveTeacherFromBatchCommand(id, teacherId, subjectId));
         if (!result.Success)
         {
             return BadRequest(result);

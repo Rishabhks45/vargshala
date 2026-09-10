@@ -4671,6 +4671,11 @@ select option:hover,
   --tw-shadow: var(--tw-shadow-colored);
 }
 
+.shadow-\[\#009488\]\/20{
+  --tw-shadow-color: rgb(0 148 136 / 0.2);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
 .shadow-emerald-950\/10{
   --tw-shadow-color: rgb(2 44 34 / 0.1);
   --tw-shadow: var(--tw-shadow-colored);
@@ -6721,6 +6726,11 @@ input, textarea, select {
 .hover\:dark\:border-teal-500:is(.dark *):hover{
   --tw-border-opacity: 1;
   border-color: rgb(20 184 166 / var(--tw-border-opacity, 1));
+}
+
+.dark\:hover\:bg-\[\#142025\]:hover:is(.dark *){
+  --tw-bg-opacity: 1;
+  background-color: rgb(20 32 37 / var(--tw-bg-opacity, 1));
 }
 
 .dark\:hover\:bg-\[\#142025\]\/40:hover:is(.dark *){

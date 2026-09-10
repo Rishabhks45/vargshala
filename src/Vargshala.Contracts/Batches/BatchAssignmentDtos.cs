@@ -12,6 +12,8 @@ public class BatchTeacherDto
     public string? Department { get; set; }
     public string? Designation { get; set; }
     public string? Specialization { get; set; }
+    public Guid SubjectId { get; set; }
+    public string SubjectName { get; set; } = string.Empty;
     public DateTime AssignedAt { get; set; }
     public DateTime? RemovedAt { get; set; }
     public bool IsActive { get; set; }
@@ -20,6 +22,7 @@ public class BatchTeacherDto
 public class AssignTeacherToBatchRequest
 {
     public Guid TeacherId { get; set; }
+    public Guid? SubjectId { get; set; }
 }
 
 public class BatchStudentDto

@@ -37,6 +37,7 @@ public static class TeacherMappingExtensions
             Batches = teacher.BatchTeachers?
                 .Where(bt => bt.IsActive && bt.Batch != null && !bt.Batch.IsDeleted)
                 .Select(bt => bt.Batch.Name)
+                .Distinct()
                 .ToList() ?? new List<string>(),
             CreatedAt = teacher.CreatedAt,
             UpdatedAt = teacher.UpdatedAt

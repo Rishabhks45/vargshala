@@ -18,6 +18,9 @@ public class BatchTeacherConfiguration : IEntityTypeConfiguration<BatchTeacher>
         builder.Property(bt => bt.TeacherId)
             .IsRequired();
 
+        builder.Property(bt => bt.SubjectId)
+            .IsRequired();
+
         builder.Property(bt => bt.AssignedAt)
             .IsRequired()
             .HasDefaultValueSql("NOW()");
@@ -41,15 +44,23 @@ public class BatchTeacherConfiguration : IEntityTypeConfiguration<BatchTeacher>
             .HasForeignKey(bt => bt.TeacherId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint: (BatchId, TeacherId)
-        builder.HasIndex(bt => new { bt.BatchId, bt.TeacherId })
+        builder.HasOne(bt => bt.Subject)
+            .WithMany()
+            .HasForeignKey(bt => bt.SubjectId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Unique constraint: (BatchId, TeacherId, SubjectId)
+        builder.HasIndex(bt => new { bt.BatchId, bt.TeacherId, bt.SubjectId })
             .IsUnique()
-            .HasDatabaseName("UQ_BatchTeachers_BatchId_TeacherId");
+            .HasDatabaseName("UQ_BatchTeachers_BatchId_TeacherId_SubjectId");
 
         builder.HasIndex(bt => bt.BatchId)
             .HasDatabaseName("IX_BatchTeachers_BatchId");
 
         builder.HasIndex(bt => bt.TeacherId)
             .HasDatabaseName("IX_BatchTeachers_TeacherId");
+
+        builder.HasIndex(bt => bt.SubjectId)
+            .HasDatabaseName("IX_BatchTeachers_SubjectId");
     }
 }

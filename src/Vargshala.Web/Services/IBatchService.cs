@@ -50,6 +50,7 @@ public interface IBatchService
     Task<ApiResponse<bool>> RemoveTeacherFromBatchAsync(
         Guid id,
         Guid teacherId,
+        Guid? subjectId = null,
         CancellationToken cancellationToken = default);
 
     Task<ApiResponse<List<BatchStudentDto>>> GetBatchStudentsAsync(

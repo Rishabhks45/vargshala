@@ -25,7 +25,8 @@ public interface IBatchRepository
 
     // Teacher assignment
     Task<List<BatchTeacher>> GetTeachersByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
-    Task<BatchTeacher?> GetBatchTeacherAsync(Guid batchId, Guid teacherId, CancellationToken cancellationToken = default);
+    Task<BatchTeacher?> GetBatchTeacherAsync(Guid batchId, Guid teacherId, Guid? subjectId = null, CancellationToken cancellationToken = default);
+    Task<List<BatchTeacher>> GetBatchTeachersByTeacherAsync(Guid batchId, Guid teacherId, CancellationToken cancellationToken = default);
     Task AddTeacherAsync(BatchTeacher batchTeacher, CancellationToken cancellationToken = default);
     void UpdateTeacher(BatchTeacher batchTeacher);
 

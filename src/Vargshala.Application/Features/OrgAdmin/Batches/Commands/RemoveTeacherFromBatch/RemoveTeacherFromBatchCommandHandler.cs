@@ -20,20 +20,44 @@ public class RemoveTeacherFromBatchCommandHandler : IRequestHandler<RemoveTeache
 
     public async Task<ApiResponse<bool>> Handle(RemoveTeacherFromBatchCommand command, CancellationToken cancellationToken)
     {
-        var existing = await _batchRepository.GetBatchTeacherAsync(command.BatchId, command.TeacherId, cancellationToken);
-        if (existing == null || !existing.IsActive)
+        if (command.SubjectId.HasValue)
         {
-            return ApiResponse<bool>.FailureResponse("Teacher is not actively assigned to this batch.");
+            var existing = await _batchRepository.GetBatchTeacherAsync(command.BatchId, command.TeacherId, command.SubjectId.Value, cancellationToken);
+            if (existing == null || !existing.IsActive)
+            {
+                return ApiResponse<bool>.FailureResponse("Teacher is not actively assigned to this subject in the batch.");
+            }
+
+            existing.IsActive = false;
+            existing.RemovedAt = DateTime.UtcNow;
+            existing.UpdatedAt = DateTime.UtcNow;
+            existing.UpdatedBy = _currentUser.UserId;
+
+            _batchRepository.UpdateTeacher(existing);
+            await _batchRepository.SaveChangesAsync(cancellationToken);
+
+            return ApiResponse<bool>.SuccessResponse(true, "Teacher removed from batch subject successfully.");
         }
+        else
+        {
+            var activeAssignments = await _batchRepository.GetBatchTeachersByTeacherAsync(command.BatchId, command.TeacherId, cancellationToken);
+            if (activeAssignments == null || !activeAssignments.Any())
+            {
+                return ApiResponse<bool>.FailureResponse("Teacher is not actively assigned to this batch.");
+            }
 
-        existing.IsActive = false;
-        existing.RemovedAt = DateTime.UtcNow;
-        existing.UpdatedAt = DateTime.UtcNow;
-        existing.UpdatedBy = _currentUser.UserId;
+            foreach (var item in activeAssignments)
+            {
+                item.IsActive = false;
+                item.RemovedAt = DateTime.UtcNow;
+                item.UpdatedAt = DateTime.UtcNow;
+                item.UpdatedBy = _currentUser.UserId;
+                _batchRepository.UpdateTeacher(item);
+            }
 
-        _batchRepository.UpdateTeacher(existing);
-        await _batchRepository.SaveChangesAsync(cancellationToken);
+            await _batchRepository.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<bool>.SuccessResponse(true, "Teacher removed from batch successfully.");
+            return ApiResponse<bool>.SuccessResponse(true, "Teacher removed from batch successfully.");
+        }
     }
 }
