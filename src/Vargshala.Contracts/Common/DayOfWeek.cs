@@ -26,31 +26,8 @@ public enum DayOfWeek
     Sunday = 7
 }
 
-public static class DayOfWeekNames
-{
-    public const string Monday = "Monday";
-    public const string Tuesday = "Tuesday";
-    public const string Wednesday = "Wednesday";
-    public const string Thursday = "Thursday";
-    public const string Friday = "Friday";
-    public const string Saturday = "Saturday";
-    public const string Sunday = "Sunday";
-}
-
 public static class DayOfWeekExtensions
 {
-    public static string GetDisplayName(this DayOfWeek day) => day switch
-    {
-        DayOfWeek.Monday => DayOfWeekNames.Monday,
-        DayOfWeek.Tuesday => DayOfWeekNames.Tuesday,
-        DayOfWeek.Wednesday => DayOfWeekNames.Wednesday,
-        DayOfWeek.Thursday => DayOfWeekNames.Thursday,
-        DayOfWeek.Friday => DayOfWeekNames.Friday,
-        DayOfWeek.Saturday => DayOfWeekNames.Saturday,
-        DayOfWeek.Sunday => DayOfWeekNames.Sunday,
-        _ => day.ToString()
-    };
-
     public static string GetShortName(this DayOfWeek day) => day switch
     {
         DayOfWeek.Monday => "Mon",

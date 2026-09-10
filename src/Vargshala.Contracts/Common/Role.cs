@@ -32,17 +32,3 @@ public static class RoleNames
     public const string Student = nameof(UserRole.Student);
     public const string BranchAdmin = nameof(UserRole.BranchAdmin);
 }
-
-public static class UserRoleExtensions
-{
-    public static string GetDisplayName(this UserRole role) => role switch
-    {
-        UserRole.SuperAdmin => "Super Admin",
-        UserRole.BackOffice => "BackOffice Staff",
-        UserRole.OrganizationAdmin => "Institute Admin",
-        UserRole.BranchAdmin => "Branch Admin",
-        UserRole.Teacher => "Teacher",
-        UserRole.Student => "Student",
-        _ => role.ToString()
-    };
-}

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Vargshala.Contracts.Common;
 
 namespace Vargshala.Contracts.Teachers;
 
@@ -52,42 +53,9 @@ public enum HighestQualification
 
 public static class HighestQualificationExtensions
 {
-    public static string GetDisplayName(this HighestQualification qualification) => qualification switch
-    {
-        HighestQualification.BEd => "B.Ed.",
-        HighestQualification.MEd => "M.Ed.",
-        HighestQualification.BSc => "B.Sc.",
-        HighestQualification.MSc => "M.Sc.",
-        HighestQualification.BA => "B.A.",
-        HighestQualification.MA => "M.A.",
-        HighestQualification.BTech => "B.Tech.",
-        HighestQualification.MTech => "M.Tech.",
-        HighestQualification.BCom => "B.Com.",
-        HighestQualification.MCom => "M.Com.",
-        HighestQualification.BCA => "BCA",
-        HighestQualification.MCA => "MCA",
-        HighestQualification.MBA => "MBA",
-        HighestQualification.PhD => "Ph.D.",
-        HighestQualification.Other => "Other",
-        _ => qualification.ToString()
-    };
+    public static string GetDisplayName(this HighestQualification qualification)
+        => EnumHelper.GetDisplayName(qualification);
 
     public static HighestQualification? ParseQualification(string? val)
-    {
-        if (string.IsNullOrWhiteSpace(val)) return null;
-
-        if (int.TryParse(val, out var intVal) && Enum.IsDefined(typeof(HighestQualification), intVal))
-            return (HighestQualification)intVal;
-
-        var clean = val.Trim().Replace(".", "").Replace(" ", "");
-        foreach (HighestQualification q in Enum.GetValues(typeof(HighestQualification)))
-        {
-            if (string.Equals(q.ToString(), clean, StringComparison.OrdinalIgnoreCase))
-                return q;
-            if (string.Equals(q.GetDisplayName().Replace(".", "").Replace(" ", ""), clean, StringComparison.OrdinalIgnoreCase))
-                return q;
-        }
-
-        return null;
-    }
+        => EnumHelper.TryParseFromDisplayName<HighestQualification>(val, out var result) ? result : null;
 }

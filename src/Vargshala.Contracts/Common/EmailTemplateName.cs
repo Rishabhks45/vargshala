@@ -35,37 +35,8 @@ public enum EmailTemplateName
     GeneralAnnouncement = 10
 }
 
-public static class EmailTemplateNameConstants
-{
-    public const string WelcomeOnboarding = "Welcome & Onboarding";
-    public const string ForgotPassword = "Forgot Password";
-    public const string PasswordReset = "Password Reset Link";
-    public const string VerificationOtp = "Verification OTP";
-    public const string AdmissionConfirmation = "Admission Confirmation";
-    public const string FeeReceipt = "Fee Payment Receipt";
-    public const string FeeDueReminder = "Fee Due Reminder";
-    public const string AttendanceAlert = "Attendance Alert";
-    public const string ExamNotice = "Exam & Quiz Notice";
-    public const string GeneralAnnouncement = "General Announcement";
-}
-
 public static class EmailTemplateNameExtensions
 {
-    public static string GetDisplayName(this EmailTemplateName templateName) => templateName switch
-    {
-        EmailTemplateName.WelcomeOnboarding => "Welcome & Onboarding",
-        EmailTemplateName.ForgotPassword => "Forgot Password",
-        EmailTemplateName.PasswordReset => "Password Reset Link",
-        EmailTemplateName.VerificationOtp => "Verification OTP",
-        EmailTemplateName.AdmissionConfirmation => "Admission Confirmation",
-        EmailTemplateName.FeeReceipt => "Fee Payment Receipt",
-        EmailTemplateName.FeeDueReminder => "Fee Due Reminder",
-        EmailTemplateName.AttendanceAlert => "Attendance Alert",
-        EmailTemplateName.ExamNotice => "Exam & Quiz Notice",
-        EmailTemplateName.GeneralAnnouncement => "General Announcement",
-        _ => templateName.ToString()
-    };
-
     public static string GetDefaultCode(this EmailTemplateName templateName) => templateName switch
     {
         EmailTemplateName.WelcomeOnboarding => "WELCOME_ONBOARD",
