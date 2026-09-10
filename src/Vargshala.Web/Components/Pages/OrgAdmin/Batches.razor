@@ -1,546 +1,1451 @@
 @page "/batches"
-@attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher")]
+@page "/batch"
+@attribute [Authorize(Roles = "OrganizationAdmin,SuperAdmin,BranchAdmin,1,1001,4,Teacher,2")]
+@using Microsoft.AspNetCore.Components.Web
+@using Vargshala.Contracts.Common
 @using Vargshala.Contracts.Batches
+@using Vargshala.Contracts.Classes
+@using Vargshala.Contracts.Subjects
+@using Vargshala.Contracts.Branches
+@using Vargshala.Contracts.Teachers
+@using Vargshala.Contracts.Students
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
 @using Vargshala.Web.Components.UI.Modals
 @using Vargshala.Web.Components.UI.Inputs
-@using Vargshala.Web.Components.UI.Validation
+@using Vargshala.Web.Components.UI.Pagination
+@using Vargshala.Web.Services
+@inject IBatchService BatchService
+@inject IClassService ClassService
+@inject ISubjectService SubjectService
+@inject IBranchService BranchService
+@inject ITeacherService TeacherService
+@inject IStudentService StudentService
+@inject INotificationService Toast
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
-<PageTitle>Classes & Batches | Vargshala</PageTitle>
+<PageTitle>Batches Directory | Vargshala</PageTitle>
 
-<div class="space-y-6 transition-colors duration-200">
-
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
+    
     <!-- Top Header & Action Controls -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
-                Classes & Batches
-            </h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Manage batches, student enrollment, teacher assignment, and class capacity.
-            </p>
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Batches Directory
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage academic batches, teacher assignments, student enrollments, and capacity.
+                </p>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <!-- Toggle View: Grid / List -->
-            <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] overflow-hidden shadow-2xs">
-                <button type="button" @onclick='() => _viewMode = "grid"'
-                        class="px-3 py-2 text-xs font-bold transition-all @(_viewMode == "grid" ? "bg-[#009488] text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                </button>
-                <button type="button" @onclick='() => _viewMode = "list"'
-                        class="px-3 py-2 text-xs font-bold transition-all @(_viewMode == "list" ? "bg-[#009488] text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                </button>
-            </div>
+        <div class="flex items-center gap-2.5">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
 
-            <button type="button"
-                    @onclick="OpenAddModal"
-                    class="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg hover:shadow-teal-700/25 border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white group-hover:rotate-90 transition-transform duration-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </span>
-                <span>Create Batch</span>
+            <button type="button" 
+                    @onclick="OpenAddDrawerAsync"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                <span>Add Batch</span>
             </button>
         </div>
     </div>
 
-    <!-- Quick Stats Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z"/></svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Batches</p>
-                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">@_batches.Count</h3>
-            </div>
-        </div>
-
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Active Batches</p>
-                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">@_batches.Count(b => b.Status == "Active")</h3>
+    <!-- Quick Stats Cards Summary -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Batches</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        @_batches.Count(b => b.IsActive) Active • @_batches.Count(b => !b.IsActive) Inactive
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Enrolled</p>
-                <h3 class="text-lg font-extrabold text-blue-600 dark:text-blue-400">@_batches.Sum(b => b.StudentCount)</h3>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Batches</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                        @_batches.Count(b => b.IsActive)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">In active operation</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Enrolled</p>
+                    <h3 class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                        @_batches.Sum(b => b.EnrolledStudentsCount)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Students in loaded batches</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                    </svg>
+                </div>
             </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Avg Occupancy</p>
-                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">@(_batches.Count > 0 ? Math.Round(_batches.Average(b => b.OccupancyPercent), 0) : 0)%</h3>
+        </div>
+
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Teachers Assigned</p>
+                    <h3 class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                        @_batches.Sum(b => b.AssignedTeachersCount)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Total faculty assignments</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Search & Filter Controls -->
-    <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <div class="relative flex-1 w-full lg:max-w-md">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
-            <input type="text"
-                   @bind="_searchQuery"
-                   @bind:event="oninput"
-                   placeholder="Search batch by name, grade, teacher..."
-                   class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white transition-all placeholder-slate-400 dark:placeholder-slate-500" />
-            @if (!string.IsNullOrEmpty(_searchQuery))
-            {
-                <button type="button" @onclick="() => _searchQuery = string.Empty" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <!-- Search, Filter & Controls Toolbar -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder rounded-2xl shadow-2xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        
+        <!-- Search Input with Debounce -->
+        <div class="relative w-full md:w-72">
+            <SearchInput @bind-Value="_searchQuery" 
+                         OnSearch="() => LoadBatchesAsync()" 
+                         Placeholder="Search batch name or code..." />
+        </div>
+
+        <!-- Filter Dropdowns -->
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <!-- Branch Filter -->
+            <div class="w-36">
+                <select @onchange="HandleBranchChange"
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
+                    <option value="">All Branches</option>
+                    @foreach (var b in _branches)
+                    {
+                        <option value="@b.Id" selected="@(_selectedBranchId == b.Id)">@b.Name</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Class Filter -->
+            <div class="w-36">
+                <select @onchange="HandleClassChange"
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
+                    <option value="">All Classes</option>
+                    @foreach (var c in _classes)
+                    {
+                        <option value="@c.Id" selected="@(_selectedClassId == c.Id)">@c.Name</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Subject Filter -->
+            <div class="w-36">
+                <select @onchange="HandleSubjectChange"
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
+                    <option value="">All Subjects</option>
+                    @foreach (var s in _subjects)
+                    {
+                        <option value="@s.Id" selected="@(_selectedSubjectId == s.Id)">@s.Name</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="w-32">
+                <select @onchange="HandleStatusChange"
+                        class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 shadow-2xs font-medium cursor-pointer">
+                    <option value="">All Statuses</option>
+                    <option value="true">Active Only</option>
+                    <option value="false">Inactive Only</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- View Mode Toggle -->
+        <div class="flex items-center gap-2 self-end md:self-auto">
+            <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] p-0.5 shadow-2xs">
+                <button type="button" @onclick='() => _viewMode = "table"'
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "table" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
+                        title="Table View">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
-            }
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2.5 w-full lg:w-auto">
-            <CustomSelect @bind-Value="_selectedGrade" Options="_gradeFilterOptions" Placeholder="All Grades" />
-            <CustomSelect @bind-Value="_selectedStatus" Options="_statusFilterOptions" Placeholder="All Status" />
+                <button type="button" @onclick='() => _viewMode = "grid"'
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all @(_viewMode == "grid" ? "bg-[#009488] text-white shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700")"
+                        title="Grid View">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- GRID VIEW -->
-    @if (_viewMode == "grid")
+    <!-- Active Filters Badge Row -->
+    @if (!string.IsNullOrWhiteSpace(_searchQuery) || _selectedBranchId.HasValue || _selectedClassId.HasValue || _selectedSubjectId.HasValue || _selectedStatus.HasValue)
     {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @foreach (var batch in FilteredBatches)
+        <div class="shrink-0 flex flex-wrap items-center gap-2 px-1 text-xs">
+            <span class="text-slate-400 font-semibold text-[11px]">Active Filters:</span>
+            
+            @if (!string.IsNullOrWhiteSpace(_searchQuery))
             {
-                <div class="card-surface p-5 space-y-4 hover:shadow-md transition-all duration-200 group border border-tealborder cursor-pointer" @onclick="() => OpenBatchDetail(batch)">
-                    <!-- Header: Initials + Name + Status -->
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#009488] to-[#00796b] text-white font-bold text-sm flex items-center justify-center shadow-md shadow-teal-900/20 shrink-0">
-                                @batch.Initials
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white leading-snug truncate group-hover:text-[#009488] transition-colors">
-                                    @batch.Name
-                                </h3>
-                                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">@batch.Grade • @batch.AcademicSession</p>
-                            </div>
-                        </div>
-                        @if (batch.Status == "Active")
-                        {
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">Active</span>
-                        }
-                        else
-                        {
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Archived</span>
-                        }
-                    </div>
-
-                    <!-- Metrics Row -->
-                    <div class="grid grid-cols-3 gap-2 p-3 bg-slate-50/80 dark:bg-[#18262c] rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                        <div>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Students</p>
-                            <p class="font-extrabold text-slate-800 dark:text-white text-sm">@batch.StudentCount</p>
-                        </div>
-                        <div class="border-x border-slate-200/80 dark:border-slate-700">
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Capacity</p>
-                            <p class="font-extrabold text-slate-800 dark:text-white text-sm">@batch.MaxCapacity</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Occupancy</p>
-                            <p class="font-extrabold @(batch.OccupancyPercent >= 90 ? "text-rose-600 dark:text-rose-400" : batch.OccupancyPercent >= 70 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400") text-sm">@batch.OccupancyPercent%</p>
-                        </div>
-                    </div>
-
-                    <!-- Occupancy Progress Bar -->
-                    <div class="space-y-1">
-                        <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500 @(batch.OccupancyPercent >= 90 ? "bg-rose-500" : batch.OccupancyPercent >= 70 ? "bg-amber-500" : "bg-[#009488]")"
-                                 style="width: @(batch.OccupancyPercent)%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Teacher & Room Info -->
-                    <div class="flex items-center justify-between text-[11px]">
-                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            <span class="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">@batch.PrimaryTeacher</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span class="truncate max-w-[100px]">@batch.RoomOrTiming</span>
-                        </div>
-                    </div>
-                </div>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Search: "@_searchQuery"
+                    <button type="button" @onclick="ClearSearch" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedBranchId.HasValue)
+            {
+                var branchName = _branches.FirstOrDefault(b => b.Id == _selectedBranchId)?.Name ?? "Branch";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Branch: @branchName
+                    <button type="button" @onclick="async () => { _selectedBranchId = null; await LoadBatchesAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedClassId.HasValue)
+            {
+                var clsName = _classes.FirstOrDefault(c => c.Id == _selectedClassId)?.Name ?? "Class";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Class: @clsName
+                    <button type="button" @onclick="async () => { _selectedClassId = null; await LoadBatchesAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedSubjectId.HasValue)
+            {
+                var subName = _subjects.FirstOrDefault(s => s.Id == _selectedSubjectId)?.Name ?? "Subject";
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Subject: @subName
+                    <button type="button" @onclick="async () => { _selectedSubjectId = null; await LoadBatchesAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
+            }
+            @if (_selectedStatus.HasValue)
+            {
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
+                    Status: @(_selectedStatus.Value ? "Active" : "Inactive")
+                    <button type="button" @onclick="async () => { _selectedStatus = null; await LoadBatchesAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
+                </span>
             }
 
-            @if (!FilteredBatches.Any())
-            {
-                <div class="col-span-full card-surface p-12 text-center">
-                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/></svg>
-                    <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No batches found</p>
-                    <p class="text-xs text-slate-400 mt-1">Try changing your search query or filter options.</p>
-                </div>
-            }
+            <button type="button" @onclick="ClearAllFilters" class="text-xs text-rose-500 hover:text-rose-700 font-bold ml-1 cursor-pointer">
+                Clear All
+            </button>
         </div>
     }
 
-    <!-- LIST VIEW -->
-    @if (_viewMode == "list")
-    {
-        <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[680px] text-left border-collapse">
+    <!-- Main Data Container -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder rounded-2xl shadow-2xs flex flex-col overflow-hidden">
+        @if (_isLoading)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
+                <div class="w-8 h-8 border-3 border-[#009488] border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs font-semibold">Loading batches...</p>
+            </div>
+        }
+        else if (_batches.Count == 0)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#009488] flex items-center justify-center mb-3">
+                    <svg class="w-8 h-8 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white">No Batches Found</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
+                    No batches match your search criteria or none have been created yet.
+                </p>
+                <button type="button" @onclick="OpenAddDrawerAsync"
+                        class="mt-4 px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] text-white text-xs font-bold shadow-md shadow-[#004D40]/20 hover:scale-[1.02] transition-all cursor-pointer">
+                    Create First Batch
+                </button>
+            </div>
+        }
+        else if (_viewMode == "table")
+        {
+            <!-- Table View -->
+            <div class="flex-1 overflow-auto">
+                <table class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
-                            <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Name")'>
-                                <div class="flex items-center gap-1.5">
-                                    <span>Batch</span>
-                                    <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
-                                </div>
-                            </th>
-                            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Grade")'>
-                                <div class="flex items-center gap-1.5">
-                                    <span>Grade</span>
-                                    <span class="@_sortState.GetIndicatorClass("Grade")">@_sortState.GetIndicator("Grade")</span>
-                                </div>
-                            </th>
-                            <th class="py-3.5 px-4">Teacher</th>
-                            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Students")'>
-                                <div class="flex items-center gap-1.5">
-                                    <span>Students</span>
-                                    <span class="@_sortState.GetIndicatorClass("Students")">@_sortState.GetIndicator("Students")</span>
-                                </div>
-                            </th>
-                            <th class="py-3.5 px-4">Occupancy</th>
-                            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors group" @onclick='() => _sortState.Toggle("Status")'>
-                                <div class="flex items-center gap-1.5">
-                                    <span>Status</span>
-                                    <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
-                                </div>
-                            </th>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-[#142025] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10">
+                            <th class="py-3 px-4">Batch Details</th>
+                            <th class="py-3 px-4">Class &amp; Subject</th>
+                            <th class="py-3 px-4">Branch</th>
+                            <th class="py-3 px-4">Schedule / Timing</th>
+                            <th class="py-3 px-4 text-center">Faculty</th>
+                            <th class="py-3 px-4 text-center">Enrolled</th>
+                            <th class="py-3 px-4 text-center">Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                        @foreach (var batch in FilteredBatches)
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                        @foreach (var b in _batches)
                         {
-                            <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/30 transition-colors cursor-pointer" @onclick="() => OpenBatchDetail(batch)">
-                                <td class="py-3.5 px-6">
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-[#18262c]/50 transition-colors group">
+                                <td class="py-3 px-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#009488] to-[#00796b] text-white font-bold text-[10px] flex items-center justify-center shadow-xs shrink-0">@batch.Initials</div>
+                                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#009488] to-[#004D40] text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                                            @b.Initials
+                                        </div>
                                         <div class="min-w-0">
-                                            <p class="font-bold text-slate-900 dark:text-white truncate">@batch.Name</p>
-                                            <p class="text-[10px] text-slate-400 dark:text-slate-500">@batch.AcademicSession • @batch.RoomOrTiming</p>
+                                            <div class="font-bold text-slate-900 dark:text-white truncate group-hover:text-[#009488] transition-colors">
+                                                @b.Name
+                                            </div>
+                                            <div class="font-mono text-[10px] text-slate-400 uppercase tracking-wide">
+                                                Code: @b.Code
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">@batch.Grade</span>
-                                </td>
-                                <td class="py-3.5 px-4 font-semibold text-slate-700 dark:text-slate-300">@batch.PrimaryTeacher</td>
-                                <td class="py-3.5 px-4 font-extrabold text-slate-800 dark:text-white">@batch.StudentCount / @batch.MaxCapacity</td>
-                                <td class="py-3.5 px-4">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div class="h-full rounded-full @(batch.OccupancyPercent >= 90 ? "bg-rose-500" : batch.OccupancyPercent >= 70 ? "bg-amber-500" : "bg-[#009488]")"
-                                                 style="width: @(batch.OccupancyPercent)%"></div>
-                                        </div>
-                                        <span class="font-bold text-[11px] @(batch.OccupancyPercent >= 90 ? "text-rose-600 dark:text-rose-400" : "text-slate-600 dark:text-slate-400")">@batch.OccupancyPercent%</span>
+
+                                <td class="py-3 px-4">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 w-fit">
+                                            @b.ClassName
+                                        </span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 w-fit">
+                                            @b.SubjectName
+                                        </span>
                                     </div>
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    @if (batch.Status == "Active")
+
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        </svg>
+                                        <span class="truncate max-w-[130px]">@b.BranchName</span>
+                                    </div>
+                                </td>
+
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                    @if (b.StartTime.HasValue && b.EndTime.HasValue)
                                     {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">Active</span>
+                                        <div class="flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                                            <svg class="w-3 h-3 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>@FormatSchedule(b.StartTime, b.EndTime)</span>
+                                        </div>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Archived</span>
+                                        <span class="text-slate-400 text-[11px] italic">Flexible Timing</span>
                                     }
+                                </td>
+
+                                <td class="py-3 px-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60">
+                                        @b.AssignedTeachersCount Teachers
+                                    </span>
+                                </td>
+
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/60">
+                                            @b.EnrolledStudentsCount Students
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td class="py-3 px-4 text-center">
+                                    <button type="button" @onclick="() => ToggleStatusAsync(b)"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer @(b.IsActive ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200")">
+                                        <span class="w-1.5 h-1.5 rounded-full @(b.IsActive ? "bg-emerald-500 animate-pulse" : "bg-slate-400")"></span>
+                                        <span>@(b.IsActive ? "Active" : "Inactive")</span>
+                                    </button>
+                                </td>
+
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button type="button" @onclick="() => OpenBatchDetailAsync(b)"
+                                                title="View Details & Roster"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-[#1f3037] transition-all cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </button>
+
+                                        <button type="button" @onclick="() => OpenEditDrawerAsync(b)"
+                                                title="Edit Batch"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+
+                                        <button type="button" @onclick="() => ConfirmDelete(b)"
+                                                title="Delete Batch"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
+        }
+        else
+        {
+            <!-- Grid Card View -->
+            <div class="flex-1 overflow-auto p-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach (var b in _batches)
+                    {
+                        <div class="p-4 rounded-2xl bg-white dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700/80 shadow-2xs hover:shadow-md transition-all group flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#009488] to-[#004D40] text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+                                            @b.Initials
+                                        </div>
+                                        <div class="min-w-0">
+                                            <h4 class="font-bold text-sm text-slate-800 dark:text-white truncate group-hover:text-[#009488] transition-colors">
+                                                @b.Name
+                                            </h4>
+                                            <p class="font-mono text-[10px] text-slate-400 uppercase">
+                                                Code: @b.Code
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(b.IsActive ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300" : "bg-slate-100 dark:bg-slate-800 text-slate-400")">
+                                        @(b.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-wrap gap-1.5 mt-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60">
+                                        @b.ClassName
+                                    </span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                        @b.SubjectName
+                                    </span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-50 dark:bg-slate-800/80 text-slate-500">
+                                        @b.BranchName
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2 mt-3.5 p-2.5 rounded-xl bg-slate-50 dark:bg-[#142025] text-[11px]">
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] block">Faculty Assigned</span>
+                                        <span class="font-bold text-slate-700 dark:text-slate-200">@b.AssignedTeachersCount Teachers</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] block">Enrolled Students</span>
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">@b.EnrolledStudentsCount Students</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <button type="button" @onclick="() => OpenBatchDetailAsync(b)"
+                                        class="text-xs font-bold text-[#009488] hover:underline cursor-pointer flex items-center gap-1">
+                                    <span>Manage Roster</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+
+                                <div class="flex items-center gap-1">
+                                    <button type="button" @onclick="() => OpenEditDrawerAsync(b)"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all cursor-pointer"
+                                            title="Edit Batch">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" @onclick="() => ConfirmDelete(b)"
+                                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+                                            title="Delete Batch">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Reusable Server-Side Table Pagination Component -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="@_currentPage" 
+                             PageSize="@_pageSize" 
+                             TotalRecords="@_totalRecords" 
+                             ItemLabel="batches"
+                             IsLoading="@_isLoading"
+                             OnPageChanged="HandlePageChanged"
+                             OnPageSizeChanged="HandlePageSizeChanged" />
         </div>
-    }
+    </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- MODAL: Create / Edit Batch -->
+<!-- DRAWER: Add / Edit Batch Slide-Over Drawer -->
 <!-- ========================================================================= -->
-@if (_showBatchModal)
+@if (_showAddEditModal)
 {
-    <Modal IsOpen="true"
-           Title="@(_editingBatch == null ? "Create New Batch" : "Edit Batch")"
-           Subtitle="@(_editingBatch == null ? "Configure a new class batch" : $"Editing {_editingBatch.Name}")"
-           MaxWidth="max-w-md"
-           OnClose="() => _showBatchModal = false">
-        <ChildContent>
-            <EditForm Model="@_batchModel" OnValidSubmit="SaveBatch">
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-1.5 flex items-center justify-center shadow-md shrink-0">
+                    <img src="images/Logo.svg" alt="Vargshala" class="w-full h-full object-contain" />
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        @(_editingBatch == null ? "Create New Batch" : "Edit Batch Details")
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        @(_editingBatch == null ? "Define a new coaching or classroom batch" : $"Updating records for {_editingBatch.Name}")
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Blazor EditForm Wrapper -->
+        <EditForm Model="@_formModel" OnValidSubmit="SaveBatchAsync" class="flex-1 flex flex-col justify-between overflow-hidden">
+            <DataAnnotationsValidator />
+
+            <!-- Drawer Scrollable Form Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-5 select-text text-slate-800 dark:text-slate-100">
+                
+                <!-- Section 1: Academic Association -->
                 <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>1. Academic Association</span>
+                    </div>
+
+                    <!-- Branch Selection -->
                     <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch Name *</label>
-                        <InputText @bind-Value="_batchModel.Name" placeholder="e.g. Class 10 — Science Morning" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch *</label>
+                        <select @onchange="OnDrawerBranchChanged"
+                                class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                            <option value="">Select Branch</option>
+                            @foreach (var b in _branches)
+                            {
+                                <option value="@b.Id" selected="@(_formModel.BranchId == b.Id)">@b.Name (@b.Code)</option>
+                            }
+                        </select>
+                        <ValidationMessage For="@(() => _formModel.BranchId)" class="text-[10px] text-rose-500" />
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- Class & Subject Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Grade *</label>
-                            <CustomSelect @bind-Value="_batchModel.Grade" Options="_gradeOptions" Placeholder="Select Grade" Class="w-full" />
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Class / Standard *</label>
+                            <select @bind="_formModel.ClassId"
+                                    class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                                <option value="@Guid.Empty">Select Class</option>
+                                @foreach (var c in _classes)
+                                {
+                                    <option value="@c.Id">@c.Name (@c.Code)</option>
+                                }
+                            </select>
+                            <ValidationMessage For="@(() => _formModel.ClassId)" class="text-[10px] text-rose-500" />
                         </div>
+
                         <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Academic Session</label>
-                            <CustomSelect @bind-Value="_batchModel.AcademicSession" Options="_sessionOptions" Placeholder="Session" Class="w-full" />
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject *</label>
+                            <select @bind="_formModel.SubjectId"
+                                    class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                                <option value="@Guid.Empty">Select Subject</option>
+                                @foreach (var s in _subjects)
+                                {
+                                    <option value="@s.Id">@s.Name (@s.Code)</option>
+                                }
+                            </select>
+                            <ValidationMessage For="@(() => _formModel.SubjectId)" class="text-[10px] text-rose-500" />
                         </div>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Primary Teacher</label>
-                        <CustomSelect @bind-Value="_batchModel.PrimaryTeacher" Options="_teacherOptions" Placeholder="Assign Teacher" Class="w-full" />
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Max Capacity</label>
-                            <InputNumber @bind-Value="_batchModel.MaxCapacity" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none font-bold text-slate-800 dark:text-white" />
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Status</label>
-                            <CustomSelect @bind-Value="_batchModel.Status" Options="_batchStatusOptions" Placeholder="Status" Class="w-full" />
-                        </div>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Room / Timing</label>
-                        <InputText @bind-Value="_batchModel.RoomOrTiming" placeholder="e.g. Room A1, 8:00 AM - 10:00 AM" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
-                    </div>
-
-                    <div class="pt-2 flex items-center justify-end gap-3">
-                        <button type="button" @onclick="() => _showBatchModal = false"
-                                class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">Cancel</button>
-                        <button type="submit"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            <span>@(_editingBatch == null ? "Create Batch" : "Update Batch")</span>
-                        </button>
                     </div>
                 </div>
-            </EditForm>
+
+                <!-- Section 2: Batch Identity -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>2. Batch Identity</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch Name *</label>
+                            <InputText @bind-Value="_formModel.Name" placeholder="e.g. Morning JEE Batch" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                            <ValidationMessage For="@(() => _formModel.Name)" class="text-[10px] text-rose-500" />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch Code *</label>
+                            <InputText @bind-Value="_formModel.Code" placeholder="e.g. B-JEE-01" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white font-mono uppercase" />
+                            <ValidationMessage For="@(() => _formModel.Code)" class="text-[10px] text-rose-500" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Schedule & Timings -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>3. Schedule &amp; Timings</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Start Time</label>
+                            <input type="time" @bind="_formModel.StartTime"
+                                   class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">End Time</label>
+                            <input type="time" @bind="_formModel.EndTime"
+                                   class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Status -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>4. Status</span>
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 dark:text-white block">Batch Status</span>
+                            <span class="text-[10px] text-slate-400 block">Allow student enrollments and attendance tracking</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" @bind="_formModel.IsActive" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#009488]"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drawer Sticky Action Buttons -->
+            <div class="px-6 py-4 bg-slate-50/80 dark:bg-[#142025] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <button type="button" @onclick="CloseDrawerAsync"
+                        class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+
+                <button type="submit" disabled="@_isSaving"
+                        class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50">
+                    @if (_isSaving)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    }
+                    <span>@(_editingBatch == null ? "Create Batch" : "Save Changes")</span>
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Batch Detail & Roster Management Modal -->
+<!-- ========================================================================= -->
+@if (_selectedBatchDetail != null)
+{
+    <Modal IsOpen="true"
+           Title="@_selectedBatchDetail.Batch.Name"
+           Subtitle="@($"{_selectedBatchDetail.Batch.ClassName} • {_selectedBatchDetail.Batch.SubjectName} • Code: {_selectedBatchDetail.Batch.Code}")"
+           MaxWidth="max-w-2xl"
+           OnClose="() => _selectedBatchDetail = null">
+        <ChildContent>
+            <div class="space-y-4">
+                <!-- Summary Metrics Bar -->
+                <div class="grid grid-cols-3 gap-2 p-3 bg-teal-50/70 dark:bg-teal-950/40 rounded-xl border border-teal-200/60 text-center text-xs">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block font-medium">Branch</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">@_selectedBatchDetail.Batch.BranchName</span>
+                    </div>
+                    <div class="border-x border-teal-200/60 dark:border-teal-900/60">
+                        <span class="text-[10px] text-slate-400 block font-medium">Schedule</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">
+                            @FormatSchedule(_selectedBatchDetail.Batch.StartTime, _selectedBatchDetail.Batch.EndTime)
+</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block font-medium">Status</span>
+                        <span class="font-bold @(_selectedBatchDetail.Batch.IsActive ? "text-emerald-600" : "text-slate-400")">
+                            @(_selectedBatchDetail.Batch.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="flex border-b border-slate-200 dark:border-slate-800 text-xs font-bold">
+                    <button type="button" @onclick='() => _rosterTab = "teachers"'
+                            class="px-4 py-2 border-b-2 transition-all @(_rosterTab == "teachers" ? "border-[#009488] text-[#009488]" : "border-transparent text-slate-400 hover:text-slate-600")">
+                        Assigned Teachers (@_selectedBatchDetail.Teachers.Count)
+                    </button>
+                    <button type="button" @onclick='() => _rosterTab = "students"'
+                            class="px-4 py-2 border-b-2 transition-all @(_rosterTab == "students" ? "border-[#009488] text-[#009488]" : "border-transparent text-slate-400 hover:text-slate-600")">
+                        Enrolled Students (@_selectedBatchDetail.Students.Count)
+                    </button>
+                </div>
+
+                <!-- Tab 1: Assigned Teachers -->
+                @if (_rosterTab == "teachers")
+                {
+                    <div class="space-y-3">
+                        <!-- Add Teacher Form -->
+                        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700">
+                            <select @bind="_selectedTeacherIdToAssign"
+                                    class="flex-1 px-3 py-2 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200">
+                                <option value="@Guid.Empty">-- Select Teacher to Assign --</option>
+                                @foreach (var t in _availableTeachers)
+                                {
+                                    <option value="@t.Id">@t.FullName (@t.Department)</option>
+                                }
+                            </select>
+                            <button type="button" @onclick="AssignTeacherAsync"
+                                    class="px-3 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-lg transition-all cursor-pointer shrink-0">
+                                Assign Teacher
+                            </button>
+                        </div>
+
+                        <!-- Teachers List -->
+                        <div class="max-h-60 overflow-y-auto space-y-2 pr-1">
+                            @if (_selectedBatchDetail.Teachers.Count == 0)
+                            {
+                                <p class="text-xs text-slate-400 text-center py-4">No teachers assigned yet.</p>
+                            }
+                            else
+                            {
+                                @foreach (var t in _selectedBatchDetail.Teachers)
+                                {
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-[#18262c]">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] font-bold text-xs flex items-center justify-center">
+                                                @(string.IsNullOrWhiteSpace(t.TeacherName) ? "T" : t.TeacherName[0].ToString().ToUpper())
+                                            </div>
+                                            <div>
+                                                <h5 class="text-xs font-bold text-slate-800 dark:text-white">@t.TeacherName</h5>
+                                                <p class="text-[10px] text-slate-400">@t.TeacherEmail • Code: @t.TeacherCode</p>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" @onclick="() => RemoveTeacherAsync(t.TeacherId)"
+                                                title="Remove Teacher"
+                                                class="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Tab 2: Enrolled Students -->
+                @if (_rosterTab == "students")
+                {
+                    <div class="space-y-3">
+                        <!-- Enroll Student Form -->
+                        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200/80 dark:border-slate-700">
+                            <select @bind="_selectedStudentIdToEnroll"
+                                    class="flex-1 px-3 py-2 text-xs bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200">
+                                <option value="@Guid.Empty">-- Select Student to Enroll --</option>
+                                @foreach (var s in _availableStudents)
+                                {
+                                    <option value="@s.Id">@s.FullName (@s.RollNumber)</option>
+                                }
+                            </select>
+                            <button type="button" @onclick="EnrollStudentAsync"
+                                    class="px-3 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all cursor-pointer shrink-0">
+                                Enroll Student
+                            </button>
+                        </div>
+
+                        <!-- Students List -->
+                        <div class="max-h-60 overflow-y-auto space-y-2 pr-1">
+                            @if (_selectedBatchDetail.Students.Count == 0)
+                            {
+                                <p class="text-xs text-slate-400 text-center py-4">No students enrolled yet.</p>
+                            }
+                            else
+                            {
+                                @foreach (var s in _selectedBatchDetail.Students)
+                                {
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-[#18262c]">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 font-bold text-xs flex items-center justify-center">
+                                                @(string.IsNullOrWhiteSpace(s.StudentName) ? "S" : s.StudentName[0].ToString().ToUpper())
+                                            </div>
+                                            <div>
+                                                <div class="flex items-center gap-1.5">
+                                                    <h5 class="text-xs font-bold text-slate-800 dark:text-white">@s.StudentName</h5>
+                                                    @if (s.IsPrimary)
+                                                    {
+                                                        <span class="text-[9px] px-1.5 py-0.2 bg-emerald-50 text-emerald-600 font-bold rounded">Primary</span>
+                                                    }
+                                                </div>
+                                                <p class="text-[10px] text-slate-400">@s.StudentMobile • Code: @s.StudentCode</p>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" @onclick="() => RemoveStudentAsync(s.StudentId)"
+                                                title="Remove Student"
+                                                class="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
         </ChildContent>
+        <FooterTemplate>
+            <div class="flex items-center justify-between w-full">
+                <button type="button" @onclick="() => _selectedBatchDetail = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                    Close
+                </button>
+                <button type="button" @onclick="async () => { var b = _selectedBatchDetail.Batch; _selectedBatchDetail = null; await OpenEditDrawerAsync(b); }"
+                        class="px-4 py-2 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] rounded-xl transition-all cursor-pointer">
+                    Edit Batch
+                </button>
+            </div>
+        </FooterTemplate>
     </Modal>
 }
 
 <!-- ========================================================================= -->
-<!-- MODAL: Batch Detail View -->
+<!-- MODAL: Soft-Delete Confirmation Modal -->
 <!-- ========================================================================= -->
-@if (_detailBatch != null)
+@if (_batchToDelete != null)
 {
     <Modal IsOpen="true"
-           Title="@_detailBatch.Name"
-           Subtitle="@($"{_detailBatch.Grade} • {_detailBatch.AcademicSession}")"
+           Title="Delete Batch"
+           Subtitle="Confirm deletion of this academic batch"
            MaxWidth="max-w-md"
-           OnClose="() => _detailBatch = null">
+           OnClose="() => _batchToDelete = null">
         <ChildContent>
-            <div class="space-y-4">
-                <div class="grid grid-cols-3 gap-2 p-3 bg-teal-50/60 dark:bg-teal-950/40 rounded-xl border border-teal-100/80 dark:border-teal-900/60 text-center text-xs">
+            <div class="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+                <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200/80 text-rose-800 dark:text-rose-200 flex items-start gap-3">
+                    <svg class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
                     <div>
-                        <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Students</span>
-                        <span class="font-extrabold text-slate-800 dark:text-slate-200">@_detailBatch.StudentCount</span>
-                    </div>
-                    <div class="border-x border-teal-200/60 dark:border-teal-900/60">
-                        <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Capacity</span>
-                        <span class="font-extrabold text-slate-800 dark:text-slate-200">@_detailBatch.MaxCapacity</span>
-                    </div>
-                    <div>
-                        <span class="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Occupancy</span>
-                        <span class="font-extrabold @(_detailBatch.OccupancyPercent >= 90 ? "text-rose-600" : "text-emerald-600")">@_detailBatch.OccupancyPercent%</span>
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 dark:bg-[#18262c] p-3.5 rounded-2xl space-y-2.5 text-xs border border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Primary Teacher</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">@_detailBatch.PrimaryTeacher</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Room / Timing</span>
-                        <span class="font-bold text-slate-800 dark:text-slate-200">@_detailBatch.RoomOrTiming</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 dark:text-slate-500 font-medium">Status</span>
-                        <Badge Text="@_detailBatch.Status"
-                               Variant="@(_detailBatch.Status == "Active" ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)"
-                               ShowDot="true" />
+                        <p class="font-bold">Are you sure you want to delete this batch?</p>
+                        <p class="text-[11px] text-rose-700/80 dark:text-rose-300/80 mt-0.5">
+                            Batch: <span class="font-black">@_batchToDelete.Name</span> (@_batchToDelete.Code).
+                            This action will soft-delete the batch record.
+                        </p>
                     </div>
                 </div>
             </div>
         </ChildContent>
         <FooterTemplate>
-            <button type="button"
-                    @onclick="() => { var b = _detailBatch; _detailBatch = null; OpenEditModal(b); }"
-                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all cursor-pointer">
-                <span>Edit Batch →</span>
-            </button>
+            <div class="flex items-center justify-end gap-2 w-full">
+                <button type="button" @onclick="() => _batchToDelete = null"
+                        class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 bg-slate-100 dark:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" @onclick="DeleteBatchAsync" disabled="@_isDeleting"
+                        class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50">
+                    @if (_isDeleting)
+                    {
+                        <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    }
+                    <span>Delete Batch</span>
+                </button>
+            </div>
         </FooterTemplate>
     </Modal>
 }
 
 @code {
+    private List<BatchDto> _batches = new();
+    private List<BranchDto> _branches = new();
+    private List<ClassLookupDto> _classes = new();
+    private List<SubjectDto> _subjects = new();
+    private List<TeacherDto> _availableTeachers = new();
+    private List<StudentDto> _availableStudents = new();
+
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+    private bool _isDeleting = false;
+    private string _viewMode = "table";
+
+    // Filtering & Paging State
     private string _searchQuery = string.Empty;
-    private string _selectedGrade = string.Empty;
-    private string _selectedStatus = string.Empty;
-    private string _viewMode = "grid";
-    private readonly TableSortState _sortState = new();
+    private Guid? _selectedBranchId;
+    private Guid? _selectedClassId;
+    private Guid? _selectedSubjectId;
+    private bool? _selectedStatus;
+    private int _currentPage = 1;
+    private int _pageSize = 10;
+    private int _totalRecords = 0;
 
-    // Filter Options
-    private readonly List<CustomSelect.CustomSelectOption> _gradeFilterOptions = new()
-    {
-        new("", "All Grades"),
-        new("Class 10", "Class 10"),
-        new("Class 11", "Class 11"),
-        new("Class 12", "Class 12"),
-        new("Competitive", "Competitive")
-    };
-
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Status"),
-        new("Active", "Active"),
-        new("Archived", "Archived")
-    };
-
-    // Modal Form Options
-    private readonly List<CustomSelect.CustomSelectOption> _gradeOptions = new()
-    {
-        new("Class 10", "Class 10"),
-        new("Class 11", "Class 11"),
-        new("Class 12", "Class 12"),
-        new("Competitive", "Competitive")
-    };
-
-    private readonly List<CustomSelect.CustomSelectOption> _sessionOptions = new()
-    {
-        new("2026-27", "2026-27"),
-        new("2025-26", "2025-26")
-    };
-
-    private readonly List<CustomSelect.CustomSelectOption> _teacherOptions = new()
-    {
-        new("Dr. Priya Sharma", "Dr. Priya Sharma"),
-        new("Rajesh Verma", "Rajesh Verma"),
-        new("Sunita Gupta", "Sunita Gupta"),
-        new("Amit Tiwari", "Amit Tiwari"),
-        new("Dr. Kavita Reddy", "Dr. Kavita Reddy"),
-        new("Neha Agarwal", "Neha Agarwal")
-    };
-
-    private readonly List<CustomSelect.CustomSelectOption> _batchStatusOptions = new()
-    {
-        new("Active", "Active"),
-        new("Archived", "Archived")
-    };
-
-    // State
-    private bool _showBatchModal = false;
+    // Drawer state
+    private bool _showAddEditModal = false;
+    private bool _isDrawerOpen = false;
     private BatchDto? _editingBatch;
-    private BatchDto _batchModel = new();
-    private BatchDto? _detailBatch;
+    private BatchFormModel _formModel = new();
 
-    // Mock Data
-    private readonly List<BatchDto> _batches = new()
-    {
-        new() { Name = "Class 10 — Maths", Grade = "Class 10", AcademicSession = "2026-27", RoomOrTiming = "Room A1, 8 AM", PrimaryTeacher = "Dr. Priya Sharma", StudentCount = 42, MaxCapacity = 50 },
-        new() { Name = "Class 10 — Science", Grade = "Class 10", AcademicSession = "2026-27", RoomOrTiming = "Room A2, 10 AM", PrimaryTeacher = "Amit Tiwari", StudentCount = 38, MaxCapacity = 50 },
-        new() { Name = "Class 12 — Physics", Grade = "Class 12", AcademicSession = "2026-27", RoomOrTiming = "Room B1, 8 AM", PrimaryTeacher = "Rajesh Verma", StudentCount = 35, MaxCapacity = 40 },
-        new() { Name = "Class 12 — Chemistry", Grade = "Class 12", AcademicSession = "2026-27", RoomOrTiming = "Room B2, 10 AM", PrimaryTeacher = "Sunita Gupta", StudentCount = 30, MaxCapacity = 40 },
-        new() { Name = "Class 12 — Biology", Grade = "Class 12", AcademicSession = "2026-27", RoomOrTiming = "Room B3, 12 PM", PrimaryTeacher = "Dr. Kavita Reddy", StudentCount = 28, MaxCapacity = 35 },
-        new() { Name = "IIT-JEE Morning Batch", Grade = "Competitive", AcademicSession = "2026-27", RoomOrTiming = "Hall 1, 6 AM", PrimaryTeacher = "Dr. Priya Sharma", StudentCount = 55, MaxCapacity = 60 },
-        new() { Name = "NEET Evening Batch", Grade = "Competitive", AcademicSession = "2026-27", RoomOrTiming = "Hall 2, 4 PM", PrimaryTeacher = "Dr. Kavita Reddy", StudentCount = 48, MaxCapacity = 50 },
-        new() { Name = "Class 11 — Foundation", Grade = "Class 11", AcademicSession = "2025-26", RoomOrTiming = "Room C1, 2 PM", PrimaryTeacher = "Neha Agarwal", StudentCount = 20, MaxCapacity = 45, Status = "Archived" }
-    };
+    // Roster & Details modal
+    private BatchDetailDto? _selectedBatchDetail;
+    private string _rosterTab = "teachers";
+    private Guid _selectedTeacherIdToAssign = Guid.Empty;
+    private Guid _selectedStudentIdToEnroll = Guid.Empty;
 
-    private List<BatchDto> FilteredBatches
+    // Delete modal
+    private BatchDto? _batchToDelete;
+
+    protected override async Task OnInitializedAsync()
     {
-        get
+        await LoadLookupsAsync();
+        await LoadBatchesAsync();
+    }
+
+    private async Task LoadLookupsAsync()
+    {
+        try
         {
-            var query = _batches.Where(b =>
-                (string.IsNullOrWhiteSpace(_searchQuery) ||
-                 b.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                 b.Grade.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                 b.PrimaryTeacher.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)) &&
-                (string.IsNullOrWhiteSpace(_selectedGrade) || b.Grade == _selectedGrade) &&
-                (string.IsNullOrWhiteSpace(_selectedStatus) || b.Status == _selectedStatus)
-            );
+            var branchTask = BranchService.GetAllActiveBranchesAsync();
+            var classTask = ClassService.GetAllActiveClassesAsync();
+            var subjectTask = SubjectService.GetAllActiveSubjectsAsync();
+            var teacherTask = TeacherService.GetTeachersPagedAsync(new PagedRequest { PageSize = 100 });
+            var studentTask = StudentService.GetStudentsPagedAsync(new PagedRequest { PageSize = 100 });
 
-            if (_sortState.IsSorted)
-            {
-                query = _sortState.Column switch
-                {
-                    "Name" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(b => b.Name) : query.OrderByDescending(b => b.Name),
-                    "Grade" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(b => b.Grade) : query.OrderByDescending(b => b.Grade),
-                    "Students" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(b => b.StudentCount) : query.OrderByDescending(b => b.StudentCount),
-                    "Status" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(b => b.Status) : query.OrderByDescending(b => b.Status),
-                    _ => query
-                };
-            }
+            await Task.WhenAll(branchTask, classTask, subjectTask, teacherTask, studentTask);
 
-            return query.ToList();
+            if (branchTask.Result.Success && branchTask.Result.Data != null)
+                _branches = branchTask.Result.Data;
+            if (classTask.Result.Success && classTask.Result.Data != null)
+                _classes = classTask.Result.Data;
+            if (subjectTask.Result.Success && subjectTask.Result.Data != null)
+                _subjects = subjectTask.Result.Data;
+            if (teacherTask.Result.Success && teacherTask.Result.Data != null)
+                _availableTeachers = teacherTask.Result.Data.Items;
+            if (studentTask.Result.Success && studentTask.Result.Data != null)
+                _availableStudents = studentTask.Result.Data.Items;
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading initial options: " + ex.Message);
         }
     }
 
-    private void OpenAddModal()
+    private async Task LoadBatchesAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var req = new PagedRequest
+            {
+                PageNumber = _currentPage,
+                PageSize = _pageSize,
+                Search = _searchQuery,
+                SortBy = "CreatedAt",
+                SortDirection = "desc"
+            };
+
+            var res = await BatchService.GetBatchesPagedAsync(
+                req,
+                _selectedBranchId,
+                _selectedClassId,
+                _selectedSubjectId,
+                _selectedStatus);
+
+            if (res.Success && res.Data != null)
+            {
+                _batches = res.Data.Items;
+                _totalRecords = res.Data.TotalRecords;
+            }
+            else
+            {
+                _batches.Clear();
+                _totalRecords = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error fetching batches: " + ex.Message);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleSearch(string query)
+    {
+        _searchQuery = query;
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task ClearSearch()
+    {
+        _searchQuery = string.Empty;
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task HandleBranchChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task HandleClassChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _selectedClassId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task HandleSubjectChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _selectedSubjectId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task HandleStatusChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _selectedStatus = string.IsNullOrWhiteSpace(val) ? null : bool.Parse(val);
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task ClearAllFilters()
+    {
+        _searchQuery = string.Empty;
+        _selectedBranchId = null;
+        _selectedClassId = null;
+        _selectedSubjectId = null;
+        _selectedStatus = null;
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task HandlePageChanged(int page)
+    {
+        _currentPage = page;
+        await LoadBatchesAsync();
+    }
+
+    private async Task HandlePageSizeChanged(int size)
+    {
+        _pageSize = size;
+        _currentPage = 1;
+        await LoadBatchesAsync();
+    }
+
+    private async Task OpenAddDrawerAsync()
     {
         _editingBatch = null;
-        _batchModel = new BatchDto { Status = "Active", AcademicSession = "2026-27", MaxCapacity = 50 };
-        _showBatchModal = true;
-    }
-
-    private void OpenEditModal(BatchDto batch)
-    {
-        _editingBatch = batch;
-        _batchModel = new BatchDto
+        _formModel = new BatchFormModel
         {
-            Id = batch.Id, Name = batch.Name, Grade = batch.Grade, AcademicSession = batch.AcademicSession,
-            RoomOrTiming = batch.RoomOrTiming, PrimaryTeacher = batch.PrimaryTeacher, StudentCount = batch.StudentCount,
-            MaxCapacity = batch.MaxCapacity, Status = batch.Status
+            BranchId = _branches.FirstOrDefault()?.Id ?? Guid.Empty,
+            ClassId = _classes.FirstOrDefault()?.Id ?? Guid.Empty,
+            SubjectId = _subjects.FirstOrDefault()?.Id ?? Guid.Empty,
+            IsActive = true
         };
-        _showBatchModal = true;
+
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
     }
 
-    private void SaveBatch()
+    private async Task OpenEditDrawerAsync(BatchDto b)
     {
-        if (_editingBatch == null)
+        _editingBatch = b;
+        _formModel = new BatchFormModel
         {
-            _batchModel.Id = Guid.NewGuid();
-            _batches.Insert(0, _batchModel);
+            Id = b.Id,
+            BranchId = b.BranchId,
+            ClassId = b.ClassId,
+            SubjectId = b.SubjectId,
+            Name = b.Name,
+            Code = b.Code,
+            StartTime = b.StartTime.HasValue ? DateTime.Today.Add(b.StartTime.Value.ToTimeSpan()) : null,
+            EndTime = b.EndTime.HasValue ? DateTime.Today.Add(b.EndTime.Value.ToTimeSpan()) : null,
+            IsActive = b.IsActive
+        };
+
+        _showAddEditModal = true;
+        await Task.Yield();
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        await Task.Delay(250);
+        _showAddEditModal = false;
+        _editingBatch = null;
+    }
+
+    private void OnDrawerBranchChanged(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var branchId))
+        {
+            _formModel.BranchId = branchId;
         }
-        else
+    }
+
+    private async Task SaveBatchAsync()
+    {
+        _isSaving = true;
+        try
         {
-            var index = _batches.FindIndex(b => b.Id == _editingBatch.Id);
-            if (index != -1)
+            TimeOnly? sTime = _formModel.StartTime.HasValue ? TimeOnly.FromDateTime(_formModel.StartTime.Value) : null;
+            TimeOnly? eTime = _formModel.EndTime.HasValue ? TimeOnly.FromDateTime(_formModel.EndTime.Value) : null;
+
+            if (_editingBatch == null)
             {
-                _batchModel.StudentCount = _editingBatch.StudentCount;
-                _batches[index] = _batchModel;
+                var req = new CreateBatchRequest
+                {
+                    ClassId = _formModel.ClassId,
+                    SubjectId = _formModel.SubjectId,
+                    Name = _formModel.Name.Trim(),
+                    Code = _formModel.Code.Trim().ToUpperInvariant(),
+                    StartTime = sTime,
+                    EndTime = eTime
+                };
+
+                var res = await BatchService.CreateBatchAsync(req);
+                if (res.Success)
+                {
+                    Toast.Success("Batch created successfully.");
+                    await CloseDrawerAsync();
+                    await LoadBatchesAsync();
+                }
+                else
+                {
+                    Toast.Error(res.Message ?? "Failed to create batch.");
+                }
+            }
+            else
+            {
+                var req = new UpdateBatchRequest
+                {
+                    Id = _formModel.Id,
+                    ClassId = _formModel.ClassId,
+                    SubjectId = _formModel.SubjectId,
+                    Name = _formModel.Name.Trim(),
+                    Code = _formModel.Code.Trim().ToUpperInvariant(),
+                    StartTime = sTime,
+                    EndTime = eTime,
+                    IsActive = _formModel.IsActive
+                };
+
+                var res = await BatchService.UpdateBatchAsync(_formModel.Id, req);
+                if (res.Success)
+                {
+                    Toast.Success("Batch updated successfully.");
+                    await CloseDrawerAsync();
+                    await LoadBatchesAsync();
+                }
+                else
+                {
+                    Toast.Error(res.Message ?? "Failed to update batch.");
+                }
             }
         }
-        _showBatchModal = false;
+        catch (Exception ex)
+        {
+            Toast.Error("Error saving batch: " + ex.Message);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
     }
 
-    private void OpenBatchDetail(BatchDto batch)
+    private async Task ToggleStatusAsync(BatchDto b)
     {
-        _detailBatch = batch;
+        try
+        {
+            var res = await BatchService.ToggleBatchStatusAsync(b.Id);
+            if (res.Success)
+            {
+                b.IsActive = res.Data;
+                Toast.Success(res.Message ?? "Status updated.");
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to update status.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error: " + ex.Message);
+        }
+    }
+
+    private async Task OpenBatchDetailAsync(BatchDto b)
+    {
+        try
+        {
+            var res = await BatchService.GetBatchByIdAsync(b.Id);
+            if (res.Success && res.Data != null)
+            {
+                _selectedBatchDetail = res.Data;
+            }
+            else
+            {
+                _selectedBatchDetail = new BatchDetailDto { Batch = b };
+            }
+            _rosterTab = "teachers";
+            _selectedTeacherIdToAssign = Guid.Empty;
+            _selectedStudentIdToEnroll = Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error loading batch details: " + ex.Message);
+        }
+    }
+
+    private async Task AssignTeacherAsync()
+    {
+        if (_selectedBatchDetail == null || _selectedTeacherIdToAssign == Guid.Empty)
+        {
+            Toast.Warning("Please select a teacher to assign.");
+            return;
+        }
+
+        try
+        {
+            var res = await BatchService.AssignTeacherToBatchAsync(_selectedBatchDetail.Batch.Id, new AssignTeacherToBatchRequest { TeacherId = _selectedTeacherIdToAssign });
+            if (res.Success)
+            {
+                Toast.Success("Teacher assigned successfully.");
+                var refresh = await BatchService.GetBatchByIdAsync(_selectedBatchDetail.Batch.Id);
+                if (refresh.Success && refresh.Data != null)
+                    _selectedBatchDetail = refresh.Data;
+                _selectedTeacherIdToAssign = Guid.Empty;
+                await LoadBatchesAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to assign teacher.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error assigning teacher: " + ex.Message);
+        }
+    }
+
+    private async Task RemoveTeacherAsync(Guid teacherId)
+    {
+        if (_selectedBatchDetail == null) return;
+        try
+        {
+            var res = await BatchService.RemoveTeacherFromBatchAsync(_selectedBatchDetail.Batch.Id, teacherId);
+            if (res.Success)
+            {
+                Toast.Success("Teacher removed from batch.");
+                var refresh = await BatchService.GetBatchByIdAsync(_selectedBatchDetail.Batch.Id);
+                if (refresh.Success && refresh.Data != null)
+                    _selectedBatchDetail = refresh.Data;
+                await LoadBatchesAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to remove teacher.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error removing teacher: " + ex.Message);
+        }
+    }
+
+    private async Task EnrollStudentAsync()
+    {
+        if (_selectedBatchDetail == null || _selectedStudentIdToEnroll == Guid.Empty)
+        {
+            Toast.Warning("Please select a student to enroll.");
+            return;
+        }
+
+        try
+        {
+            var res = await BatchService.EnrollStudentToBatchAsync(_selectedBatchDetail.Batch.Id, new EnrollStudentToBatchRequest { StudentId = _selectedStudentIdToEnroll, IsPrimary = true, EnrollmentType = "Regular" });
+            if (res.Success)
+            {
+                Toast.Success("Student enrolled successfully.");
+                var refresh = await BatchService.GetBatchByIdAsync(_selectedBatchDetail.Batch.Id);
+                if (refresh.Success && refresh.Data != null)
+                    _selectedBatchDetail = refresh.Data;
+                _selectedStudentIdToEnroll = Guid.Empty;
+                await LoadBatchesAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to enroll student.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error enrolling student: " + ex.Message);
+        }
+    }
+
+    private async Task RemoveStudentAsync(Guid studentId)
+    {
+        if (_selectedBatchDetail == null) return;
+        try
+        {
+            var res = await BatchService.RemoveStudentFromBatchAsync(_selectedBatchDetail.Batch.Id, studentId);
+            if (res.Success)
+            {
+                Toast.Success("Student removed from batch.");
+                var refresh = await BatchService.GetBatchByIdAsync(_selectedBatchDetail.Batch.Id);
+                if (refresh.Success && refresh.Data != null)
+                    _selectedBatchDetail = refresh.Data;
+                await LoadBatchesAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to remove student.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error removing student: " + ex.Message);
+        }
+    }
+
+    private void ConfirmDelete(BatchDto b)
+    {
+        _batchToDelete = b;
+    }
+
+    private async Task DeleteBatchAsync()
+    {
+        if (_batchToDelete == null) return;
+        _isDeleting = true;
+        try
+        {
+            var res = await BatchService.DeleteBatchAsync(_batchToDelete.Id);
+            if (res.Success)
+            {
+                Toast.Success("Batch deleted successfully.");
+                _batchToDelete = null;
+                await LoadBatchesAsync();
+            }
+            else
+            {
+                Toast.Error(res.Message ?? "Failed to delete batch.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error deleting batch: " + ex.Message);
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
+    }
+
+    private string FormatSchedule(TimeOnly? start, TimeOnly? end)
+    {
+        if (start.HasValue && end.HasValue)
+        {
+            return $"{start.Value.ToString("HH:mm")} - {end.Value.ToString("HH:mm")}";
+        }
+        return "Flexible Timing";
+    }
+
+    private void ExportCsv()
+    {
+        Toast.Info("Exporting batches directory to CSV...");
+    }
+
+    public class BatchFormModel
+    {
+        public Guid Id { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Branch is required.")]
+        public Guid BranchId { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Class is required.")]
+        public Guid ClassId { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Subject is required.")]
+        public Guid SubjectId { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Batch Name is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(150, ErrorMessage = "Max 150 characters.")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Batch Code is required.")]
+        [System.ComponentModel.DataAnnotations.StringLength(50, ErrorMessage = "Max 50 characters.")]
+        public string Code { get; set; } = string.Empty;
+
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+
+        public bool IsActive { get; set; } = true;
     }
 }

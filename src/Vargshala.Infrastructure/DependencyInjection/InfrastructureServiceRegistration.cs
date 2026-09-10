@@ -35,8 +35,14 @@ public static class InfrastructureServiceRegistration
         services.AddDbContext<VargshalaDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
-                npgsqlOptions => npgsqlOptions.MigrationsAssembly(
-                    typeof(VargshalaDbContext).Assembly.FullName)));
+                npgsqlOptions =>
+                {
+                    npgsqlOptions.MigrationsAssembly(typeof(VargshalaDbContext).Assembly.FullName);
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+                }));
 
         services.AddScoped<IVargshalaDbContext>(provider =>
             provider.GetRequiredService<VargshalaDbContext>());
