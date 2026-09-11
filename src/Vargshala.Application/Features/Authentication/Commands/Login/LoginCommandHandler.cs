@@ -78,6 +78,22 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
             branchIdForToken = activeBranches[0].BranchId;
             branchName = activeBranches[0].Branch?.Name;
         }
+        else if (user.Role == UserRole.OrganizationAdmin && user.OrganizationId.HasValue)
+        {
+            var mainBranch = await _authRepository.GetMainBranchByOrganizationIdAsync(user.OrganizationId.Value, cancellationToken);
+            if (mainBranch != null)
+            {
+                branchIdForToken = mainBranch.Id;
+                branchName = mainBranch.Name;
+            }
+            else
+            {
+                var activeAccess = user.UserBranchAccesses
+                    .FirstOrDefault(a => a.Branch != null && a.Branch.IsMainBranch && !a.Branch.IsDeleted);
+                branchIdForToken = activeAccess?.BranchId;
+                branchName = activeAccess?.Branch?.Name;
+            }
+        }
         else
         {
             var activeAccess = user.UserBranchAccesses

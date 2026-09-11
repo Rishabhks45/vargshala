@@ -24,6 +24,8 @@
 @inject IStudentService StudentService
 @inject INotificationService Toast
 @inject NavigationManager Navigation
+@inject IBranchContextService BranchContext
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Batches Directory | Vargshala</PageTitle>
@@ -1183,6 +1185,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
+        _selectedBranchId = BranchContext.CurrentBranchId;
         await LoadLookupsAsync();
         await LoadBatchesAsync();
     }
@@ -1308,6 +1316,7 @@
     private async Task HandleBranchChanged(string val)
     {
         _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await BranchContext.SetBranchAsync(_selectedBranchId);
         await LoadBatchesAsync(1);
     }
 
@@ -1722,6 +1731,24 @@
     private void ExportCsv()
     {
         Toast.Info("Exporting batches directory to CSV...");
+    }
+
+    private async Task HandleGlobalBranchChangedAsync()
+    {
+        if (_selectedBranchId != BranchContext.CurrentBranchId)
+        {
+            _selectedBranchId = BranchContext.CurrentBranchId;
+            await InvokeAsync(async () =>
+            {
+                await LoadBatchesAsync(1);
+                StateHasChanged();
+            });
+        }
+    }
+
+    public void Dispose()
+    {
+        BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
     }
 
     public class BatchFormModel

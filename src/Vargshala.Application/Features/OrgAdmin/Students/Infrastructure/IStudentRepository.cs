@@ -18,6 +18,7 @@ public interface IStudentRepository
         bool? isActive = null,
         Guid? branchId = null,
         CancellationToken cancellationToken = default);
+    Task<bool> BranchBelongsToOrgAsync(Guid branchId, Guid organizationId, CancellationToken cancellationToken = default);
     Task AddAsync(Student student, CancellationToken cancellationToken = default);
     void Update(Student student);
     void Delete(Student student);

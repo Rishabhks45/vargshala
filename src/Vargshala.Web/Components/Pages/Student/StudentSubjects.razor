@@ -1,0 +1,33 @@
+@page "/student/subjects"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+
+<PageTitle>Subjects | Student Portal</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Enrolled Subjects</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Class 12 Core Subjects and Faculty Teachers.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <h3 class="font-extrabold text-base text-slate-800 dark:text-white">Mathematics</h3>
+            <p class="text-xs text-slate-500 mt-1">Amit Sir • Room 101</p>
+        </div>
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <h3 class="font-extrabold text-base text-slate-800 dark:text-white">Physics</h3>
+            <p class="text-xs text-slate-500 mt-1">Rahul Sir • Room 102</p>
+        </div>
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <h3 class="font-extrabold text-base text-slate-800 dark:text-white">Chemistry</h3>
+            <p class="text-xs text-slate-500 mt-1">Neha Ma'am • Room 201</p>
+        </div>
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <h3 class="font-extrabold text-base text-slate-800 dark:text-white">English</h3>
+            <p class="text-xs text-slate-500 mt-1">Suman Sir • Room 203</p>
+        </div>
+    </div>
+</div>

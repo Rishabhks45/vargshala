@@ -1,0 +1,40 @@
+@page "/student/attendance"
+@page "/student/attendance/report"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+
+<PageTitle>My Attendance | Student Portal</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Attendance Record</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Detailed session-by-session log and monthly statistics.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 shadow-2xs">
+                Overall: 92% (Good Standing)
+            </span>
+        </div>
+    </div>
+
+    <!-- Attendance Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs text-center">
+            <span class="text-xs text-slate-500 font-semibold">Total Classes</span>
+            <div class="text-2xl font-black text-slate-800 dark:text-white mt-1">50</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs text-center">
+            <span class="text-xs text-emerald-600 font-semibold">Present</span>
+            <div class="text-2xl font-black text-emerald-600 mt-1">46</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs text-center">
+            <span class="text-xs text-rose-500 font-semibold">Absent</span>
+            <div class="text-2xl font-black text-rose-500 mt-1">4</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs text-center">
+            <span class="text-xs text-amber-500 font-semibold">Late</span>
+            <div class="text-2xl font-black text-amber-500 mt-1">2</div>
+        </div>
+    </div>
+</div>

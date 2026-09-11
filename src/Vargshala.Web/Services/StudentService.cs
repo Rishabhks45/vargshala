@@ -23,6 +23,7 @@ public class StudentService : IStudentService
         string? className = null,
         string? section = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -39,6 +40,8 @@ public class StudentService : IStudentService
                 queryParams += $"&section={Uri.EscapeDataString(section)}";
             if (isActive.HasValue)
                 queryParams += $"&isActive={isActive.Value.ToString().ToLowerInvariant()}";
+            if (branchId.HasValue && branchId.Value != Guid.Empty)
+                queryParams += $"&branchId={branchId.Value}";
 
             var response = await _httpClient.GetAsync($"api/v1/orgadmin/students{queryParams}", cancellationToken);
 

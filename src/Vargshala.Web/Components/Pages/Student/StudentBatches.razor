@@ -1,0 +1,67 @@
+@page "/student/batches"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+
+<PageTitle>My Batches | Student Portal</PageTitle>
+
+<div class="space-y-6 transition-colors duration-200">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">My Batches</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Batches you are currently enrolled in at Brillent Coaching Center.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Morning Batch -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] dark:text-teal-300">
+                    Morning Batch
+                </span>
+                <span class="text-xs font-bold text-slate-400">Class 12</span>
+            </div>
+            <div class="mt-4 space-y-2">
+                <h3 class="font-extrabold text-base text-slate-800 dark:text-white">PCM Morning Intensive</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Time: 07:00 AM - 11:30 AM (Mon - Sat)</p>
+                <div class="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-600 dark:text-slate-300">
+                    <span>👨‍🏫 Amit Sir, Rahul Sir</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Afternoon Batch -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] dark:text-teal-300">
+                    Afternoon Batch
+                </span>
+                <span class="text-xs font-bold text-slate-400">Class 12</span>
+            </div>
+            <div class="mt-4 space-y-2">
+                <h3 class="font-extrabold text-base text-slate-800 dark:text-white">Chemistry Practical & Theory</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Time: 01:00 PM - 02:30 PM (Tue, Thu, Sat)</p>
+                <div class="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-600 dark:text-slate-300">
+                    <span>👩‍🏫 Neha Ma'am</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evening Batch -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-2xs">
+            <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] dark:text-teal-300">
+                    Evening Batch
+                </span>
+                <span class="text-xs font-bold text-slate-400">Class 12</span>
+            </div>
+            <div class="mt-4 space-y-2">
+                <h3 class="font-extrabold text-base text-slate-800 dark:text-white">English Communication & Literature</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Time: 04:00 PM - 05:30 PM (Mon, Wed, Fri)</p>
+                <div class="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-600 dark:text-slate-300">
+                    <span>👨‍🏫 Suman Sir</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

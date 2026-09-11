@@ -12,6 +12,8 @@
 @using Vargshala.Web.Services
 @inject ITeacherService TeacherService
 @inject INotificationService Toast
+@inject IBranchContextService BranchContext
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Teachers &amp; Staff | Vargshala</PageTitle>
@@ -872,6 +874,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
         await LoadTeachersAsync(1);
     }
 
@@ -905,7 +912,8 @@
                 pagedRequest,
                 department: string.IsNullOrWhiteSpace(_selectedDepartment) ? null : _selectedDepartment,
                 designation: string.IsNullOrWhiteSpace(_selectedDesignation) ? null : _selectedDesignation,
-                isActive: isActive);
+                isActive: isActive,
+                branchId: BranchContext.CurrentBranchId);
 
             if (response != null && response.Success && response.Data != null)
             {
@@ -1260,5 +1268,19 @@
     private void ExportCsv()
     {
         Toast.Info("Exporting teachers directory to CSV...");
+    }
+
+    private async Task HandleGlobalBranchChangedAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadTeachersAsync(1);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
     }
 }

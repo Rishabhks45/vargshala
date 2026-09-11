@@ -147,6 +147,13 @@ public class StudentRepository : IStudentRepository
             defaultAscending: false,
             cancellationToken: cancellationToken);
     }
+
+    public async Task<bool> BranchBelongsToOrgAsync(Guid branchId, Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Branches
+            .AsNoTracking()
+            .AnyAsync(b => b.Id == branchId && b.OrganizationId == organizationId && !b.IsDeleted, cancellationToken);
+    }
     #endregion
 
     #region Command Methods

@@ -66,6 +66,13 @@ public class AuthRepository : IAuthRepository
         return await _db.Users
             .AnyAsync(u => u.Email == email && u.OrganizationId == organizationId && !u.IsDeleted, cancellationToken);
     }
+
+    public async Task<Branch?> GetMainBranchByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Branches
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.OrganizationId == organizationId && b.IsMainBranch && !b.IsDeleted, cancellationToken);
+    }
     #endregion
 
     #region Command Methods

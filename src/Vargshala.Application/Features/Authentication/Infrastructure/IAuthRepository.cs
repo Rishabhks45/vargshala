@@ -16,6 +16,7 @@ public interface IAuthRepository
     Task AddUserAsync(User user, CancellationToken cancellationToken = default);
     Task AddBranchAsync(Branch branch, CancellationToken cancellationToken = default);
     Task AddUserBranchAccessAsync(UserBranchAccess access, CancellationToken cancellationToken = default);
+    Task<Branch?> GetMainBranchByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 #endregion

@@ -20,6 +20,8 @@
 @inject INotificationService Toast
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject IBranchContextService BranchContext
+@implements IDisposable
 
 <div class="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar scrollbar-hidden space-y-4 transition-colors duration-200 pb-20 pr-1 select-text" style="scrollbar-width: none; -ms-overflow-style: none;">
 
@@ -1566,11 +1568,18 @@ private double LateDash => Math.Round(CurrentLatePercentage * 0.88, 1);
 
 protected override async Task OnInitializedAsync()
 {
+    BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+    if (!BranchContext.IsInitialized)
+    {
+        await BranchContext.InitializeAsync();
+    }
+    _selectedBranchId = BranchContext.CurrentBranchId?.ToString() ?? "";
     _isLoadingSheet = true;
     try
     {
         await LoadBranchesAsync();
-        await LoadClassesAsync();
+        Guid? bId = BranchContext.CurrentBranchId;
+        await LoadClassesAsync(bId);
         await LoadBatchesAsync();
     }
     finally
@@ -1590,7 +1599,8 @@ private async Task LoadBranchesAsync()
         if (res.Success && res.Data != null)
         {
             _branches = res.Data;
-            _branchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
+            _branchOptions = new() { new("", "All Branches") };
+            _branchOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
         }
     }
     catch (Exception ex)
@@ -1658,6 +1668,7 @@ private async Task OnBranchChanged(string branchIdStr)
     _selectedBatchId = string.Empty;
 
     Guid? bId = Guid.TryParse(branchIdStr, out var id) ? id : null;
+    await BranchContext.SetBranchAsync(bId);
     await LoadClassesAsync(bId);
     await LoadBatchesAsync(null);
 }
@@ -2324,6 +2335,29 @@ private int GetWeeklyAveragePercentage()
     if (_overview?.DailyTrends == null || _overview.DailyTrends.Count == 0) return 0;
     var valid = _overview.DailyTrends.Where(d => d.Percentage > 0).ToList();
     return valid.Count > 0 ? (int)Math.Round(valid.Average(d => d.Percentage)) : 0;
+}
+
+private async Task HandleGlobalBranchChangedAsync()
+{
+    var newBranchStr = BranchContext.CurrentBranchId?.ToString() ?? "";
+    if (_selectedBranchId != newBranchStr)
+    {
+        _selectedBranchId = newBranchStr;
+        _selectedClassId = string.Empty;
+        _selectedBatchId = string.Empty;
+        await InvokeAsync(async () =>
+        {
+            Guid? bId = BranchContext.CurrentBranchId;
+            await LoadClassesAsync(bId);
+            await LoadBatchesAsync(null);
+            StateHasChanged();
+        });
+    }
+}
+
+public void Dispose()
+{
+    BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
 }
 
 }

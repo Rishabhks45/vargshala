@@ -24,6 +24,8 @@
 @inject IAttendanceService AttendanceService
 @inject INotificationService Toast
 @inject NavigationManager Navigation
+@inject IBranchContextService BranchContext
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Class Sessions Directory | Vargshala</PageTitle>
@@ -1298,6 +1300,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
+        _selectedBranchId = BranchContext.CurrentBranchId;
         await LoadLookupsAsync();
         await LoadSessionsAsync();
     }
@@ -1417,6 +1425,7 @@
     private async Task HandleBranchChanged(string val)
     {
         _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await BranchContext.SetBranchAsync(_selectedBranchId);
         await LoadSessionsAsync(1);
     }
 
@@ -1879,6 +1888,24 @@
         {
             _isSavingAttendance = false;
         }
+    }
+
+    private async Task HandleGlobalBranchChangedAsync()
+    {
+        if (_selectedBranchId != BranchContext.CurrentBranchId)
+        {
+            _selectedBranchId = BranchContext.CurrentBranchId;
+            await InvokeAsync(async () =>
+            {
+                await LoadSessionsAsync(1);
+                StateHasChanged();
+            });
+        }
+    }
+
+    public void Dispose()
+    {
+        BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
     }
 
     public class GenerateFormModel

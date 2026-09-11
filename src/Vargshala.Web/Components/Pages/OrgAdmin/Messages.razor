@@ -1,5 +1,5 @@
 @page "/messages"
-@attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher")]
+@attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher,BranchAdmin,Student")]
 @using Vargshala.Contracts.Messages
 @using Vargshala.Web.Components.UI.Badges
 @using Vargshala.Web.Components.UI.Buttons
@@ -583,6 +583,8 @@
 
     private readonly Dictionary<Guid, List<ChatMessageDto>> _messagesDb = new();
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     protected override void OnInitialized()
     {
         var c1 = _conversations[0].Id;
@@ -635,6 +637,41 @@
         };
 
         _selectedConversation = _conversations[0];
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var user = authState.User;
+                var roleStr = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                           ?? user.FindFirst("role")?.Value 
+                           ?? user.FindFirst("Role")?.Value;
+                var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
+                        ?? user.Identity?.Name;
+
+                if (user.IsInRole("Student") || string.Equals(roleStr, "Student", StringComparison.OrdinalIgnoreCase) || roleStr == "5")
+                {
+                    _currentUserRole = "Student";
+                    _currentUserName = !string.IsNullOrWhiteSpace(name) && !name.Equals("student", StringComparison.OrdinalIgnoreCase)
+                        ? $"{name} (Student)"
+                        : "Aryan Kapoor (Student)";
+                }
+                else if (user.IsInRole("Teacher") || string.Equals(roleStr, "Teacher", StringComparison.OrdinalIgnoreCase) || roleStr == "3")
+                {
+                    _currentUserRole = "Teacher";
+                    _currentUserName = !string.IsNullOrWhiteSpace(name) ? $"{name} (Faculty)" : "Dr. Vikram Sharma (Faculty)";
+                }
+                else
+                {
+                    _currentUserRole = "Admin";
+                    _currentUserName = !string.IsNullOrWhiteSpace(name) ? $"{name} (Admin)" : "Rishabh Sharma (Admin)";
+                }
+            }
+        }
     }
 
     private List<ChatConversationDto> FilteredConversations

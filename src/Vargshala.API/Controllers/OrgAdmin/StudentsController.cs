@@ -37,9 +37,10 @@ public class StudentsController : ControllerBase
         [FromQuery] PagedRequest request,
         [FromQuery] string? className = null,
         [FromQuery] string? section = null,
-        [FromQuery] bool? isActive = null)
+        [FromQuery] bool? isActive = null,
+        [FromQuery] Guid? branchId = null)
     {
-        var query = new GetStudentsPagedQuery(request, className, section, isActive);
+        var query = new GetStudentsPagedQuery(request, className, section, isActive, branchId);
         var result = await _mediator.Send(query);
 
         if (!result.Success)

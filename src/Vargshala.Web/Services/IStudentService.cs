@@ -11,6 +11,7 @@ public interface IStudentService
         string? className = null,
         string? section = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default);
 
     Task<ApiResponse<StudentDto>> GetStudentByIdAsync(

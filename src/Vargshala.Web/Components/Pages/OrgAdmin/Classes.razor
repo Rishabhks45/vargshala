@@ -16,6 +16,8 @@
 @inject IBranchService BranchService
 @inject INotificationService Toast
 @inject NavigationManager Navigation
+@inject IBranchContextService BranchContext
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Classes Directory | Vargshala</PageTitle>
@@ -762,6 +764,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
+        _selectedBranchId = BranchContext.CurrentBranchId;
         await LoadBranchesAsync();
         await LoadClassesAsync();
     }
@@ -851,6 +859,7 @@
     private async Task HandleBranchChanged(string val)
     {
         _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await BranchContext.SetBranchAsync(_selectedBranchId);
         await LoadClassesAsync(1);
     }
 
@@ -1035,6 +1044,24 @@
         if (string.IsNullOrWhiteSpace(name)) return "C";
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return string.Join("", parts.Where(s => char.IsLetter(s[0])).Take(2).Select(s => s[0])).ToUpper();
+    }
+
+    private async Task HandleGlobalBranchChangedAsync()
+    {
+        if (_selectedBranchId != BranchContext.CurrentBranchId)
+        {
+            _selectedBranchId = BranchContext.CurrentBranchId;
+            await InvokeAsync(async () =>
+            {
+                await LoadClassesAsync(1);
+                StateHasChanged();
+            });
+        }
+    }
+
+    public void Dispose()
+    {
+        BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
     }
 
     public class ClassFormModel

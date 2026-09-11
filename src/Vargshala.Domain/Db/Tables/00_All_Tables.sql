@@ -727,3 +727,335 @@ CREATE INDEX IF NOT EXISTS "IX_Attendances_ClassSessionId"
 
 CREATE INDEX IF NOT EXISTS "IX_Attendances_StudentId"
     ON public."Attendances" ("StudentId");
+
+
+-- =============================================
+-- 17_FeeStructures.sql
+-- =============================================
+CREATE TABLE IF NOT EXISTS public."FeeStructures"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "OrganizationId" UUID NOT NULL,
+    "BranchId" UUID NOT NULL,
+
+    "Name" VARCHAR(150) NOT NULL,
+    "Description" TEXT,
+    "TotalAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    "AcademicSession" VARCHAR(50) NOT NULL,
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    "IsDeleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DeletedBy" UUID,
+    "DeletedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_FeeStructures"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_FeeStructures_Organizations_OrganizationId"
+        FOREIGN KEY ("OrganizationId")
+        REFERENCES public."Organizations" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_FeeStructures_Branches_BranchId"
+        FOREIGN KEY ("BranchId")
+        REFERENCES public."Branches" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "CK_FeeStructures_TotalAmount"
+        CHECK ("TotalAmount" >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS "IX_FeeStructures_OrganizationId"
+    ON public."FeeStructures" ("OrganizationId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeStructures_BranchId"
+    ON public."FeeStructures" ("BranchId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeStructures_Org_Branch"
+    ON public."FeeStructures" ("OrganizationId", "BranchId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeStructures_Session_IsActive"
+    ON public."FeeStructures" ("AcademicSession", "IsActive");
+
+
+-- =============================================
+-- 18_StudentFees.sql
+-- =============================================
+CREATE TABLE IF NOT EXISTS public."StudentFees"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "OrganizationId" UUID NOT NULL,
+    "StudentId" UUID NOT NULL,
+    "FeeStructureId" UUID NOT NULL,
+
+    "OriginalAmount" NUMERIC(12, 2) NOT NULL,
+    "DiscountAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    "FinalAmount" NUMERIC(12, 2) NOT NULL,
+    "Status" VARCHAR(30) NOT NULL DEFAULT 'Pending',
+    "AssignedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    "IsDeleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DeletedBy" UUID,
+    "DeletedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_StudentFees"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_StudentFees_Organizations_OrganizationId"
+        FOREIGN KEY ("OrganizationId")
+        REFERENCES public."Organizations" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_StudentFees_Students_StudentId"
+        FOREIGN KEY ("StudentId")
+        REFERENCES public."Students" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_StudentFees_FeeStructures_FeeStructureId"
+        FOREIGN KEY ("FeeStructureId")
+        REFERENCES public."FeeStructures" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "CK_StudentFees_Amounts"
+        CHECK ("FinalAmount" = ("OriginalAmount" - "DiscountAmount")),
+
+    CONSTRAINT "CK_StudentFees_Status"
+        CHECK ("Status" IN ('Pending', 'PartiallyPaid', 'Paid', 'Overdue', 'Cancelled'))
+);
+
+CREATE INDEX IF NOT EXISTS "IX_StudentFees_OrganizationId"
+    ON public."StudentFees" ("OrganizationId");
+
+CREATE INDEX IF NOT EXISTS "IX_StudentFees_StudentId"
+    ON public."StudentFees" ("StudentId");
+
+CREATE INDEX IF NOT EXISTS "IX_StudentFees_FeeStructureId"
+    ON public."StudentFees" ("FeeStructureId");
+
+CREATE INDEX IF NOT EXISTS "IX_StudentFees_Org_Status"
+    ON public."StudentFees" ("OrganizationId", "Status");
+
+
+-- =============================================
+-- 19_FeeDiscounts.sql
+-- =============================================
+CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "StudentFeeId" UUID NOT NULL,
+
+    "DiscountType" VARCHAR(50) NOT NULL,
+    "Value" NUMERIC(12, 2) NOT NULL,
+    "Amount" NUMERIC(12, 2) NOT NULL,
+    "Reason" VARCHAR(255),
+    "ApprovedBy" UUID,
+    "ApprovedAt" TIMESTAMPTZ DEFAULT NOW(),
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT "PK_FeeDiscounts"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_FeeDiscounts_StudentFees_StudentFeeId"
+        FOREIGN KEY ("StudentFeeId")
+        REFERENCES public."StudentFees" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_FeeDiscounts_Users_ApprovedBy"
+        FOREIGN KEY ("ApprovedBy")
+        REFERENCES public."Users" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
+    CONSTRAINT "CK_FeeDiscounts_Amount"
+        CHECK ("Amount" >= 0),
+
+    CONSTRAINT "CK_FeeDiscounts_Value"
+        CHECK ("Value" >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_StudentFeeId"
+    ON public."FeeDiscounts" ("StudentFeeId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_ApprovedBy"
+    ON public."FeeDiscounts" ("ApprovedBy");
+
+
+-- =============================================
+-- 20_FeeInstallments.sql
+-- =============================================
+CREATE TABLE IF NOT EXISTS public."FeeInstallments"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "StudentFeeId" UUID NOT NULL,
+
+    "InstallmentNumber" INT NOT NULL,
+    "Amount" NUMERIC(12, 2) NOT NULL,
+    "DueDate" DATE NOT NULL,
+    "Status" VARCHAR(30) NOT NULL DEFAULT 'Pending',
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_FeeInstallments"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_FeeInstallments_StudentFees_StudentFeeId"
+        FOREIGN KEY ("StudentFeeId")
+        REFERENCES public."StudentFees" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "UQ_FeeInstallments_StudentFeeId_InstallmentNumber"
+        UNIQUE ("StudentFeeId", "InstallmentNumber"),
+
+    CONSTRAINT "CK_FeeInstallments_Amount"
+        CHECK ("Amount" > 0),
+
+    CONSTRAINT "CK_FeeInstallments_Status"
+        CHECK ("Status" IN ('Pending', 'PartiallyPaid', 'Paid', 'Overdue', 'Cancelled'))
+);
+
+CREATE INDEX IF NOT EXISTS "IX_FeeInstallments_StudentFeeId"
+    ON public."FeeInstallments" ("StudentFeeId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeInstallments_DueDate"
+    ON public."FeeInstallments" ("DueDate");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeInstallments_Status"
+    ON public."FeeInstallments" ("Status");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeInstallments_StudentFee_DueDate"
+    ON public."FeeInstallments" ("StudentFeeId", "DueDate");
+
+
+-- =============================================
+-- 21_Payments.sql
+-- =============================================
+CREATE TABLE IF NOT EXISTS public."Payments"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "OrganizationId" UUID NOT NULL,
+    "StudentId" UUID NOT NULL,
+
+    "Amount" NUMERIC(12, 2) NOT NULL,
+    "PaymentDate" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "PaymentMethod" VARCHAR(50) NOT NULL,
+    "TransactionReference" VARCHAR(100),
+    "Status" VARCHAR(30) NOT NULL DEFAULT 'Completed',
+    "Remarks" TEXT,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+
+    "IsDeleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DeletedBy" UUID,
+    "DeletedAt" TIMESTAMPTZ,
+
+    CONSTRAINT "PK_Payments"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_Payments_Organizations_OrganizationId"
+        FOREIGN KEY ("OrganizationId")
+        REFERENCES public."Organizations" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_Payments_Students_StudentId"
+        FOREIGN KEY ("StudentId")
+        REFERENCES public."Students" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_Payments_Users_CreatedBy"
+        FOREIGN KEY ("CreatedBy")
+        REFERENCES public."Users" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
+    CONSTRAINT "CK_Payments_Amount"
+        CHECK ("Amount" > 0),
+
+    CONSTRAINT "CK_Payments_Status"
+        CHECK ("Status" IN ('Completed', 'Pending', 'Failed', 'Refunded'))
+);
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_OrganizationId"
+    ON public."Payments" ("OrganizationId");
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_StudentId"
+    ON public."Payments" ("StudentId");
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_PaymentDate"
+    ON public."Payments" ("PaymentDate");
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_TransactionReference"
+    ON public."Payments" ("TransactionReference");
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_Org_Date"
+    ON public."Payments" ("OrganizationId", "PaymentDate");
+
+
+-- =============================================
+-- 22_PaymentAllocations.sql
+-- =============================================
+CREATE TABLE IF NOT EXISTS public."PaymentAllocations"
+(
+    "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "PaymentId" UUID NOT NULL,
+    "FeeInstallmentId" UUID NOT NULL,
+
+    "AllocatedAmount" NUMERIC(12, 2) NOT NULL,
+
+    "CreatedBy" UUID,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT "PK_PaymentAllocations"
+        PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_PaymentAllocations_Payments_PaymentId"
+        FOREIGN KEY ("PaymentId")
+        REFERENCES public."Payments" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT "FK_PaymentAllocations_FeeInstallments_FeeInstallmentId"
+        FOREIGN KEY ("FeeInstallmentId")
+        REFERENCES public."FeeInstallments" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT "UQ_PaymentAllocations_PaymentId_FeeInstallmentId"
+        UNIQUE ("PaymentId", "FeeInstallmentId"),
+
+    CONSTRAINT "CK_PaymentAllocations_Amount"
+        CHECK ("AllocatedAmount" > 0)
+);
+
+CREATE INDEX IF NOT EXISTS "IX_PaymentAllocations_PaymentId"
+    ON public."PaymentAllocations" ("PaymentId");
+
+CREATE INDEX IF NOT EXISTS "IX_PaymentAllocations_FeeInstallmentId"
+    ON public."PaymentAllocations" ("FeeInstallmentId");
+

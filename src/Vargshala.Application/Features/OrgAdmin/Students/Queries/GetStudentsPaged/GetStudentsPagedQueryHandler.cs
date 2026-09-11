@@ -29,6 +29,15 @@ public class GetStudentsPagedQueryHandler : IRequestHandler<GetStudentsPagedQuer
             return ApiResponse<PagedResponse<StudentDto>>.FailureResponse("No active organization context found.");
         }
 
+        if (query.BranchId.HasValue && query.BranchId.Value != Guid.Empty)
+        {
+            var branchBelongs = await _studentRepository.BranchBelongsToOrgAsync(query.BranchId.Value, orgId.Value, cancellationToken);
+            if (!branchBelongs)
+            {
+                return ApiResponse<PagedResponse<StudentDto>>.FailureResponse("The specified branch does not belong to your organization.");
+            }
+        }
+
         var pagedRequest = query.Request ?? new PagedRequest();
         var (students, totalRecords) = await _studentRepository.GetPagedByOrgAsync(
             orgId.Value,

@@ -3,6 +3,7 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @inject IUserService UserService
+@inject IBranchContextService BranchContext
 
 <div class="flex h-screen max-h-screen w-screen overflow-hidden bg-[#004D40] font-sans text-slate-800 antialiased select-none">
     
@@ -54,7 +55,17 @@
                         <Authorized>
                             @{
                                 var orgName = context.User.FindFirst("OrganizationName")?.Value;
-                                var branchName = context.User.FindFirst("BranchName")?.Value;
+                                var roleStr = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                                           ?? context.User.FindFirst("role")?.Value 
+                                           ?? context.User.FindFirst("Role")?.Value;
+                                var profile = UserService.CurrentProfile;
+                                var isOrgAdmin = (profile != null && profile.Role == UserRole.OrganizationAdmin)
+                                              || context.User.IsInRole("OrganizationAdmin") || context.User.IsInRole("1") 
+                                              || string.Equals(roleStr, "OrganizationAdmin", StringComparison.OrdinalIgnoreCase) 
+                                              || roleStr == "1";
+                                var branchName = isOrgAdmin && BranchContext.IsInitialized
+                                    ? (BranchContext.IsAllBranches ? "All Branches" : BranchContext.CurrentBranch?.Name)
+                                    : context.User.FindFirst("BranchName")?.Value;
                                 var role = RoleNavigationHelper.GetRoleDisplayName(context.User);
                             }
                             <p class="text-[11px] text-teal-200/90 font-medium truncate flex items-center gap-1.5">
@@ -83,6 +94,26 @@
             <!-- Top Right Profile, Notification & Theme Controls -->
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 
+                <!-- Branch Selector for Organization Admin -->
+                <AuthorizeView>
+                    <Authorized>
+                        @{
+                            var roleStr = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                                       ?? context.User.FindFirst("role")?.Value 
+                                       ?? context.User.FindFirst("Role")?.Value;
+                            var profile = UserService.CurrentProfile;
+                            var isOrgAdmin = (profile != null && profile.Role == UserRole.OrganizationAdmin)
+                                          || context.User.IsInRole("OrganizationAdmin") || context.User.IsInRole("1") 
+                                          || string.Equals(roleStr, "OrganizationAdmin", StringComparison.OrdinalIgnoreCase) 
+                                          || roleStr == "1";
+                        }
+                        @if (isOrgAdmin && BranchContext.AvailableBranches.Any())
+                        {
+                            <BranchSelector />
+                        }
+                    </Authorized>
+                </AuthorizeView>
+
                 <!-- Dark / Light Mode Toggle Button -->
                 <button type="button" 
                         onclick="window.toggleAppTheme()" 
@@ -262,15 +293,38 @@
     {
         Navigation.LocationChanged += OnLocationChanged;
         UserService.OnProfileUpdated += HandleProfileUpdated;
+        BranchContext.OnBranchChanged += HandleBranchChangedAsync;
 
         if (AuthStateTask != null)
         {
             var authState = await AuthStateTask;
-            if (authState.User.Identity?.IsAuthenticated == true && UserService.CurrentProfile == null)
+            if (authState.User.Identity?.IsAuthenticated == true)
             {
-                await UserService.GetMyProfileAsync();
+                if (UserService.CurrentProfile == null)
+                {
+                    await UserService.GetMyProfileAsync();
+                }
+
+                var roleStr = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                           ?? authState.User.FindFirst("role")?.Value 
+                           ?? authState.User.FindFirst("Role")?.Value;
+                var profile = UserService.CurrentProfile;
+                var isOrgAdmin = (profile != null && profile.Role == UserRole.OrganizationAdmin)
+                              || authState.User.IsInRole("OrganizationAdmin") || authState.User.IsInRole("1") 
+                              || string.Equals(roleStr, "OrganizationAdmin", StringComparison.OrdinalIgnoreCase) 
+                              || roleStr == "1";
+
+                if (isOrgAdmin)
+                {
+                    await BranchContext.InitializeAsync();
+                }
             }
         }
+    }
+
+    private Task HandleBranchChangedAsync()
+    {
+        return InvokeAsync(StateHasChanged);
     }
 
     private void HandleProfileUpdated(UserDto updatedProfile)
@@ -303,7 +357,12 @@
             "controlpanel/email-templates" or "controlpanel/templates" => "Email Templates",
             "controlpanel/users" => "Users",
 
-            "student" or "student/home" => "Home",
+            "student" or "student/home" => "Dashboard",
+            "student/classes" => "My Classes",
+            "student/batches" => "My Batches",
+            "student/subjects" => "Subjects",
+            "student/timetable" => "My Timetable",
+            "student/attendance" => "Attendance",
             "student/study-material" => "Study Material",
             "student/tasks" => "Tasks",
             "student/quizzes" => "Quizzes",
@@ -356,5 +415,6 @@
     {
         Navigation.LocationChanged -= OnLocationChanged;
         UserService.OnProfileUpdated -= HandleProfileUpdated;
+        BranchContext.OnBranchChanged -= HandleBranchChangedAsync;
     }
 }

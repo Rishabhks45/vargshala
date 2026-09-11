@@ -20,6 +20,8 @@
 @inject ISubjectService SubjectService
 @inject IBatchService BatchService
 @inject INotificationService Toast
+@inject IBranchContextService BranchContext
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Students Directory | Vargshala</PageTitle>
@@ -1313,6 +1315,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
         await Task.WhenAll(LoadStudentsAsync(1), LoadLookupDataAsync());
     }
 
@@ -1609,7 +1616,8 @@
             var response = await StudentService.GetStudentsPagedAsync(
                 pagedRequest,
                 className: string.IsNullOrWhiteSpace(_selectedBatch) ? null : _selectedBatch,
-                isActive: isActive);
+                isActive: isActive,
+                branchId: BranchContext.CurrentBranchId);
 
             if (response != null && response.Success && response.Data != null)
             {
@@ -2150,5 +2158,19 @@
     private void ExportCsv()
     {
         Toast.Info("Exporting students directory to CSV...");
+    }
+
+    private async Task HandleGlobalBranchChangedAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadStudentsAsync(1);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
     }
 }
