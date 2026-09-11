@@ -1,273 +1,1698 @@
 @page "/fees"
+@page "/orgadmin/fees"
 @attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin")]
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Fees
+@using Vargshala.Contracts.Fees.Enums
+@using Vargshala.Contracts.FeeStructures
+@using Vargshala.Contracts.Branches
+@using Vargshala.Contracts.Classes
 @using Vargshala.Web.Common
-@using Vargshala.Web.Components.UI.Inputs
-@using Vargshala.Web.Components.UI.Modals
 @using Vargshala.Web.Components.UI.Badges
+@using Vargshala.Web.Components.UI.Buttons
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Pagination
+@using Vargshala.Web.Services
+@inject IFeeService FeeService
+@inject IFeeStructureService FeeStructureService
+@inject IBranchService BranchService
+@inject IClassService ClassService
+@inject IBranchContextService BranchContext
+@inject INotificationService Toast
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@implements IDisposable
 @rendermode InteractiveServer
 
-<PageTitle>Fees Management | Vargshala</PageTitle>
+<PageTitle>Student Fees | Vargshala</PageTitle>
 
-<div class="space-y-6 transition-colors duration-200">
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
 
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Fees Management</h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Track fee collection, pending dues, and payment history.</p>
-        </div>
+    <!-- Top Header & Action Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-            <button type="button" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] transition-all shadow-2xs cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                <span>Export Report</span>
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    Student Fees
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Manage student fee assignments, track installment schedules, and collect inward payments.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
             </button>
-            <button type="button" @onclick="() => _showCollectModal = true"
-                    class="group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md shadow-teal-900/15 hover:shadow-lg border border-teal-400/30 hover:from-[#00a89a] hover:to-[#00897b] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
-                <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                </span>
+
+            <button type="button" 
+                    id="btn-assign-fee"
+                    @onclick="OpenAssignDrawerAsync"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-teal-600/30 text-[#00796b] dark:text-teal-400 hover:bg-teal-50/50 dark:hover:bg-teal-950/40 transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <span>Assign Fee</span>
+            </button>
+
+            <button type="button" 
+                    id="btn-collect-fee"
+                    @onclick="() => OpenCollectDrawerAsync(null)"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
                 <span>Collect Fee</span>
             </button>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Expected</p>
-                <h3 class="text-lg font-extrabold text-slate-800 dark:text-white">₹@_totalExpected.ToString("N0")</h3>
-            </div>
-        </div>
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Collected</p>
-                <h3 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">₹@_totalCollected.ToString("N0")</h3>
-            </div>
-        </div>
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Pending</p>
-                <h3 class="text-lg font-extrabold text-amber-600 dark:text-amber-400">₹@_totalPending.ToString("N0")</h3>
+    <!-- Quick Stats Cards Summary (Directly rendered without layout shift) -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Total Expected -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Expected</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">₹@_stats.TotalExpected.ToString("N0")</h3>
+                    <p class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold mt-0.5">
+                        @_totalRecords student assignments
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
             </div>
         </div>
-        <div class="card-surface p-4 flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/80 flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+
+        <!-- Total Collected -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Collected</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">₹@_stats.TotalCollected.ToString("N0")</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+                        @_stats.CollectionRate% collection rate
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
             </div>
-            <div>
-                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Overdue</p>
-                <h3 class="text-lg font-extrabold text-rose-600 dark:text-rose-400">@_feeRecords.Count(f => f.Status == "Overdue") students</h3>
+        </div>
+
+        <!-- Total Pending Due -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Outstanding</p>
+                    <h3 class="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">₹@_stats.TotalPending.ToString("N0")</h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Pending collection</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Overdue Dues</p>
+                    <h3 class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">@_stats.OverdueStudentsCount</h3>
+                    <p class="text-[10px] text-rose-500 font-medium mt-0.5">Students past due date</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Collection Progress -->
-    <div class="card-surface p-5 space-y-3">
-        <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-slate-700 dark:text-slate-300">Fee Collection Progress</span>
-            <span class="font-extrabold text-[#009488]">@CollectionPercent% collected</span>
+    <!-- Collection Progress Bar -->
+    <div class="card-surface p-4 border border-tealborder shadow-2xs">
+        <div class="flex items-center justify-between text-xs mb-2">
+            <span class="font-bold text-slate-700 dark:text-slate-300">Overall Fee Collection Progress</span>
+            <span class="font-extrabold text-[#009488]">@_stats.CollectionRate% collected (₹@_stats.TotalCollected.ToString("N0") / ₹@_stats.TotalExpected.ToString("N0"))</span>
         </div>
-        <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div class="h-full rounded-full bg-gradient-to-r from-[#009488] to-[#00796b] transition-all duration-700" style="width: @(CollectionPercent)%"></div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card-surface p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        <div class="relative flex-1 w-full lg:max-w-md">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
-            <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="Search by student name..."
-                   class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white transition-all placeholder-slate-400 dark:placeholder-slate-500" />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2.5 w-full lg:w-auto">
-            <CustomSelect @bind-Value="_filterBatch" Options="_batchFilterOptions" Placeholder="All Batches" />
-            <CustomSelect @bind-Value="_filterStatus" Options="_statusFilterOptions" Placeholder="All Status" />
+        <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-[#004D40] to-[#009488] transition-all duration-700" style="width: @(_stats.CollectionRate)%"></div>
         </div>
     </div>
 
-    <!-- Fee Records Table -->
-    <div class="card-surface overflow-hidden border border-tealborder shadow-xs">
+    <!-- Search & Filter Controls -->
+    <div class="shrink-0 card-surface p-3.5 border border-tealborder shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
+        <!-- Search Input -->
+        <div class="w-full md:w-80 relative">
+            <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text"
+                   value="@_searchTerm"
+                   @oninput="HandleSearchInput"
+                   placeholder="Search student, roll number, fee package..."
+                   class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#009488] focus:ring-1 focus:ring-[#009488] transition-all" />
+        </div>
+
+        <!-- Filter Selectors -->
+        <div class="w-full md:w-auto flex flex-wrap items-center gap-2.5">
+            <!-- Branch Filter -->
+            <div class="w-40">
+                <CustomSelect Value="@_selectedBranchId"
+                              ValueChanged="HandleBranchFilterChanged"
+                              Options="@_branchFilterOptions"
+                              Placeholder="All Branches" />
+            </div>
+
+            <!-- Class Filter -->
+            <div class="w-40">
+                <CustomSelect Value="@_selectedClassId"
+                              ValueChanged="HandleClassFilterChanged"
+                              Options="@_classFilterOptions"
+                              Placeholder="All Classes" />
+            </div>
+
+            <!-- Status Filter -->
+            <div class="w-36">
+                <CustomSelect Value="@_selectedStatus"
+                              ValueChanged="HandleStatusFilterChanged"
+                              Options="@_statusFilterOptions"
+                              Placeholder="All Status" />
+            </div>
+
+            @if (HasActiveFilters)
+            {
+                <button type="button" 
+                        @onclick="ClearFiltersAsync"
+                        class="px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all cursor-pointer">
+                    Clear
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="card-surface overflow-hidden border border-tealborder shadow-xs flex-1 flex flex-col justify-between min-h-[360px]">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[700px] text-left border-collapse">
+            <table class="w-full text-left border-collapse table-fixed">
                 <thead>
-                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider select-none">
-                        <th class="py-3.5 px-6 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => _sortState.Toggle("Name")'>
-                            <div class="flex items-center gap-1.5"><span>Student</span><span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span></div>
+                    <tr class="border-b border-slate-100 dark:border-slate-800/80 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none bg-slate-50/50 dark:bg-[#152328]/40">
+                        <th class="py-3 px-4 w-[24%] cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => HandleSortAsync("StudentName")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Student</span>
+                                <span class="@_sortState.GetIndicatorClass("StudentName")">@_sortState.GetIndicator("StudentName")</span>
+                            </div>
                         </th>
-                        <th class="py-3.5 px-4">Batch</th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => _sortState.Toggle("Total")'>
-                            <div class="flex items-center gap-1.5"><span>Total Fee</span><span class="@_sortState.GetIndicatorClass("Total")">@_sortState.GetIndicator("Total")</span></div>
+                        <th class="py-3 px-3 w-[18%]">
+                            <span>Fee Structure / Branch</span>
                         </th>
-                        <th class="py-3.5 px-4">Paid</th>
-                        <th class="py-3.5 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => _sortState.Toggle("Due")'>
-                            <div class="flex items-center gap-1.5"><span>Due</span><span class="@_sortState.GetIndicatorClass("Due")">@_sortState.GetIndicator("Due")</span></div>
+                        <th class="py-3 px-3 w-[11%] text-right cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => HandleSortAsync("Total")'>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <span>Total (₹)</span>
+                                <span class="@_sortState.GetIndicatorClass("Total")">@_sortState.GetIndicator("Total")</span>
+                            </div>
                         </th>
-                        <th class="py-3.5 px-4">Status</th>
-                        <th class="py-3.5 px-4">Last Payment</th>
+                        <th class="py-3 px-3 w-[11%] text-right cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => HandleSortAsync("Paid")'>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <span>Paid (₹)</span>
+                                <span class="@_sortState.GetIndicatorClass("Paid")">@_sortState.GetIndicator("Paid")</span>
+                            </div>
+                        </th>
+                        <th class="py-3 px-3 w-[11%] text-right cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => HandleSortAsync("Due")'>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <span>Due (₹)</span>
+                                <span class="@_sortState.GetIndicatorClass("Due")">@_sortState.GetIndicator("Due")</span>
+                            </div>
+                        </th>
+                        <th class="py-3 px-3 w-[11%] text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 transition-colors" @onclick='() => HandleSortAsync("Status")'>
+                            <div class="flex items-center justify-center gap-1.5">
+                                <span>Status</span>
+                                <span class="@_sortState.GetIndicatorClass("Status")">@_sortState.GetIndicator("Status")</span>
+                            </div>
+                        </th>
+                        <th class="py-3 px-4 w-[14%] text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                    @foreach (var record in FilteredRecords)
-                    {
-                        <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/30 transition-colors">
-                            <td class="py-3.5 px-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800 text-[#00796b] dark:text-teal-300 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                        @record.Initials
+
+                @if (_isLoading && !_items.Any())
+                {
+                    <TableSkeletonRows Columns="7" Rows="5" />
+                }
+                else if (!_items.Any())
+                {
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="py-12 text-center">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
                                     </div>
-                                    <span class="font-bold text-slate-900 dark:text-white">@record.StudentName</span>
+                                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No Student Fee Records Found</p>
+                                    <p class="text-xs text-slate-400 max-w-sm">No fee assignments match your current filters. Assign fee structures to students to start tracking collections.</p>
+                                    <button type="button" @onclick="OpenAssignDrawerAsync" class="mt-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#009488] text-white shadow-sm hover:bg-[#00796b] transition-all cursor-pointer">
+                                        Assign First Fee Structure
+                                    </button>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">@record.BatchName</span>
-                            </td>
-                            <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-white">₹@record.TotalFee.ToString("N0")</td>
-                            <td class="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">₹@record.PaidAmount.ToString("N0")</td>
-                            <td class="py-3.5 px-4 font-extrabold @(record.DueAmount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-400")">₹@record.DueAmount.ToString("N0")</td>
-                            <td class="py-3.5 px-4">
-                                @if (record.Status == "Paid")
-                                { <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">Paid</span> }
-                                else if (record.Status == "Partial")
-                                { <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800">Partial</span> }
-                                else
-                                { <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">Overdue</span> }
-                            </td>
-                            <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-medium">@record.LastPaymentDate</td>
                         </tr>
-                    }
-                </tbody>
+                    </tbody>
+                }
+                else
+                {
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs @(_isLoading ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                        @foreach (var item in _items)
+                        {
+                            <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/20 transition-colors group">
+                                <!-- Student Name & Code -->
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800 text-[#00796b] dark:text-teal-300 font-bold text-[10px] flex items-center justify-center shrink-0">
+                                            @item.Initials
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-slate-900 dark:text-white truncate">@item.StudentName</p>
+                                            <p class="text-[10px] text-slate-400 truncate">
+                                                @(string.IsNullOrWhiteSpace(item.RollNumber) ? (item.StudentCode ?? "No Roll") : $"Roll: {item.RollNumber}")
+                                                @if (!string.IsNullOrWhiteSpace(item.ClassName))
+                                                {
+                                                    <span> • @item.ClassName</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Fee Structure & Branch -->
+                                <td class="py-3 px-3">
+                                    <p class="font-semibold text-slate-800 dark:text-slate-200 truncate">@item.FeeStructureName</p>
+                                    <p class="text-[10px] text-slate-400 truncate">
+                                        @item.BranchName
+                                        @if (!string.IsNullOrWhiteSpace(item.BatchName))
+                                        {
+                                            <span> • @item.BatchName</span>
+                                        }
+                                    </p>
+                                </td>
+
+                                <!-- Total Fee -->
+                                <td class="py-3 px-3 text-right">
+                                    <p class="font-bold text-slate-900 dark:text-white">₹@item.FinalAmount.ToString("N0")</p>
+                                    @if (item.DiscountAmount > 0)
+                                    {
+                                        <p class="text-[10px] text-emerald-600 font-medium">Saved ₹@item.DiscountAmount.ToString("N0")</p>
+                                    }
+                                </td>
+
+                                <!-- Paid Amount -->
+                                <td class="py-3 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                    ₹@item.PaidAmount.ToString("N0")
+                                </td>
+
+                                <!-- Due Amount -->
+                                <td class="py-3 px-3 text-right font-extrabold @(item.DueAmount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-400")">
+                                    ₹@item.DueAmount.ToString("N0")
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td class="py-3 px-3 text-center">
+                                    @if (item.Status == nameof(StudentFeeStatus.Paid))
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">Paid</span>
+                                    }
+                                    else if (item.Status == nameof(StudentFeeStatus.PartiallyPaid))
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800">Partial</span>
+                                    }
+                                    else if (item.Status == nameof(StudentFeeStatus.Overdue))
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">Overdue</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Pending</span>
+                                    }
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        @if (item.DueAmount > 0)
+                                        {
+                                            <button type="button" 
+                                                    @onclick="() => OpenCollectDrawerAsync(item)"
+                                                    title="Collect Fee"
+                                                    class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer">
+                                                Collect
+                                            </button>
+                                        }
+
+                                        <button type="button" 
+                                                @onclick="() => OpenStatementDrawerAsync(item.Id)"
+                                                title="View Statement & History"
+                                                class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                }
             </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="border-t border-slate-100 dark:border-slate-800/80">
+            <TablePagination PageNumber="_currentPage"
+                             PageSize="_pageSize"
+                             TotalRecords="_totalRecords"
+                             ItemLabel="students"
+                             IsLoading="_isLoading"
+                             OnPageChanged="HandlePageChangedAsync"
+                             OnPageSizeChanged="HandlePageSizeChangedAsync" />
         </div>
     </div>
 </div>
 
-<!-- Collect Fee Modal -->
-@if (_showCollectModal)
+<!-- ========================================================================= -->
+<!-- DRAWER 1: Collect Fee Payment Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showCollectDrawer)
 {
-    <Modal IsOpen="true" Title="Collect Fee Payment" Subtitle="Record a new fee payment" MaxWidth="max-w-md" OnClose="() => _showCollectModal = false">
-        <ChildContent>
-            <div class="space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Select Student</label>
-                    <CustomSelect @bind-Value="_collectStudentName" Options="_studentOptions" Placeholder="Select Student" Class="w-full" />
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isCollectDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseCollectDrawerAsync"></div>
+
+    <!-- Right Side-Over Drawer Container with Bidirectional Smooth Slide Transition -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isCollectDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient & Logo -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-1.5 flex items-center justify-center shadow-md shrink-0">
+                    <img src="images/Logo.svg" alt="Vargshala" class="w-full h-full object-contain" />
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Amount (₹)</label>
-                        <input type="number" @bind="_collectAmount" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-bold text-slate-800 dark:text-white" />
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Payment Mode</label>
-                        <CustomSelect @bind-Value="_collectMode" Options="_paymentModeOptions" Placeholder="Mode" Class="w-full" />
-                    </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>Collect Fee Payment</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Record inward student payment with automatic installment allocation
+                    </p>
                 </div>
             </div>
-        </ChildContent>
-        <FooterTemplate>
-            <button type="button" @onclick="() => _showCollectModal = false" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer">Cancel</button>
-            <button type="button" @onclick="ProcessCollection" class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] rounded-xl shadow-md border border-teal-400/30 transition-all cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                <span>Confirm Payment</span>
+
+            <button type="button" 
+                    @onclick="CloseCollectDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-        </FooterTemplate>
-    </Modal>
+        </div>
+
+        <!-- Drawer Scrollable Form Body (No Scrollbar) -->
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 select-text text-slate-800 dark:text-slate-100" style="scrollbar-width: none; -ms-overflow-style: none;">
+            
+            <!-- Section 1: Branch & Student Selection -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                    <span>1. Branch &amp; Student Selection</span>
+                </div>
+
+                <!-- Branch Selector inside Drawer -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch *</label>
+                    <CustomSelect Value="@_drawerBranchId"
+                                  ValueChanged="HandleDrawerBranchChangedAsync"
+                                  Options="@_drawerBranchOptions"
+                                  Placeholder="Select Branch"
+                                  Class="w-full" />
+                </div>
+
+                <!-- Select Student -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between min-h-[18px]">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Student *</label>
+                        @if (_drawerStudentLookupOptions.Any())
+                        {
+                            <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">@_drawerStudentLookupOptions.Count student(s) available</span>
+                        }
+                    </div>
+                    <CustomSelect Value="@_collectStudentIdString"
+                                  ValueChanged="HandleCollectStudentChanged"
+                                  Options="@_drawerStudentLookupOptions"
+                                  Placeholder="@(_drawerStudentLookupOptions.Any() ? "Search or select student..." : "No students in selected branch")"
+                                  Disabled="@(!_drawerStudentLookupOptions.Any())"
+                                  Class="w-full" />
+                </div>
+            </div>
+
+            @if (_selectedCollectStudent != null)
+            {
+                <!-- Outstanding Info Box -->
+                <div class="p-4 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 space-y-2.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-600 dark:text-slate-400 font-medium">Student:</span>
+                        <span class="font-bold text-slate-900 dark:text-white">@_selectedCollectStudent.FullName</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_selectedCollectStudent.RollNumber))
+                    {
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-600 dark:text-slate-400 font-medium">Roll Number:</span>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200">@_selectedCollectStudent.RollNumber</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_selectedCollectStudent.ClassName))
+                    {
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-600 dark:text-slate-400 font-medium">Class / Course:</span>
+                            <span class="font-semibold text-slate-800 dark:text-slate-200">@_selectedCollectStudent.ClassName</span>
+                        </div>
+                    }
+                    <div class="flex items-center justify-between text-xs pt-1.5 border-t border-teal-200/60 dark:border-teal-800/60">
+                        <span class="text-slate-600 dark:text-slate-400 font-bold">Outstanding Balance:</span>
+                        <span class="font-black text-rose-600 dark:text-rose-400 text-base">₹@_selectedCollectStudent.PendingDue.ToString("N0")</span>
+                    </div>
+                </div>
+
+                <!-- Section 2: Payment Collection -->
+                <div class="space-y-4 pt-1">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>2. Payment Collection Details</span>
+                    </div>
+
+                    <!-- Payment Amount -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Amount to Collect (₹) *</label>
+                            @if (_selectedCollectStudent.PendingDue > 0)
+                            {
+                                <button type="button" 
+                                        @onclick="() => _collectRequest.Amount = _selectedCollectStudent.PendingDue"
+                                        class="text-[10px] font-bold text-[#009488] hover:text-[#00796b] hover:underline cursor-pointer">
+                                    Pay Full Due (₹@_selectedCollectStudent.PendingDue.ToString("N0"))
+                                </button>
+                            }
+                        </div>
+                        <input type="number" 
+                               @bind="_collectRequest.Amount" 
+                               min="1" 
+                               max="@_selectedCollectStudent.PendingDue"
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-800 dark:text-white focus:bg-white dark:focus:bg-[#142025] focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                    </div>
+
+                    <!-- Payment Mode & Reference -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Payment Mode *</label>
+                            <CustomSelect Value="@_collectRequest.PaymentMethod"
+                                          ValueChanged="(v) => _collectRequest.PaymentMethod = v"
+                                          Options="@_paymentModeOptions"
+                                          Placeholder="Select Mode"
+                                          Class="w-full" />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Reference / UTR</label>
+                            <input type="text" 
+                                   @bind="_collectRequest.TransactionReference"
+                                   placeholder="UTR / Cheque / Ref No."
+                                   class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:bg-white dark:focus:bg-[#142025] focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Remarks / Receipt Note</label>
+                        <input type="text" 
+                               @bind="_collectRequest.Remarks"
+                               placeholder="Optional notes or remarks..."
+                               class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:bg-white dark:focus:bg-[#142025] focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Drawer Footer Action Buttons -->
+        <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseCollectDrawerAsync"
+                    class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="SubmitPaymentAsync"
+                    disabled="@(_isSubmitting || _selectedCollectStudent == null || _collectRequest.Amount <= 0)"
+                    class="px-5 py-2.5 text-xs font-bold bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] text-white rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                @if (_isSubmitting)
+                {
+                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Recording Payment...</span>
+                }
+                else
+                {
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Confirm Payment</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- DRAWER 2: Assign Fee Structure Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showAssignDrawer)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isAssignDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseAssignDrawerAsync"></div>
+
+    <!-- Right Side-Over Drawer Container with Bidirectional Smooth Slide Transition -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isAssignDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient & Logo -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-1.5 flex items-center justify-center shadow-md shrink-0">
+                    <img src="images/Logo.svg" alt="Vargshala" class="w-full h-full object-contain" />
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>Assign Fee Structure</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Allocate fee package &amp; configure installment schedules
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseAssignDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Scrollable Form Body (No Scrollbar) -->
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 select-text text-slate-800 dark:text-slate-100" style="scrollbar-width: none; -ms-overflow-style: none;">
+            
+            <!-- Section 1: Branch, Student & Package Selection -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                    <span>1. Branch, Student &amp; Package</span>
+                </div>
+
+                <!-- Branch Selector inside Drawer -->
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Branch *</label>
+                    <CustomSelect Value="@_drawerBranchId"
+                                  ValueChanged="HandleDrawerBranchChangedAsync"
+                                  Options="@_drawerBranchOptions"
+                                  Placeholder="Select Branch"
+                                  Class="w-full" />
+                </div>
+
+                <!-- Select Student -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between min-h-[18px]">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Student *</label>
+                        @if (_drawerStudentLookupOptions.Any())
+                        {
+                            <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">@_drawerStudentLookupOptions.Count student(s) available</span>
+                        }
+                    </div>
+                    <CustomSelect Value="@_assignStudentIdString"
+                                  ValueChanged="HandleAssignStudentChanged"
+                                  Options="@_drawerStudentLookupOptions"
+                                  Placeholder="@(_drawerStudentLookupOptions.Any() ? "Search or select student..." : "No students in selected branch")"
+                                  Disabled="@(!_drawerStudentLookupOptions.Any())"
+                                  Class="w-full" />
+                </div>
+
+                <!-- Select Fee Structure -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between min-h-[18px]">
+                        <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Fee Structure Package *</label>
+                        @if (_drawerStructureLookupOptions.Any())
+                        {
+                            <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">@_drawerStructureLookupOptions.Count package(s) available</span>
+                        }
+                    </div>
+                    <CustomSelect Value="@_assignStructureIdString"
+                                  ValueChanged="HandleAssignStructureChanged"
+                                  Options="@_drawerStructureLookupOptions"
+                                  Placeholder="@(_drawerStructureLookupOptions.Any() ? "Choose fee package..." : "No packages in selected branch")"
+                                  Disabled="@(!_drawerStructureLookupOptions.Any())"
+                                  Class="w-full" />
+                </div>
+            </div>
+
+            @if (_selectedAssignStructure != null)
+            {
+                <div class="p-4 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-between text-xs">
+                    <div class="space-y-0.5">
+                        <span class="text-slate-600 dark:text-slate-400 font-medium">Selected Package Total:</span>
+                        <div class="text-[11px] text-teal-700 dark:text-teal-300 font-semibold">@_selectedAssignStructure.AcademicSession</div>
+                    </div>
+                    <span class="font-extrabold text-slate-900 dark:text-white text-base">₹@_selectedAssignStructure.TotalAmount.ToString("N0")</span>
+                </div>
+
+                <!-- Section 2: Discount & Installments -->
+                <div class="space-y-4 pt-1">
+                    <div class="flex items-center gap-2 text-xs font-bold text-[#00796b] dark:text-teal-300 uppercase tracking-wider pb-1 border-b border-teal-500/20">
+                        <span>2. Discount &amp; Installments</span>
+                    </div>
+
+                    <!-- Discount Selector -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Discount Type</label>
+                            <CustomSelect Value="@_assignRequest.DiscountType"
+                                          ValueChanged="(v) => _assignRequest.DiscountType = v"
+                                          Options="@_discountTypeOptions"
+                                          Placeholder="No Discount"
+                                          Class="w-full" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Discount Value</label>
+                            <input type="number" 
+                                   @bind="_assignRequest.DiscountValue" 
+                                   min="0" 
+                                   placeholder="@(_assignRequest.DiscountType == nameof(FeeDiscountType.Percentage) ? "% (e.g. 10)" : "₹ (e.g. 2000)")"
+                                   class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:bg-white dark:focus:bg-[#142025] focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                        </div>
+                    </div>
+
+                    <!-- Discount Reason -->
+                    @if (!string.IsNullOrWhiteSpace(_assignRequest.DiscountType) && _assignRequest.DiscountValue > 0)
+                    {
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Discount Reason / Approval Note</label>
+                            <input type="text" 
+                                   @bind="_assignRequest.DiscountReason" 
+                                   placeholder="e.g. Sibling concession, Merit scholarship"
+                                   class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:bg-white dark:focus:bg-[#142025] focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                        </div>
+                    }
+
+                    <!-- Installments Plan -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Installments *</label>
+                            <CustomSelect Value="@_assignRequest.InstallmentsCount.ToString()"
+                                          ValueChanged="(v) => _assignRequest.InstallmentsCount = int.TryParse(v, out var n) ? n : 1"
+                                          Options="@_installmentsOptions"
+                                          Class="w-full" />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">First Due Date *</label>
+                            <input type="date" 
+                                   value="@_assignFirstDueDateString" 
+                                   @onchange="(e) => HandleFirstDueDateChange(e.Value?.ToString())"
+                                   class="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:bg-white dark:focus:bg-[#142025] focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                        </div>
+                    </div>
+
+                    <!-- Final Amount Summary Box -->
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-500 dark:text-slate-400">Total Net Payable:</span>
+                            <span class="font-extrabold text-[#00796b] dark:text-teal-300 text-base">₹@CalculatedFinalAmount.ToString("N0")</span>
+                        </div>
+                        @if (_assignRequest.InstallmentsCount > 1)
+                        {
+                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200 dark:border-slate-700">
+                                <span>Per Installment (approx):</span>
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">
+                                    ₹@((CalculatedFinalAmount / _assignRequest.InstallmentsCount).ToString("N0")) × @_assignRequest.InstallmentsCount
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Drawer Footer Action Buttons -->
+        <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseAssignDrawerAsync"
+                    class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="SubmitAssignAsync"
+                    disabled="@(_isSubmitting || string.IsNullOrEmpty(_assignStudentIdString) || string.IsNullOrEmpty(_assignStructureIdString))"
+                    class="px-5 py-2.5 text-xs font-bold bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] text-white rounded-xl shadow-md shadow-teal-900/15 border border-teal-400/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                @if (_isSubmitting)
+                {
+                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Assigning Package...</span>
+                }
+                else
+                {
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span>Assign Structure</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- DRAWER 3: Statement & Installments Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showStatementDrawer && _selectedFeeDetail != null)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isStatementDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseStatementDrawerAsync"></div>
+
+    <!-- Right Side-Over Drawer Container with Bidirectional Smooth Slide Transition -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isStatementDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 text-teal-200 font-extrabold text-xs flex items-center justify-center shadow-md shrink-0">
+                    @_selectedFeeDetail.StudentFee.Initials
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>@_selectedFeeDetail.StudentFee.StudentName</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        @_selectedFeeDetail.StudentFee.FeeStructureName • @_selectedFeeDetail.StudentFee.BranchName
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseStatementDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6 select-text text-slate-800 dark:text-slate-100" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <!-- Summary Card -->
+            <div class="grid grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-center">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Total Fee</p>
+                    <p class="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">₹@_selectedFeeDetail.StudentFee.FinalAmount.ToString("N0")</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-emerald-600 uppercase">Paid</p>
+                    <p class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">₹@_selectedFeeDetail.StudentFee.PaidAmount.ToString("N0")</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-rose-600 uppercase">Due</p>
+                    <p class="text-sm font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">₹@_selectedFeeDetail.StudentFee.DueAmount.ToString("N0")</p>
+                </div>
+            </div>
+
+            <!-- Installment Schedule -->
+            <div class="space-y-2">
+                <h3 class="text-xs font-bold text-slate-800 dark:text-white flex items-center justify-between">
+                    <span>Installment Schedule</span>
+                    <span class="text-[11px] font-medium text-slate-400">@_selectedFeeDetail.Installments.Count installments</span>
+                </h3>
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-50 dark:bg-[#18262c] text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="py-2.5 px-3">#</th>
+                                <th class="py-2.5 px-3">Due Date</th>
+                                <th class="py-2.5 px-3 text-right">Amount</th>
+                                <th class="py-2.5 px-3 text-right">Paid</th>
+                                <th class="py-2.5 px-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @foreach (var inst in _selectedFeeDetail.Installments)
+                            {
+                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                    <td class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-300">Inst @inst.InstallmentNumber</td>
+                                    <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">@inst.DueDate.ToString("dd MMM yyyy")</td>
+                                    <td class="py-2.5 px-3 text-right font-semibold text-slate-900 dark:text-white">₹@inst.Amount.ToString("N0")</td>
+                                    <td class="py-2.5 px-3 text-right font-semibold text-emerald-600">₹@inst.PaidAmount.ToString("N0")</td>
+                                    <td class="py-2.5 px-3 text-center">
+                                        @if (inst.Status == nameof(StudentFeeStatus.Paid))
+                                        {
+                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Paid</span>
+                                        }
+                                        else if (inst.Status == nameof(StudentFeeStatus.PartiallyPaid))
+                                        {
+                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Partial</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Pending</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Payments / Receipts -->
+            <div class="space-y-2">
+                <h3 class="text-xs font-bold text-slate-800 dark:text-white">Payment Receipts</h3>
+                @if (!_selectedFeeDetail.RecentPayments.Any())
+                {
+                    <p class="text-xs text-slate-400 italic">No payments recorded yet.</p>
+                }
+                else
+                {
+                    <div class="space-y-2">
+                        @foreach (var p in _selectedFeeDetail.RecentPayments)
+                        {
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-900 dark:text-white">@p.ReceiptNumber</span>
+                                        <span class="text-[10px] px-1.5 py-0.2 rounded bg-teal-50 dark:bg-teal-950 text-[#009488] font-semibold">@p.PaymentMethod</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">@p.PaymentDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="font-black text-emerald-600 dark:text-emerald-400 text-sm">₹@p.Amount.ToString("N0")</span>
+                                    <button type="button" 
+                                            @onclick="() => ViewReceiptAsync(p.Id)"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                                            title="View Receipt">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Drawer Footer Action Buttons -->
+        <div class="p-4 bg-slate-50 dark:bg-[#0c1417] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+            <div>
+                @if (_selectedFeeDetail.StudentFee.DueAmount > 0)
+                {
+                    <button type="button" 
+                            @onclick="() => HandleStatementCollectClickedAsync(_selectedFeeDetail.StudentFee)"
+                            class="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] rounded-xl shadow-md border border-teal-400/30 transition-all flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>Collect Payment</span>
+                    </button>
+                }
+            </div>
+            <button type="button" 
+                    @onclick="CloseStatementDrawerAsync"
+                    class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
+                Close
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- PRINTABLE RECEIPT MODAL -->
+<!-- ========================================================================= -->
+@if (_showReceiptModal && _activeReceipt != null)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white dark:bg-[#142025] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-scale-up">
+            <!-- Printable Area -->
+            <div id="receipt-printable-area" class="p-6 space-y-5 bg-white text-slate-900">
+                <!-- Receipt Header -->
+                <div class="flex items-center justify-between border-b pb-4 border-slate-200">
+                    <div>
+                        <h1 class="text-base font-black tracking-tight text-[#004D40]">VARGSHALA INSTITUTE</h1>
+                        <p class="text-[11px] text-slate-500 font-medium">Official Fee Payment Receipt</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">PAID</span>
+                        <p class="text-[10px] text-slate-400 font-mono mt-1">@_activeReceipt.ReceiptNumber</p>
+                    </div>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Student Details</p>
+                        <p class="font-bold text-slate-800 mt-0.5">@_activeReceipt.StudentName</p>
+                        <p class="text-[11px] text-slate-500">Roll No: @(_activeReceipt.StudentRollNumber ?? "N/A")</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Payment Info</p>
+                        <p class="font-bold text-slate-800 mt-0.5">@_activeReceipt.PaymentDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+                        <p class="text-[11px] text-slate-500">Mode: @_activeReceipt.PaymentMethod @(!string.IsNullOrWhiteSpace(_activeReceipt.TransactionReference) ? $"({_activeReceipt.TransactionReference})" : "")</p>
+                    </div>
+                </div>
+
+                <!-- Allocations Breakdown -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200">
+                            <tr>
+                                <th class="py-2 px-3">Description</th>
+                                <th class="py-2 px-3 text-right">Allocated Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach (var alloc in _activeReceipt.Allocations)
+                            {
+                                <tr>
+                                    <td class="py-2 px-3 text-slate-700">Installment @alloc.InstallmentNumber (Due: @alloc.DueDate.ToString("dd MMM yyyy"))</td>
+                                    <td class="py-2 px-3 text-right font-bold text-slate-900">₹@alloc.AllocatedAmount.ToString("N0")</td>
+                                </tr>
+                            }
+                            <tr class="bg-slate-50/50 font-black">
+                                <td class="py-2 px-3 text-slate-900">Total Amount Paid</td>
+                                <td class="py-2 px-3 text-right text-emerald-700 text-sm">₹@_activeReceipt.Amount.ToString("N0")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Remarks if any -->
+                @if (!string.IsNullOrWhiteSpace(_activeReceipt.Remarks))
+                {
+                    <p class="text-[11px] text-slate-500 italic">Remarks: @_activeReceipt.Remarks</p>
+                }
+
+                <div class="pt-4 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Generated by Vargshala SaaS</span>
+                    <span>Authorized Signatory</span>
+                </div>
+            </div>
+
+            <!-- Footer / Action Buttons -->
+            <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5 bg-slate-50/50 dark:bg-[#152328]/30">
+                <button type="button" @onclick="() => _showReceiptModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-xl cursor-pointer">
+                    Close
+                </button>
+                <button type="button" @onclick="PrintReceipt" class="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] rounded-xl shadow-md cursor-pointer flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print Receipt</span>
+                </button>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    private string _searchQuery = string.Empty;
-    private string _filterBatch = string.Empty;
-    private string _filterStatus = string.Empty;
-    private bool _showCollectModal = false;
-    private string _collectStudentName = string.Empty;
-    private decimal _collectAmount = 5000;
-    private string _collectMode = "UPI";
+    private bool _isLoading = true;
+    private bool _isSubmitting = false;
+
+    private List<StudentFeeDto> _items = new();
+    private FeeStatisticsDto _stats = new();
+    private int _totalRecords = 0;
+    private int _currentPage = 1;
+    private int _pageSize = 10;
+
+    private string _searchTerm = string.Empty;
+    private string _selectedBranchId = string.Empty;
+    private string _selectedClassId = string.Empty;
+    private string _selectedStatus = string.Empty;
     private readonly TableSortState _sortState = new();
 
-    private decimal _totalExpected => _feeRecords.Sum(f => f.TotalFee);
-    private decimal _totalCollected => _feeRecords.Sum(f => f.PaidAmount);
-    private decimal _totalPending => _feeRecords.Sum(f => f.DueAmount);
-    private int CollectionPercent => _totalExpected > 0 ? (int)Math.Round(_totalCollected / _totalExpected * 100) : 0;
-
-    private readonly List<CustomSelect.CustomSelectOption> _batchFilterOptions = new()
-    {
-        new("", "All Batches"), new("Class 10 — Maths", "Class 10 — Maths"), new("Class 10 — Science", "Class 10 — Science"),
-        new("Class 12 — Physics", "Class 12 — Physics"), new("IIT-JEE Morning Batch", "IIT-JEE Morning Batch")
-    };
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Status"), new("Paid", "Paid"), new("Partial", "Partial"), new("Overdue", "Overdue")
-    };
-    private readonly List<CustomSelect.CustomSelectOption> _studentOptions = new()
-    {
-        new("Aarav Mehta", "Aarav Mehta"), new("Isha Agarwal", "Isha Agarwal"), new("Kabir Singh", "Kabir Singh"),
-        new("Vivaan Chopra", "Vivaan Chopra"), new("Devansh Jain", "Devansh Jain")
-    };
-    private readonly List<CustomSelect.CustomSelectOption> _paymentModeOptions = new()
-    {
-        new("UPI", "UPI / Online"), new("Cash", "Cash"), new("Bank Transfer", "Bank Transfer"), new("Cheque", "Cheque")
-    };
-
-    private readonly List<FeeRecord> _feeRecords = new()
-    {
-        new("Aarav Mehta", "Class 10 — Maths", 25000, 25000, "Paid", "28 Aug 2026"),
-        new("Isha Agarwal", "Class 10 — Maths", 25000, 15000, "Partial", "15 Aug 2026"),
-        new("Kabir Singh", "Class 10 — Science", 28000, 0, "Overdue", "—"),
-        new("Ananya Rao", "Class 10 — Science", 28000, 28000, "Paid", "01 Sep 2026"),
-        new("Devansh Jain", "Class 12 — Physics", 32000, 20000, "Partial", "20 Aug 2026"),
-        new("Ridhima Kaur", "Class 12 — Chemistry", 32000, 32000, "Paid", "25 Aug 2026"),
-        new("Vivaan Chopra", "IIT-JEE Morning Batch", 65000, 20000, "Overdue", "10 Jul 2026"),
-        new("Meera Iyer", "IIT-JEE Morning Batch", 65000, 65000, "Paid", "01 Sep 2026")
-    };
-
-    private List<FeeRecord> FilteredRecords
+    private bool HasActiveFilters
     {
         get
         {
-            var query = _feeRecords.Where(f =>
-                (string.IsNullOrWhiteSpace(_searchQuery) || f.StudentName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)) &&
-                (string.IsNullOrWhiteSpace(_filterBatch) || f.BatchName == _filterBatch) &&
-                (string.IsNullOrWhiteSpace(_filterStatus) || f.Status == _filterStatus));
-
-            if (_sortState.IsSorted)
-            {
-                query = _sortState.Column switch
-                {
-                    "Name" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(f => f.StudentName) : query.OrderByDescending(f => f.StudentName),
-                    "Total" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(f => f.TotalFee) : query.OrderByDescending(f => f.TotalFee),
-                    "Due" => _sortState.Direction == SortDirection.Ascending ? query.OrderBy(f => f.DueAmount) : query.OrderByDescending(f => f.DueAmount),
-                    _ => query
-                };
-            }
-            return query.ToList();
+            var mainBranchId = _branches.FirstOrDefault(b => b.IsMainBranch)?.Id.ToString() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(_searchTerm) ||
+                   (!string.IsNullOrWhiteSpace(_selectedBranchId) && _selectedBranchId != mainBranchId) ||
+                   !string.IsNullOrWhiteSpace(_selectedClassId) ||
+                   !string.IsNullOrWhiteSpace(_selectedStatus);
         }
     }
 
-    private void ProcessCollection() { _showCollectModal = false; }
+    // Filter Options
+    private List<BranchDto> _branches = new();
+    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new();
+    private List<CustomSelect.CustomSelectOption> _classFilterOptions = new();
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = FeeFilterHelper.GetStatusFilterOptions();
 
-    public class FeeRecord
+    // Drawer Branch & Data State
+    private string _drawerBranchId = string.Empty;
+    private List<CustomSelect.CustomSelectOption> _drawerBranchOptions = new();
+    private List<StudentLookupForFeeDto> _allDrawerStudentLookups = new();
+    private List<CustomSelect.CustomSelectOption> _drawerStudentLookupOptions = new();
+    private List<FeeStructureLookupDto> _allDrawerStructureLookups = new();
+    private List<CustomSelect.CustomSelectOption> _drawerStructureLookupOptions = new();
+
+    // Collect Fee State
+    private bool _showCollectDrawer = false;
+    private bool _isCollectDrawerOpen = false;
+    private CollectPaymentRequest _collectRequest = new();
+    private string _collectStudentIdString = string.Empty;
+    private StudentLookupForFeeDto? _selectedCollectStudent = null;
+
+    // Assign Fee State
+    private bool _showAssignDrawer = false;
+    private bool _isAssignDrawerOpen = false;
+    private AssignStudentFeeRequest _assignRequest = new();
+    private string _assignStudentIdString = string.Empty;
+    private string _assignStructureIdString = string.Empty;
+    private string _assignFirstDueDateString = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd");
+    private FeeStructureLookupDto? _selectedAssignStructure = null;
+
+    // Statement & Receipt State
+    private bool _showStatementDrawer = false;
+    private bool _isStatementDrawerOpen = false;
+    private StudentFeeDetailDto? _selectedFeeDetail = null;
+
+    private bool _showReceiptModal = false;
+    private PaymentDto? _activeReceipt = null;
+
+    private readonly List<CustomSelect.CustomSelectOption> _paymentModeOptions = FeeFilterHelper.GetPaymentMethodOptions();
+    private readonly List<CustomSelect.CustomSelectOption> _discountTypeOptions = FeeFilterHelper.GetDiscountTypeOptions();
+    private readonly List<CustomSelect.CustomSelectOption> _installmentsOptions = FeeFilterHelper.GetInstallmentOptions();
+
+    private decimal CalculatedFinalAmount
     {
-        public string StudentName { get; set; }
-        public string BatchName { get; set; }
-        public decimal TotalFee { get; set; }
-        public decimal PaidAmount { get; set; }
-        public decimal DueAmount => TotalFee - PaidAmount;
-        public string Status { get; set; }
-        public string LastPaymentDate { get; set; }
-        public string Initials => string.Join("", StudentName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])).ToUpper();
+        get
+        {
+            if (_selectedAssignStructure == null) return 0;
+            var orig = _selectedAssignStructure.TotalAmount;
+            if (_assignRequest.DiscountValue.HasValue && _assignRequest.DiscountValue > 0)
+            {
+                if (_assignRequest.DiscountType == nameof(FeeDiscountType.Percentage))
+                {
+                    var disc = Math.Round(orig * (_assignRequest.DiscountValue.Value / 100m), 2);
+                    return Math.Max(0, orig - disc);
+                }
+                return Math.Max(0, orig - _assignRequest.DiscountValue.Value);
+            }
+            return orig;
+        }
+    }
 
-        public FeeRecord(string name, string batch, decimal total, decimal paid, string status, string lastPayment)
-        { StudentName = name; BatchName = batch; TotalFee = total; PaidAmount = paid; Status = status; LastPaymentDate = lastPayment; }
+    protected override async Task OnInitializedAsync()
+    {
+        BranchContext.OnBranchChanged += HandleBranchContextChangedAsync;
+
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
+
+        // Auto-select current branch if present
+        if (BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId != Guid.Empty)
+        {
+            _selectedBranchId = BranchContext.CurrentBranchId.Value.ToString();
+        }
+        else
+        {
+            _selectedBranchId = string.Empty;
+        }
+
+        await LoadFilterDropdownsAsync();
+        await LoadDataAsync(1);
+    }
+
+    private async Task HandleBranchContextChangedAsync()
+    {
+        var newBranchId = BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId != Guid.Empty
+            ? BranchContext.CurrentBranchId.Value.ToString()
+            : string.Empty;
+
+        if (_selectedBranchId != newBranchId)
+        {
+            _selectedBranchId = newBranchId;
+            _selectedClassId = string.Empty;
+            await InvokeAsync(async () =>
+            {
+                await LoadFilterDropdownsAsync(keepBranchSelection: !string.IsNullOrWhiteSpace(newBranchId));
+                await LoadDataAsync(1);
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task LoadFilterDropdownsAsync(bool keepBranchSelection = false)
+    {
+        // 1. Branches
+        var branchRes = await BranchService.GetAllActiveBranchesAsync();
+        if (branchRes.Success && branchRes.Data != null)
+        {
+            _branches = branchRes.Data;
+            _branchFilterOptions = new() { new("", "All Branches") };
+            _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name + (b.IsMainBranch ? " (Main Branch)" : ""))));
+            _drawerBranchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name + (b.IsMainBranch ? " (Main Branch)" : ""))).ToList();
+
+            // Default selected branch to Main Branch if not explicitly chosen or kept
+            if (!keepBranchSelection && string.IsNullOrWhiteSpace(_selectedBranchId))
+            {
+                var mainBranch = _branches.FirstOrDefault(b => b.IsMainBranch) ?? _branches.FirstOrDefault();
+                if (mainBranch != null)
+                {
+                    _selectedBranchId = mainBranch.Id.ToString();
+                }
+            }
+        }
+
+        // 2. Classes (Filtered by the selected branch)
+        Guid? bId = Guid.TryParse(_selectedBranchId, out var g) && g != Guid.Empty ? g : null;
+        var classRes = await ClassService.GetAllActiveClassesAsync(bId);
+        if (classRes.Success && classRes.Data != null)
+        {
+            _classFilterOptions = new() { new("", "All Classes") };
+
+            if (!bId.HasValue && _branches.Count > 1)
+            {
+                // In "All Branches" mode, append branch name to prevent ambiguous duplicate class names (e.g. Class 10th (Main Branch))
+                _classFilterOptions.AddRange(classRes.Data.Select(c =>
+                {
+                    var branchName = _branches.FirstOrDefault(b => b.Id == c.BranchId)?.Name;
+                    var label = !string.IsNullOrWhiteSpace(branchName) ? $"{c.Name} ({branchName})" : c.Name;
+                    return new CustomSelect.CustomSelectOption(c.Id.ToString(), label);
+                }));
+            }
+            else
+            {
+                _classFilterOptions.AddRange(classRes.Data.Select(c => new CustomSelect.CustomSelectOption(c.Id.ToString(), c.Name)));
+            }
+        }
+    }
+
+    private async Task LoadDataAsync(int page)
+    {
+        _isLoading = true;
+        _currentPage = page;
+
+        Guid? branchId = Guid.TryParse(_selectedBranchId, out var b) && b != Guid.Empty ? b : null;
+        Guid? classId = Guid.TryParse(_selectedClassId, out var c) && c != Guid.Empty ? c : null;
+
+        var req = new PagedRequest
+        {
+            PageNumber = _currentPage,
+            PageSize = _pageSize,
+            Search = _searchTerm,
+            SortBy = _sortState.Column,
+            SortDirection = _sortState.IsSorted ? (_sortState.Direction == SortDirection.Descending ? "desc" : "asc") : null
+        };
+
+        var taskList = FeeService.GetStudentFeesPagedAsync(req, branchId, classId, null, _selectedStatus);
+        var taskStats = FeeService.GetFeeStatisticsAsync(branchId);
+
+        await Task.WhenAll(taskList, taskStats);
+
+        var listRes = await taskList;
+        if (listRes.Success && listRes.Data != null)
+        {
+            _items = listRes.Data.Items;
+            _totalRecords = listRes.Data.TotalRecords;
+        }
+        else
+        {
+            _items = new();
+            _totalRecords = 0;
+            if (!string.IsNullOrWhiteSpace(listRes.Message))
+            {
+                if (listRes.Message.Contains("401") || listRes.Message.Contains("Unauthorized"))
+                {
+                    Toast.Error("Your session has expired. Please log in again.");
+                    Navigation.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+                Toast.Error(listRes.Message);
+            }
+        }
+
+        var statsRes = await taskStats;
+        if (statsRes.Success && statsRes.Data != null)
+        {
+            _stats = statsRes.Data;
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task HandleSearchInput(ChangeEventArgs e)
+    {
+        _searchTerm = e.Value?.ToString() ?? string.Empty;
+        await LoadDataAsync(1);
+    }
+
+    private async Task HandleBranchFilterChanged(string val)
+    {
+        _selectedBranchId = val;
+        _selectedClassId = string.Empty;
+        Guid? bId = Guid.TryParse(val, out var g) && g != Guid.Empty ? g : null;
+        if (BranchContext.CurrentBranchId != bId)
+        {
+            await BranchContext.SetBranchAsync(bId);
+        }
+        await LoadFilterDropdownsAsync(keepBranchSelection: true);
+        await LoadDataAsync(1);
+    }
+
+    private async Task HandleClassFilterChanged(string val)
+    {
+        _selectedClassId = val;
+        await LoadDataAsync(1);
+    }
+
+    private async Task HandleStatusFilterChanged(string val)
+    {
+        _selectedStatus = val;
+        await LoadDataAsync(1);
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        _searchTerm = string.Empty;
+        var mainBranch = _branches.FirstOrDefault(b => b.IsMainBranch) ?? _branches.FirstOrDefault();
+        _selectedBranchId = mainBranch != null ? mainBranch.Id.ToString() : string.Empty;
+        _selectedClassId = string.Empty;
+        _selectedStatus = string.Empty;
+        _sortState.Reset();
+        if (mainBranch != null && BranchContext.CurrentBranchId != mainBranch.Id)
+        {
+            await BranchContext.SetBranchAsync(mainBranch.Id);
+        }
+        await LoadFilterDropdownsAsync(keepBranchSelection: true);
+        await LoadDataAsync(1);
+    }
+
+    private async Task HandleSortAsync(string column)
+    {
+        _sortState.Toggle(column);
+        await LoadDataAsync(1);
+    }
+
+    private async Task HandlePageChangedAsync(int page)
+    {
+        await LoadDataAsync(page);
+    }
+
+    private async Task HandlePageSizeChangedAsync(int newSize)
+    {
+        _pageSize = newSize;
+        await LoadDataAsync(1);
+    }
+
+    // =========================================================================
+    // DRAWER HELPER & BRANCH LOGIC
+    // =========================================================================
+    private string DetermineDefaultDrawerBranchId()
+    {
+        // 1. Check if page filter has a valid selected branch
+        if (!string.IsNullOrWhiteSpace(_selectedBranchId) && Guid.TryParse(_selectedBranchId, out var selB) && selB != Guid.Empty)
+        {
+            return _selectedBranchId;
+        }
+
+        // 2. Check if BranchContext has a current branch selected
+        if (BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId.Value != Guid.Empty)
+        {
+            return BranchContext.CurrentBranchId.Value.ToString();
+        }
+
+        // 3. Find the main branch from loaded branches
+        var main = _branches.FirstOrDefault(b => b.IsMainBranch);
+        if (main != null)
+        {
+            return main.Id.ToString();
+        }
+
+        // 4. Fallback to first branch if any
+        return _branches.FirstOrDefault()?.Id.ToString() ?? string.Empty;
+    }
+
+    private async Task HandleDrawerBranchChangedAsync(string newBranchId)
+    {
+        _drawerBranchId = newBranchId;
+
+        // Reset student selection
+        _collectStudentIdString = string.Empty;
+        _selectedCollectStudent = null;
+        _collectRequest.StudentId = Guid.Empty;
+        _collectRequest.Amount = 0;
+
+        _assignStudentIdString = string.Empty;
+        _assignStructureIdString = string.Empty;
+        _selectedAssignStructure = null;
+        _assignRequest.StudentId = Guid.Empty;
+        _assignRequest.FeeStructureId = Guid.Empty;
+
+        Guid? branchGuid = Guid.TryParse(newBranchId, out var g) && g != Guid.Empty ? g : null;
+        await LoadDrawerStudentsAsync(branchGuid);
+
+        if (_showAssignDrawer)
+        {
+            await LoadDrawerStructuresAsync(branchGuid);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task LoadDrawerStudentsAsync(Guid? branchId)
+    {
+        var res = await FeeService.GetStudentsLookupAsync(branchId);
+        if (res.Success && res.Data != null)
+        {
+            _allDrawerStudentLookups = res.Data;
+
+            // Ensure only students belonging to the chosen branch are presented in the drawer
+            if (branchId.HasValue && branchId.Value != Guid.Empty)
+            {
+                _allDrawerStudentLookups = _allDrawerStudentLookups
+                    .Where(s => s.BranchId == branchId.Value)
+                    .ToList();
+            }
+
+            _drawerStudentLookupOptions = _allDrawerStudentLookups
+                .Select(s => new CustomSelect.CustomSelectOption(
+                    s.StudentId.ToString(),
+                    $"{s.FullName} {(string.IsNullOrWhiteSpace(s.RollNumber) ? "" : $"({s.RollNumber})")} - Due: ₹{s.PendingDue:N0}"))
+                .ToList();
+        }
+        else
+        {
+            _allDrawerStudentLookups = new();
+            _drawerStudentLookupOptions = new();
+        }
+    }
+
+    private async Task LoadDrawerStructuresAsync(Guid? branchId)
+    {
+        var res = await FeeStructureService.GetAllActiveFeeStructuresAsync(branchId);
+        if (res.Success && res.Data != null)
+        {
+            _allDrawerStructureLookups = res.Data;
+            _drawerStructureLookupOptions = _allDrawerStructureLookups
+                .Select(fs => new CustomSelect.CustomSelectOption(
+                    fs.Id.ToString(),
+                    $"{fs.Name} (₹{fs.TotalAmount:N0}) - {fs.AcademicSession}"))
+                .ToList();
+        }
+        else
+        {
+            _allDrawerStructureLookups = new();
+            _drawerStructureLookupOptions = new();
+        }
+    }
+
+    // =========================================================================
+    // COLLECT FEE ACTIONS
+    // =========================================================================
+    private async Task OpenCollectDrawerAsync(StudentFeeDto? preselected)
+    {
+        _collectRequest = new CollectPaymentRequest();
+        _selectedCollectStudent = null;
+        _collectStudentIdString = string.Empty;
+
+        // Default to Main Branch / current branch context
+        _drawerBranchId = DetermineDefaultDrawerBranchId();
+        if (preselected != null && preselected.BranchId != Guid.Empty)
+        {
+            _drawerBranchId = preselected.BranchId.ToString();
+        }
+
+        Guid? branchGuid = Guid.TryParse(_drawerBranchId, out var g) && g != Guid.Empty ? g : null;
+        await LoadDrawerStudentsAsync(branchGuid);
+
+        if (preselected != null)
+        {
+            _collectStudentIdString = preselected.StudentId.ToString();
+            _selectedCollectStudent = _allDrawerStudentLookups.FirstOrDefault(s => s.StudentId == preselected.StudentId)
+                ?? new StudentLookupForFeeDto
+                {
+                    StudentId = preselected.StudentId,
+                    FullName = preselected.StudentName,
+                    RollNumber = preselected.RollNumber,
+                    ClassName = preselected.ClassName,
+                    BranchId = preselected.BranchId,
+                    BranchName = preselected.BranchName,
+                    PendingDue = preselected.DueAmount
+                };
+            _collectRequest.StudentId = preselected.StudentId;
+            _collectRequest.StudentFeeId = preselected.Id;
+            _collectRequest.Amount = preselected.DueAmount;
+        }
+
+        _showCollectDrawer = true;
+        StateHasChanged();
+        await Task.Yield();
+        _isCollectDrawerOpen = true;
+    }
+
+    private async Task CloseCollectDrawerAsync()
+    {
+        _isCollectDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(300);
+        _showCollectDrawer = false;
+    }
+
+    private void HandleCollectStudentChanged(string val)
+    {
+        _collectStudentIdString = val;
+        if (Guid.TryParse(val, out var sId))
+        {
+            _selectedCollectStudent = _allDrawerStudentLookups.FirstOrDefault(s => s.StudentId == sId);
+            _collectRequest.StudentId = sId;
+            _collectRequest.Amount = _selectedCollectStudent?.PendingDue ?? 0;
+        }
+        else
+        {
+            _selectedCollectStudent = null;
+            _collectRequest.StudentId = Guid.Empty;
+            _collectRequest.Amount = 0;
+        }
+    }
+
+    private async Task SubmitPaymentAsync()
+    {
+        if (_selectedCollectStudent == null || _collectRequest.Amount <= 0) return;
+
+        _isSubmitting = true;
+        var res = await FeeService.CollectFeeAsync(_collectRequest);
+        _isSubmitting = false;
+
+        if (res.Success && res.Data != null)
+        {
+            Toast.Success(res.Message ?? "Payment collected successfully!");
+            await CloseCollectDrawerAsync();
+            _activeReceipt = res.Data;
+            _showReceiptModal = true;
+            await LoadDataAsync(_currentPage);
+        }
+        else
+        {
+            if (res.Message?.Contains("401") == true || res.Message?.Contains("Unauthorized") == true)
+            {
+                Toast.Error("Your session has expired. Please log in again.");
+                Navigation.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+            Toast.Error(res.Message ?? "Failed to collect payment.");
+        }
+    }
+
+    // =========================================================================
+    // ASSIGN FEE ACTIONS
+    // =========================================================================
+    private async Task OpenAssignDrawerAsync()
+    {
+        _assignRequest = new AssignStudentFeeRequest();
+        _assignStudentIdString = string.Empty;
+        _assignStructureIdString = string.Empty;
+        _selectedAssignStructure = null;
+        _assignFirstDueDateString = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd");
+        _assignRequest.FirstDueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7));
+
+        _drawerBranchId = DetermineDefaultDrawerBranchId();
+        Guid? branchGuid = Guid.TryParse(_drawerBranchId, out var g) && g != Guid.Empty ? g : null;
+
+        await LoadDrawerStudentsAsync(branchGuid);
+        await LoadDrawerStructuresAsync(branchGuid);
+
+        _showAssignDrawer = true;
+        StateHasChanged();
+        await Task.Yield();
+        _isAssignDrawerOpen = true;
+    }
+
+    private async Task CloseAssignDrawerAsync()
+    {
+        _isAssignDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(300);
+        _showAssignDrawer = false;
+    }
+
+    private void HandleAssignStudentChanged(string val)
+    {
+        _assignStudentIdString = val;
+        _assignRequest.StudentId = Guid.TryParse(val, out var sId) ? sId : Guid.Empty;
+    }
+
+    private void HandleAssignStructureChanged(string val)
+    {
+        _assignStructureIdString = val;
+        if (Guid.TryParse(val, out var fsId))
+        {
+            _selectedAssignStructure = _allDrawerStructureLookups.FirstOrDefault(fs => fs.Id == fsId);
+            _assignRequest.FeeStructureId = fsId;
+        }
+        else
+        {
+            _selectedAssignStructure = null;
+            _assignRequest.FeeStructureId = Guid.Empty;
+        }
+    }
+
+    private void HandleFirstDueDateChange(string? dateStr)
+    {
+        if (DateTime.TryParse(dateStr, out var dt))
+        {
+            _assignFirstDueDateString = dt.ToString("yyyy-MM-dd");
+            _assignRequest.FirstDueDate = DateOnly.FromDateTime(dt);
+        }
+    }
+
+    private async Task SubmitAssignAsync()
+    {
+        if (_assignRequest.StudentId == Guid.Empty || _assignRequest.FeeStructureId == Guid.Empty) return;
+
+        _isSubmitting = true;
+        var res = await FeeService.AssignFeeAsync(_assignRequest);
+        _isSubmitting = false;
+
+        if (res.Success && res.Data != null)
+        {
+            Toast.Success(res.Message ?? "Fee structure assigned successfully!");
+            await CloseAssignDrawerAsync();
+            await LoadDataAsync(1);
+        }
+        else
+        {
+            if (res.Message?.Contains("401") == true || res.Message?.Contains("Unauthorized") == true)
+            {
+                Toast.Error("Your session has expired. Please log in again.");
+                Navigation.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+            Toast.Error(res.Message ?? "Failed to assign fee structure.");
+        }
+    }
+
+    // =========================================================================
+    // STATEMENT & RECEIPT VIEW
+    // =========================================================================
+    private async Task OpenStatementDrawerAsync(Guid feeId)
+    {
+        var res = await FeeService.GetStudentFeeDetailsAsync(feeId);
+        if (res.Success && res.Data != null)
+        {
+            _selectedFeeDetail = res.Data;
+            _showStatementDrawer = true;
+            StateHasChanged();
+            await Task.Yield();
+            _isStatementDrawerOpen = true;
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Could not load fee statement.");
+        }
+    }
+
+    private async Task CloseStatementDrawerAsync()
+    {
+        _isStatementDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(300);
+        _showStatementDrawer = false;
+        _selectedFeeDetail = null;
+    }
+
+    private async Task HandleStatementCollectClickedAsync(StudentFeeDto sf)
+    {
+        await CloseStatementDrawerAsync();
+        await OpenCollectDrawerAsync(sf);
+    }
+
+    private async Task ViewReceiptAsync(Guid paymentId)
+    {
+        var res = await FeeService.GetPaymentReceiptAsync(paymentId);
+        if (res.Success && res.Data != null)
+        {
+            _activeReceipt = res.Data;
+            _showReceiptModal = true;
+        }
+    }
+
+    private async Task PrintReceipt()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private async Task ExportCsv()
+    {
+        if (!_items.Any())
+        {
+            Toast.Warning("No records to export.");
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Student Name,Roll Number,Class,Fee Structure,Total Amount,Paid Amount,Due Amount,Status,Assigned Date");
+        foreach (var item in _items)
+        {
+            sb.AppendLine($"\"{item.StudentName}\",\"{item.RollNumber}\",\"{item.ClassName}\",\"{item.FeeStructureName}\",{item.FinalAmount},{item.PaidAmount},{item.DueAmount},\"{item.Status}\",\"{item.AssignedAt:yyyy-MM-dd}\"");
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var base64 = Convert.ToBase64String(bytes);
+        await JS.InvokeVoidAsync("downloadFileFromBase64", $"student_fees_{DateTime.UtcNow:yyyyMMdd}.csv", "text/csv", base64);
+        Toast.Success("Fee report exported successfully.");
+    }
+
+
+    public void Dispose()
+    {
+        BranchContext.OnBranchChanged -= HandleBranchContextChangedAsync;
     }
 }

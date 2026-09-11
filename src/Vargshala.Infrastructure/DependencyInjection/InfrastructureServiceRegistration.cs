@@ -1,5 +1,6 @@
 using Vargshala.Application.Features.OrgAdmin.Classes.Infrastructure;
 using Vargshala.Application.Features.OrgAdmin.FeeStructures.Infrastructure;
+using Vargshala.Application.Features.OrgAdmin.Fees.Infrastructure;
 using Vargshala.Application.Features.OrgAdmin.Batches.Infrastructure;
 using Vargshala.Application.Features.Subjects.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,7 @@ public static class InfrastructureServiceRegistration
 
         services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<IFeeStructureRepository, FeeStructureRepository>();
+        services.AddScoped<IFeeRepository, FeeRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();

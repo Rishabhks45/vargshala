@@ -27,6 +27,11 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<ClassSession> ClassSessions => Set<ClassSession>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
+    public DbSet<StudentFee> StudentFees => Set<StudentFee>();
+    public DbSet<FeeDiscount> FeeDiscounts => Set<FeeDiscount>();
+    public DbSet<FeeInstallment> FeeInstallments => Set<FeeInstallment>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,7 +53,11 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
         modelBuilder.Entity<BatchSchedule>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<ClassSession>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<FeeStructure>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<StudentFee>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<PaymentAllocation>().HasQueryFilter(e => !e.IsDeleted);
     }
+
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

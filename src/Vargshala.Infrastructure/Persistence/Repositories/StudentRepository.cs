@@ -121,7 +121,7 @@ public class StudentRepository : IStudentRepository
 
         if (branchId.HasValue && branchId.Value != Guid.Empty)
         {
-            query = query.Where(s => s.BatchStudents.Any(bs => bs.Batch.Class.BranchId == branchId.Value));
+            query = query.Where(s => s.BatchStudents.Any(bs => bs.IsActive && bs.Batch.Class.BranchId == branchId.Value));
         }
 
         if (!string.IsNullOrWhiteSpace(className))

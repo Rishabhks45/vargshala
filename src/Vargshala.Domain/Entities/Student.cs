@@ -46,4 +46,7 @@ public class Student : BaseEntity
     public User User { get; set; } = null!;
     public ICollection<BatchStudent> BatchStudents { get; set; } = new List<BatchStudent>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+    public ICollection<StudentFee> StudentFees { get; set; } = new List<StudentFee>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }
+

@@ -22,6 +22,12 @@ public interface IVargshalaDbContext
     DbSet<ClassSession> ClassSessions { get; }
     DbSet<Attendance> Attendances { get; }
     DbSet<FeeStructure> FeeStructures { get; }
+    DbSet<StudentFee> StudentFees { get; }
+    DbSet<FeeDiscount> FeeDiscounts { get; }
+    DbSet<FeeInstallment> FeeInstallments { get; }
+    DbSet<Payment> Payments { get; }
+    DbSet<PaymentAllocation> PaymentAllocations { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+

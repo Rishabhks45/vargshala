@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS public."StudentFees" (
     "AssignedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     -- Audit & Soft Delete
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
     "CreatedBy" UUID,
     "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "UpdatedBy" UUID,
@@ -149,6 +150,7 @@ CREATE TABLE IF NOT EXISTS public."Payments" (
     "Remarks" TEXT,
 
     -- Audit & Soft Delete
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
     "CreatedBy" UUID REFERENCES public."Users"("Id") ON DELETE SET NULL,
     "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "UpdatedBy" UUID,
@@ -180,9 +182,15 @@ CREATE TABLE IF NOT EXISTS public."PaymentAllocations" (
     "FeeInstallmentId" UUID NOT NULL REFERENCES public."FeeInstallments"("Id") ON DELETE RESTRICT,
     "AllocatedAmount" NUMERIC(12, 2) NOT NULL,
 
-    -- Audit
-    "CreatedBy" UUID,
+    -- Audit & Soft Delete (BaseEntity)
+    "IsActive" BOOLEAN NOT NULL DEFAULT TRUE,
+    "CreatedBy" UUID REFERENCES public."Users"("Id") ON DELETE SET NULL,
     "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "UpdatedBy" UUID,
+    "UpdatedAt" TIMESTAMPTZ,
+    "IsDeleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DeletedBy" UUID,
+    "DeletedAt" TIMESTAMPTZ,
 
     CONSTRAINT "UQ_PaymentAllocations_PaymentId_FeeInstallmentId" UNIQUE ("PaymentId", "FeeInstallmentId"),
     CONSTRAINT "CK_PaymentAllocations_Amount" CHECK ("AllocatedAmount" > 0)
