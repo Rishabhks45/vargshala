@@ -16,6 +16,7 @@ public class UserDto
     public bool EmailVerified { get; set; }
     public bool MobileVerified { get; set; }
     public bool IsActive { get; set; } = true;
+    public EntityStatus Status => EntityStatusExtensions.FromBool(IsActive);
     public string? ProfilePictureUrl { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public Guid? CreatedBy { get; set; }

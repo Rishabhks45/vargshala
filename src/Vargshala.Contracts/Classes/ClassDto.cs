@@ -1,3 +1,5 @@
+using Vargshala.Contracts.Common;
+
 namespace Vargshala.Contracts.Classes;
 
 public class ClassDto
@@ -9,6 +11,7 @@ public class ClassDto
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
+    public EntityStatus Status => EntityStatusExtensions.FromBool(IsActive);
     public int BatchesCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

@@ -27,7 +27,12 @@ public class BatchDto
     public string PrimaryTeacher { get; set; } = string.Empty;
     public int StudentCount { get; set; }
     public int MaxCapacity { get; set; } = 60;
-    public string Status { get; set; } = "Active";
+    public string Status
+    {
+        get => IsActive ? Vargshala.Contracts.Common.EntityStatusNames.Active : Vargshala.Contracts.Common.EntityStatusNames.Inactive;
+        set => IsActive = Vargshala.Contracts.Common.EntityStatusExtensions.FromString(value) == Vargshala.Contracts.Common.EntityStatus.Active;
+    }
+    public Vargshala.Contracts.Common.EntityStatus EntityStatus => Vargshala.Contracts.Common.EntityStatusExtensions.FromBool(IsActive);
 
     public string Initials
     {

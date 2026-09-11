@@ -37,7 +37,7 @@ public static class BatchMappingExtensions
             RoomOrTiming = timing,
             PrimaryTeacher = primaryTeacherName,
             StudentCount = studentCount,
-            Status = b.IsActive ? "Active" : "Inactive",
+            Status = b.IsActive ? Vargshala.Contracts.Common.EntityStatusNames.Active : Vargshala.Contracts.Common.EntityStatusNames.Inactive,
             CreatedAt = b.CreatedAt,
             UpdatedAt = b.UpdatedAt
         };

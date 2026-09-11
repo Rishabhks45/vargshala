@@ -8,6 +8,7 @@ public class SubjectDto
     public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; }
+    public Vargshala.Contracts.Common.EntityStatus Status => Vargshala.Contracts.Common.EntityStatusExtensions.FromBool(IsActive);
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

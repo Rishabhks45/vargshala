@@ -11,7 +11,7 @@ public class BranchDto
     public string Email { get; set; } = string.Empty;
     public int ActiveBatchesCount { get; set; }
     public int TotalStudentsCount { get; set; }
-    public string Status { get; set; } = "Active"; // Active, Inactive
+    public string Status { get; set; } = Common.EntityStatusNames.Active; // Active, Inactive
 }
 
 public class SubjectDto
@@ -23,7 +23,7 @@ public class SubjectDto
     public string Stream { get; set; } = "Science"; // Science, Commerce, Arts, General
     public int TotalFacultyAssigned { get; set; }
     public int WeeklyHours { get; set; } = 6;
-    public string Status { get; set; } = "Active";
+    public string Status { get; set; } = Common.EntityStatusNames.Active;
 }
 
 public class FacultySubjectAssignmentDto
@@ -36,7 +36,7 @@ public class FacultySubjectAssignmentDto
     public string BatchName { get; set; } = string.Empty;
     public int HoursPerWeek { get; set; } = 4;
     public bool IsPrimary { get; set; } = true;
-    public string Status { get; set; } = "Active"; // Active, On Leave
+    public string Status { get; set; } = Common.EntityStatusNames.Active; // Active, On Leave
 }
 
 public class PeriodTimingDto
@@ -50,5 +50,5 @@ public class PeriodTimingDto
     public int DurationMinutes { get; set; } = 50;
     public string BranchName { get; set; } = "All Branches";
     public bool IsBreak { get; set; } = false;
-    public string Status { get; set; } = "Active";
+    public string Status { get; set; } = Common.EntityStatusNames.Active;
 }

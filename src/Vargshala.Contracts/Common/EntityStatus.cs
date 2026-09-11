@@ -41,6 +41,17 @@ public static class EntityStatusExtensions
         _ => null
     };
 
+    public static EntityStatus FromBool(bool isActive) => isActive ? EntityStatus.Active : EntityStatus.Inactive;
+
+    public static string ToStatusName(this bool isActive) => isActive ? EntityStatusNames.Active : EntityStatusNames.Inactive;
+
+    public static string ToStatusName(this bool? isActive) => isActive switch
+    {
+        true => EntityStatusNames.Active,
+        false => EntityStatusNames.Inactive,
+        _ => EntityStatusNames.All
+    };
+
     public static EntityStatus FromNullableBool(bool? isActive) => isActive switch
     {
         true => EntityStatus.Active,
@@ -51,8 +62,20 @@ public static class EntityStatusExtensions
     public static EntityStatus FromString(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return EntityStatus.All;
-        if (bool.TryParse(value, out var b)) return b ? EntityStatus.Active : EntityStatus.Inactive;
-        if (Enum.TryParse<EntityStatus>(value, true, out var result)) return result;
+        var trimmed = value.Trim();
+        if (bool.TryParse(trimmed, out var b)) return b ? EntityStatus.Active : EntityStatus.Inactive;
+        if (trimmed.Equals("Suspended", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
+        {
+            return EntityStatus.Inactive;
+        }
+        if (trimmed.Equals("Active", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Equals("Enabled", StringComparison.OrdinalIgnoreCase))
+        {
+            return EntityStatus.Active;
+        }
+        if (Enum.TryParse<EntityStatus>(trimmed, true, out var result)) return result;
         return EntityStatus.All;
     }
 }

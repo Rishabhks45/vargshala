@@ -246,20 +246,7 @@
 
                                 <!-- Status Badge -->
                                 <td class="py-1.5 px-3 text-center">
-                                    @if (student.IsActive)
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
-                                            Active
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>
-                                            Inactive
-                                        </span>
-                                    }
+                                    <EntityStatusBadge IsActive="@student.IsActive" />
                                 </td>
 
                                 <!-- Actions Column with Isolated Tooltips -->
@@ -1065,12 +1052,7 @@
     private List<BatchDto> _allBranchBatches = new();
 
     private List<CustomSelect.CustomSelectOption> _batchFilterOptions = new();
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Status"),
-        new("true", "Active Only"),
-        new("false", "Inactive Only")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions();
 
     private List<CustomSelect.CustomSelectOption> _classOptions = new();
     private List<CustomSelect.CustomSelectOption> _subjectOptions = new();
@@ -1173,9 +1155,7 @@
 
         try
         {
-            bool? isActive = null;
-            if (_selectedStatus == "true") isActive = true;
-            else if (_selectedStatus == "false") isActive = false;
+            bool? isActive = EntityStatusExtensions.FromString(_selectedStatus).ToNullableBool();
 
             var pagedRequest = new PagedRequest
             {

@@ -236,20 +236,7 @@
 
                                 <!-- Status Badge -->
                                 <td class="py-1.5 px-3 text-center">
-                                    @if (inst.IsActive)
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
-                                            Active
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1"></span>
-                                            Suspended
-                                        </span>
-                                    }
+                                    <EntityStatusBadge IsActive="@inst.IsActive" InactiveLabel="Suspended" />
                                 </td>
 
                                  <!-- Actions Column: Direct Action Buttons -->
@@ -745,12 +732,7 @@
         new("Free Trial", "Free Trial")
     };
 
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Status"),
-        new("Active", "Active Only"),
-        new("Suspended", "Suspended Only")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions("All Status", "Active Only", "Suspended Only");
 
     private List<InstituteSummaryDto> _institutes = new();
 
@@ -823,8 +805,11 @@
 
             if (!string.IsNullOrWhiteSpace(_selectedStatusFilter))
             {
-                if (_selectedStatusFilter == "Active") query = query.Where(i => i.IsActive);
-                else if (_selectedStatusFilter == "Suspended") query = query.Where(i => !i.IsActive);
+                var statusBool = EntityStatusExtensions.FromString(_selectedStatusFilter).ToNullableBool();
+                if (statusBool.HasValue)
+                {
+                    query = query.Where(i => i.IsActive == statusBool.Value);
+                }
             }
 
             return query.ToList();

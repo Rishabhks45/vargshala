@@ -259,7 +259,7 @@
                                             title="Click to toggle status"
                                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all @(tpl.IsActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800")">
                                         <span class="w-1.5 h-1.5 rounded-full @(tpl.IsActive ? "bg-emerald-500 animate-pulse" : "bg-rose-500")"></span>
-                                        @(tpl.IsActive ? "Active" : "Disabled")
+                                        @(tpl.IsActive ? EntityStatusNames.Active : "Disabled")
                                     </button>
                                 </td>
                                 <td class="py-1.5 px-5 text-right">
@@ -688,12 +688,7 @@
             _modalRoleOptions.Add(new(((int)role).ToString(), role.GetDisplayName()));
         }
 
-        _statusFilterOptions = new List<CustomSelect.CustomSelectOption>
-        {
-            new("", "All Status"),
-            new("Active", "Active Only"),
-            new("Disabled", "Disabled Only")
-        };
+        _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions("All Status", "Active Only", "Disabled Only");
 
         UpdateModalTemplateOptions();
     }
@@ -711,7 +706,7 @@
                 category = cat;
             }
 
-            bool? isActive = _selectedStatusFilter == "Active" ? true : _selectedStatusFilter == "Disabled" ? false : null;
+            bool? isActive = EntityStatusExtensions.FromString(_selectedStatusFilter).ToNullableBool();
 
             var res = await TemplateService.GetTemplatesPagedAsync(_query.ToPagedRequest(), category, isActive);
             if (res != null && res.Success && res.Data != null)

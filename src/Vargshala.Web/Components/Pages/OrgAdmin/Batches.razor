@@ -188,7 +188,7 @@
 
             <!-- Status Filter with CustomSelect -->
             <div class="w-32">
-                <CustomSelect Value="@(_selectedStatus.HasValue ? _selectedStatus.Value.ToString().ToLower() : "")"
+                <CustomSelect Value="@(_selectedStatus.HasValue ? (_selectedStatus.Value ? EntityStatusNames.Active : EntityStatusNames.Inactive) : "")"
                               ValueChanged="HandleStatusChanged"
                               Options="_statusFilterOptions"
                               Placeholder="All Statuses" />
@@ -391,7 +391,7 @@
                                         <button type="button" @onclick="() => ToggleStatusAsync(b)"
                                                 class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer @(b.IsActive ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200")">
                                             <span class="w-1.5 h-1.5 rounded-full @(b.IsActive ? "bg-emerald-500 animate-pulse" : "bg-slate-400")"></span>
-                                            <span>@(b.IsActive ? "Active" : "Inactive")</span>
+                                            <span>@(b.IsActive ? EntityStatusNames.Active : EntityStatusNames.Inactive)</span>
                                         </button>
                                     </td>
 
@@ -1136,12 +1136,7 @@
     private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new() { new("", "All Branches") };
     private List<CustomSelect.CustomSelectOption> _classFilterOptions = new() { new("", "All Classes") };
     private List<CustomSelect.CustomSelectOption> _subjectFilterOptions = new() { new("", "All Subjects") };
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Statuses"),
-        new("true", "Active Only"),
-        new("false", "Inactive Only")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions("All Statuses", "Active Only", "Inactive Only");
 
     // CustomSelect Drawer & Modal Options
     private List<CustomSelect.CustomSelectOption> _drawerBranchOptions = new();
@@ -1334,7 +1329,7 @@
 
     private async Task HandleStatusChanged(string val)
     {
-        _selectedStatus = string.IsNullOrWhiteSpace(val) ? null : bool.Parse(val);
+        _selectedStatus = EntityStatusExtensions.FromString(val).ToNullableBool();
         await LoadBatchesAsync(1);
     }
 

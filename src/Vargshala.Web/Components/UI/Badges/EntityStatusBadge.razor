@@ -1,0 +1,47 @@
+@using Vargshala.Contracts.Common
+
+@if (ResolvedStatus == EntityStatus.Active)
+{
+    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 @CustomClass">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
+        @(string.IsNullOrEmpty(ActiveLabel) ? EntityStatusNames.Active : ActiveLabel)
+    </span>
+}
+else
+{
+    @if (UseRoseForInactive || InactiveLabel == "Suspended")
+    {
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800 @CustomClass">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1"></span>
+            @(string.IsNullOrEmpty(InactiveLabel) ? EntityStatusNames.Inactive : InactiveLabel)
+        </span>
+    }
+    else
+    {
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 @CustomClass">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>
+            @(string.IsNullOrEmpty(InactiveLabel) ? EntityStatusNames.Inactive : InactiveLabel)
+        </span>
+    }
+}
+
+@code {
+    [Parameter] public EntityStatus? Status { get; set; }
+    [Parameter] public bool? IsActive { get; set; }
+    [Parameter] public string? StatusString { get; set; }
+    [Parameter] public string? ActiveLabel { get; set; }
+    [Parameter] public string? InactiveLabel { get; set; }
+    [Parameter] public bool UseRoseForInactive { get; set; } = false;
+    [Parameter] public string CustomClass { get; set; } = string.Empty;
+
+    private EntityStatus ResolvedStatus
+    {
+        get
+        {
+            if (Status.HasValue && Status.Value != EntityStatus.All) return Status.Value;
+            if (IsActive.HasValue) return IsActive.Value ? EntityStatus.Active : EntityStatus.Inactive;
+            if (!string.IsNullOrWhiteSpace(StatusString)) return EntityStatusExtensions.FromString(StatusString);
+            return EntityStatus.Active;
+        }
+    }
+}

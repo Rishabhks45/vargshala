@@ -232,8 +232,7 @@
                                     <button type="button" 
                                             @onclick="() => ToggleStatusAsync(subject)"
                                             class="cursor-pointer transition-transform active:scale-95">
-                                        <Badge Text="@(subject.IsActive ? "Active" : "Inactive")" 
-                                               Variant="@(subject.IsActive ? Badge.BadgeVariant.Green : Badge.BadgeVariant.Gray)" />
+                                        <EntityStatusBadge IsActive="@subject.IsActive" />
                                     </button>
                                 </td>
 
@@ -503,12 +502,7 @@
     private string _selectedStatus = string.Empty;
     private TableSortState _sortState => _query.SortState;
 
-    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
-    {
-        new("", "All Status"),
-        new("Active", "Active Only"),
-        new("Inactive", "Inactive Only")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions();
 
     private bool _showAddEditModal = false;
     private bool _isDrawerOpen = false;
@@ -555,9 +549,7 @@
 
         try
         {
-            bool? isActive = null;
-            if (_selectedStatus == "Active") isActive = true;
-            else if (_selectedStatus == "Inactive") isActive = false;
+            bool? isActive = EntityStatusExtensions.FromString(_selectedStatus).ToNullableBool();
 
             var pagedRequest = new PagedRequest
             {
