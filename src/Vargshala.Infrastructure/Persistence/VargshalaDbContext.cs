@@ -26,6 +26,7 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<BatchSchedule> BatchSchedules => Set<BatchSchedule>();
     public DbSet<ClassSession> ClassSessions => Set<ClassSession>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<FeeStructure> FeeStructures => Set<FeeStructure>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +47,7 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
         modelBuilder.Entity<Batch>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<BatchSchedule>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<ClassSession>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<FeeStructure>().HasQueryFilter(e => !e.IsDeleted);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

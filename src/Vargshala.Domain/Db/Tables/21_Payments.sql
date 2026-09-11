@@ -6,8 +6,10 @@ CREATE TABLE IF NOT EXISTS public."Payments"
 (
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "OrganizationId" UUID NOT NULL,
+    "BranchId" UUID NULL,
     "StudentId" UUID NOT NULL,
 
+    "ReceiptNumber" VARCHAR(50) NULL,
     "Amount" NUMERIC(12, 2) NOT NULL,
     "PaymentDate" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "PaymentMethod" VARCHAR(50) NOT NULL,
@@ -33,6 +35,12 @@ CREATE TABLE IF NOT EXISTS public."Payments"
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
+    CONSTRAINT "FK_Payments_Branches_BranchId"
+        FOREIGN KEY ("BranchId")
+        REFERENCES public."Branches" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
     CONSTRAINT "FK_Payments_Students_StudentId"
         FOREIGN KEY ("StudentId")
         REFERENCES public."Students" ("Id")
@@ -45,6 +53,9 @@ CREATE TABLE IF NOT EXISTS public."Payments"
         ON UPDATE CASCADE
         ON DELETE SET NULL,
 
+    CONSTRAINT "UQ_Payments_OrganizationId_ReceiptNumber"
+        UNIQUE ("OrganizationId", "ReceiptNumber"),
+
     CONSTRAINT "CK_Payments_Amount"
         CHECK ("Amount" > 0),
 
@@ -55,8 +66,14 @@ CREATE TABLE IF NOT EXISTS public."Payments"
 CREATE INDEX IF NOT EXISTS "IX_Payments_OrganizationId"
     ON public."Payments" ("OrganizationId");
 
+CREATE INDEX IF NOT EXISTS "IX_Payments_BranchId"
+    ON public."Payments" ("BranchId");
+
 CREATE INDEX IF NOT EXISTS "IX_Payments_StudentId"
     ON public."Payments" ("StudentId");
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_ReceiptNumber"
+    ON public."Payments" ("ReceiptNumber");
 
 CREATE INDEX IF NOT EXISTS "IX_Payments_PaymentDate"
     ON public."Payments" ("PaymentDate");

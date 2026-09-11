@@ -91,6 +91,7 @@ public static class StartupExtensions
         builder.Services.AddScoped<IBranchContextService, BranchContextService>();
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         builder.Services.AddScoped<ICouponService, CouponService>();
+        builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
         builder.Services.AddScoped<IFileUploadService, FileUploadService>();
         builder.Services.AddCropper();
 

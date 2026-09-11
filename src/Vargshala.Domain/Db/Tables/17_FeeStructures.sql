@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public."FeeStructures"
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "OrganizationId" UUID NOT NULL,
     "BranchId" UUID NOT NULL,
+    "ClassId" UUID NULL,
 
     "Name" VARCHAR(150) NOT NULL,
     "Description" TEXT,
@@ -38,6 +39,12 @@ CREATE TABLE IF NOT EXISTS public."FeeStructures"
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
+    CONSTRAINT "FK_FeeStructures_Classes_ClassId"
+        FOREIGN KEY ("ClassId")
+        REFERENCES public."Classes" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
     CONSTRAINT "CK_FeeStructures_TotalAmount"
         CHECK ("TotalAmount" >= 0)
 );
@@ -47,6 +54,9 @@ CREATE INDEX IF NOT EXISTS "IX_FeeStructures_OrganizationId"
 
 CREATE INDEX IF NOT EXISTS "IX_FeeStructures_BranchId"
     ON public."FeeStructures" ("BranchId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeStructures_ClassId"
+    ON public."FeeStructures" ("ClassId");
 
 CREATE INDEX IF NOT EXISTS "IX_FeeStructures_Org_Branch"
     ON public."FeeStructures" ("OrganizationId", "BranchId");

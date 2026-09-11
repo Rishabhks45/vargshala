@@ -21,6 +21,7 @@ public interface IVargshalaDbContext
     DbSet<BatchSchedule> BatchSchedules { get; }
     DbSet<ClassSession> ClassSessions { get; }
     DbSet<Attendance> Attendances { get; }
+    DbSet<FeeStructure> FeeStructures { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

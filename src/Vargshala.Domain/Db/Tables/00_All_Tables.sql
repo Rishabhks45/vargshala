@@ -737,6 +737,7 @@ CREATE TABLE IF NOT EXISTS public."FeeStructures"
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "OrganizationId" UUID NOT NULL,
     "BranchId" UUID NOT NULL,
+    "ClassId" UUID NULL,
 
     "Name" VARCHAR(150) NOT NULL,
     "Description" TEXT,
@@ -768,6 +769,12 @@ CREATE TABLE IF NOT EXISTS public."FeeStructures"
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
+    CONSTRAINT "FK_FeeStructures_Classes_ClassId"
+        FOREIGN KEY ("ClassId")
+        REFERENCES public."Classes" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
     CONSTRAINT "CK_FeeStructures_TotalAmount"
         CHECK ("TotalAmount" >= 0)
 );
@@ -777,6 +784,9 @@ CREATE INDEX IF NOT EXISTS "IX_FeeStructures_OrganizationId"
 
 CREATE INDEX IF NOT EXISTS "IX_FeeStructures_BranchId"
     ON public."FeeStructures" ("BranchId");
+
+CREATE INDEX IF NOT EXISTS "IX_FeeStructures_ClassId"
+    ON public."FeeStructures" ("ClassId");
 
 CREATE INDEX IF NOT EXISTS "IX_FeeStructures_Org_Branch"
     ON public."FeeStructures" ("OrganizationId", "BranchId");
@@ -798,6 +808,7 @@ CREATE TABLE IF NOT EXISTS public."StudentFees"
     "OriginalAmount" NUMERIC(12, 2) NOT NULL,
     "DiscountAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     "FinalAmount" NUMERIC(12, 2) NOT NULL,
+    "PaidAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     "Status" VARCHAR(30) NOT NULL DEFAULT 'Pending',
     "AssignedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -834,6 +845,9 @@ CREATE TABLE IF NOT EXISTS public."StudentFees"
     CONSTRAINT "CK_StudentFees_Amounts"
         CHECK ("FinalAmount" = ("OriginalAmount" - "DiscountAmount")),
 
+    CONSTRAINT "CK_StudentFees_PaidAmount"
+        CHECK ("PaidAmount" >= 0 AND "PaidAmount" <= "FinalAmount"),
+
     CONSTRAINT "CK_StudentFees_Status"
         CHECK ("Status" IN ('Pending', 'PartiallyPaid', 'Paid', 'Overdue', 'Cancelled'))
 );
@@ -857,6 +871,7 @@ CREATE INDEX IF NOT EXISTS "IX_StudentFees_Org_Status"
 CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
 (
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "OrganizationId" UUID NOT NULL,
     "StudentFeeId" UUID NOT NULL,
 
     "DiscountType" VARCHAR(50) NOT NULL,
@@ -871,6 +886,12 @@ CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
 
     CONSTRAINT "PK_FeeDiscounts"
         PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_FeeDiscounts_Organizations_OrganizationId"
+        FOREIGN KEY ("OrganizationId")
+        REFERENCES public."Organizations" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
 
     CONSTRAINT "FK_FeeDiscounts_StudentFees_StudentFeeId"
         FOREIGN KEY ("StudentFeeId")
@@ -891,6 +912,9 @@ CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
         CHECK ("Value" >= 0)
 );
 
+CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_OrganizationId"
+    ON public."FeeDiscounts" ("OrganizationId");
+
 CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_StudentFeeId"
     ON public."FeeDiscounts" ("StudentFeeId");
 
@@ -904,10 +928,12 @@ CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_ApprovedBy"
 CREATE TABLE IF NOT EXISTS public."FeeInstallments"
 (
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "OrganizationId" UUID NOT NULL,
     "StudentFeeId" UUID NOT NULL,
 
     "InstallmentNumber" INT NOT NULL,
     "Amount" NUMERIC(12, 2) NOT NULL,
+    "PaidAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     "DueDate" DATE NOT NULL,
     "Status" VARCHAR(30) NOT NULL DEFAULT 'Pending',
 
@@ -918,6 +944,12 @@ CREATE TABLE IF NOT EXISTS public."FeeInstallments"
 
     CONSTRAINT "PK_FeeInstallments"
         PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_FeeInstallments_Organizations_OrganizationId"
+        FOREIGN KEY ("OrganizationId")
+        REFERENCES public."Organizations" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
 
     CONSTRAINT "FK_FeeInstallments_StudentFees_StudentFeeId"
         FOREIGN KEY ("StudentFeeId")
@@ -931,9 +963,15 @@ CREATE TABLE IF NOT EXISTS public."FeeInstallments"
     CONSTRAINT "CK_FeeInstallments_Amount"
         CHECK ("Amount" > 0),
 
+    CONSTRAINT "CK_FeeInstallments_PaidAmount"
+        CHECK ("PaidAmount" >= 0 AND "PaidAmount" <= "Amount"),
+
     CONSTRAINT "CK_FeeInstallments_Status"
         CHECK ("Status" IN ('Pending', 'PartiallyPaid', 'Paid', 'Overdue', 'Cancelled'))
 );
+
+CREATE INDEX IF NOT EXISTS "IX_FeeInstallments_OrganizationId"
+    ON public."FeeInstallments" ("OrganizationId");
 
 CREATE INDEX IF NOT EXISTS "IX_FeeInstallments_StudentFeeId"
     ON public."FeeInstallments" ("StudentFeeId");
@@ -955,8 +993,10 @@ CREATE TABLE IF NOT EXISTS public."Payments"
 (
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "OrganizationId" UUID NOT NULL,
+    "BranchId" UUID NULL,
     "StudentId" UUID NOT NULL,
 
+    "ReceiptNumber" VARCHAR(50) NULL,
     "Amount" NUMERIC(12, 2) NOT NULL,
     "PaymentDate" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "PaymentMethod" VARCHAR(50) NOT NULL,
@@ -982,6 +1022,12 @@ CREATE TABLE IF NOT EXISTS public."Payments"
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
+    CONSTRAINT "FK_Payments_Branches_BranchId"
+        FOREIGN KEY ("BranchId")
+        REFERENCES public."Branches" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+
     CONSTRAINT "FK_Payments_Students_StudentId"
         FOREIGN KEY ("StudentId")
         REFERENCES public."Students" ("Id")
@@ -994,6 +1040,9 @@ CREATE TABLE IF NOT EXISTS public."Payments"
         ON UPDATE CASCADE
         ON DELETE SET NULL,
 
+    CONSTRAINT "UQ_Payments_OrganizationId_ReceiptNumber"
+        UNIQUE ("OrganizationId", "ReceiptNumber"),
+
     CONSTRAINT "CK_Payments_Amount"
         CHECK ("Amount" > 0),
 
@@ -1004,8 +1053,14 @@ CREATE TABLE IF NOT EXISTS public."Payments"
 CREATE INDEX IF NOT EXISTS "IX_Payments_OrganizationId"
     ON public."Payments" ("OrganizationId");
 
+CREATE INDEX IF NOT EXISTS "IX_Payments_BranchId"
+    ON public."Payments" ("BranchId");
+
 CREATE INDEX IF NOT EXISTS "IX_Payments_StudentId"
     ON public."Payments" ("StudentId");
+
+CREATE INDEX IF NOT EXISTS "IX_Payments_ReceiptNumber"
+    ON public."Payments" ("ReceiptNumber");
 
 CREATE INDEX IF NOT EXISTS "IX_Payments_PaymentDate"
     ON public."Payments" ("PaymentDate");
@@ -1058,4 +1113,5 @@ CREATE INDEX IF NOT EXISTS "IX_PaymentAllocations_PaymentId"
 
 CREATE INDEX IF NOT EXISTS "IX_PaymentAllocations_FeeInstallmentId"
     ON public."PaymentAllocations" ("FeeInstallmentId");
+
 

@@ -6211,6 +6211,10 @@ input, textarea, select {
   border-color: rgb(30 64 175 / var(--tw-border-opacity, 1));
 }
 
+.dark\:border-blue-800\/60:is(.dark *){
+  border-color: rgb(30 64 175 / 0.6);
+}
+
 .dark\:border-blue-800\/80:is(.dark *){
   border-color: rgb(30 64 175 / 0.8);
 }
@@ -6665,6 +6669,10 @@ input, textarea, select {
 
 .dark\:bg-rose-950\/40:is(.dark *){
   background-color: rgb(76 5 25 / 0.4);
+}
+
+.dark\:bg-rose-950\/50:is(.dark *){
+  background-color: rgb(76 5 25 / 0.5);
 }
 
 .dark\:bg-rose-950\/60:is(.dark *){

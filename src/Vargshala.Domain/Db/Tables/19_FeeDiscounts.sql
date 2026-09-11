@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
 (
     "Id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "OrganizationId" UUID NOT NULL,
     "StudentFeeId" UUID NOT NULL,
 
     "DiscountType" VARCHAR(50) NOT NULL,
@@ -19,6 +20,12 @@ CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
 
     CONSTRAINT "PK_FeeDiscounts"
         PRIMARY KEY ("Id"),
+
+    CONSTRAINT "FK_FeeDiscounts_Organizations_OrganizationId"
+        FOREIGN KEY ("OrganizationId")
+        REFERENCES public."Organizations" ("Id")
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
 
     CONSTRAINT "FK_FeeDiscounts_StudentFees_StudentFeeId"
         FOREIGN KEY ("StudentFeeId")
@@ -38,6 +45,9 @@ CREATE TABLE IF NOT EXISTS public."FeeDiscounts"
     CONSTRAINT "CK_FeeDiscounts_Value"
         CHECK ("Value" >= 0)
 );
+
+CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_OrganizationId"
+    ON public."FeeDiscounts" ("OrganizationId");
 
 CREATE INDEX IF NOT EXISTS "IX_FeeDiscounts_StudentFeeId"
     ON public."FeeDiscounts" ("StudentFeeId");

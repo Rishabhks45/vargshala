@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public."StudentFees"
     "OriginalAmount" NUMERIC(12, 2) NOT NULL,
     "DiscountAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     "FinalAmount" NUMERIC(12, 2) NOT NULL,
+    "PaidAmount" NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     "Status" VARCHAR(30) NOT NULL DEFAULT 'Pending',
     "AssignedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -47,6 +48,9 @@ CREATE TABLE IF NOT EXISTS public."StudentFees"
 
     CONSTRAINT "CK_StudentFees_Amounts"
         CHECK ("FinalAmount" = ("OriginalAmount" - "DiscountAmount")),
+
+    CONSTRAINT "CK_StudentFees_PaidAmount"
+        CHECK ("PaidAmount" >= 0 AND "PaidAmount" <= "FinalAmount"),
 
     CONSTRAINT "CK_StudentFees_Status"
         CHECK ("Status" IN ('Pending', 'PartiallyPaid', 'Paid', 'Overdue', 'Cancelled'))
