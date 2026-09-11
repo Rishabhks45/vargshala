@@ -62,7 +62,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "OrganizationAdmin,SuperAdmin")]
+    [Authorize(Roles = "OrganizationAdmin,SuperAdmin,1,1001")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
         var command = new CreateUserCommand(
@@ -84,6 +84,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "OrganizationAdmin,SuperAdmin,1,1001")]
     public async Task<IActionResult> GetUsers([FromQuery] PagedRequest request)
     {
         var result = await _mediator.Send(new GetUsersQuery(request));

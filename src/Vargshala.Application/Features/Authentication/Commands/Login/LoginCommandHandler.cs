@@ -54,7 +54,41 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
             return ApiResponse<LoginResponse>.FailureResponse("Invalid email or password.");
         }
 
-        var accessToken = _tokenService.GenerateAccessToken(user);
+        Guid? branchIdForToken = null;
+        string? branchName = null;
+
+        if (user.Role == UserRole.BranchAdmin)
+        {
+            var activeBranches = user.UserBranchAccesses
+                .Where(a => a.IsActive && a.Branch != null && !a.Branch.IsDeleted)
+                .ToList();
+
+            if (activeBranches.Count == 0)
+            {
+                return ApiResponse<LoginResponse>.FailureResponse(
+                    "No active branch is assigned to this Branch Admin account. Please contact your Institute Administrator.");
+            }
+
+            if (activeBranches.Count > 1)
+            {
+                return ApiResponse<LoginResponse>.FailureResponse(
+                    "Configuration Conflict: Multiple active branch assignments detected for this Branch Admin account. Exactly one active branch is permitted. Please contact your Institute Administrator.");
+            }
+
+            branchIdForToken = activeBranches[0].BranchId;
+            branchName = activeBranches[0].Branch?.Name;
+        }
+        else
+        {
+            var activeAccess = user.UserBranchAccesses
+                .FirstOrDefault(a => a.Branch != null && a.Branch.IsMainBranch && !a.Branch.IsDeleted)
+                ?? user.UserBranchAccesses.FirstOrDefault(a => a.Branch != null && !a.Branch.IsDeleted);
+
+            branchIdForToken = activeAccess?.BranchId;
+            branchName = activeAccess?.Branch?.Name;
+        }
+
+        var accessToken = _tokenService.GenerateAccessToken(user, user.Role == UserRole.BranchAdmin ? branchIdForToken : null);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
         // Store refresh token on user
@@ -63,11 +97,6 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
         user.LastLoginAt = DateTime.UtcNow;
 
         await _authRepository.SaveChangesAsync(cancellationToken);
-
-        // Resolve active primary / main branch for user session
-        var activeAccess = user.UserBranchAccesses
-            .FirstOrDefault(a => a.Branch != null && a.Branch.IsMainBranch && !a.Branch.IsDeleted)
-            ?? user.UserBranchAccesses.FirstOrDefault(a => a.Branch != null && !a.Branch.IsDeleted);
 
         var response = new LoginResponse
         {
@@ -83,8 +112,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Log
                 Role = user.Role,
                 OrganizationId = user.OrganizationId,
                 OrganizationName = user.Organization?.Name,
-                CurrentBranchId = activeAccess?.BranchId,
-                CurrentBranchName = activeAccess?.Branch?.Name
+                CurrentBranchId = branchIdForToken,
+                CurrentBranchName = branchName
             }
         };
 

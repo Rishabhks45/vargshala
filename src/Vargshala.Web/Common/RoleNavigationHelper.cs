@@ -12,7 +12,7 @@ public static class RoleNavigationHelper
             UserRole.SuperAdmin => "/controlpanel/platform",
             UserRole.BackOffice => "/controlpanel/platform",
             UserRole.OrganizationAdmin => "/",
-            UserRole.BranchAdmin => "/",
+            UserRole.BranchAdmin => "/branch",
             UserRole.Teacher => "/attendance",
             UserRole.Student => "/student/home",
             _ => "/"
@@ -42,8 +42,12 @@ public static class RoleNavigationHelper
             return "/attendance";
         }
 
-        if (principal.IsInRole("OrganizationAdmin") || principal.IsInRole("1") ||
-            principal.IsInRole("BranchAdmin") || principal.IsInRole("4"))
+        if (principal.IsInRole("BranchAdmin") || principal.IsInRole("4"))
+        {
+            return "/branch";
+        }
+
+        if (principal.IsInRole("OrganizationAdmin") || principal.IsInRole("1"))
         {
             return "/";
         }

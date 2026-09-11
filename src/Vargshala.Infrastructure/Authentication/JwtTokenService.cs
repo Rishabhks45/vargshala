@@ -18,7 +18,7 @@ public class JwtTokenService : ITokenService
         _options = options.Value;
     }
 
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, Guid? branchId = null)
     {
         var claims = new List<Claim>
         {
@@ -30,6 +30,19 @@ public class JwtTokenService : ITokenService
         if (user.OrganizationId.HasValue)
         {
             claims.Add(new Claim("organization_id", user.OrganizationId.Value.ToString()));
+        }
+
+        var targetBranchId = branchId.HasValue && branchId.Value != Guid.Empty
+            ? branchId.Value
+            : user.UserBranchAccesses
+                .Where(a => a.IsActive && (a.Branch == null || !a.Branch.IsDeleted))
+                .Select(a => (Guid?)a.BranchId)
+                .FirstOrDefault();
+
+        if (targetBranchId.HasValue && targetBranchId.Value != Guid.Empty)
+        {
+            claims.Add(new Claim("branch_id", targetBranchId.Value.ToString()));
+            claims.Add(new Claim("BranchId", targetBranchId.Value.ToString()));
         }
 
         if (!string.IsNullOrWhiteSpace(user.Email))

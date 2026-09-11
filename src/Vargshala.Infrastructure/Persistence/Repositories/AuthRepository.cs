@@ -22,6 +22,8 @@ public class AuthRepository : IAuthRepository
         var normalizedEmail = email.Trim().ToLower();
         return await _db.Users
             .Include(u => u.Organization)
+            .Include(u => u.UserBranchAccesses)
+                .ThenInclude(uba => uba.Branch)
             .OrderByDescending(u => u.IsActive)
             .FirstOrDefaultAsync(u => !u.IsDeleted && u.Email != null && (u.Email.ToLower() == normalizedEmail || EF.Functions.ILike(u.Email, normalizedEmail)), cancellationToken);
     }
@@ -35,6 +37,9 @@ public class AuthRepository : IAuthRepository
     public async Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _db.Users
+            .Include(u => u.Organization)
+            .Include(u => u.UserBranchAccesses)
+                .ThenInclude(uba => uba.Branch)
             .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
     }
 

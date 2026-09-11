@@ -27,7 +27,7 @@ public class GetAllActiveBatchesQueryHandler : IRequestHandler<GetAllActiveBatch
             return ApiResponse<List<BatchDto>>.FailureResponse("No active organization context found.");
         }
 
-        var items = await _batchRepository.GetAllActiveAsync(orgId.Value, query.ClassId, cancellationToken);
+        var items = await _batchRepository.GetAllActiveAsync(orgId.Value, query.ClassId, query.BranchId, cancellationToken);
         var dtos = items.Select(b => b.ToDto()).ToList();
         return ApiResponse<List<BatchDto>>.SuccessResponse(dtos);
     }

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vargshala.Application.Features.Authentication.Commands.ForgotPassword;
 using Vargshala.Application.Features.Authentication.Commands.Login;
@@ -12,6 +13,7 @@ namespace Vargshala.API.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
+[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;

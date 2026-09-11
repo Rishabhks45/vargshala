@@ -21,7 +21,7 @@ namespace Vargshala.API.Controllers.OrgAdmin;
 
 [ApiController]
 [Route("api/v1/orgadmin/batches")]
-[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4,Teacher,2")]
+[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,Teacher,2")]
 public class BatchesController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -68,7 +68,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> Create([FromBody] CreateBatchRequest request)
     {
         var result = await _mediator.Send(new CreateBatchCommand(request));
@@ -81,7 +81,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBatchRequest request)
     {
         if (id != request.Id)
@@ -99,7 +99,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteBatchCommand(id));
@@ -112,7 +112,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/toggle-status")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> ToggleStatus(Guid id)
     {
         var result = await _mediator.Send(new ToggleBatchStatusCommand(id));
@@ -133,7 +133,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/teachers")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> AssignTeacher(Guid id, [FromBody] AssignTeacherToBatchRequest request)
     {
         var result = await _mediator.Send(new AssignTeacherToBatchCommand(id, request));
@@ -146,7 +146,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}/teachers/{teacherId:guid}")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> RemoveTeacher(Guid id, Guid teacherId, [FromQuery] Guid? subjectId = null)
     {
         var result = await _mediator.Send(new RemoveTeacherFromBatchCommand(id, teacherId, subjectId));
@@ -168,7 +168,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/students")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> EnrollStudent(Guid id, [FromBody] EnrollStudentToBatchRequest request)
     {
         var result = await _mediator.Send(new EnrollStudentToBatchCommand(id, request));
@@ -181,7 +181,7 @@ public class BatchesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}/students/{studentId:guid}")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> RemoveStudent(Guid id, Guid studentId)
     {
         var result = await _mediator.Send(new RemoveStudentFromBatchCommand(id, studentId));

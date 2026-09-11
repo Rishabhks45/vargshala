@@ -172,8 +172,127 @@
             </Authorized>
         </AuthorizeView>
 
-        <!-- Institute Staff Navigation (OrganizationAdmin, BranchAdmin & Teacher) -->
-        <AuthorizeView Roles="OrganizationAdmin,BranchAdmin,Teacher" Context="navAuthContext">
+        <!-- Branch Admin Dedicated Navigation Menu (8 Items) -->
+        <AuthorizeView Roles="BranchAdmin,4" Context="branchAdminNavContext">
+            <Authorized>
+                <!-- 1. Branch Dashboard -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch" 
+                         Match="NavLinkMatch.All" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Branch Dashboard" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Dashboard</span>
+                    }
+                </NavLink>
+
+                <!-- 2. Students -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/students" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Students" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Students</span>
+                    }
+                </NavLink>
+
+                <!-- 3. Teachers / Faculty -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/teachers" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Faculty" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Faculty</span>
+                    }
+                </NavLink>
+
+                <!-- 4. Classes -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/classes" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Classes" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Classes</span>
+                    }
+                </NavLink>
+
+                <!-- 5. Batches -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/batches" 
+                         Match="NavLinkMatch.All"
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Batches" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Batches</span>
+                    }
+                </NavLink>
+
+                <!-- 6. Assign Faculty -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/batches/assign-teachers" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Assign Faculty" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Assign Faculty</span>
+                    }
+                </NavLink>
+
+                <!-- 7. Class Sessions -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/class-sessions" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Sessions" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Class Sessions</span>
+                    }
+                </NavLink>
+
+                <!-- 8. Attendance -->
+                <NavLink class="@GetNavLinkClass()" 
+                         href="branch/attendance" 
+                         ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
+                         title="@(IsCollapsed ? "Attendance" : "")">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    @if (!IsCollapsed)
+                    {
+                        <span class="truncate">Attendance</span>
+                    }
+                </NavLink>
+            </Authorized>
+        </AuthorizeView>
+
+        <!-- Institute Staff Navigation (OrganizationAdmin & Teacher) -->
+        <AuthorizeView Roles="OrganizationAdmin,Teacher" Context="navAuthContext">
             <Authorized>
                 <!-- Dashboard -->
                 <NavLink class="@GetNavLinkClass()" 
@@ -190,8 +309,8 @@
                     }
                 </NavLink>
 
-                <!-- Students (OrgAdmin & BranchAdmin) -->
-                <AuthorizeView Roles="OrganizationAdmin,BranchAdmin" Context="studentAdminContext">
+                <!-- Students (OrgAdmin Only) -->
+                <AuthorizeView Roles="OrganizationAdmin" Context="studentAdminContext">
                     <NavLink class="@GetNavLinkClass()" 
                              href="students" 
                              ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
@@ -207,7 +326,7 @@
                 </AuthorizeView>
 
                 <!-- Teachers (Admins Only) -->
-                <AuthorizeView Roles="SuperAdmin,OrganizationAdmin,BranchAdmin" Context="teacherAdminContext">
+                <AuthorizeView Roles="SuperAdmin,OrganizationAdmin" Context="teacherAdminContext">
                     <NavLink class="@GetNavLinkClass()" 
                              href="teachers" 
                              ActiveClass="bg-[#009488] text-white shadow-sm font-semibold hover:bg-[#009488]"
@@ -383,7 +502,7 @@
                 </NavLink>
 
                 <!-- Fees, Reports, Masters, Settings (Admins Only) -->
-                <AuthorizeView Roles="SuperAdmin,OrganizationAdmin,BranchAdmin" Context="adminSettingsContext">
+                <AuthorizeView Roles="SuperAdmin,OrganizationAdmin" Context="adminSettingsContext">
                     <!-- Fees -->
                     <NavLink class="@GetNavLinkClass()" 
                              href="fees" 

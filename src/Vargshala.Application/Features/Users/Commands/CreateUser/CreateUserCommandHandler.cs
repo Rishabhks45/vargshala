@@ -40,7 +40,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
         // Prevent creating SuperAdmin or BackOffice through this endpoint
         if (request.Role is UserRole.SuperAdmin or UserRole.BackOffice)
         {
-            return ApiResponse<UserDto>.FailureResponse("Cannot create a platform administrator through this endpoint.");
+            return ApiResponse<UserDto>.FailureResponse("Cannot create a SuperAdmin or platform administrator through this endpoint.");
         }
 
         // Check for duplicate email within the organization

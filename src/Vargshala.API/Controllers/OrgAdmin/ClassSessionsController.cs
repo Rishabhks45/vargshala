@@ -16,7 +16,7 @@ namespace Vargshala.API.Controllers.OrgAdmin;
 
 [ApiController]
 [Route("api/v1/orgadmin/class-sessions")]
-[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4,Teacher,2")]
+[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,Teacher,2")]
 public class ClassSessionsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -61,7 +61,7 @@ public class ClassSessionsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> Create([FromBody] CreateClassSessionRequest request)
     {
         var result = await _mediator.Send(new CreateClassSessionCommand(request));
@@ -91,7 +91,7 @@ public class ClassSessionsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteClassSessionCommand(id));
@@ -128,7 +128,7 @@ public class ClassSessionsController : ControllerBase
     }
 
     [HttpPost("generate")]
-    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+    [Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
     public async Task<IActionResult> GenerateFromSchedule([FromBody] GenerateSessionsFromScheduleRequest request)
     {
         var result = await _mediator.Send(new GenerateSessionsFromScheduleCommand(request));

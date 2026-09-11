@@ -68,6 +68,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IBatchRepository, BatchRepository>();
         services.AddScoped<Vargshala.Application.Features.OrgAdmin.ClassSessions.Infrastructure.IClassSessionRepository, ClassSessionRepository>();
         services.AddScoped<Vargshala.Application.Features.OrgAdmin.Attendances.Infrastructure.IAttendanceRepository, AttendanceRepository>();
+        services.AddScoped<Vargshala.Application.Features.BranchAdmin.Dashboard.Infrastructure.IBranchDashboardRepository, BranchDashboardRepository>();
 
         services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();

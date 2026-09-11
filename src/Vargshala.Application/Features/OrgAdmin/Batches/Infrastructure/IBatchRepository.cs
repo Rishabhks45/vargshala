@@ -17,7 +17,7 @@ public interface IBatchRepository
         Guid? subjectId = null,
         bool? isActive = null,
         CancellationToken cancellationToken = default);
-    Task<List<Batch>> GetAllActiveAsync(Guid organizationId, Guid? classId = null, CancellationToken cancellationToken = default);
+    Task<List<Batch>> GetAllActiveAsync(Guid organizationId, Guid? classId = null, Guid? branchId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Batch batch, CancellationToken cancellationToken = default);
     void Update(Batch batch);
     void Delete(Batch batch);

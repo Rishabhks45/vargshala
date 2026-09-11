@@ -15,7 +15,7 @@ namespace Vargshala.API.Controllers.OrgAdmin;
 
 [ApiController]
 [Route("api/v1/orgadmin/classes")]
-[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4")]
+[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001")]
 public class ClassesController : ControllerBase
 {
     private readonly IMediator _mediator;

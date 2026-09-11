@@ -150,13 +150,18 @@ public class BatchRepository : IBatchRepository
             cancellationToken: cancellationToken);
     }
 
-    public async Task<List<Batch>> GetAllActiveAsync(Guid organizationId, Guid? classId = null, CancellationToken cancellationToken = default)
+    public async Task<List<Batch>> GetAllActiveAsync(Guid organizationId, Guid? classId = null, Guid? branchId = null, CancellationToken cancellationToken = default)
     {
         var query = _db.Batches
             .AsNoTracking()
             .Include(b => b.Class)
             .Include(b => b.Subject)
             .Where(b => b.Class!.Branch!.OrganizationId == organizationId && b.IsActive && !b.IsDeleted);
+
+        if (branchId.HasValue)
+        {
+            query = query.Where(b => b.Class!.BranchId == branchId.Value);
+        }
 
         if (classId.HasValue)
         {

@@ -72,9 +72,12 @@ public class AccountController : Controller
         }
 
         // Add current branch info if provided
-        if (!string.IsNullOrWhiteSpace(branchId) && !claims.Any(c => c.Type == "BranchId"))
+        if (!string.IsNullOrWhiteSpace(branchId))
         {
-            claims.Add(new Claim("BranchId", branchId));
+            if (!claims.Any(c => c.Type == "BranchId"))
+                claims.Add(new Claim("BranchId", branchId));
+            if (!claims.Any(c => c.Type == "branch_id"))
+                claims.Add(new Claim("branch_id", branchId));
         }
 
         if (!string.IsNullOrWhiteSpace(branchName) && !claims.Any(c => c.Type == "BranchName"))

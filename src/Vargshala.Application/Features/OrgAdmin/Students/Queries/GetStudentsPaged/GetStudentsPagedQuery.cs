@@ -8,5 +8,6 @@ public record GetStudentsPagedQuery(
     PagedRequest Request,
     string? ClassName = null,
     string? Section = null,
-    bool? IsActive = null
+    bool? IsActive = null,
+    Guid? BranchId = null
 ) : IRequest<ApiResponse<PagedResponse<StudentDto>>>;

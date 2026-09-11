@@ -89,6 +89,15 @@ public static class StartupExtensions
         builder.Services.AddScoped<ICouponService, CouponService>();
         builder.Services.AddScoped<IFileUploadService, FileUploadService>();
         builder.Services.AddCropper();
+
+        // Branch Admin Client Services
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchDashboardClientService, Vargshala.Web.Services.BranchAdmin.BranchDashboardClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchClassClientService, Vargshala.Web.Services.BranchAdmin.BranchClassClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchBatchClientService, Vargshala.Web.Services.BranchAdmin.BranchBatchClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchStudentClientService, Vargshala.Web.Services.BranchAdmin.BranchStudentClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchTeacherClientService, Vargshala.Web.Services.BranchAdmin.BranchTeacherClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchClassSessionClientService, Vargshala.Web.Services.BranchAdmin.BranchClassSessionClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchAttendanceClientService, Vargshala.Web.Services.BranchAdmin.BranchAttendanceClientService>();
         #endregion
     }
     #endregion

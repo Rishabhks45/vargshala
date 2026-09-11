@@ -13,7 +13,7 @@ namespace Vargshala.API.Controllers.OrgAdmin;
 
 [ApiController]
 [Route("api/v1/orgadmin/attendances")]
-[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,BranchAdmin,4,Teacher,2")]
+[Authorize(Roles = "OrganizationAdmin,1,SuperAdmin,1001,Teacher,2")]
 public class AttendancesController : ControllerBase
 {
     private readonly IMediator _mediator;

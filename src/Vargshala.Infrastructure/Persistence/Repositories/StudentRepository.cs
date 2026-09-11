@@ -111,12 +111,18 @@ public class StudentRepository : IStudentRepository
         string? className = null,
         string? section = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Students
             .AsNoTracking()
             .Include(s => s.User)
             .Where(s => !s.IsDeleted && s.User.OrganizationId == organizationId);
+
+        if (branchId.HasValue && branchId.Value != Guid.Empty)
+        {
+            query = query.Where(s => s.BatchStudents.Any(bs => bs.Batch.Class.BranchId == branchId.Value));
+        }
 
         if (!string.IsNullOrWhiteSpace(className))
         {

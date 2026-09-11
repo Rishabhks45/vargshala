@@ -52,7 +52,29 @@ public class RefreshTokenCommandHandler
             return ApiResponse<RefreshTokenResponse>.FailureResponse("Invalid or expired refresh token.");
         }
 
-        var newAccessToken = _tokenService.GenerateAccessToken(user);
+        Guid? branchIdForToken = null;
+        if (user.Role == UserRole.BranchAdmin)
+        {
+            var activeBranches = user.UserBranchAccesses
+                .Where(a => a.IsActive && a.Branch != null && !a.Branch.IsDeleted)
+                .ToList();
+
+            if (activeBranches.Count == 0)
+            {
+                return ApiResponse<RefreshTokenResponse>.FailureResponse(
+                    "No active branch is assigned to this Branch Admin account. Please contact your Institute Administrator.");
+            }
+
+            if (activeBranches.Count > 1)
+            {
+                return ApiResponse<RefreshTokenResponse>.FailureResponse(
+                    "Configuration Conflict: Multiple active branch assignments detected for this Branch Admin account. Exactly one active branch is permitted. Please contact your Institute Administrator.");
+            }
+
+            branchIdForToken = activeBranches[0].BranchId;
+        }
+
+        var newAccessToken = _tokenService.GenerateAccessToken(user, branchIdForToken);
 
         // In Blazor Server Interactive mode, auth cookies cannot be updated over WebSockets mid-circuit.
         // Maintain the active refresh token for its duration (7 days), renewing the access token.

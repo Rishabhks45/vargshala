@@ -16,6 +16,7 @@ public interface IStudentRepository
         string? className = null,
         string? section = null,
         bool? isActive = null,
+        Guid? branchId = null,
         CancellationToken cancellationToken = default);
     Task AddAsync(Student student, CancellationToken cancellationToken = default);
     void Update(Student student);

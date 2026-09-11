@@ -36,6 +36,7 @@ public class GetStudentsPagedQueryHandler : IRequestHandler<GetStudentsPagedQuer
             query.ClassName,
             query.Section,
             query.IsActive,
+            query.BranchId,
             cancellationToken);
 
         var dtos = students.Select(s => s.ToDto()).ToList();

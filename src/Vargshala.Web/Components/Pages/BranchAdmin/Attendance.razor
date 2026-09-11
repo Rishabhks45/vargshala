@@ -1,0 +1,2184 @@
+@page "/branch/attendance"
+@attribute [Authorize(Roles = "BranchAdmin,4")]
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Batches
+@using Vargshala.Contracts.Classes
+@using Vargshala.Contracts.ClassSessions
+@using Vargshala.Contracts.Attendances
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Skeletons
+@using Vargshala.Web.Services
+@using Vargshala.Web.Services.BranchAdmin
+@inject IBranchClassClientService BranchClassService
+@inject IBranchBatchClientService BranchBatchService
+@inject IBranchClassSessionClientService BranchSessionService
+@inject IBranchAttendanceClientService BranchAttendanceService
+@inject INotificationService Toast
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>Branch Attendance | Vargshala</PageTitle>
+
+<div class="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar scrollbar-hidden space-y-4 transition-colors duration-200 pb-20 pr-1 select-text" style="scrollbar-width: none; -ms-overflow-style: none;">
+
+<!-- Top Header: Title & Description on Left, Filters Toolbar & "+ Take Attendance" Action on Right in ONE SINGLE LINE -->
+<div class="flex items-center justify-between gap-3.5 w-full">
+    <!-- Left: Header & Description -->
+    <div class="shrink-0">
+        <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-none">Attendance</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Track and manage student attendance batch-wise.</p>
+    </div>
+
+    <!-- Right: Top Filters Toolbar & Primary "+ Take Attendance" Action (Single Row) -->
+    <div class="flex items-center gap-2 shrink-0">
+        <!-- Class Filter -->
+        <div class="w-32">
+            <CustomSelect Value="@_selectedClassId"
+                          ValueChanged="OnClassChanged"
+                          Options="@_classOptions"
+                          Placeholder="All Classes" />
+        </div>
+
+        <!-- Batch Filter -->
+        <div class="w-40">
+            <CustomSelect Value="@_selectedBatchId"
+                          ValueChanged="OnBatchChanged"
+                          Options="@_batchOptions"
+                          Placeholder="Select Batch" />
+        </div>
+
+        <!-- Date Picker: Styled pill with calendar icon matching OrgAdmin control height -->
+        <div class="relative flex items-center px-3.5 py-2 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xs gap-2 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 select-none whitespace-nowrap">
+                @_selectedDate.ToString("dd MMM yyyy")@(_selectedDate == DateOnly.FromDateTime(DateTime.Today) ? " (Today)" : "")
+            </span>
+            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+            </svg>
+            <input type="date"
+                   value="@_selectedDate.ToString("yyyy-MM-dd")"
+                   @onchange="OnDateChanged"
+                   class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+        </div>
+
+        <!-- Primary Action: + Take Attendance (Exact Match with OrgAdmin Attendance button) -->
+        <button type="button" 
+                @onclick="OpenTakeAttendanceModal"
+                class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] shrink-0">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            <span>Take Attendance</span>
+        </button>
+    </div>
+</div>
+
+<!-- Hero Cards Row: All 5 Cards in ONE SINGLE LINE Matching OrgAdmin Layout -->
+<div class="grid grid-cols-12 gap-2.5 xl:gap-3 items-stretch w-full" style="grid-template-columns: repeat(12, minmax(0, 1fr));">
+    <!-- Card 1: Selected Batch Hero Card (4 Columns) -->
+    <div class="col-span-4 card-surface p-3.5 border border-tealborder shadow-2xs relative overflow-hidden flex items-center justify-between gap-3 min-w-0" style="grid-column: span 4 / span 4;">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-[#009488] flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <h3 class="text-sm font-extrabold text-slate-800 dark:text-white truncate leading-tight">
+                    @(_overview?.BatchName ?? _selectedBatch?.Name ?? "Select Batch")
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate font-medium">
+                    @(_overview != null ? $"{_overview.SubjectName} ({_overview.ClassName})" : (_selectedBatch != null ? $"{_selectedBatch.SubjectName} ({_selectedBatch.ClassName})" : "No batch chosen"))
+                </p>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+                    @(_overview?.ScheduleFormatted ?? "Mon, Wed, Fri | 4:00 PM - 5:30 PM")
+                </p>
+            </div>
+        </div>
+        @if (_selectedBatch != null)
+        {
+            <button type="button" @onclick='() => Navigation.NavigateTo("branch/batches")'
+                    class="px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700/80 rounded-xl hover:bg-slate-50 transition-all shrink-0 cursor-pointer shadow-2xs">
+                View Batch Details
+            </button>
+        }
+    </div>
+
+    <!-- Card 2: Total Students (2 Columns) -->
+    <div class="col-span-2 card-surface p-3.5 border border-tealborder shadow-2xs relative overflow-hidden flex items-center gap-3 min-w-0" style="grid-column: span 2 / span 2;">
+        <div class="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        </div>
+        <div class="min-w-0">
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Total Students</p>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white leading-tight mt-0.5">@CurrentTotalStudents</h3>
+        </div>
+    </div>
+
+    <!-- Card 3: Present Today (2 Columns) -->
+    <div class="col-span-2 card-surface p-3.5 border border-tealborder shadow-2xs relative overflow-hidden flex items-center gap-3 min-w-0" style="grid-column: span 2 / span 2;">
+        <div class="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <div class="min-w-0">
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Present Today</p>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white leading-tight mt-0.5">@CurrentPresentCount</h3>
+            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5 truncate">@(CurrentPresentPercentage)%</p>
+        </div>
+    </div>
+
+    <!-- Card 4: Absent Today (2 Columns) -->
+    <div class="col-span-2 card-surface p-3.5 border border-tealborder shadow-2xs relative overflow-hidden flex items-center gap-3 min-w-0" style="grid-column: span 2 / span 2;">
+        <div class="w-11 h-11 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <div class="min-w-0">
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Absent Today</p>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white leading-tight mt-0.5">@CurrentAbsentCount</h3>
+            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5 truncate">@(CurrentAbsentPercentage)%</p>
+        </div>
+    </div>
+
+    <!-- Card 5: Late Today (2 Columns) -->
+    <div class="col-span-2 card-surface p-3.5 border border-tealborder shadow-2xs relative overflow-hidden flex items-center gap-3 min-w-0" style="grid-column: span 2 / span 2;">
+        <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <div class="min-w-0">
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Late Today</p>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white leading-tight mt-0.5">@CurrentLateCount</h3>
+            <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5 truncate">@(CurrentLatePercentage)%</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid: 8 Cols Tabs & Tables | 4 Cols Overview Widgets -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    
+    <!-- Left Section (Tabs & Tables) - 8 Cols -->
+    <div class="lg:col-span-8 space-y-3.5">
+        <!-- Navigation Tabs Bar -->
+        <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800">
+            <button type="button" @onclick='() => SetActiveTabAsync("student")'
+                    class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "student" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                </svg>
+                <span>Student Attendance</span>
+            </button>
+            <button type="button" @onclick='() => SetActiveTabAsync("batch")'
+                    class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "batch" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Batch Overview</span>
+            </button>
+            <button type="button" @onclick='() => SetActiveTabAsync("date")'
+                    class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "date" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Date-wise Report</span>
+            </button>
+            <button type="button" @onclick='() => SetActiveTabAsync("student-report")'
+                    class="pb-3 px-3 text-xs font-bold flex items-center gap-2 border-b-2 transition-all cursor-pointer @(_activeTab == "student-report" ? "text-[#009488] border-[#009488]" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 border-transparent")">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Student-wise Report</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: STUDENT ATTENDANCE -->
+        @if (_activeTab == "student")
+        {
+            <div class="card-surface rounded-2xl border border-tealborder shadow-2xs overflow-hidden">
+                <!-- Session Selector / Banner if multiple sessions exist on this date -->
+                @if (_daySessions.Count > 1)
+                {
+                    <div class="p-3 bg-teal-50/60 dark:bg-teal-950/40 border-b border-teal-100 dark:border-teal-900/40 flex items-center justify-between gap-3">
+                        <span class="text-xs font-bold text-teal-800 dark:text-teal-200">
+                            Multiple Sessions on @_selectedDate.ToString("dd MMM yyyy"):
+                        </span>
+                        <div class="flex items-center gap-2">
+                            @foreach (var sess in _daySessions)
+                            {
+                                <button type="button" @onclick="() => SelectSessionAsync(sess.Id)"
+                                        class="px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all @(sess.Id.ToString() == _selectedSessionId ? "bg-[#009488] text-white shadow-xs" : "bg-white dark:bg-[#142025] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700")">
+                                    @sess.StartTime.ToString("hh:mm tt") - @sess.EndTime.ToString("hh:mm tt") (@(sess.TeacherName ?? "Teacher"))
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Card Header: Title + [Mark All Present] + [Mark All Absent] + [Save Attendance] -->
+                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">
+                                Students in @(_sheet?.BatchName ?? _selectedBatch?.Name ?? "Selected Batch")
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Mark attendance for @_selectedDate.ToString("dd MMM yyyy")
+                                @if (_sheet != null && !string.IsNullOrEmpty(_sheet.TeacherName))
+                                {
+                                    <span> • Faculty: @_sheet.TeacherName</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Header Action Buttons (Matching Reference UI) -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" @onclick="MarkAllPresent"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#15803D] bg-[#DCFCE7] hover:bg-[#BBF7D0] border border-emerald-200 transition-all cursor-pointer">
+                            Mark All Present
+                        </button>
+                        <button type="button" @onclick="MarkAllAbsent"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#B91C1C] bg-[#FEE2E2] hover:bg-[#FECACA] border border-rose-200 transition-all cursor-pointer">
+                            Mark All Absent
+                        </button>
+                        @if (HasUnsavedChanges || _isSaving)
+                        {
+                            <button type="button" @onclick="SaveAttendanceAsync" disabled="@_isSaving"
+                                    class="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] active:scale-98 shadow-md shadow-[#009488]/20 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 animate-in fade-in zoom-in-95 duration-150">
+                                @if (_isSaving)
+                                {
+                                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Save Attendance</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Search & Filter Bar: Compact Search Box on Left, Filter Pills & Menu on Right -->
+                <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <!-- Search Box -->
+                    <div class="relative w-full sm:w-64 md:w-72">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" @bind="_studentSearchQuery" @bind:event="oninput"
+                               placeholder="Search by name or roll no..."
+                               class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#142025] border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-700 dark:text-slate-200 focus:outline-none focus:border-[#009488] transition-all" />
+                    </div>
+
+                    <!-- Filter Pills & Ellipsis Action Menu (Right Aligned) -->
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" @onclick='() => _statusFilter = "ALL"'
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer @(_statusFilter == "ALL" ? "bg-[#009488] text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
+                            All (@(_sheet?.Students.Count ?? 0))
+                        </button>
+                        <button type="button" @onclick='() => _statusFilter = AttendanceStatus.Present'
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer @(_statusFilter == AttendanceStatus.Present ? "bg-emerald-600 text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
+                            Present (@CurrentPresentCount)
+                        </button>
+                        <button type="button" @onclick='() => _statusFilter = AttendanceStatus.Absent'
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer @(_statusFilter == AttendanceStatus.Absent ? "bg-rose-600 text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
+                            Absent (@CurrentAbsentCount)
+                        </button>
+                        <button type="button" @onclick='() => _statusFilter = AttendanceStatus.Late'
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer @(_statusFilter == AttendanceStatus.Late ? "bg-amber-600 text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
+                            Late (@CurrentLateCount)
+                        </button>
+                        @if (CurrentUnmarkedCount > 0)
+                        {
+                            <button type="button" @onclick='() => _statusFilter = AttendanceStatus.Unmarked'
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer @(_statusFilter == AttendanceStatus.Unmarked ? "bg-slate-600 text-white shadow-2xs" : "bg-white dark:bg-[#18262c] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50")">
+                                Unmarked (@CurrentUnmarkedCount)
+                            </button>
+                        }
+                        <!-- 3-Dot Options Action Menu -->
+                        <div class="relative inline-block text-left">
+                            <button type="button" 
+                                    @onclick="() => _isRosterMenuOpen = !_isRosterMenuOpen"
+                                    class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#18262c] transition-all cursor-pointer ml-0.5 @(_isRosterMenuOpen ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white" : "")"
+                                    title="More Roster Actions">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                            </button>
+
+                            @if (_isRosterMenuOpen)
+                            {
+                                <!-- Backdrop to close on click outside -->
+                                <div class="fixed inset-0 z-40" @onclick="() => _isRosterMenuOpen = false"></div>
+
+                                <!-- Dropdown Menu -->
+                                <div class="absolute right-0 top-full mt-1.5 w-56 bg-white dark:bg-[#18262c] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/80 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
+                                    <div class="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 mb-1">
+                                        Roster Options
+                                    </div>
+
+                                    <!-- Export CSV -->
+                                    <button type="button" @onclick="ExportSessionAttendanceCsvAsync"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/50 hover:text-[#009488] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <span>Export to CSV</span>
+                                    </button>
+
+                                    <!-- Revert Changes (if modified) -->
+                                    @if (HasUnsavedChanges)
+                                    {
+                                        <button type="button" @onclick="RevertChanges"
+                                                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition-colors cursor-pointer">
+                                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                            </svg>
+                                            <span>Revert Unsaved Changes</span>
+                                        </button>
+                                    }
+
+                                    <!-- Mark All Unmarked -->
+                                    <button type="button" @onclick="MarkAllUnmarked"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#142025] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                        </svg>
+                                        <span>Reset to Unmarked</span>
+                                    </button>
+
+                                    <!-- Print Roster -->
+                                    <button type="button" @onclick="PrintRosterAsync"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#142025] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        </svg>
+                                        <span>Print Sheet</span>
+                                    </button>
+
+                                    <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+
+                                    <!-- Reload from Server -->
+                                    <button type="button" @onclick="RefreshSheetAsync"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#142025] rounded-xl transition-colors cursor-pointer">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                        </svg>
+                                        <span>Reload from Server</span>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Table Content -->
+                @if (_sheet?.IsAttendanceMarked == true && !_isLoadingSheet)
+                {
+                    <div class="px-4 py-2 bg-emerald-50/80 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/40 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                            Attendance already recorded for this session. Changes will update existing records.
+                        </span>
+                    </div>
+                }
+
+                <!-- Student Attendance Table -->
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
+                                <th class="py-3 px-3 w-10 text-center">
+                                    <input type="checkbox" checked="@IsAllPresent" @onchange="(e) => ToggleAllAttendance((bool)(e.Value ?? false))"
+                                           class="rounded border-slate-300 text-[#009488] focus:ring-0 cursor-pointer" />
+                                </th>
+                                <th class="py-3 px-2 w-10 text-center">#</th>
+                                <th class="py-3 px-3 w-20">Roll No.</th>
+                                <th class="py-3 px-4">Student Name</th>
+                                <th class="py-3 px-4">Attendance Status</th>
+                                <th class="py-3 px-4">Check-in Time</th>
+                                <th class="py-3 px-4">Remarks</th>
+                                <th class="py-3 px-3 w-12 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs @(_isLoadingSheet && _sheet?.Students.Any() == true ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                            @if (_isLoadingSheet)
+                            {
+                                <TableSkeletonRows Columns="8" Rows="8" />
+                            }
+                            else if (string.IsNullOrEmpty(_selectedSessionId) && _daySessions.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="8" class="p-0">
+                                        <div class="p-12 flex flex-col items-center justify-center text-center">
+                                            <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mb-3">
+                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Class Session Found</h4>
+                                            <p class="text-xs text-slate-400 max-w-sm mt-1">No class session found for this batch on @_selectedDate.ToString("dd MMMM yyyy").</p>
+                                            <div class="mt-4 flex items-center gap-2">
+                                                <button type="button" @onclick='() => Navigation.NavigateTo("branch/class-sessions")'
+                                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] shadow-xs transition-all cursor-pointer">
+                                                    Create Class Session
+                                                </button>
+                                                <button type="button" @onclick="SetDateToToday"
+                                                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-all cursor-pointer">
+                                                    Select Today's Date
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            else if (_sheet == null || _sheet.Students.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="8" class="p-0">
+                                        <div class="p-12 flex flex-col items-center justify-center text-center">
+                                            <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
+                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <h4 class="text-sm font-bold text-slate-800 dark:text-white">No Enrolled Students</h4>
+                                            <p class="text-xs text-slate-400 max-w-sm mt-1">This batch does not have any active enrolled students yet.</p>
+                                            <button type="button" @onclick='() => Navigation.NavigateTo("branch/batches")'
+                                                    class="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] shadow-xs transition-all cursor-pointer">
+                                                Enroll Students in Batch
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @for (int i = 0; i < FilteredStudents.Count; i++)
+                                {
+                                    var studentIndex = i;
+                                    var s = FilteredStudents[studentIndex];
+                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-[#142025]/40 transition-colors">
+                                        <td class="py-3 px-3 text-center">
+                                            <input type="checkbox" checked="@(s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)"
+                                                   @onchange="(e) => ToggleStudentAttendance(s, (bool)(e.Value ?? false))"
+                                                   class="rounded border-slate-300 text-[#009488] focus:ring-0 cursor-pointer" />
+                                        </td>
+                                        <td class="py-3 px-2 text-center font-medium text-slate-400">@(studentIndex + 1)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                                            @(string.IsNullOrWhiteSpace(s.RollNumber) ? (s.StudentCode ?? "-") : s.RollNumber)
+                                        </td>
+                                        <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">
+                                            @s.StudentName
+                                        </td>
+                                        
+                                        <!-- Attendance Status Badge Button -->
+                                        <td class="py-3 px-4">
+                                            @if (s.Status == AttendanceStatus.Present)
+                                            {
+                                                <button type="button" @onclick="() => CycleStudentStatus(s)"
+                                                        title="Click to toggle status"
+                                                        class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-[#DCFCE7] text-[#15803D] hover:ring-2 hover:ring-emerald-400/30 transition-all cursor-pointer">
+                                                    Present
+                                                </button>
+                                            }
+                                            else if (s.Status == AttendanceStatus.Absent)
+                                            {
+                                                <button type="button" @onclick="() => CycleStudentStatus(s)"
+                                                        title="Click to toggle status"
+                                                        class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-[#FEE2E2] text-[#B91C1C] hover:ring-2 hover:ring-rose-400/30 transition-all cursor-pointer">
+                                                    Absent
+                                                </button>
+                                            }
+                                            else if (s.Status == AttendanceStatus.Late)
+                                            {
+                                                <button type="button" @onclick="() => CycleStudentStatus(s)"
+                                                        title="Click to toggle status"
+                                                        class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-[#FEF3C7] text-[#B45309] hover:ring-2 hover:ring-amber-400/30 transition-all cursor-pointer">
+                                                    Late
+                                                </button>
+                                            }
+                                            else if (s.Status == AttendanceStatus.Excused)
+                                            {
+                                                <button type="button" @onclick="() => CycleStudentStatus(s)"
+                                                        title="Click to toggle status"
+                                                        class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 hover:ring-2 hover:ring-blue-400/30 transition-all cursor-pointer">
+                                                    Excused
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" @onclick="() => CycleStudentStatus(s)"
+                                                        title="Click to mark attendance"
+                                                        class="px-3.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-[#18262c] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-teal-400 hover:text-[#009488] transition-all cursor-pointer">
+                                                    Not Marked
+                                                </button>
+                                            }
+                                        </td>
+
+                                        <!-- Check-in Time -->
+                                        <td class="py-3 px-4 font-medium text-slate-600 dark:text-slate-300">
+                                            @if (s.Status == AttendanceStatus.Absent)
+                                            {
+                                                <span class="text-slate-400">-</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@s.CheckInTimeFormatted</span>
+                                            }
+                                        </td>
+
+                                        <!-- Remarks -->
+                                        <td class="py-3 px-4 min-w-[140px]">
+                                            @if (string.IsNullOrWhiteSpace(s.Remarks))
+                                            {
+                                                <button type="button" @onclick="() => OpenRemarksModal(s)"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-dashed border-slate-200 dark:border-slate-700 transition-all cursor-pointer">
+                                                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                    <span>Add reason</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" @onclick="() => OpenRemarksModal(s)"
+                                                        title="@s.Remarks (Click to edit)"
+                                                        class="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-[#009488] hover:text-[#009488] transition-all cursor-pointer max-w-[160px]">
+                                                    <span class="truncate">@s.Remarks</span>
+                                                    <svg class="w-3 h-3 text-slate-400 group-hover:text-[#009488] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                            }
+                                        </td>
+
+                                        <!-- Action Menu Button -->
+                                        <td class="py-3 px-3 text-center">
+                                            <button type="button" @onclick="() => OpenRemarksModal(s)"
+                                                    title="Add Attendance Reason / Remarks"
+                                                    class="p-1.5 text-slate-400 hover:text-[#009488] dark:hover:text-teal-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (!_isLoadingSheet && _sheet?.Students.Count > 0)
+                {
+                    <!-- Pagination Footer -->
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                        <span>Showing 1 to @FilteredStudents.Count of @(_sheet?.Students.Count ?? 0) students</span>
+                        <div class="flex items-center gap-1">
+                            <button type="button" class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-40">
+                                &larr;
+                            </button>
+                            <button type="button" class="w-7 h-7 rounded-lg bg-[#004D40] text-white font-bold flex items-center justify-center cursor-pointer">
+                                1
+                            </button>
+                            <button type="button" class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-40">
+                                &rarr;
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- TAB 2: BATCH OVERVIEW -->
+        @if (_activeTab == "batch")
+        {
+            <div class="card-surface rounded-2xl border border-tealborder shadow-2xs p-6 space-y-6">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-white">Batch Attendance Analysis</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Comprehensive attendance performance for @(_overview?.BatchName ?? "selected batch")</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#142025] border border-slate-200/60 dark:border-slate-800">
+                        <p class="text-xs font-semibold text-slate-400">Total Enrolled</p>
+                        <h4 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@(_overview?.TotalStudents ?? 0)</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Active batch students</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#142025] border border-slate-200/60 dark:border-slate-800">
+                        <p class="text-xs font-semibold text-slate-400">Today's Attendance Rate</p>
+                        <h4 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">@(_overview?.TodayAttendancePercentage ?? 0)%</h4>
+                        <p class="text-[11px] text-slate-500 mt-1">Present + Late students</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-[#142025] border border-slate-200/60 dark:border-slate-800">
+                        <p class="text-xs font-semibold text-slate-400">Weekly Performance</p>
+                        <h4 class="text-2xl font-black text-[#009488] mt-1">
+                            @(GetWeeklyAveragePercentage())%
+                        </h4>
+                        <p class="text-[11px] text-slate-500 mt-1">7-Day average attendance</p>
+                    </div>
+                </div>
+
+                <!-- 7-Day Table Breakdown -->
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <th class="py-2.5 px-3">Date</th>
+                                <th class="py-2.5 px-3">Day</th>
+                                <th class="py-2.5 px-3">Present</th>
+                                <th class="py-2.5 px-3">Late</th>
+                                <th class="py-2.5 px-3">Absent</th>
+                                <th class="py-2.5 px-3">Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            @if (_isLoadingSheet && _overview == null)
+                            {
+                                <TableSkeletonRows Columns="6" Rows="5" />
+                            }
+                            else if (_overview?.DailyTrends != null)
+                            {
+                                @foreach (var t in _overview.DailyTrends)
+                                {
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-[#142025]/50">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">@t.DateShortFormatted</td>
+                                        <td class="py-2.5 px-3 text-slate-500">@t.DayOfWeekShort</td>
+                                        <td class="py-2.5 px-3 font-bold text-emerald-600">@t.PresentCount</td>
+                                        <td class="py-2.5 px-3 font-bold text-amber-600">@t.LateCount</td>
+                                        <td class="py-2.5 px-3 font-bold text-rose-600">@t.AbsentCount</td>
+                                        <td class="py-2.5 px-3">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-16 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-[#009488] rounded-full" style="width: @t.Percentage%"></div>
+                                                </div>
+                                                <span class="font-bold text-slate-700 dark:text-slate-200">@t.Percentage%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- TAB 3: DATE-WISE REPORT -->
+        @if (_activeTab == "date")
+        {
+            <div class="card-surface rounded-2xl border border-tealborder shadow-2xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">Date-wise Attendance Report</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Historical session attendance log for this batch</p>
+                    </div>
+                    <button type="button" @onclick="ReloadDateWiseReportAsync"
+                            class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-all cursor-pointer">
+                        Refresh Report
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
+                                <th class="py-3 px-3">Date</th>
+                                <th class="py-3 px-3">Session Timing</th>
+                                <th class="py-3 px-3">Faculty</th>
+                                <th class="py-3 px-3">Total</th>
+                                <th class="py-3 px-3 text-emerald-600">Present</th>
+                                <th class="py-3 px-3 text-rose-600">Absent</th>
+                                <th class="py-3 px-3 text-amber-600">Late</th>
+                                <th class="py-3 px-3">Rate</th>
+                                <th class="py-3 px-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 @(_isLoadingDateReports && _dateReports.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                            @if (_isLoadingDateReports && !_dateReports.Any())
+                            {
+                                <TableSkeletonRows Columns="9" Rows="6" />
+                            }
+                            else if (string.IsNullOrEmpty(_selectedBatchId))
+                            {
+                                <tr>
+                                    <td colspan="9" class="p-12 text-center text-xs text-slate-400">
+                                        Please select a batch above to view the date-wise attendance report.
+                                    </td>
+                                </tr>
+                            }
+                            else if (_dateReports.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="9" class="p-12 text-center text-xs text-slate-400">
+                                        No class sessions recorded yet for this batch.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var r in _dateReports)
+                                {
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-[#142025]/50">
+                                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">@r.SessionDate.ToString("dd MMM yyyy")</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">@r.StartTime.ToString("hh:mm tt") - @r.EndTime.ToString("hh:mm tt")</td>
+                                        <td class="py-3 px-3 text-slate-500">@r.TeacherName</td>
+                                        <td class="py-3 px-3 font-semibold">@r.TotalStudents</td>
+                                        <td class="py-3 px-3 font-bold text-emerald-600">@r.PresentCount</td>
+                                        <td class="py-3 px-3 font-bold text-rose-600">@r.AbsentCount</td>
+                                        <td class="py-3 px-3 font-bold text-amber-600">@r.LateCount</td>
+                                        <td class="py-3 px-3 font-extrabold text-slate-800 dark:text-white">@r.AttendancePercentage%</td>
+                                        <td class="py-3 px-3 text-center">
+                                            <button type="button" @onclick="() => SelectSessionFromReportAsync(r.SessionId, r.SessionDate)"
+                                                    class="px-2.5 py-1 text-[11px] font-bold text-[#009488] bg-teal-50 dark:bg-teal-950/40 rounded-lg hover:bg-teal-100 transition-all cursor-pointer">
+                                                Open Sheet
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- TAB 4: STUDENT-WISE REPORT -->
+        @if (_activeTab == "student-report")
+        {
+            <div class="card-surface rounded-2xl border border-tealborder shadow-2xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white">Student-wise Attendance Report</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Aggregate attendance percentage per student across all sessions</p>
+                    </div>
+                    <button type="button" @onclick="ReloadStudentWiseReportAsync"
+                            class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-all cursor-pointer">
+                        Refresh Report
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto no-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 dark:bg-[#142025]/50">
+                                <th class="py-3 px-3">Roll No.</th>
+                                <th class="py-3 px-4">Student Name</th>
+                                <th class="py-3 px-3 text-center">Total Classes</th>
+                                <th class="py-3 px-3 text-center text-emerald-600">Present</th>
+                                <th class="py-3 px-3 text-center text-rose-600">Absent</th>
+                                <th class="py-3 px-3 text-center text-amber-600">Late</th>
+                                <th class="py-3 px-4">Attendance Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 @(_isLoadingStudentReports && _studentReports.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                            @if (_isLoadingStudentReports && !_studentReports.Any())
+                            {
+                                <TableSkeletonRows Columns="7" Rows="6" />
+                            }
+                            else if (string.IsNullOrEmpty(_selectedBatchId))
+                            {
+                                <tr>
+                                    <td colspan="7" class="p-12 text-center text-xs text-slate-400">
+                                        Please select a batch above to view the student-wise attendance report.
+                                    </td>
+                                </tr>
+                            }
+                            else if (_studentReports.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="7" class="p-12 text-center text-xs text-slate-400">
+                                        No student records found for this batch.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var sr in _studentReports)
+                                {
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-[#142025]/50">
+                                        <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                                            @(string.IsNullOrWhiteSpace(sr.RollNumber) ? (sr.StudentCode ?? "-") : sr.RollNumber)
+                                        </td>
+                                        <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">
+                                            @sr.FullName
+                                        </td>
+                                        <td class="py-3 px-3 text-center font-bold">@sr.TotalClasses</td>
+                                        <td class="py-3 px-3 text-center font-bold text-emerald-600">@sr.PresentCount</td>
+                                        <td class="py-3 px-3 text-center font-bold text-rose-600">@sr.AbsentCount</td>
+                                        <td class="py-3 px-3 text-center font-bold text-amber-600">@sr.LateCount</td>
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                    <div class="h-full rounded-full @(sr.AttendancePercentage >= 80 ? "bg-emerald-500" : sr.AttendancePercentage >= 60 ? "bg-amber-500" : "bg-rose-500")"
+                                                         style="width: @sr.AttendancePercentage%"></div>
+                                                </div>
+                                                <span class="font-extrabold @(sr.AttendancePercentage >= 80 ? "text-emerald-600" : sr.AttendancePercentage >= 60 ? "text-amber-600" : "text-rose-600")">
+                                                    @sr.AttendancePercentage%
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Right Column Widgets (4 Cols) - Follows Reference UI -->
+    <div class="lg:col-span-4 space-y-4">
+        <!-- Widget 1: Batch Attendance Overview (7-Day Bar Chart) -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs rounded-2xl space-y-3.5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-800 dark:text-white">Batch Attendance Overview</h3>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-500 bg-white dark:bg-[#18262c] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700/80 shadow-2xs">
+                    Last 7 Days
+                </span>
+            </div>
+
+            <!-- Vertical Bar Chart with 7 Days -->
+            <div class="pt-2">
+                <div class="h-44 flex items-end justify-between gap-1.5 px-2 pb-1 border-b border-slate-100 dark:border-slate-800 relative">
+                    <!-- Y-axis guide lines (subtle) -->
+                    <div class="absolute inset-x-0 top-0 border-b border-dashed border-slate-100 dark:border-slate-800/40 pointer-events-none"></div>
+                    <div class="absolute inset-x-0 top-1/2 border-b border-dashed border-slate-100 dark:border-slate-800/40 pointer-events-none"></div>
+
+                    @if (_overview?.DailyTrends != null && _overview.DailyTrends.Count > 0)
+                    {
+                        @foreach (var day in _overview.DailyTrends)
+                        {
+                            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative">
+                                <!-- Percentage tooltip/label above bar -->
+                                <span class="text-[10px] font-black @(day.Percentage > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-300 dark:text-slate-600")">
+                                    @(day.Percentage)%
+                                </span>
+                                <!-- Vertical Bar -->
+                                <div class="w-full max-w-[28px] rounded-t-lg transition-all duration-500 @(day.Percentage > 0 ? "bg-[#10B981] hover:bg-[#059669]" : "bg-slate-100 dark:bg-slate-800")"
+                                     style="height: @(Math.Max(day.Percentage, 4))%;"></div>
+                            </div>
+                        }
+                    }
+                    else if (_isLoadingSheet)
+                    {
+                        @for (int s = 0; s < 7; s++)
+                        {
+                            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end animate-pulse">
+                                <div class="w-6 h-2 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                                <div class="w-full max-w-[28px] bg-slate-200 dark:bg-slate-800 rounded-t-lg" style="height: @(20 + (s * 8))%;"></div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                            No trend data available
+                        </div>
+                    }
+                </div>
+
+                <!-- X-Axis Day & Date Labels -->
+                <div class="flex items-center justify-between gap-1.5 px-2 pt-2 text-[10px] text-slate-400 font-semibold text-center">
+                    @if (_overview?.DailyTrends != null)
+                    {
+                        @foreach (var day in _overview.DailyTrends)
+                        {
+                            <div class="flex-1">
+                                <p class="font-bold text-slate-600 dark:text-slate-300">@day.DayOfWeekShort</p>
+                                <p class="text-[9px] text-slate-400">@day.DateShortFormatted</p>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget 2: Attendance Distribution (Today) (SVG Donut Chart) -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs rounded-2xl space-y-3.5">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    </svg>
+                </div>
+                <h3 class="text-xs font-bold text-slate-800 dark:text-white">Attendance Distribution (Today)</h3>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 pt-1">
+                <!-- SVG Donut Chart with Center Student Count -->
+                <div class="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <!-- Background Track -->
+                        <circle cx="18" cy="18" r="14" fill="transparent"
+                                stroke="currentColor" stroke-width="3.5"
+                                class="text-slate-100 dark:text-slate-800" />
+
+                        <!-- Present Arc (Emerald) -->
+                        <circle cx="18" cy="18" r="14" fill="transparent"
+                                stroke="#10b981" stroke-width="3.5"
+                                stroke-dasharray="@(PresentDash) 100"
+                                stroke-dashoffset="0"
+                                stroke-linecap="round" />
+
+                        <!-- Late Arc (Amber) -->
+                        <circle cx="18" cy="18" r="14" fill="transparent"
+                                stroke="#f59e0b" stroke-width="3.5"
+                                stroke-dasharray="@(LateDash) 100"
+                                stroke-dashoffset="@(-PresentDash)"
+                                stroke-linecap="round" />
+
+                        <!-- Absent Arc (Rose) -->
+                        <circle cx="18" cy="18" r="14" fill="transparent"
+                                stroke="#f43f5e" stroke-width="3.5"
+                                stroke-dasharray="@(AbsentDash) 100"
+                                stroke-dashoffset="@(-(PresentDash + LateDash))"
+                                stroke-linecap="round" />
+                    </svg>
+
+                    <!-- Center Text -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-base font-black text-slate-800 dark:text-white leading-none">
+                            @(_overview?.TotalStudents ?? _sheet?.TotalStudents ?? 0)
+                        </span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">
+                            Students
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Legend List with Real Counts & Percentages -->
+                <div class="flex-1 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">Present</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 dark:text-white">@CurrentPresentCount</span>
+                            <span class="text-[11px] font-semibold text-slate-400 w-10 text-right">@(CurrentPresentPercentage)%</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">Absent</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 dark:text-white">@CurrentAbsentCount</span>
+                            <span class="text-[11px] font-semibold text-slate-400 w-10 text-right">@(CurrentAbsentPercentage)%</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">Late</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 dark:text-white">@CurrentLateCount</span>
+                            <span class="text-[11px] font-semibold text-slate-400 w-10 text-right">@(CurrentLatePercentage)%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget 3: Recent Attendance Activity Feed -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs rounded-2xl space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-800 dark:text-white">Recent Attendance Activity</h3>
+                </div>
+                <button type="button" @onclick='() => SetActiveTabAsync("student")'
+                        class="text-[11px] font-bold text-[#009488] hover:underline cursor-pointer">
+                    View All
+                </button>
+            </div>
+
+            <div class="space-y-2.5 pt-1">
+                @if (_overview?.RecentActivities != null && _overview.RecentActivities.Count > 0)
+                {
+                    @foreach (var act in _overview.RecentActivities)
+                    {
+                        <div class="flex items-center justify-between text-xs py-1 border-b border-slate-50 dark:border-slate-800/40 last:border-0">
+                            <div class="flex items-center gap-2 truncate">
+                                <span class="w-2 h-2 rounded-full shrink-0 @(act.Status == AttendanceStatus.Present ? "bg-emerald-500" : act.Status == AttendanceStatus.Late ? "bg-amber-500" : "bg-rose-500")"></span>
+                                <span class="font-medium text-slate-700 dark:text-slate-200 truncate">
+                                    @act.StudentName marked @act.Status
+                                </span>
+                            </div>
+                            <span class="text-[11px] font-semibold text-slate-400 shrink-0 ml-2">
+                                @act.MarkedAtFormatted
+                            </span>
+                        </div>
+                    }
+                }
+                else if (_isLoadingSheet)
+                {
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <div class="flex items-center justify-between text-xs py-1.5 animate-pulse">
+                            <div class="flex items-center gap-2 flex-1">
+                                <div class="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+                                <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                            </div>
+                            <div class="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-12 ml-2"></div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-xs text-slate-400">
+                        No attendance recorded yet today.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: Take Attendance Right Slide-Over Drawer -->
+<!-- ========================================================================= -->
+@if (_showTakeAttendanceModal)
+{
+    <!-- Backdrop Overlay with Smooth Fade -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isTakeAttendanceDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseTakeAttendanceDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container with Bidirectional Smooth Slide Transition -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isTakeAttendanceDrawerOpen ? "translate-x-0" : "translate-x-full") select-text overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient & Icon -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-white/10 border border-teal-400/30 p-2 flex items-center justify-center shadow-md shrink-0">
+                    <svg class="w-5 h-5 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight">
+                        Take Attendance
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        Guided step-by-step attendance setup
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseTakeAttendanceDrawerAsync" 
+                    class="relative z-10 p-2 rounded-xl text-teal-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Close Drawer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs no-scrollbar scrollbar-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <!-- Step 1: Class -->
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 1: Class</label>
+                <CustomSelect Value="@_modalClassId"
+                              ValueChanged="OnModalClassChanged"
+                              Options="@_modalClassOptions"
+                              Placeholder="Select Class"
+                              Class="w-full" />
+            </div>
+
+            <!-- Step 2: Batch -->
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 2: Batch</label>
+                <CustomSelect Value="@_modalBatchId"
+                              ValueChanged="OnModalBatchChanged"
+                              Options="@_modalBatchOptions"
+                              Placeholder="Select Batch"
+                              Class="w-full" />
+            </div>
+
+            <!-- Step 3: Session Date -->
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 3: Session Date</label>
+                <input type="date"
+                       value="@_modalDate.ToString("yyyy-MM-dd")"
+                       @onchange="OnModalDateChanged"
+                       class="w-full h-10 px-3.5 py-2.5 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 text-slate-900 dark:text-white transition-all" />
+            </div>
+
+            <!-- Step 4: Class Session Selection -->
+            <div class="space-y-1">
+                <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1">Step 4: Select Class Session</label>
+                @if (_isModalLoadingSessions)
+                {
+                    <div class="py-3 flex items-center gap-2 text-slate-400">
+                        <div class="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span>Checking scheduled sessions...</span>
+                    </div>
+                }
+                else if (_modalSessions.Count == 0)
+                {
+                    <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-200 space-y-2">
+                        <p class="font-bold">No class session found for this batch on this date.</p>
+                        <p class="text-[11px] text-amber-700 dark:text-amber-300">You must create a Class Session first before taking attendance.</p>
+                        <button type="button" @onclick='() => Navigation.NavigateTo("branch/class-sessions")'
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] shadow-xs cursor-pointer transition-all">
+                            Create Class Session
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <CustomSelect Value="@_modalSessionId"
+                                  ValueChanged="(val) => _modalSessionId = val"
+                                  Options="@_modalSessionOptions"
+                                  Placeholder="Select Class Session"
+                                  Class="w-full" />
+                }
+            </div>
+        </div>
+
+        <!-- Drawer Footer with Cancel & Open Attendance Sheet Action -->
+        <div class="px-6 py-4 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseTakeAttendanceDrawerAsync"
+                    class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="ApplyModalSelectionAndOpenSheetAsync"
+                    disabled="@(string.IsNullOrEmpty(_modalSessionId))"
+                    class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] shadow-md transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                Open Attendance Sheet
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Attendance Reason & Remarks Modal -->
+<!-- ========================================================================= -->
+@if (_showRemarksModal && _activeRemarksStudent != null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+         @onclick="CloseRemarksModal">
+        <div class="bg-white dark:bg-[#111c21] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95"
+             @onclick:stopPropagation="true">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-[#004D40] text-white flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <svg class="w-4 h-4 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <span>Attendance Reason &amp; Remarks</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 mt-0.5 font-medium">
+                        @_activeRemarksStudent.StudentName @(!string.IsNullOrWhiteSpace(_activeRemarksStudent.RollNumber) ? $"• Roll: {_activeRemarksStudent.RollNumber}" : "")
+                    </p>
+                </div>
+                <button type="button" @onclick="CloseRemarksModal" class="p-1 text-teal-200 hover:text-white rounded-lg transition-colors cursor-pointer" title="Close">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 space-y-4 text-xs">
+                <!-- Status Picker -->
+                <div>
+                    <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1.5">Attendance Status</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" @onclick='() => _remarksStatus = "Present"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Present" ? "bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] ring-2 ring-emerald-400/30" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Present
+                        </button>
+                        <button type="button" @onclick='() => _remarksStatus = "Absent"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Absent" ? "bg-[#FEE2E2] text-[#B91C1C] border-[#FCA5A5] ring-2 ring-rose-400/30" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Absent
+                        </button>
+                        <button type="button" @onclick='() => _remarksStatus = "Late"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Late" ? "bg-[#FEF3C7] text-[#B45309] border-[#FCD34D] ring-2 ring-amber-400/30" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Late
+                        </button>
+                        <button type="button" @onclick='() => _remarksStatus = "Excused"'
+                                class="py-2 px-1.5 rounded-xl font-bold text-xs border text-center transition-all cursor-pointer @(_remarksStatus == "Excused" ? "bg-blue-50 text-blue-700 border-blue-300 ring-2 ring-blue-400/30 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" : "bg-slate-50 dark:bg-[#18262c] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100")">
+                            Excused
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Reason Chips -->
+                <div>
+                    <label class="block text-slate-700 dark:text-slate-300 font-bold mb-1.5">Quick Reason Suggestions</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" @onclick='() => SetQuickReason("Sick Leave / Medical")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Sick Leave
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Family Function")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Family Function
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Traffic / Transport Delay")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Transport Delay
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Doctor Appointment")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Doctor Appointment
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Prior Leave Approved")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Prior Leave Approved
+                        </button>
+                        <button type="button" @onclick='() => SetQuickReason("Personal Emergency")'
+                                class="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-teal-50 hover:text-[#009488] hover:border-teal-300 transition-all cursor-pointer">
+                            Personal Emergency
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reason / Remark Input -->
+                <div class="space-y-1">
+                    <label class="block text-slate-700 dark:text-slate-300 font-bold">Reason / Note</label>
+                    <textarea @bind="_remarksText" rows="3"
+                              placeholder="Type reason for absence, late arrival, or special notes..."
+                              class="w-full p-3 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#142025] border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                @if (!string.IsNullOrWhiteSpace(_remarksText))
+                {
+                    <button type="button" @onclick='() => _remarksText = string.Empty'
+                            class="text-xs text-rose-500 hover:text-rose-700 font-semibold cursor-pointer">
+                        Clear Reason
+                    </button>
+                }
+                else
+                {
+                    <div></div>
+                }
+
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @onclick="CloseRemarksModal"
+                            class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" @onclick="SaveRemarksModalAsync"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] shadow-xs transition-all cursor-pointer flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Apply &amp; Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+// Top Filter State
+private List<ClassLookupDto> _classes = new();
+private List<CustomSelect.CustomSelectOption> _classOptions = new();
+private string _selectedClassId = string.Empty;
+
+private List<BatchDto> _batches = new();
+private List<CustomSelect.CustomSelectOption> _batchOptions = new();
+private string _selectedBatchId = string.Empty;
+private BatchDto? _selectedBatch => _batches.FirstOrDefault(b => b.Id.ToString() == _selectedBatchId);
+
+private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
+
+// Active Tab: "student", "batch", "date", "student-report"
+private string _activeTab = "student";
+
+// Sessions for the selected Batch & Date
+private List<ClassSessionDto> _daySessions = new();
+private string _selectedSessionId = string.Empty;
+
+// Overview & Sheet DTOs
+private BatchAttendanceOverviewDto? _overview;
+private SessionAttendanceSheetDto? _sheet;
+
+// Reports DTOs
+private List<DateAttendanceReportDto> _dateReports = new();
+private List<StudentAttendanceReportDto> _studentReports = new();
+
+// UI Loading & Filter states
+private bool _isLoadingSheet = true;
+private bool _isLoadingDateReports = false;
+private bool _isLoadingStudentReports = false;
+private bool _isSaving = false;
+private bool _hasChanges = false;
+private bool _isRosterMenuOpen = false;
+private string _studentSearchQuery = string.Empty;
+private Dictionary<Guid, (string Status, string? Remarks)> _initialStudentStates = new();
+private bool HasUnsavedChanges => _hasChanges || (_initialStudentStates.Count > 0 && _sheet?.Students.Any(s => 
+    !_initialStudentStates.TryGetValue(s.StudentId, out var init) || 
+    init.Status != s.Status || 
+    (init.Remarks ?? "") != (s.Remarks ?? "")) == true);
+private string _statusFilter = "ALL"; // ALL, Present, Absent, Late
+private bool _selectAllChecked = false;
+private HashSet<Guid> _selectedStudentIds = new();
+
+// Attendance Remarks & Reason Modal State
+private bool _showRemarksModal = false;
+private StudentAttendanceItemDto? _activeRemarksStudent;
+private string _remarksStatus = "Present";
+private string _remarksText = string.Empty;
+
+private void OpenRemarksModal(StudentAttendanceItemDto student)
+{
+    _activeRemarksStudent = student;
+    _remarksStatus = student.Status;
+    _remarksText = student.Remarks ?? string.Empty;
+    _showRemarksModal = true;
+}
+
+private void CloseRemarksModal()
+{
+    _showRemarksModal = false;
+    _activeRemarksStudent = null;
+}
+
+private void SetQuickReason(string reason)
+{
+    _remarksText = reason;
+}
+
+private async Task SaveRemarksModalAsync()
+{
+    if (_activeRemarksStudent == null) return;
+
+    _activeRemarksStudent.Status = _remarksStatus;
+    _activeRemarksStudent.Remarks = string.IsNullOrWhiteSpace(_remarksText) ? null : _remarksText.Trim();
+
+    if (_activeRemarksStudent.Status == AttendanceStatus.Absent)
+    {
+        _activeRemarksStudent.MarkedAt = null;
+        _selectedStudentIds.Remove(_activeRemarksStudent.StudentId);
+    }
+    else
+    {
+        if (!_activeRemarksStudent.MarkedAt.HasValue) _activeRemarksStudent.MarkedAt = DateTime.UtcNow;
+        if (_activeRemarksStudent.Status == AttendanceStatus.Present || _activeRemarksStudent.Status == AttendanceStatus.Late)
+        {
+            _selectedStudentIds.Add(_activeRemarksStudent.StudentId);
+        }
+        else
+        {
+            _selectedStudentIds.Remove(_activeRemarksStudent.StudentId);
+        }
+    }
+    _selectAllChecked = IsAllPresent;
+
+    CloseRemarksModal();
+    await SaveAttendanceAsync();
+}
+
+// Take Attendance Drawer State
+private bool _showTakeAttendanceModal = false;
+private bool _isTakeAttendanceDrawerOpen = false;
+private string _modalClassId = string.Empty;
+private List<CustomSelect.CustomSelectOption> _modalClassOptions = new();
+private string _modalBatchId = string.Empty;
+private List<CustomSelect.CustomSelectOption> _modalBatchOptions = new();
+private DateOnly _modalDate = DateOnly.FromDateTime(DateTime.Today);
+private List<ClassSessionDto> _modalSessions = new();
+private List<CustomSelect.CustomSelectOption> _modalSessionOptions = new();
+private string _modalSessionId = string.Empty;
+private bool _isModalLoadingSessions = false;
+
+// Filtered Student List for Tab 1
+private List<StudentAttendanceItemDto> FilteredStudents
+{
+    get
+    {
+        if (_sheet == null) return new();
+        var list = _sheet.Students.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(_studentSearchQuery))
+        {
+            var q = _studentSearchQuery.Trim().ToLower();
+            list = list.Where(s =>
+                s.StudentName.ToLower().Contains(q) ||
+                (s.RollNumber != null && s.RollNumber.ToLower().Contains(q)) ||
+                (s.StudentCode != null && s.StudentCode.ToLower().Contains(q))
+            );
+        }
+
+        if (_statusFilter != "ALL")
+        {
+            list = list.Where(s => s.Status == _statusFilter);
+        }
+
+        return list.ToList();
+    }
+}
+
+// Dynamic Counts from currently marked/sheet state (not hardcoded)
+private int CurrentPresentCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Present) ?? _overview?.TodayPresent ?? 0;
+private int CurrentAbsentCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Absent) ?? _overview?.TodayAbsent ?? 0;
+private int CurrentLateCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Late) ?? _overview?.TodayLate ?? 0;
+private int CurrentUnmarkedCount => _sheet?.Students.Count(s => s.Status == AttendanceStatus.Unmarked) ?? 0;
+private int CurrentTotalStudents => _sheet?.TotalStudents ?? _overview?.TotalStudents ?? 0;
+
+private double CurrentPresentPercentage => CurrentTotalStudents > 0
+    ? Math.Round((double)CurrentPresentCount / CurrentTotalStudents * 100, 1)
+    : 0;
+
+private double CurrentAbsentPercentage => CurrentTotalStudents > 0
+    ? Math.Round((double)CurrentAbsentCount / CurrentTotalStudents * 100, 1)
+    : 0;
+
+private double CurrentLatePercentage => CurrentTotalStudents > 0
+    ? Math.Round((double)CurrentLateCount / CurrentTotalStudents * 100, 1)
+    : 0;
+
+// Donut chart arc calculations (circumference for r=14 is 2 * pi * 14 ≈ 88)
+private double PresentDash => Math.Round(CurrentPresentPercentage * 0.88, 1);
+private double AbsentDash => Math.Round(CurrentAbsentPercentage * 0.88, 1);
+private double LateDash => Math.Round(CurrentLatePercentage * 0.88, 1);
+
+protected override async Task OnInitializedAsync()
+{
+    _isLoadingSheet = true;
+    try
+    {
+        await LoadClassesAsync();
+        await LoadBatchesAsync();
+    }
+    finally
+    {
+        if (_batches.Count == 0)
+        {
+            _isLoadingSheet = false;
+        }
+    }
+}
+
+private async Task LoadClassesAsync()
+{
+    try
+    {
+        var res = await BranchClassService.GetAllActiveClassesAsync();
+        if (res.Success && res.Data != null)
+        {
+            _classes = res.Data;
+            _classOptions = _classes.Select(c => new CustomSelect.CustomSelectOption(c.Id.ToString(), c.Name)).ToList();
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Failed to load classes: " + ex.Message);
+    }
+}
+
+private async Task LoadBatchesAsync(Guid? classId = null)
+{
+    try
+    {
+        var res = await BranchBatchService.GetAllActiveBatchesAsync(classId);
+        if (res.Success && res.Data != null)
+        {
+            _batches = res.Data;
+            _batchOptions = _batches.Select(b => new CustomSelect.CustomSelectOption(
+                b.Id.ToString(),
+                $"{b.Name} ({b.ClassName} - {b.SubjectName})"
+            )).ToList();
+
+            if (_batches.Count > 0 && string.IsNullOrEmpty(_selectedBatchId))
+            {
+                _selectedBatchId = _batches[0].Id.ToString();
+                await OnBatchSelectedAsync(Guid.Parse(_selectedBatchId));
+            }
+            else if (_batches.Count == 0)
+            {
+                _isLoadingSheet = false;
+            }
+        }
+        else
+        {
+            _isLoadingSheet = false;
+        }
+    }
+    catch (Exception ex)
+    {
+        _isLoadingSheet = false;
+        Toast.Error("Failed to load batches: " + ex.Message);
+    }
+}
+
+private async Task OnClassChanged(string classIdStr)
+{
+    _selectedClassId = classIdStr;
+    _selectedBatchId = string.Empty;
+
+    Guid? cId = Guid.TryParse(classIdStr, out var id) ? id : null;
+    await LoadBatchesAsync(cId);
+}
+
+private async Task OnBatchChanged(string batchIdStr)
+{
+    _selectedBatchId = batchIdStr;
+    if (Guid.TryParse(batchIdStr, out var batchId))
+    {
+        await OnBatchSelectedAsync(batchId);
+    }
+}
+
+private async Task OnDateChanged(ChangeEventArgs e)
+{
+    if (DateOnly.TryParse(e.Value?.ToString(), out var d))
+    {
+        _selectedDate = d;
+        if (Guid.TryParse(_selectedBatchId, out var batchId))
+        {
+            await ReloadBatchSessionsAndSheetAsync(batchId);
+        }
+    }
+}
+
+private void SetDateToToday()
+{
+    _selectedDate = DateOnly.FromDateTime(DateTime.Today);
+    if (Guid.TryParse(_selectedBatchId, out var batchId))
+    {
+        _ = ReloadBatchSessionsAndSheetAsync(batchId);
+    }
+}
+
+private async Task OnBatchSelectedAsync(Guid batchId)
+{
+    // Clear previously cached reports for other batches
+    _dateReports.Clear();
+    _studentReports.Clear();
+
+    // 1. Load Batch Overview (Timings, 7-day trend, recent activities)
+    await LoadBatchOverviewAsync(batchId);
+
+    // 2. Load ClassSessions for this batch on _selectedDate
+    await ReloadBatchSessionsAndSheetAsync(batchId);
+
+    // 3. Preload reports if active tab requires it
+    if (_activeTab == "date") await ReloadDateWiseReportAsync();
+    if (_activeTab == "student-report") await ReloadStudentWiseReportAsync();
+}
+
+private async Task LoadBatchOverviewAsync(Guid batchId)
+{
+    try
+    {
+        var res = await BranchAttendanceService.GetBatchOverviewAsync(batchId, _selectedDate);
+        if (res.Success && res.Data != null)
+        {
+            _overview = res.Data;
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Failed to load batch overview: " + ex.Message);
+    }
+}
+
+private async Task ReloadBatchSessionsAndSheetAsync(Guid batchId)
+{
+    _isLoadingSheet = true;
+    _selectedSessionId = string.Empty;
+    _sheet = null;
+    _daySessions = new();
+
+    try
+    {
+        var res = await BranchSessionService.GetClassSessionsPagedAsync(
+            new PagedRequest { PageSize = 50 },
+            batchId: batchId,
+            fromDate: _selectedDate,
+            toDate: _selectedDate);
+
+        if (res.Success && res.Data != null && res.Data.Items.Count > 0)
+        {
+            _daySessions = res.Data.Items.OrderBy(s => s.StartTime).ToList();
+            _selectedSessionId = _daySessions[0].Id.ToString();
+            await LoadAttendanceSheetAsync(Guid.Parse(_selectedSessionId));
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Failed to load sessions: " + ex.Message);
+    }
+    finally
+    {
+        _isLoadingSheet = false;
+    }
+}
+
+private async Task SelectSessionAsync(Guid sessionId)
+{
+    _selectedSessionId = sessionId.ToString();
+    await LoadAttendanceSheetAsync(sessionId);
+}
+
+private async Task LoadAttendanceSheetAsync(Guid sessionId)
+{
+    _isLoadingSheet = true;
+    try
+    {
+        var res = await BranchAttendanceService.GetSessionAttendanceSheetAsync(sessionId);
+        if (res.Success && res.Data != null)
+        {
+            _sheet = res.Data;
+            _selectedStudentIds = _sheet.Students
+                .Where(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)
+                .Select(s => s.StudentId)
+                .ToHashSet();
+            _selectAllChecked = IsAllPresent;
+            _hasChanges = false;
+            _initialStudentStates = _sheet.Students.ToDictionary(s => s.StudentId, s => (s.Status, s.Remarks));
+        }
+        else
+        {
+            _sheet = null;
+            Toast.Error(res.Message ?? "Failed to load attendance sheet.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Error loading attendance: " + ex.Message);
+    }
+    finally
+    {
+        _isLoadingSheet = false;
+    }
+}
+
+private async Task SetActiveTabAsync(string tab)
+{
+    _activeTab = tab;
+    if (tab == "date")
+    {
+        if (Guid.TryParse(_selectedBatchId, out _))
+        {
+            if (_dateReports.Count == 0)
+            {
+                await ReloadDateWiseReportAsync();
+            }
+        }
+    }
+    else if (tab == "student-report")
+    {
+        if (Guid.TryParse(_selectedBatchId, out _))
+        {
+            if (_studentReports.Count == 0)
+            {
+                await ReloadStudentWiseReportAsync();
+            }
+        }
+    }
+}
+
+private async Task ReloadDateWiseReportAsync()
+{
+    if (!Guid.TryParse(_selectedBatchId, out var batchId))
+    {
+        _isLoadingDateReports = false;
+        return;
+    }
+
+    _isLoadingDateReports = true;
+    await InvokeAsync(StateHasChanged);
+    try
+    {
+        var res = await BranchAttendanceService.GetDateWiseReportAsync(batchId);
+        if (res.Success && res.Data != null)
+        {
+            _dateReports = res.Data;
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to load date-wise report.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Error loading date report: " + ex.Message);
+    }
+    finally
+    {
+        _isLoadingDateReports = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+private async Task ReloadStudentWiseReportAsync()
+{
+    if (!Guid.TryParse(_selectedBatchId, out var batchId))
+    {
+        _isLoadingStudentReports = false;
+        return;
+    }
+
+    _isLoadingStudentReports = true;
+    await InvokeAsync(StateHasChanged);
+    try
+    {
+        var res = await BranchAttendanceService.GetStudentWiseReportAsync(batchId);
+        if (res.Success && res.Data != null)
+        {
+            _studentReports = res.Data;
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to load student-wise report.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Error loading student report: " + ex.Message);
+    }
+    finally
+    {
+        _isLoadingStudentReports = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+private async Task SelectSessionFromReportAsync(Guid sessionId, DateOnly sessionDate)
+{
+    _selectedDate = sessionDate;
+    _selectedSessionId = sessionId.ToString();
+    _activeTab = "student";
+    await LoadAttendanceSheetAsync(sessionId);
+}
+
+// Status Toggling & Actions
+private bool IsAllPresent => _sheet != null && _sheet.Students.Count > 0 && 
+    _sheet.Students.All(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late);
+
+private void ToggleStudentAttendance(StudentAttendanceItemDto s, bool isPresent)
+{
+    if (isPresent)
+    {
+        s.Status = AttendanceStatus.Present;
+        if (!s.MarkedAt.HasValue) s.MarkedAt = DateTime.UtcNow;
+        _selectedStudentIds.Add(s.StudentId);
+    }
+    else
+    {
+        s.Status = AttendanceStatus.Absent;
+        s.MarkedAt = null;
+        _selectedStudentIds.Remove(s.StudentId);
+    }
+    _selectAllChecked = IsAllPresent;
+}
+
+private void ToggleAllAttendance(bool isPresent)
+{
+    if (isPresent)
+    {
+        MarkAllPresent();
+    }
+    else
+    {
+        MarkAllAbsent();
+    }
+}
+
+private void CycleStudentStatus(StudentAttendanceItemDto student)
+{
+    student.Status = student.Status switch
+    {
+        AttendanceStatus.Present => AttendanceStatus.Absent,
+        AttendanceStatus.Absent => AttendanceStatus.Late,
+        AttendanceStatus.Late => AttendanceStatus.Excused,
+        _ => AttendanceStatus.Present
+    };
+
+    if (student.Status == AttendanceStatus.Absent)
+    {
+        student.MarkedAt = null;
+        _selectedStudentIds.Remove(student.StudentId);
+    }
+    else
+    {
+        if (!student.MarkedAt.HasValue) student.MarkedAt = DateTime.UtcNow;
+        if (student.Status == AttendanceStatus.Present || student.Status == AttendanceStatus.Late)
+        {
+            _selectedStudentIds.Add(student.StudentId);
+        }
+        else
+        {
+            _selectedStudentIds.Remove(student.StudentId);
+        }
+    }
+    _selectAllChecked = IsAllPresent;
+}
+
+private void MarkAllPresent()
+{
+    if (_sheet == null) return;
+    var now = DateTime.UtcNow;
+    foreach (var s in _sheet.Students)
+    {
+        s.Status = AttendanceStatus.Present;
+        s.MarkedAt = now;
+    }
+    _selectedStudentIds = _sheet.Students.Select(s => s.StudentId).ToHashSet();
+    _selectAllChecked = true;
+    Toast.Info("All students set to Present. Click Save Attendance to commit.");
+}
+
+private void MarkAllAbsent()
+{
+    if (_sheet == null) return;
+    foreach (var s in _sheet.Students)
+    {
+        s.Status = AttendanceStatus.Absent;
+        s.MarkedAt = null;
+    }
+    _selectedStudentIds.Clear();
+    _selectAllChecked = false;
+    Toast.Info("All students set to Absent. Click Save Attendance to commit.");
+}
+
+private async Task SaveAttendanceAsync()
+{
+    if (_sheet == null || !Guid.TryParse(_selectedSessionId, out var sessionId))
+    {
+        Toast.Error("No active session to save attendance for.");
+        return;
+    }
+
+    _isSaving = true;
+    try
+    {
+        var req = new MarkSessionAttendanceRequest
+        {
+            ClassSessionId = sessionId,
+            Items = _sheet.Students.Select(s => new StudentAttendanceEntry
+            {
+                StudentId = s.StudentId,
+                Status = s.Status == AttendanceStatus.Unmarked ? AttendanceStatus.Absent : s.Status,
+                Remarks = s.Remarks
+            }).ToList()
+        };
+
+        var res = await BranchAttendanceService.SaveSessionAttendanceAsync(sessionId, req);
+        if (res.Success && res.Data != null)
+        {
+            _sheet = res.Data;
+            _selectedStudentIds = _sheet.Students
+                .Where(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)
+                .Select(s => s.StudentId)
+                .ToHashSet();
+            _selectAllChecked = IsAllPresent;
+            _hasChanges = false;
+            _initialStudentStates = _sheet.Students.ToDictionary(s => s.StudentId, s => (s.Status, s.Remarks));
+            Toast.Success("Attendance saved successfully!");
+
+            // Refresh overview to update 7-day trend and activity feed
+            if (Guid.TryParse(_selectedBatchId, out var bId))
+            {
+                await LoadBatchOverviewAsync(bId);
+            }
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to save attendance.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Error saving attendance: " + ex.Message);
+    }
+    finally
+    {
+        _isSaving = false;
+    }
+}
+
+// -------------------------------------------------------------
+// Roster Actions (3-Dot Action Menu)
+// -------------------------------------------------------------
+private void RevertChanges()
+{
+    _isRosterMenuOpen = false;
+    if (_sheet == null || _initialStudentStates.Count == 0) return;
+
+    foreach (var s in _sheet.Students)
+    {
+        if (_initialStudentStates.TryGetValue(s.StudentId, out var orig))
+        {
+            s.Status = orig.Status;
+            s.Remarks = orig.Remarks;
+        }
+    }
+    _selectedStudentIds = _sheet.Students
+        .Where(s => s.Status == AttendanceStatus.Present || s.Status == AttendanceStatus.Late)
+        .Select(s => s.StudentId)
+        .ToHashSet();
+    _selectAllChecked = IsAllPresent;
+    _hasChanges = false;
+    Toast.Info("Unsaved changes reverted.");
+}
+
+private void MarkAllUnmarked()
+{
+    _isRosterMenuOpen = false;
+    if (_sheet == null) return;
+    _hasChanges = true;
+    foreach (var s in _sheet.Students)
+    {
+        s.Status = AttendanceStatus.Unmarked;
+        s.MarkedAt = null;
+    }
+    _selectedStudentIds.Clear();
+    _selectAllChecked = false;
+    Toast.Info("All students reset to Unmarked. Click Save Attendance to commit.");
+}
+
+private async Task PrintRosterAsync()
+{
+    _isRosterMenuOpen = false;
+    await JS.InvokeVoidAsync("window.print");
+}
+
+private async Task RefreshSheetAsync()
+{
+    _isRosterMenuOpen = false;
+    if (Guid.TryParse(_selectedSessionId, out var sid))
+    {
+        await LoadAttendanceSheetAsync(sid);
+        Toast.Info("Attendance sheet reloaded from server.");
+    }
+}
+
+private async Task ExportSessionAttendanceCsvAsync()
+{
+    _isRosterMenuOpen = false;
+    if (_sheet == null || _sheet.Students.Count == 0)
+    {
+        Toast.Warning("No students in attendance roster to export.");
+        return;
+    }
+
+    try
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Roll No,Student Name,Student Code,Status,Marked At,Remarks");
+
+        foreach (var s in _sheet.Students)
+        {
+            var roll = EscapeCsv(s.RollNumber ?? "");
+            var name = EscapeCsv(s.StudentName ?? "");
+            var code = EscapeCsv(s.StudentCode ?? "");
+            var status = EscapeCsv(s.Status ?? "");
+            var markedAt = s.MarkedAt.HasValue ? s.MarkedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "";
+            var remarks = EscapeCsv(s.Remarks ?? "");
+            sb.AppendLine($"{roll},{name},{code},{status},{markedAt},{remarks}");
+        }
+
+        var batchName = _selectedBatch?.Name ?? "Batch";
+        var cleanBatchName = string.Concat(batchName.Split(System.IO.Path.GetInvalidFileNameChars())).Replace(" ", "_");
+        var fileName = $"Branch_Attendance_{cleanBatchName}_{_selectedDate:yyyyMMdd}.csv";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var base64 = Convert.ToBase64String(bytes);
+
+        await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, "text/csv;charset=utf-8;", base64);
+        Toast.Success($"Exported {_sheet.Students.Count} attendance records to CSV.");
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Failed to export CSV: " + ex.Message);
+    }
+}
+
+private static string EscapeCsv(string value)
+{
+    if (string.IsNullOrEmpty(value)) return "\"\"";
+    if (value.Contains(",") || value.Contains("\"") || value.Contains("\n") || value.Contains("\r"))
+    {
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+    return $"\"{value}\"";
+}
+
+// Modal Workflow Helpers
+private async Task OpenTakeAttendanceModal()
+{
+    _modalClassId = _selectedClassId;
+    _modalBatchId = _selectedBatchId;
+    _modalDate = _selectedDate;
+    _modalSessionId = _selectedSessionId;
+
+    // Populate modal classes
+    var resClasses = await BranchClassService.GetAllActiveClassesAsync();
+    if (resClasses.Success && resClasses.Data != null)
+    {
+        _modalClassOptions = resClasses.Data.Select(c => new CustomSelect.CustomSelectOption(c.Id.ToString(), c.Name)).ToList();
+    }
+
+    // Populate modal batches
+    Guid? cId = Guid.TryParse(_modalClassId, out var cid) ? cid : null;
+    var resBatches = await BranchBatchService.GetAllActiveBatchesAsync(cId);
+    if (resBatches.Success && resBatches.Data != null)
+    {
+        _modalBatchOptions = resBatches.Data.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
+    }
+
+    if (!string.IsNullOrEmpty(_modalBatchId))
+    {
+        await CheckModalSessionsAsync(Guid.Parse(_modalBatchId), _modalDate);
+    }
+
+    _showTakeAttendanceModal = true;
+    _isTakeAttendanceDrawerOpen = false;
+    StateHasChanged();
+    await Task.Delay(50);
+    _isTakeAttendanceDrawerOpen = true;
+    StateHasChanged();
+}
+
+private async Task CloseTakeAttendanceDrawerAsync()
+{
+    _isTakeAttendanceDrawerOpen = false;
+    StateHasChanged();
+    await Task.Delay(300);
+    _showTakeAttendanceModal = false;
+    StateHasChanged();
+}
+
+private async Task OnModalClassChanged(string classIdStr)
+{
+    _modalClassId = classIdStr;
+    _modalBatchId = string.Empty;
+    _modalSessionId = string.Empty;
+    _modalSessions.Clear();
+
+    Guid? cId = Guid.TryParse(classIdStr, out var id) ? id : null;
+    var res = await BranchBatchService.GetAllActiveBatchesAsync(cId);
+    if (res.Success && res.Data != null)
+    {
+        _modalBatchOptions = res.Data.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
+    }
+}
+
+private async Task OnModalBatchChanged(string batchIdStr)
+{
+    _modalBatchId = batchIdStr;
+    if (Guid.TryParse(batchIdStr, out var batchId))
+    {
+        await CheckModalSessionsAsync(batchId, _modalDate);
+    }
+}
+
+private async Task OnModalDateChanged(ChangeEventArgs e)
+{
+    if (DateOnly.TryParse(e.Value?.ToString(), out var d))
+    {
+        _modalDate = d;
+        if (Guid.TryParse(_modalBatchId, out var batchId))
+        {
+            await CheckModalSessionsAsync(batchId, d);
+        }
+    }
+}
+
+private async Task CheckModalSessionsAsync(Guid batchId, DateOnly date)
+{
+    _isModalLoadingSessions = true;
+    _modalSessions.Clear();
+    _modalSessionOptions.Clear();
+    _modalSessionId = string.Empty;
+
+    try
+    {
+        var res = await BranchSessionService.GetClassSessionsPagedAsync(
+            new PagedRequest { PageSize = 50 },
+            batchId: batchId,
+            fromDate: date,
+            toDate: date);
+
+        if (res.Success && res.Data != null && res.Data.Items.Count > 0)
+        {
+            _modalSessions = res.Data.Items.OrderBy(s => s.StartTime).ToList();
+            _modalSessionOptions = _modalSessions.Select(s => new CustomSelect.CustomSelectOption(
+                s.Id.ToString(),
+                $"{s.StartTime:hh:mm tt} - {s.EndTime:hh:mm tt} ({s.TeacherName ?? "Teacher"})"
+            )).ToList();
+
+            _modalSessionId = _modalSessions[0].Id.ToString();
+        }
+    }
+    catch (Exception ex)
+    {
+        Toast.Error("Error checking sessions: " + ex.Message);
+    }
+    finally
+    {
+        _isModalLoadingSessions = false;
+    }
+}
+
+private async Task ApplyModalSelectionAndOpenSheetAsync()
+{
+    if (string.IsNullOrEmpty(_modalSessionId)) return;
+
+    _selectedClassId = _modalClassId;
+    _selectedBatchId = _modalBatchId;
+    _selectedDate = _modalDate;
+    _selectedSessionId = _modalSessionId;
+    await CloseTakeAttendanceDrawerAsync();
+    _activeTab = "student";
+
+    if (Guid.TryParse(_selectedBatchId, out var batchId))
+    {
+        await LoadBatchOverviewAsync(batchId);
+        await LoadAttendanceSheetAsync(Guid.Parse(_selectedSessionId));
+    }
+}
+
+private int GetWeeklyAveragePercentage()
+{
+    if (_overview?.DailyTrends == null || _overview.DailyTrends.Count == 0) return 0;
+    var valid = _overview.DailyTrends.Where(d => d.Percentage > 0).ToList();
+    return valid.Count > 0 ? (int)Math.Round(valid.Average(d => d.Percentage)) : 0;
+}
+}

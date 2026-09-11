@@ -227,6 +227,12 @@
                 Navigation.NavigateTo("student/home", replace: true);
                 return;
             }
+
+            if (user.IsInRole("BranchAdmin") || user.IsInRole("4"))
+            {
+                Navigation.NavigateTo("branch", replace: true);
+                return;
+            }
         }
     }
 

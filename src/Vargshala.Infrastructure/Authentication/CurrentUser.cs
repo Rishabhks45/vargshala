@@ -34,6 +34,16 @@ public class CurrentUser : ICurrentUser
         }
     }
 
+    public Guid? BranchId
+    {
+        get
+        {
+            var claim = User?.FindFirst("branch_id")?.Value
+                     ?? User?.FindFirst("BranchId")?.Value;
+            return Guid.TryParse(claim, out var id) ? id : null;
+        }
+    }
+
     public string Role => User?.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
 
     public UserRole? UserRole => Enum.TryParse<UserRole>(Role, out var role) ? role : null;

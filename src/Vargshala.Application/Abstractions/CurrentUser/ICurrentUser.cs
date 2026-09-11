@@ -6,6 +6,7 @@ public interface ICurrentUser
 {
     Guid UserId { get; }
     Guid? OrganizationId { get; }
+    Guid? BranchId { get; }
     string Role { get; }
     UserRole? UserRole { get; }
     bool IsAuthenticated { get; }
