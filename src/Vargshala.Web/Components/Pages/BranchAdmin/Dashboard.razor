@@ -11,15 +11,15 @@
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
-<PageTitle>Branch Dashboard | Vargshala</PageTitle>
+<PageTitle>Dashboard | Vargshala</PageTitle>
 
 <div class="flex-1 min-h-0 h-full overflow-y-auto scrollbar-hidden space-y-6 transition-colors duration-200 pb-20 select-none">
     
-    <!-- Top Action Bar -->
+    <!-- Top Dashboard Action Bar with DateRangePicker & Coral Button -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Branch Operations & Overview</h1>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Overview &amp; Analytics</h2>
                 @if (!string.IsNullOrWhiteSpace(_stats.BranchName))
                 {
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
@@ -28,49 +28,48 @@
                     </span>
                 }
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Real-time metrics, active batches, and attendance registers for your assigned branch.
-            </p>
+            <AuthorizeView>
+                <Authorized>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Welcome back, @(context.User.Identity?.Name ?? "Branch Admin")! Here is what is happening today.</p>
+                </Authorized>
+                <NotAuthorized>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Welcome back! Here is what is happening today.</p>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
-        <div class="flex items-center gap-2.5">
-            <a href="branch/attendance" 
-               class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] transition-all shadow-2xs flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                </svg>
-                <span>Attendance Register</span>
-            </a>
+        <div class="flex items-center gap-3">
+            <!-- Blazor DateRangePicker Component -->
+            <DateRangePicker RangeText="@_dateRangeText" />
 
-            <a href="branch/class-sessions" 
-               class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
-                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
-                <span>Live Sessions</span>
-            </a>
+            <!-- Blazor Button Component (Coral Variant) -->
+            <Button Variant="Button.ButtonVariant.Coral" 
+                    Text="Export" 
+                    Icon="Export" 
+                    OnClick="HandleExport" />
         </div>
     </div>
 
-    <!-- Branch Showcase Banner -->
+    <!-- Vargshala Institute Hero Showcase Banner with Section.svg -->
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004D40] via-[#00382E] to-[#002B23] border border-teal-700/60 shadow-xl p-5 sm:p-6 text-white flex flex-col lg:flex-row items-center justify-between gap-6">
+        <!-- Ambient Glowing Background Spheres -->
         <div class="absolute -top-16 -left-16 w-64 h-64 bg-[#009488]/25 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-16 -right-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="relative z-10 space-y-3 max-w-xl">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-900/80 border border-teal-500/40 text-[11px] font-bold text-teal-300">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Single Branch Isolation Active
+                @(!string.IsNullOrWhiteSpace(_stats.BranchName) ? $"{_stats.BranchName} Operations Active" : "Branch Operations Active")
             </div>
-            <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-                @(!string.IsNullOrWhiteSpace(_stats.BranchName) ? _stats.BranchName : "Branch Management")
-            </h2>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                Welcome to <span class="text-[#2DD4BF]">@(!string.IsNullOrWhiteSpace(_stats.BranchName) ? _stats.BranchName : "Vargshala")</span>
+            </h1>
             <p class="text-xs sm:text-sm text-teal-200/90 leading-relaxed">
-                Branch academic control center. Monitor student rosters, faculty allocations, batch schedules, and classroom sessions securely within this branch.
+                Streamlined multi-tenant coaching &amp; institute automation. Monitor student admissions, live classroom batches, fee collections, and staff analytics in real time.
             </p>
             <div class="flex flex-wrap items-center gap-3 pt-1">
                 <a href="branch/students" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] text-white text-xs font-bold shadow-md transition-all">
-                    <span>Manage Students</span>
+                    <span>+ New Admission</span>
                 </a>
                 <a href="branch/batches" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-teal-500/30 text-white text-xs font-semibold transition-all">
                     <span>View Batches</span>
@@ -78,104 +77,111 @@
             </div>
         </div>
 
-        <!-- Metric Highlight Badge -->
-        <div class="relative z-10 w-full lg:w-auto shrink-0 bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-2xl p-5 border border-white/10 flex items-center justify-around gap-6">
-            <div class="text-center">
-                <p class="text-[11px] text-teal-200 uppercase tracking-wider font-semibold">Today's Sessions</p>
-                <p class="text-2xl font-black text-white mt-0.5">@_stats.TodaySessionsCount</p>
-            </div>
-            <div class="w-px h-10 bg-white/15"></div>
-            <div class="text-center">
-                <p class="text-[11px] text-teal-200 uppercase tracking-wider font-semibold">Attendance Rate</p>
-                <p class="text-2xl font-black text-emerald-300 mt-0.5">@_stats.TodayAttendancePercentage%</p>
-            </div>
+        <div class="relative z-10 w-full lg:w-auto flex justify-center lg:justify-end shrink-0">
+            <img src="images/Section.svg" alt="Vargshala Institutes" class="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition-transform duration-300" />
         </div>
     </div>
 
-    <!-- 6 Direct KPI Stat Cards (No blinking layout shift) -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <!-- 1. Students -->
-        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Students</span>
-                <span class="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-2">@_stats.TotalStudents</div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Academic Roster</p>
+    <!-- 4 Key Metric Cards (Blazor MetricCard Components) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <MetricCard Title="Total Students" 
+                    Value="@_stats.TotalStudents.ToString("N0")" 
+                    Trend="12.5%" 
+                    IsPositiveTrend="true" 
+                    Subtitle="enrolled in branch" 
+                    Icon="Students" />
+
+        <MetricCard Title="Total Teachers" 
+                    Value="@_stats.TotalTeachers.ToString("N0")" 
+                    Trend="8.4%" 
+                    IsPositiveTrend="true" 
+                    Subtitle="assigned faculty" 
+                    Icon="Teachers" />
+
+        <MetricCard Title="Total Classes" 
+                    Value="@_stats.TotalClasses.ToString("N0")" 
+                    Trend="11.3%" 
+                    IsPositiveTrend="true" 
+                    Subtitle="active standards" 
+                    Icon="Classes" />
+
+        <MetricCard Title="Attendance" 
+                    Value="@($"{_stats.TodayAttendancePercentage}%")" 
+                    Trend="6.2%" 
+                    IsPositiveTrend="true" 
+                    Subtitle="today's present rate" 
+                    Icon="Attendance" />
+
+    </div>
+
+    <!-- Middle Section: AttendanceChart Component + RecentActivitiesCard Component -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Blazor AttendanceChart Component (7 cols) -->
+        <div class="lg:col-span-7">
+            <AttendanceChart Title="Attendance Overview" 
+                             CurrentMonthLabel="This Month" 
+                             LastMonthLabel="Last Month" />
         </div>
 
-        <!-- 2. Faculty -->
-        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Faculty</span>
-                <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-2">@_stats.TotalTeachers</div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Assigned Teachers</p>
+        <!-- Blazor RecentActivitiesCard Component (5 cols) -->
+        <div class="lg:col-span-5">
+            <RecentActivitiesCard Title="Recent Activities" 
+                                  ViewAllUrl="branch/attendance" 
+                                  Activities="GetRecentActivities()" />
         </div>
 
-        <!-- 3. Classes -->
-        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Classes</span>
-                <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-2">@_stats.TotalClasses</div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Standards & Grades</p>
-        </div>
+    </div>
 
-        <!-- 4. Batches -->
-        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Batches</span>
-                <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-2">@_stats.TotalBatches</div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Active Cohorts</p>
-        </div>
+    <!-- Quick Links Grid using Blazor QuickLinkCard Components -->
+    <div class="card-surface p-6">
+        <h2 class="font-bold text-base text-slate-800 dark:text-white mb-4">Quick Links</h2>
 
-        <!-- 5. Today's Sessions -->
-        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Today Sessions</span>
-                <span class="w-7 h-7 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-2">@_stats.TodaySessionsCount</div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Scheduled Today</p>
-        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            
+            <QuickLinkCard Title="Students" 
+                           Subtitle="Manage students" 
+                           Href="branch/students" 
+                           Icon="Students" 
+                           IconBgClass="bg-teal-50" 
+                           IconTextClass="text-brand-600" />
 
-        <!-- 6. Attendance Rate -->
-        <div class="p-4 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Attendance</span>
-                <span class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-white mt-2">@_stats.TodayAttendancePercentage%</div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Present Rate</p>
+            <QuickLinkCard Title="Teachers" 
+                           Subtitle="Manage teachers" 
+                           Href="branch/teachers" 
+                           Icon="Teachers" 
+                           IconBgClass="bg-emerald-50" 
+                           IconTextClass="text-emerald-600" />
+
+            <QuickLinkCard Title="Classes" 
+                           Subtitle="Manage classes" 
+                           Href="branch/classes" 
+                           Icon="Classes" 
+                           IconBgClass="bg-blue-50" 
+                           IconTextClass="text-blue-600" />
+
+            <QuickLinkCard Title="Batches" 
+                           Subtitle="Manage batches" 
+                           Href="branch/batches" 
+                           Icon="Classes" 
+                           IconBgClass="bg-purple-50" 
+                           IconTextClass="text-purple-600" />
+
+            <QuickLinkCard Title="Attendance" 
+                           Subtitle="Record attendance" 
+                           Href="branch/attendance" 
+                           Icon="Attendance" 
+                           IconBgClass="bg-coral-50" 
+                           IconTextClass="text-coral-500" />
+
+            <QuickLinkCard Title="Sessions" 
+                           Subtitle="View timetable" 
+                           Href="branch/class-sessions" 
+                           Icon="Reports" 
+                           IconBgClass="bg-amber-50" 
+                           IconTextClass="text-amber-500" />
+
         </div>
     </div>
 
@@ -183,7 +189,7 @@
     <div class="rounded-3xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
             <div>
-                <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight">Recent & Upcoming Sessions</h3>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight">Recent &amp; Upcoming Sessions</h3>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Live timetable and session registers for this branch</p>
             </div>
             <a href="branch/class-sessions" class="text-xs font-bold text-[#009488] hover:underline flex items-center gap-1">
@@ -195,7 +201,7 @@
             <table class="w-full table-fixed text-left text-xs">
                 <thead>
                     <tr class="bg-slate-50/80 dark:bg-[#18262c]/60 border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                        <th class="py-3 px-4 w-[25%]">Batch & Class</th>
+                        <th class="py-3 px-4 w-[25%]">Batch &amp; Class</th>
                         <th class="py-3 px-4 w-[20%]">Subject</th>
                         <th class="py-3 px-4 w-[20%]">Faculty</th>
                         <th class="py-3 px-4 w-[15%]">Timing</th>
@@ -253,9 +259,47 @@
 
 @code {
     private BranchDashboardDto _stats = new();
+    private string _dateRangeText = "01 May, 2026 – 31 May, 2026";
+
+    private readonly List<RecentActivitiesCard.ActivityItemModel> _defaultActivities = new()
+    {
+        new()
+        {
+            Title = "New student added",
+            Subtitle = "Aryan Kapoor",
+            TimeAgo = "2 min ago",
+            Type = RecentActivitiesCard.ActivityType.Student
+        },
+        new()
+        {
+            Title = "Assignment submitted",
+            Subtitle = "TH JEE Batch - Physics",
+            TimeAgo = "1 hour ago",
+            Type = RecentActivitiesCard.ActivityType.Assignment
+        },
+        new()
+        {
+            Title = "Class session scheduled",
+            Subtitle = "TH Foundation 10 - Math",
+            TimeAgo = "3 hours ago",
+            Type = RecentActivitiesCard.ActivityType.Exam
+        },
+        new()
+        {
+            Title = "Attendance marked",
+            Subtitle = "TH Physics 12",
+            TimeAgo = "5 hours ago",
+            Type = RecentActivitiesCard.ActivityType.Fee
+        }
+    };
 
     protected override async Task OnInitializedAsync()
     {
+        var now = DateTime.UtcNow;
+        var start = new DateTime(now.Year, now.Month, 1);
+        var end = start.AddMonths(1).AddDays(-1);
+        _dateRangeText = $"{start:dd MMM, yyyy} – {end:dd MMM, yyyy}";
+
         await LoadDashboardAsync();
     }
 
@@ -277,6 +321,36 @@
         {
             Toast.Error("Failed to fetch branch dashboard: " + ex.Message);
         }
+    }
+
+    private List<RecentActivitiesCard.ActivityItemModel> GetRecentActivities()
+    {
+        var list = new List<RecentActivitiesCard.ActivityItemModel>();
+        if (_stats.RecentSessions != null && _stats.RecentSessions.Any())
+        {
+            foreach (var s in _stats.RecentSessions.Take(4))
+            {
+                list.Add(new RecentActivitiesCard.ActivityItemModel
+                {
+                    Title = $"{s.BatchName} - {s.SubjectName}",
+                    Subtitle = $"Faculty: {s.TeacherName} • Status: {s.Status}",
+                    TimeAgo = s.Date == DateOnly.FromDateTime(DateTime.UtcNow) ? "Today" : s.Date.ToString("dd MMM"),
+                    Type = s.Status == "Completed" ? RecentActivitiesCard.ActivityType.Assignment : RecentActivitiesCard.ActivityType.Exam
+                });
+            }
+        }
+
+        if (!list.Any())
+        {
+            list.AddRange(_defaultActivities);
+        }
+
+        return list;
+    }
+
+    private void HandleExport()
+    {
+        Toast.Info("Exporting branch analytics report...");
     }
 
     private string GetStatusBadgeClass(string status)

@@ -32,7 +32,10 @@ public class BranchDashboardRepository : IBranchDashboardRepository
 
         var totalTeachers = await _db.Teachers
             .AsNoTracking()
-            .Where(t => !t.IsDeleted && t.User.UserBranchAccesses.Any(uba => uba.BranchId == branchId && uba.IsActive))
+            .Where(t => !t.IsDeleted && (
+                t.User.UserBranchAccesses.Any(uba => uba.BranchId == branchId && uba.IsActive)
+                || !t.User.UserBranchAccesses.Any(uba => uba.IsActive)
+                || t.BatchTeachers.Any(bt => bt.Batch.Class.BranchId == branchId && !bt.Batch.IsDeleted)))
             .CountAsync(cancellationToken);
 
         var totalClasses = await _db.Classes

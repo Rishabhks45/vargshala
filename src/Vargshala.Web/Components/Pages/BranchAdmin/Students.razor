@@ -524,9 +524,9 @@
                         </div>
                     </div>
 
-                    @if (_editingStudent != null && _activeStudentEnrollments.Any())
+                    @if (_editingStudent != null)
                     {
-                        <div class="p-3 rounded-xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/60 space-y-2">
+                        <div class="p-3.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/60 space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <span class="text-[11px] font-bold text-teal-800 dark:text-teal-200 uppercase tracking-wider flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -534,99 +534,219 @@
                                     </svg>
                                     Current Active Enrolled Batches (@_activeStudentEnrollments.Count)
                                 </span>
-                                <span class="text-[10px] text-teal-600 dark:text-teal-400">Enrolled Batches</span>
+                                <button type="button" 
+                                        @onclick="ToggleAddBatchSection"
+                                        class="px-2.5 py-1 text-[11px] font-bold text-teal-700 dark:text-teal-200 bg-teal-100 hover:bg-teal-200 dark:bg-teal-900/60 dark:hover:bg-teal-900 border border-teal-300 dark:border-teal-700/60 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs">
+                                    <svg class="w-3 h-3 text-teal-600 dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="@(_showAddBatchSection ? "M6 18L18 6M6 6l12 12" : "M12 4.5v15m7.5-7.5h-15")"/>
+                                    </svg>
+                                    <span>@(_showAddBatchSection ? "Close" : "+ Add Batch")</span>
+                                </button>
                             </div>
-                            <div class="space-y-1.5">
-                                @foreach (var enr in _activeStudentEnrollments)
-                                {
-                                    <div class="flex items-center justify-between p-2 rounded-lg bg-white/80 dark:bg-[#111c21]/80 border border-teal-100 dark:border-teal-900/50 text-xs">
-                                        <div class="space-y-0.5">
-                                            <div class="flex items-center gap-1.5">
-                                                <span class="font-bold text-slate-800 dark:text-white">@enr.BatchName</span>
-                                                @if (enr.IsPrimary)
-                                                {
-                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">PRIMARY</span>
-                                                }
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">@enr.EnrollmentType</span>
+
+                            @if (_activeStudentEnrollments.Any())
+                            {
+                                <div class="space-y-1.5">
+                                    @foreach (var enr in _activeStudentEnrollments)
+                                    {
+                                        <div class="flex items-center justify-between p-2 rounded-lg bg-white/80 dark:bg-[#111c21]/80 border border-teal-100 dark:border-teal-900/50 text-xs">
+                                            <div class="space-y-0.5">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-slate-800 dark:text-white">@enr.BatchName</span>
+                                                    @if (enr.IsPrimary)
+                                                    {
+                                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">PRIMARY</span>
+                                                    }
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">@enr.EnrollmentType</span>
+                                                </div>
+                                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                                    Class: <strong class="text-slate-700 dark:text-slate-300">@enr.ClassName</strong> • Subject: <strong class="text-slate-700 dark:text-slate-300">@enr.SubjectName</strong>
+                                                    <span> • Joined: @enr.JoinedAt.ToString("dd MMM yyyy")</span>
+                                                </p>
                                             </div>
-                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                                Class: <strong class="text-slate-700 dark:text-slate-300">@enr.ClassName</strong> • Subject: <strong class="text-slate-700 dark:text-slate-300">@enr.SubjectName</strong>
-                                                <span> • Joined: @enr.JoinedAt.ToString("dd MMM yyyy")</span>
-                                            </p>
+                                            <button type="button" 
+                                                    @onclick="() => HandleUnenrollFromBatchAsync(enr.BatchId)" 
+                                                    title="Unenroll from this batch"
+                                                    class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
                                         </div>
-                                        <button type="button" 
-                                                @onclick="() => HandleUnenrollFromBatchAsync(enr.BatchId)" 
-                                                title="Unenroll from this batch"
-                                                class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer">
-                                            <svg class="w-3.5 h-3.5 fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="p-3 text-center bg-white/60 dark:bg-[#111c21]/60 rounded-lg border border-dashed border-teal-200 dark:border-teal-800/60">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">No active batch enrollments found for this student.</p>
+                                </div>
+                            }
+
+                            <!-- Inline Add Batch Form -->
+                            @if (_showAddBatchSection)
+                            {
+                                <div class="p-3.5 bg-white dark:bg-[#111c21] rounded-xl border border-teal-300 dark:border-teal-700/80 space-y-3 mt-2 shadow-xs">
+                                    <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                            Enroll in New Batch
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Select Class, Subject &amp; Batch</span>
                                     </div>
-                                }
-                            </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Class / Grade *</label>
+                                            <CustomSelect Value="@_newBatchClassId" 
+                                                          ValueChanged="OnNewBatchClassChanged" 
+                                                          Options="_classOptions" 
+                                                          Placeholder="Select Class / Grade" 
+                                                          Class="w-full" />
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject *</label>
+                                            <CustomSelect Value="@_newBatchSubjectId" 
+                                                          ValueChanged="OnNewBatchSubjectChanged" 
+                                                          Options="_newBatchSubjectOptions" 
+                                                          Disabled="@(string.IsNullOrEmpty(_newBatchClassId) || !_newBatchSubjectOptions.Any())"
+                                                          Placeholder="@(string.IsNullOrEmpty(_newBatchClassId) ? "Select Class first" : (!_newBatchSubjectOptions.Any() ? "No subjects in class" : "Select Subject"))" 
+                                                          Class="w-full" />
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch Assignment *</label>
+                                            @if (!string.IsNullOrEmpty(_newBatchSubjectId) && _newBatchOptions.Any())
+                                            {
+                                                <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">@_newBatchOptions.Count active batch(es) available</span>
+                                            }
+                                        </div>
+                                        <CustomSelect Value="@_newBatchId" 
+                                                      ValueChanged="OnNewBatchChanged" 
+                                                      Options="_newBatchOptions" 
+                                                      Disabled="@(string.IsNullOrEmpty(_newBatchSubjectId) || !_newBatchOptions.Any())"
+                                                      Placeholder="@(string.IsNullOrEmpty(_newBatchSubjectId) ? "Select Subject first" : (!_newBatchOptions.Any() ? "All batches already enrolled" : "Select Batch"))" 
+                                                      Class="w-full" />
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Enrollment Date *</label>
+                                            <InputDate Type="InputDateType.Date" @bind-Value="_newBatchEnrollmentDate" class="w-full h-10 px-3.5 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:outline-none text-slate-900 dark:text-white transition-all" />
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Enrollment Type</label>
+                                            <CustomSelect @bind-Value="_newBatchEnrollmentType" Options="_enrollmentTypeOptions" Placeholder="Regular" Class="w-full" />
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-1">
+                                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                                            <input type="checkbox" @bind="_newBatchIsPrimary" class="w-4 h-4 text-[#009488] border-slate-300 rounded focus:ring-teal-500 cursor-pointer" />
+                                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Mark as Primary Batch</span>
+                                        </label>
+
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" @onclick="() => _showAddBatchSection = false" class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 transition-colors cursor-pointer">
+                                                Cancel
+                                            </button>
+                                            <button type="button" 
+                                                    @onclick="HandleAddNewBatchAsync" 
+                                                    disabled="@(string.IsNullOrEmpty(_newBatchId) || _isEnrollingBatch)"
+                                                    class="px-3.5 py-1.5 text-xs font-bold text-white bg-[#009488] hover:bg-[#007A6F] active:scale-95 disabled:opacity-50 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                                                @if (_isEnrollingBatch)
+                                                {
+                                                    <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>Enrolling...</span>
+                                                }
+                                                else
+                                                {
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                                                    <span>Enroll in Batch</span>
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <button type="button" 
+                                        @onclick="ToggleAddBatchSection"
+                                        class="w-full py-2 px-3 border border-dashed border-teal-300 dark:border-teal-700/60 rounded-lg text-xs font-bold text-[#009488] dark:text-teal-400 hover:bg-teal-100/50 dark:hover:bg-teal-950/40 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                                    </svg>
+                                    <span>+ Add Another Batch</span>
+                                </button>
+                            }
                         </div>
                     }
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
+                    @if (_editingStudent == null)
+                    {
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between min-h-[18px]">
+                                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Class / Grade *</label>
+                                </div>
+                                <CustomSelect Value="@_selectedClassId" 
+                                              ValueChanged="OnClassChanged" 
+                                              Options="_classOptions" 
+                                              Placeholder="Select Class / Grade" 
+                                              Class="w-full" />
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between min-h-[18px]">
+                                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject *</label>
+                                </div>
+                                <CustomSelect Value="@_selectedSubjectId" 
+                                              ValueChanged="OnSubjectChanged" 
+                                              Options="_subjectOptions" 
+                                              Disabled="@(string.IsNullOrEmpty(_selectedClassId) || !_subjectOptions.Any())"
+                                              Placeholder="@(string.IsNullOrEmpty(_selectedClassId) ? "Select Class first" : (!_subjectOptions.Any() ? "No subjects in class" : "Select Subject"))" 
+                                              Class="w-full" />
+                            </div>
+                        </div>
+
                         <div class="space-y-1">
                             <div class="flex items-center justify-between min-h-[18px]">
-                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Class / Grade *</label>
+                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch Assignment *</label>
+                                @if (!string.IsNullOrEmpty(_selectedClassId) && !string.IsNullOrEmpty(_selectedSubjectId) && _batchOptions.Any())
+                                {
+                                    <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">@_batchOptions.Count active batch(es) available</span>
+                                }
                             </div>
-                            <CustomSelect Value="@_selectedClassId" 
-                                          ValueChanged="OnClassChanged" 
-                                          Options="_classOptions" 
-                                          Placeholder="Select Class / Grade" 
+                            <CustomSelect Value="@_selectedBatchId" 
+                                          ValueChanged="OnBatchChanged" 
+                                          Options="_batchOptions" 
+                                          Disabled="@(string.IsNullOrEmpty(_selectedSubjectId) || !_batchOptions.Any())"
+                                          Placeholder="@(string.IsNullOrEmpty(_selectedSubjectId) ? "Select Subject first" : (!_batchOptions.Any() ? "No batches for this subject" : "Select Batch"))" 
                                           Class="w-full" />
                         </div>
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between min-h-[18px]">
-                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Subject *</label>
-                            </div>
-                            <CustomSelect Value="@_selectedSubjectId" 
-                                          ValueChanged="OnSubjectChanged" 
-                                          Options="_subjectOptions" 
-                                          Disabled="@(string.IsNullOrEmpty(_selectedClassId) || !_subjectOptions.Any())"
-                                          Placeholder="@(string.IsNullOrEmpty(_selectedClassId) ? "Select Class first" : (!_subjectOptions.Any() ? "No subjects in class" : "Select Subject"))" 
-                                          Class="w-full" />
-                        </div>
-                    </div>
 
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between min-h-[18px]">
-                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Batch Assignment *</label>
-                            @if (!string.IsNullOrEmpty(_selectedClassId) && !string.IsNullOrEmpty(_selectedSubjectId) && _batchOptions.Any())
-                            {
-                                <span class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">@_batchOptions.Count active batch(es) available</span>
-                            }
-                        </div>
-                        <CustomSelect Value="@_selectedBatchId" 
-                                      ValueChanged="OnBatchChanged" 
-                                      Options="_batchOptions" 
-                                      Disabled="@(string.IsNullOrEmpty(_selectedSubjectId) || !_batchOptions.Any())"
-                                      Placeholder="@(string.IsNullOrEmpty(_selectedSubjectId) ? "Select Subject first" : (!_batchOptions.Any() ? "No batches for this subject" : "Select Batch"))" 
-                                      Class="w-full" />
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between min-h-[18px]">
-                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Enrollment Date *</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between min-h-[18px]">
+                                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Enrollment Date *</label>
+                                </div>
+                                <InputDate Type="InputDateType.Date" @bind-Value="_enrollmentDate" class="w-full h-10 px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
                             </div>
-                            <InputDate Type="InputDateType.Date" @bind-Value="_enrollmentDate" class="w-full h-10 px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white transition-all" />
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between min-h-[18px]">
-                                <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Enrollment Type</label>
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between min-h-[18px]">
+                                    <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Enrollment Type</label>
+                                </div>
+                                <CustomSelect @bind-Value="_enrollmentType" Options="_enrollmentTypeOptions" Placeholder="Regular" Class="w-full" />
                             </div>
-                            <CustomSelect @bind-Value="_enrollmentType" Options="_enrollmentTypeOptions" Placeholder="Regular" Class="w-full" />
                         </div>
-                    </div>
 
-                    <div class="flex items-center gap-2 pt-0.5">
-                        <input type="checkbox" id="isPrimaryEnrollment" @bind="_isPrimaryEnrollment" class="w-4 h-4 text-[#009488] border-slate-300 rounded focus:ring-teal-500 cursor-pointer" />
-                        <label for="isPrimaryEnrollment" class="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
-                            Mark as Primary Batch Enrollment
-                        </label>
-                    </div>
+                        <div class="flex items-center gap-2 pt-0.5">
+                            <input type="checkbox" id="isPrimaryEnrollment" @bind="_isPrimaryEnrollment" class="w-4 h-4 text-[#009488] border-slate-300 rounded focus:ring-teal-500 cursor-pointer" />
+                            <label for="isPrimaryEnrollment" class="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                                Mark as Primary Batch Enrollment
+                            </label>
+                        </div>
+                    }
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
                         <div class="space-y-1">
@@ -1008,6 +1128,19 @@
     private bool _isPrimaryEnrollment = true;
     private List<StudentBatchEnrollmentDto> _activeStudentEnrollments = new();
 
+    // Inline Add Batch state for existing students
+    private bool _showAddBatchSection = false;
+    private bool _isEnrollingBatch = false;
+    private string _newBatchClassId = string.Empty;
+    private string _newBatchSubjectId = string.Empty;
+    private string _newBatchId = string.Empty;
+    private DateOnly _newBatchEnrollmentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+    private string _newBatchEnrollmentType = "Regular";
+    private bool _newBatchIsPrimary = false;
+    private List<BatchDto> _newBatchClassBatches = new();
+    private List<CustomSelect.CustomSelectOption> _newBatchSubjectOptions = new();
+    private List<CustomSelect.CustomSelectOption> _newBatchOptions = new();
+
     protected override async Task OnInitializedAsync()
     {
         await LoadMetadataAsync();
@@ -1207,6 +1340,7 @@
         _enrollmentDate = DateOnly.FromDateTime(DateTime.UtcNow);
         _enrollmentType = "Regular";
         _isPrimaryEnrollment = true;
+        _showAddBatchSection = false;
 
         _modalModel = new StudentDto
         {
@@ -1229,6 +1363,17 @@
     private async Task OpenEditModalAsync(StudentDto student)
     {
         _editingStudent = student;
+        _showAddBatchSection = false;
+        _newBatchClassId = string.Empty;
+        _newBatchSubjectId = string.Empty;
+        _newBatchId = string.Empty;
+        _newBatchEnrollmentDate = student.AdmissionDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        _newBatchEnrollmentType = "Regular";
+        _newBatchIsPrimary = false;
+        _newBatchClassBatches.Clear();
+        _newBatchSubjectOptions.Clear();
+        _newBatchOptions.Clear();
+
         _modalModel = new StudentDto
         {
             Id = student.Id,
@@ -1431,9 +1576,127 @@
         }
     }
 
+    private void ToggleAddBatchSection()
+    {
+        _showAddBatchSection = !_showAddBatchSection;
+        if (_showAddBatchSection)
+        {
+            _newBatchClassId = string.Empty;
+            _newBatchSubjectId = string.Empty;
+            _newBatchId = string.Empty;
+            _newBatchEnrollmentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+            _newBatchEnrollmentType = "Regular";
+            _newBatchIsPrimary = false;
+            _newBatchClassBatches.Clear();
+            _newBatchSubjectOptions.Clear();
+            _newBatchOptions.Clear();
+        }
+    }
+
+    private async Task OnNewBatchClassChanged(string classId)
+    {
+        _newBatchClassId = classId;
+        _newBatchSubjectId = string.Empty;
+        _newBatchId = string.Empty;
+        _newBatchSubjectOptions.Clear();
+        _newBatchOptions.Clear();
+        _newBatchClassBatches.Clear();
+
+        if (Guid.TryParse(classId, out var cId))
+        {
+            var batchRes = await BranchBatchService.GetAllActiveBatchesAsync(cId);
+            _newBatchClassBatches = batchRes.Data ?? new();
+
+            _newBatchSubjectOptions = _newBatchClassBatches
+                .Where(b => b.SubjectId != Guid.Empty && !string.IsNullOrWhiteSpace(b.SubjectName))
+                .GroupBy(b => b.SubjectId)
+                .Select(g => new CustomSelect.CustomSelectOption(g.Key.ToString(), g.First().SubjectName))
+                .ToList();
+        }
+    }
+
+    private void OnNewBatchSubjectChanged(string subjectId)
+    {
+        _newBatchSubjectId = subjectId;
+        _newBatchId = string.Empty;
+        _newBatchOptions.Clear();
+
+        if (!string.IsNullOrWhiteSpace(subjectId))
+        {
+            var enrolledBatchIds = _activeStudentEnrollments.Select(e => e.BatchId).ToHashSet();
+
+            _newBatchOptions = _newBatchClassBatches
+                .Where(b => b.SubjectId.ToString() == subjectId && !enrolledBatchIds.Contains(b.Id))
+                .Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), $"{b.Name} ({b.Code})"))
+                .ToList();
+        }
+    }
+
+    private void OnNewBatchChanged(string batchId)
+    {
+        _newBatchId = batchId;
+    }
+
+    private async Task HandleAddNewBatchAsync()
+    {
+        if (_editingStudent == null || !Guid.TryParse(_newBatchId, out var batchGuid))
+        {
+            Toast.Warning("Please select a valid batch to enroll.");
+            return;
+        }
+
+        if (_activeStudentEnrollments.Any(e => e.BatchId == batchGuid))
+        {
+            Toast.Warning("Student is already enrolled in this batch.");
+            return;
+        }
+
+        _isEnrollingBatch = true;
+        try
+        {
+            var enrollReq = new EnrollStudentToBatchRequest
+            {
+                StudentId = _editingStudent.Id,
+                IsPrimary = _newBatchIsPrimary,
+                JoinedAt = _newBatchEnrollmentDate.ToDateTime(TimeOnly.MinValue),
+                EnrollmentType = _newBatchEnrollmentType
+            };
+
+            var res = await BranchBatchService.EnrollStudentAsync(batchGuid, enrollReq);
+            if (res != null && res.Success)
+            {
+                Toast.Success("Student enrolled into batch successfully!");
+                var enrollmentsRes = await BranchStudentService.GetStudentBatchesAsync(_editingStudent.Id);
+                _activeStudentEnrollments = enrollmentsRes.Data?.Where(e => e.IsActive).ToList() ?? new();
+
+                _showAddBatchSection = false;
+                _newBatchClassId = string.Empty;
+                _newBatchSubjectId = string.Empty;
+                _newBatchId = string.Empty;
+                _newBatchClassBatches.Clear();
+                _newBatchSubjectOptions.Clear();
+                _newBatchOptions.Clear();
+            }
+            else
+            {
+                Toast.Error(res?.Message ?? "Failed to enroll student into batch.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error enrolling student: {ex.Message}");
+        }
+        finally
+        {
+            _isEnrollingBatch = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task CloseDrawerAsync()
     {
         _isDrawerOpen = false;
+        _showAddBatchSection = false;
         StateHasChanged();
         await Task.Delay(300);
         _showAddEditModal = false;

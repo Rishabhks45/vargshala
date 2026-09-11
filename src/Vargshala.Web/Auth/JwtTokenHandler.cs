@@ -77,6 +77,11 @@ public class JwtTokenHandler : DelegatingHandler
                 ? cached.RefreshToken
                 : RefreshTokenNormalizer.Normalize(httpContext.User.FindFirst("refresh_token")?.Value);
 
+            if (!string.IsNullOrEmpty(userId) && !_tokenCache.ContainsKey(userId) && !string.IsNullOrEmpty(accessToken))
+            {
+                SetUserTokens(userId, accessToken, refreshToken ?? string.Empty);
+            }
+
             if (!string.IsNullOrEmpty(accessToken))
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
@@ -199,10 +204,15 @@ public class JwtTokenHandler : DelegatingHandler
         {
             try
             {
+                var authResult = await httpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                var props = authResult?.Properties ?? new AuthenticationProperties();
+                props.IsPersistent = true;
+                props.AllowRefresh = true;
+
                 await httpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     httpContext.User,
-                    new AuthenticationProperties { IsPersistent = true });
+                    props);
             }
             catch
             {

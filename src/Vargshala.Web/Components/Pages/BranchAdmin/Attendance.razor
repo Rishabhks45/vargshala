@@ -873,15 +873,67 @@
 
                     @if (_overview?.DailyTrends != null && _overview.DailyTrends.Count > 0)
                     {
-                        @foreach (var day in _overview.DailyTrends)
+                        @for (int i = 0; i < _overview.DailyTrends.Count; i++)
                         {
-                            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative">
-                                <!-- Percentage tooltip/label above bar -->
-                                <span class="text-[10px] font-black @(day.Percentage > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-300 dark:text-slate-600")">
+                            var day = _overview.DailyTrends[i];
+                            var index = i;
+                            var totalCount = _overview.DailyTrends.Count;
+                            var isLeftBoundary = index == 0;
+                            var isRightBoundary = index == totalCount - 1;
+
+                            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative cursor-pointer"
+                                 title="@($"{day.DayOfWeekShort}, {day.DateShortFormatted}: {day.Percentage}% Attendance ({day.PresentCount} Present, {day.LateCount} Late, {day.AbsentCount} Absent / {day.TotalStudents} Total)")">
+
+                                <!-- Floating Interactive Tooltip Popover -->
+                                <div class="absolute bottom-full mb-2 @(isLeftBoundary ? "left-0" : isRightBoundary ? "right-0" : "left-1/2 -translate-x-1/2") z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 transform group-hover:translate-y-0 translate-y-1">
+                                    <div class="bg-slate-900/95 dark:bg-[#142025]/95 text-white p-2.5 rounded-xl shadow-2xl border border-slate-700/80 backdrop-blur-md min-w-[155px] space-y-1.5 text-left select-none">
+                                        <!-- Date and Percentage -->
+                                        <div class="flex items-center justify-between gap-3 text-[11px] font-bold border-b border-slate-700/70 pb-1 text-slate-200">
+                                            <span>📅 @day.DayOfWeekShort, @day.DateShortFormatted</span>
+                                            <span class="text-emerald-400 font-black">@day.Percentage%</span>
+                                        </div>
+                                        <!-- Attendance Metric Breakdown -->
+                                        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                                            <div class="flex items-center justify-between gap-1.5">
+                                                <span class="text-slate-400 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    Present:
+                                                </span>
+                                                <span class="font-bold text-white">@day.PresentCount</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-1.5">
+                                                <span class="text-slate-400 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                    Late:
+                                                </span>
+                                                <span class="font-bold text-white">@day.LateCount</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-1.5">
+                                                <span class="text-slate-400 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                    Absent:
+                                                </span>
+                                                <span class="font-bold text-white">@day.AbsentCount</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-1.5">
+                                                <span class="text-slate-400 flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                    Total:
+                                                </span>
+                                                <span class="font-bold text-white">@day.TotalStudents</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Tooltip Pointer Arrow -->
+                                    <div class="w-2 h-2 bg-slate-900/95 dark:bg-[#142025]/95 rotate-45 border-r border-b border-slate-700/80 -mt-1 @(isLeftBoundary ? "ml-4" : isRightBoundary ? "mr-4 ml-auto" : "mx-auto")"></div>
+                                </div>
+
+                                <!-- Percentage label above bar -->
+                                <span class="text-[10px] font-black group-hover:scale-110 transition-transform @(day.Percentage > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-300 dark:text-slate-600")">
                                     @(day.Percentage)%
                                 </span>
                                 <!-- Vertical Bar -->
-                                <div class="w-full max-w-[28px] rounded-t-lg transition-all duration-500 @(day.Percentage > 0 ? "bg-[#10B981] hover:bg-[#059669]" : "bg-slate-100 dark:bg-slate-800")"
+                                <div class="w-full max-w-[28px] rounded-t-lg transition-all duration-300 group-hover:brightness-110 group-hover:scale-y-[1.02] origin-bottom @(day.Percentage > 0 ? "bg-[#10B981] hover:bg-[#059669]" : "bg-slate-100 dark:bg-slate-800")"
                                      style="height: @(Math.Max(day.Percentage, 4))%;"></div>
                             </div>
                         }
@@ -910,7 +962,7 @@
                     {
                         @foreach (var day in _overview.DailyTrends)
                         {
-                            <div class="flex-1">
+                            <div class="flex-1" title="@($"{day.DayOfWeekShort}, {day.DateShortFormatted}: {day.Percentage}% Attendance")">
                                 <p class="font-bold text-slate-600 dark:text-slate-300">@day.DayOfWeekShort</p>
                                 <p class="text-[9px] text-slate-400">@day.DateShortFormatted</p>
                             </div>
@@ -945,21 +997,30 @@
                                 stroke="#10b981" stroke-width="3.5"
                                 stroke-dasharray="@(PresentDash) 100"
                                 stroke-dashoffset="0"
-                                stroke-linecap="round" />
+                                stroke-linecap="round"
+                                class="transition-all duration-300 hover:opacity-80 cursor-pointer">
+                            <title>Present: @CurrentPresentCount (@CurrentPresentPercentage%)</title>
+                        </circle>
 
                         <!-- Late Arc (Amber) -->
                         <circle cx="18" cy="18" r="14" fill="transparent"
                                 stroke="#f59e0b" stroke-width="3.5"
                                 stroke-dasharray="@(LateDash) 100"
                                 stroke-dashoffset="@(-PresentDash)"
-                                stroke-linecap="round" />
+                                stroke-linecap="round"
+                                class="transition-all duration-300 hover:opacity-80 cursor-pointer">
+                            <title>Late: @CurrentLateCount (@CurrentLatePercentage%)</title>
+                        </circle>
 
                         <!-- Absent Arc (Rose) -->
                         <circle cx="18" cy="18" r="14" fill="transparent"
                                 stroke="#f43f5e" stroke-width="3.5"
                                 stroke-dasharray="@(AbsentDash) 100"
                                 stroke-dashoffset="@(-(PresentDash + LateDash))"
-                                stroke-linecap="round" />
+                                stroke-linecap="round"
+                                class="transition-all duration-300 hover:opacity-80 cursor-pointer">
+                            <title>Absent: @CurrentAbsentCount (@CurrentAbsentPercentage%)</title>
+                        </circle>
                     </svg>
 
                     <!-- Center Text -->

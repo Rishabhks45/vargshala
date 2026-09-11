@@ -113,8 +113,9 @@ public class AccountController : Controller
             new ClaimsPrincipal(identity),
             new AuthenticationProperties
             {
-                IsPersistent = rememberMe,
-                ExpiresUtc = expiry
+                IsPersistent = true,
+                ExpiresUtc = expiry,
+                AllowRefresh = true
             });
 
         // Determine target route if none specified

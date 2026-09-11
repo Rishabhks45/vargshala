@@ -62,6 +62,9 @@ public static class StartupExtensions
                 options.LoginPath = "/login";
                 options.LogoutPath = "/account/logout";
                 options.AccessDeniedPath = "/login";
+                options.Cookie.IsEssential = true;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
                 options.ExpireTimeSpan = TimeSpan.FromDays(7);
                 options.SlidingExpiration = true;
             });
