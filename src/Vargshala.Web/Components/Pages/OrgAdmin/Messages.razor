@@ -558,6 +558,18 @@
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-bold text-slate-900 dark:text-white">Participants (@(_selectedConversation.Members?.Count ?? 0))</h4>
+                        @if (_selectedConversation.Type != ConversationType.Direct && _selectedConversation.IsAdmin)
+                        {
+                            <button type="button" 
+                                    @onclick="OpenAddMemberModalAsync"
+                                    class="flex items-center gap-1 text-[11px] font-bold text-[#00796b] hover:text-[#004D40] bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 px-2 py-0.5 rounded-lg border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer"
+                                    title="Add Member to Group">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span>Add Member</span>
+                            </button>
+                        }
                     </div>
 
                     <!-- Member Items List -->
@@ -680,18 +692,176 @@
                         <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
                         <textarea @bind="_newConversationDescription" rows="2" placeholder="Brief description of the channel..." class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]"></textarea>
                     </div>
+
+                    <!-- Member Selection for Group / Channel -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block font-bold text-slate-700 dark:text-slate-300">
+                                Add Members <span class="text-slate-400 font-normal">(@_selectedGroupMemberIds.Count selected)</span>
+                            </label>
+                            @if (_selectedGroupMemberIds.Any())
+                            {
+                                <button type="button" @onclick="() => _selectedGroupMemberIds.Clear()" class="text-[11px] text-[#00796b] dark:text-teal-400 hover:underline cursor-pointer">
+                                    Clear all
+                                </button>
+                            }
+                        </div>
+
+                        @if (_selectedGroupMemberIds.Any())
+                        {
+                            <div class="flex flex-wrap gap-1.5 mb-2 max-h-20 overflow-y-auto p-1.5 bg-slate-50 dark:bg-[#18262c] rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                                @foreach (var id in _selectedGroupMemberIds)
+                                {
+                                    var contact = _eligibleContacts.FirstOrDefault(c => c.UserId == id);
+                                    var name = contact?.FullName ?? "Member";
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-[#00796b] dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                                        @name
+                                        <button type="button" @onclick="() => ToggleGroupMember(id)" class="hover:text-red-500 font-bold ml-0.5 cursor-pointer">✕</button>
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        <input type="text" 
+                               @bind="_contactSearchTerm" 
+                               @bind:event="oninput" 
+                               @bind:after="SearchEligibleContactsAsync" 
+                               placeholder="Search members to add..." 
+                               class="w-full mb-2 px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]" />
+
+                        <div class="max-h-36 overflow-y-auto space-y-1 border border-slate-100 dark:border-slate-800 rounded-xl p-1 bg-slate-50/50 dark:bg-[#18262c]/50">
+                            @if (_isLoadingContacts)
+                            {
+                                <p class="text-slate-400 text-center py-3">Loading authorized contacts...</p>
+                            }
+                            else if (_eligibleContacts.Any())
+                            {
+                                @foreach (var contact in _eligibleContacts)
+                                {
+                                    var isSelected = _selectedGroupMemberIds.Contains(contact.UserId);
+                                    <div @onclick="() => ToggleGroupMember(contact.UserId)"
+                                         class="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors @(isSelected ? "bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700 text-[#00796b]" : "hover:bg-slate-100 dark:hover:bg-slate-800")">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <div class="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0">
+                                                @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
+                                                <p class="text-[10px] text-slate-400 truncate">@contact.Role @(!string.IsNullOrWhiteSpace(contact.Email) ? $"• {contact.Email}" : "")</p>
+                                            </div>
+                                        </div>
+                                        <div class="shrink-0 ml-2">
+                                            @if (isSelected)
+                                            {
+                                                <span class="w-5 h-5 rounded-md bg-[#00796b] text-white flex items-center justify-center text-xs font-bold">✓</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="w-5 h-5 rounded-md border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs text-slate-400 hover:border-[#00796b]">+</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-slate-400 text-center py-3">No authorized contacts found</p>
+                            }
+                        </div>
+                    </div>
                 }
             </div>
 
             <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#18262c] border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 text-xs">
-                <button type="button" @onclick="() => _showCreateModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-semibold">
+                <button type="button" @onclick="() => _showCreateModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-semibold cursor-pointer">
                     Cancel
                 </button>
-                <button type="button" @onclick="CreateConversationAsync" disabled="@_isCreating" class="px-4 py-2 rounded-xl bg-[#00796b] text-white hover:bg-[#004D40] font-bold disabled:opacity-50">
-                    @(_isCreating ? "Creating..." : (_newConversationType == ConversationType.Direct ? "Start Chat" : "Create Channel"))
+                <button type="button" @onclick="CreateConversationAsync" disabled="@_isCreating" class="px-4 py-2 rounded-xl bg-[#00796b] text-white hover:bg-[#004D40] font-bold disabled:opacity-50 cursor-pointer">
+                    @(_isCreating ? "Creating..." : (_newConversationType == ConversationType.Direct ? "Start Chat" : _newConversationType == ConversationType.Group ? "Create Group" : "Create Channel"))
                 </button>
             </div>
 
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- ADD MEMBER TO EXISTING GROUP MODAL -->
+<!-- ========================================================================= -->
+@if (_showAddMemberModal && _selectedConversation != null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white dark:bg-[#111c21] rounded-2xl shadow-xl w-full max-w-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add Member to Group</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">@_selectedConversation.Name</p>
+                </div>
+                <button type="button" @onclick="() => _showAddMemberModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+            </div>
+
+            <div class="p-5 space-y-3 text-xs">
+                <!-- Search Input -->
+                <div class="relative">
+                    <input type="text" 
+                           @bind="_addMemberSearchTerm" 
+                           @bind:event="oninput" 
+                           @bind:after="SearchEligibleRecipientsForExistingGroupAsync" 
+                           placeholder="Search by name or email..." 
+                           class="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]" />
+                    <svg class="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+
+                <!-- Contacts list -->
+                <div class="max-h-60 overflow-y-auto space-y-1 border border-slate-100 dark:border-slate-800 rounded-xl p-1 bg-slate-50/50 dark:bg-[#18262c]/50">
+                    @if (_isLoadingContacts)
+                    {
+                        <p class="text-slate-400 text-center py-4">Loading contacts...</p>
+                    }
+                    else
+                    {
+                        var nonMembers = _eligibleContacts
+                            .Where(c => _selectedConversation.Members == null || !_selectedConversation.Members.Any(m => m.UserId == c.UserId))
+                            .ToList();
+
+                        @if (nonMembers.Any())
+                        {
+                            @foreach (var contact in nonMembers)
+                            {
+                                <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0">
+                                            @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
+                                            <p class="text-[10px] text-slate-400 truncate">@contact.Role @(!string.IsNullOrWhiteSpace(contact.Email) ? $"• {contact.Email}" : "")</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" 
+                                            @onclick="() => AddMemberToGroupAsync(contact)"
+                                            disabled="@_isAddingMember"
+                                            class="px-3 py-1 bg-[#00796b] hover:bg-[#004D40] text-white rounded-lg font-bold text-xs cursor-pointer disabled:opacity-50 transition-colors shrink-0">
+                                        + Add
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-slate-400 text-center py-4">No eligible contacts to add</p>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="px-5 py-3 bg-slate-50 dark:bg-[#18262c] border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button type="button" @onclick="() => _showAddMemberModal = false" class="px-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 text-xs font-semibold cursor-pointer">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 }
@@ -703,8 +873,8 @@
     private bool _isMuted = false;
     private bool _allowReplies = true;
 
-    private bool _isLoadingConversations = false;
-    private bool _isLoadingMessages = false;
+    private bool _isLoadingConversations = true;
+    private bool _isLoadingMessages = true;
     private bool _isSending = false;
     private bool _isCreating = false;
     private bool _showCreateModal = false;
@@ -715,8 +885,13 @@
 
     private List<EligibleUserDto> _eligibleContacts = new();
     private Guid? _selectedTargetUserId;
+    private readonly HashSet<Guid> _selectedGroupMemberIds = new();
     private string _contactSearchTerm = string.Empty;
     private bool _isLoadingContacts = false;
+
+    private bool _showAddMemberModal = false;
+    private string _addMemberSearchTerm = string.Empty;
+    private bool _isAddingMember = false;
 
     private ChatConversationDto? _selectedConversation;
     private List<ChatConversationDto> _conversations = new();
@@ -857,6 +1032,7 @@
     private async Task LoadConversationsAsync()
     {
         _isLoadingConversations = true;
+        StateHasChanged();
         try
         {
             var response = await MessageService.GetConversationsAsync(new GetConversationsPagedRequest { PageSize = 100 });
@@ -880,6 +1056,7 @@
         finally
         {
             _isLoadingConversations = false;
+            StateHasChanged();
         }
     }
 
@@ -1034,6 +1211,7 @@
         _newConversationDescription = string.Empty;
         _newConversationType = ConversationType.Direct;
         _selectedTargetUserId = null;
+        _selectedGroupMemberIds.Clear();
         _contactSearchTerm = string.Empty;
         _showCreateModal = true;
         await SearchEligibleContactsAsync();
@@ -1041,9 +1219,17 @@
 
     private async Task OnConversationTypeChangedAsync()
     {
-        if (_newConversationType == ConversationType.Direct && !_eligibleContacts.Any())
+        if (!_eligibleContacts.Any())
         {
             await SearchEligibleContactsAsync();
+        }
+    }
+
+    private void ToggleGroupMember(Guid userId)
+    {
+        if (!_selectedGroupMemberIds.Add(userId))
+        {
+            _selectedGroupMemberIds.Remove(userId);
         }
     }
 
@@ -1125,6 +1311,56 @@
         }
     }
 
+    private async Task OpenAddMemberModalAsync()
+    {
+        _addMemberSearchTerm = string.Empty;
+        _showAddMemberModal = true;
+        _contactSearchTerm = string.Empty;
+        await SearchEligibleContactsAsync();
+    }
+
+    private async Task SearchEligibleRecipientsForExistingGroupAsync()
+    {
+        _contactSearchTerm = _addMemberSearchTerm;
+        await SearchEligibleContactsAsync();
+    }
+
+    private async Task AddMemberToGroupAsync(EligibleUserDto contact)
+    {
+        if (_selectedConversation == null) return;
+        _isAddingMember = true;
+        try
+        {
+            var response = await MessageService.AddParticipantAsync(_selectedConversation.Id, contact.UserId);
+            if (response.Success)
+            {
+                NotificationService.Success($"{contact.FullName} was added to the group!");
+                _selectedConversation.Members.Add(new ChatMemberDto
+                {
+                    UserId = contact.UserId,
+                    Name = contact.FullName,
+                    Role = contact.Role ?? "Member",
+                    Initials = !string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?",
+                    IsAdmin = false
+                });
+                _selectedConversation.MemberCount++;
+                StateHasChanged();
+            }
+            else
+            {
+                NotificationService.Error(response.Message ?? "Failed to add member.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Error adding member: {ex.Message}");
+        }
+        finally
+        {
+            _isAddingMember = false;
+        }
+    }
+
     private async Task CreateConversationAsync()
     {
         if (_newConversationType == ConversationType.Direct)
@@ -1153,6 +1389,7 @@
                 Name = _newConversationName.Trim(),
                 Description = _newConversationDescription.Trim(),
                 TargetUserId = _selectedTargetUserId,
+                ParticipantUserIds = _selectedGroupMemberIds.ToList(),
                 IsAnnouncement = _newConversationType == ConversationType.Channel
             };
 
