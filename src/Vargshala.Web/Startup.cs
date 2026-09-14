@@ -104,6 +104,8 @@ public static class StartupExtensions
         builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchTeacherClientService, Vargshala.Web.Services.BranchAdmin.BranchTeacherClientService>();
         builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchClassSessionClientService, Vargshala.Web.Services.BranchAdmin.BranchClassSessionClientService>();
         builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchAttendanceClientService, Vargshala.Web.Services.BranchAdmin.BranchAttendanceClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchFeeStructureClientService, Vargshala.Web.Services.BranchAdmin.BranchFeeStructureClientService>();
+        builder.Services.AddScoped<Vargshala.Web.Services.BranchAdmin.IBranchFeeClientService, Vargshala.Web.Services.BranchAdmin.BranchFeeClientService>();
         #endregion
     }
     #endregion

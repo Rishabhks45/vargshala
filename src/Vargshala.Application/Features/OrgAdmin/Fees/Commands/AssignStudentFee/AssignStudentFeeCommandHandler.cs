@@ -39,7 +39,7 @@ public class AssignStudentFeeCommandHandler : IRequestHandler<AssignStudentFeeCo
         var req = command.Request;
 
         // 1. Verify student exists in current organization
-        var student = await _studentRepository.GetByIdAsync(req.StudentId, cancellationToken);
+        var student = await _studentRepository.GetByIdWithUserAsync(req.StudentId, cancellationToken);
         if (student == null || student.User?.OrganizationId != orgId.Value)
         {
             return ApiResponse<StudentFeeDto>.FailureResponse("Student not found in your organization.");

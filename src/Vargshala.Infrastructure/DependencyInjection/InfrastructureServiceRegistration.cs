@@ -79,6 +79,10 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
 
+        // QuestPDF PDF Receipt Generator
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+        services.AddScoped<Vargshala.Application.Abstractions.Pdf.IFeeReceiptPdfGenerator, Vargshala.Infrastructure.Services.Receipts.QuestPdfFeeReceiptGenerator>();
+
         // HttpContextAccessor (needed by CurrentUser)
         services.AddHttpContextAccessor();
 

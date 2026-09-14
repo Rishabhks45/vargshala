@@ -105,4 +105,28 @@ public class FeesController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("payments/{paymentId:guid}/receipt/pdf")]
+    public async Task<IActionResult> GetPaymentReceiptPdf(Guid paymentId, CancellationToken ct)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.OrgAdmin.Fees.Queries.GetFeeReceiptPdf.GetPaymentReceiptPdfQuery(paymentId), ct);
+        if (!result.Success || result.Data == null)
+        {
+            return NotFound(result);
+        }
+
+        return File(result.Data.FileBytes, result.Data.ContentType, result.Data.FileName);
+    }
+
+    [HttpGet("student-fees/{feeId:guid}/receipt/pdf")]
+    public async Task<IActionResult> GetStudentFeeReceiptPdf(Guid feeId, CancellationToken ct)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.OrgAdmin.Fees.Queries.GetFeeReceiptPdf.GetStudentFeeReceiptPdfQuery(feeId), ct);
+        if (!result.Success || result.Data == null)
+        {
+            return NotFound(result);
+        }
+
+        return File(result.Data.FileBytes, result.Data.ContentType, result.Data.FileName);
+    }
 }

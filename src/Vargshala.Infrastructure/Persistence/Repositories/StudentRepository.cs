@@ -61,6 +61,7 @@ public class StudentRepository : IStudentRepository
     {
         return await _db.Students
             .AsNoTracking()
+            .Include(s => s.User)
             .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken);
     }
 

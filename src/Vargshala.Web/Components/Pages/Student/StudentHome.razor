@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject IUserService UserService
+@using Vargshala.Contracts.Fees
 
 <PageTitle>Student Dashboard | Vargshala</PageTitle>
 
@@ -734,61 +735,10 @@
     </div>
 }
 
-@if (_showReceiptModal)
-{
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-        <div class="bg-white dark:bg-[#111c21] rounded-2xl max-w-md w-full p-6 border border-tealborder dark:border-slate-800 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-2">
-                    <img src="images/Logo.svg" alt="Vargshala" class="w-7 h-7 object-contain" />
-                    <div>
-                        <h3 class="font-black text-base text-slate-800 dark:text-white">Brillent Coaching Center</h3>
-                        <p class="text-[10px] text-slate-500">Official Fee Payment Receipt</p>
-                    </div>
-                </div>
-                <button type="button" @onclick="() => _showReceiptModal = false" class="text-slate-400 hover:text-slate-600 p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 space-y-2 text-xs">
-                <div class="flex justify-between">
-                    <span class="text-slate-500">Receipt No:</span>
-                    <span class="font-mono font-bold text-slate-800 dark:text-white">RCP-2026-9021</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">Student Name:</span>
-                    <span class="font-bold text-slate-800 dark:text-white">@_studentName</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">Class & Course:</span>
-                    <span class="font-semibold text-slate-700 dark:text-slate-300">Class 12 - PCM Science</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500">Payment Date:</span>
-                    <span class="font-semibold text-slate-700 dark:text-slate-300">01 Sep 2026</span>
-                </div>
-                <div class="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700 font-bold">
-                    <span class="text-slate-700 dark:text-slate-300">Total Amount Paid:</span>
-                    <span class="text-emerald-600 text-sm">₹45,000</span>
-                </div>
-                <div class="flex justify-between text-[11px] text-emerald-600">
-                    <span>Status:</span>
-                    <span class="font-bold">PAID (Clear)</span>
-                </div>
-            </div>
-
-            <div class="pt-2 flex items-center gap-3">
-                <button type="button" @onclick="() => _showReceiptModal = false" class="flex-1 py-2 rounded-xl bg-[#009488] hover:bg-[#00796b] text-white text-xs font-bold text-center shadow-xs transition-all">
-                    Download PDF
-                </button>
-                <button type="button" @onclick="() => _showReceiptModal = false" class="py-2 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-}
+<FeeReceiptModal @bind-IsOpen="_showReceiptModal"
+                 Receipt="_studentReceipt"
+                 InstituteName="Brillent Coaching Center"
+                 InstituteTagline="Premier Science & Medical Entrance Academy" />
 
 @code {
     [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
@@ -813,6 +763,24 @@
     private string _modalAssignmentDueDate = "";
 
     private bool _showReceiptModal = false;
+    private PaymentDto _studentReceipt = new()
+    {
+        ReceiptNumber = "RCP-2026-9021",
+        StudentName = "Aryan Kapoor",
+        StudentRollNumber = "ROL-1204",
+        StudentCode = "STU-2026-9021",
+        BranchName = "Main Campus (Science Wing)",
+        Amount = 45000,
+        PaymentDate = new DateTime(2026, 9, 1, 11, 30, 0),
+        PaymentMethod = "UPI",
+        TransactionReference = "UPI/260901/78491290",
+        Remarks = "Class 12 - PCM Comprehensive Coaching Package (Term 1 & 2)",
+        Allocations = new()
+        {
+            new() { InstallmentNumber = 1, DueDate = new DateOnly(2026, 8, 15), AllocatedAmount = 25000 },
+            new() { InstallmentNumber = 2, DueDate = new DateOnly(2026, 9, 1), AllocatedAmount = 20000 }
+        }
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -871,6 +839,7 @@
 
     private void OpenReceiptModal()
     {
+        _studentReceipt.StudentName = _studentName;
         _showReceiptModal = true;
     }
 

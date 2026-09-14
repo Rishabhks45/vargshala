@@ -80,6 +80,7 @@ public class PaymentDto
     public Guid StudentId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public string? StudentRollNumber { get; set; }
+    public string? StudentCode { get; set; }
     public string? ReceiptNumber { get; set; }
     public decimal Amount { get; set; }
     public DateTime PaymentDate { get; set; }

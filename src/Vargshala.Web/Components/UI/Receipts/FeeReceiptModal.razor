@@ -1,0 +1,374 @@
+@using Microsoft.JSInterop
+@using Vargshala.Contracts.Fees
+@using Vargshala.Web.Common
+@using Vargshala.Web.Services
+@inject IJSRuntime JS
+@inject INotificationService Toast
+
+@if (IsOpen && Receipt != null)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+        <div class="w-full max-w-2xl bg-white dark:bg-[#111c21] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[95vh]">
+            
+            <!-- MODAL ACTION BAR (Screen Only - Hidden in Print) -->
+            <div class="no-print px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-[#152328]/60 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-teal-500/20 text-[#009488] flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 dark:text-white leading-tight">Official Fee Payment Receipt</h2>
+                        <p class="text-[11px] text-slate-400 font-mono">@Receipt.ReceiptNumber</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="button" 
+                            @onclick="CopyReceiptNumberAsync" 
+                            title="Copy Receipt Number"
+                            class="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-teal-400 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                        </svg>
+                        <span class="hidden sm:inline">Copy No</span>
+                    </button>
+
+                    <button type="button" 
+                            @onclick="PrintReceiptAsync" 
+                            class="px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#003d33] hover:to-[#00796b] rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span>Print / Save PDF</span>
+                    </button>
+
+                    <button type="button" 
+                            @onclick="CloseAsync" 
+                            class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RECEIPT DOCUMENT CONTAINER (Scrollable on small screens, pure print canvas on paper) -->
+            <div class="overflow-y-auto p-4 sm:p-6 bg-slate-100/60 dark:bg-slate-900/40 flex justify-center">
+                
+                <div id="vargshala-fee-receipt" class="w-full max-w-xl bg-white text-slate-900 rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 relative print:border-none print:shadow-none print:p-0">
+                    
+                    <!-- WATERMARK EMBLEM (Subtle in background) -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.035] select-none">
+                        <img src="images/Logo.svg" alt="" class="w-64 h-64 object-contain grayscale" />
+                    </div>
+
+                    <!-- 1. INSTITUTE HEADER -->
+                    <div class="relative pb-4 border-b-2 border-[#004D40] flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-[#004D40] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
+                                <img src="images/Logo.svg" 
+                                     alt="Institute Logo" 
+                                     class="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                                <h1 class="text-lg sm:text-xl font-black text-[#004D40] tracking-tight leading-none uppercase">
+                                    @(string.IsNullOrWhiteSpace(InstituteName) ? (!string.IsNullOrWhiteSpace(Receipt.BranchName) ? Receipt.BranchName : "Coaching Institute") : InstituteName)
+                                </h1>
+                                <p class="text-[11px] font-semibold text-slate-600 mt-1">
+                                    @(string.IsNullOrWhiteSpace(InstituteTagline) ? "Branch Academic & Coaching Center" : InstituteTagline)
+                                </p>
+                                <p class="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                                    @(string.IsNullOrWhiteSpace(Receipt.BranchName) ? "Main Campus" : Receipt.BranchName) • Helpline: +91 98765 43210
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- RECEIPT BADGE & COPY TYPE -->
+                        <div class="text-right shrink-0 flex flex-col items-end">
+                            <span class="inline-block px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-[#004D40] text-white">
+                                Fee Receipt
+                            </span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                Student Copy
+                            </span>
+                            <div class="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">
+                                <svg class="w-2.5 h-2.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>PAID</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. VOUCHER METADATA BAR -->
+                    <div class="relative my-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                        <div>
+                            <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Receipt No</span>
+                            <span class="font-mono font-black text-slate-800 text-[11px] sm:text-xs">@Receipt.ReceiptNumber</span>
+                        </div>
+                        <div>
+                            <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Date & Time</span>
+                            <span class="font-bold text-slate-800 text-[11px]">@Receipt.PaymentDate.ToString("dd MMM yyyy, hh:mm tt")</span>
+                        </div>
+                        <div>
+                            <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Payment Mode</span>
+                            <span class="font-bold text-slate-800 text-[11px] uppercase">@Receipt.PaymentMethod</span>
+                        </div>
+                        <div>
+                            <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Transaction Ref</span>
+                            <span class="font-mono text-slate-700 text-[10.5px] truncate block" title="@Receipt.TransactionReference">
+                                @(!string.IsNullOrWhiteSpace(Receipt.TransactionReference) ? Receipt.TransactionReference : "CASH / COUNTER")
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 3. STUDENT & COURSE PROFILE -->
+                    <div class="relative mb-4 border border-slate-200 rounded-lg p-3.5 bg-white text-xs space-y-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Student Name:</span>
+                                <span class="font-black text-slate-900 ml-1 text-sm">@Receipt.StudentName</span>
+                            </div>
+                            <div class="sm:text-right">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Roll / Student Code:</span>
+                                <span class="font-mono font-bold text-slate-800 ml-1">
+                                    @(!string.IsNullOrWhiteSpace(Receipt.StudentRollNumber) ? Receipt.StudentRollNumber : (Receipt.StudentCode ?? "N/A"))
+                                </span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-[11px]">
+                            <div>
+                                <span class="text-slate-400 font-medium">Branch / Center:</span>
+                                <span class="font-semibold text-slate-700 ml-1">@(!string.IsNullOrWhiteSpace(Receipt.BranchName) ? Receipt.BranchName : "Main Campus")</span>
+                            </div>
+                            <div class="sm:text-right">
+                                <span class="text-slate-400 font-medium">Academic Session:</span>
+                                <span class="font-semibold text-slate-700 ml-1">2026 – 2027</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. ALLOCATIONS & PARTICULAR TABLE -->
+                    <div class="relative border border-slate-200 rounded-lg overflow-hidden mb-4">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-[#004D40]/5 text-[10px] font-bold text-[#004D40] uppercase border-b border-slate-200">
+                                <tr>
+                                    <th class="py-2.5 px-3 w-10 text-center">#</th>
+                                    <th class="py-2.5 px-3">Particulars / Fee Description</th>
+                                    <th class="py-2.5 px-3 w-28 text-center">Due Date</th>
+                                    <th class="py-2.5 px-3 w-32 text-right">Allocated (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @if (Receipt.Allocations.Any())
+                                {
+                                    int idx = 1;
+                                    foreach (var alloc in Receipt.Allocations)
+                                    {
+                                        <tr class="hover:bg-slate-50/50">
+                                            <td class="py-2 px-3 text-center text-slate-400 font-mono text-[11px]">@idx</td>
+                                            <td class="py-2 px-3 font-medium text-slate-800">
+                                                Installment @alloc.InstallmentNumber Fee
+                                            </td>
+                                            <td class="py-2 px-3 text-center text-slate-500 text-[11px]">
+                                                @alloc.DueDate.ToString("dd MMM yyyy")
+                                            </td>
+                                            <td class="py-2 px-3 text-right font-bold text-slate-900">
+                                                ₹@alloc.AllocatedAmount.ToString("N2")
+                                            </td>
+                                        </tr>
+                                        idx++;
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td class="py-2 px-3 text-center text-slate-400 font-mono text-[11px]">1</td>
+                                        <td class="py-2 px-3 font-medium text-slate-800">
+                                            Academic Coaching & Course Fee Payment
+                                        </td>
+                                        <td class="py-2 px-3 text-center text-slate-500 text-[11px]">
+                                            @Receipt.PaymentDate.ToString("dd MMM yyyy")
+                                        </td>
+                                        <td class="py-2 px-3 text-right font-bold text-slate-900">
+                                            ₹@Receipt.Amount.ToString("N2")
+                                        </td>
+                                    </tr>
+                                }
+                                
+                                <!-- TOTAL AMOUNT ROW -->
+                                <tr class="bg-[#004D40]/10 border-t-2 border-[#004D40] font-black">
+                                    <td colspan="3" class="py-2.5 px-3 text-slate-900 text-right uppercase tracking-wider text-[11px]">
+                                        Total Net Amount Paid:
+                                    </td>
+                                    <td class="py-2.5 px-3 text-right text-[#004D40] text-sm sm:text-base">
+                                        ₹@Receipt.Amount.ToString("N2")
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 5. AMOUNT IN WORDS (Indian Accounting Standard) -->
+                    <div class="relative p-2.5 rounded-lg bg-slate-50 border border-slate-200 mb-4 flex items-start gap-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase shrink-0 pt-0.5">Amount in Words:</span>
+                        <span class="font-bold text-slate-800 text-[11.5px] italic">
+                            @NumberToWordsHelper.ToIndianCurrencyWords(Receipt.Amount)
+                        </span>
+                    </div>
+
+                    <!-- REMARKS (If Any) -->
+                    @if (!string.IsNullOrWhiteSpace(Receipt.Remarks))
+                    {
+                        <div class="relative text-[11px] text-slate-600 italic mb-4 bg-amber-50/60 border border-amber-200/80 rounded-lg px-3 py-1.5">
+                            <span class="font-semibold text-amber-800">Note:</span> @Receipt.Remarks
+                        </div>
+                    }
+
+                    <!-- 6. VERIFICATION & SIGNATURES FOOTER -->
+                    <div class="relative pt-4 border-t border-slate-200 grid grid-cols-2 gap-4 items-end text-xs">
+                        
+                        <!-- QR Code & Digital Verification -->
+                        <div class="flex items-center gap-2.5">
+                            <!-- Crisp SVG Stylized QR Code Graphic -->
+                            <div class="w-14 h-14 p-1 bg-white border border-slate-300 rounded-lg shrink-0 flex items-center justify-center">
+                                <svg class="w-full h-full text-slate-800" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm8-2h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
+                                </svg>
+                            </div>
+                            <div class="text-[9.5px] text-slate-400 leading-tight">
+                                <p class="font-bold text-slate-600">Scan to Verify Authenticity</p>
+                                <p class="mt-0.5">Computer-generated official receipt.</p>
+                                <p>No physical signature required.</p>
+                            </div>
+                        </div>
+
+                        <!-- Authorized Signatory / Stamp -->
+                        <div class="text-right flex flex-col items-end">
+                            <div class="w-32 border-b border-dashed border-slate-400 mb-1"></div>
+                            <span class="text-[10px] font-bold text-slate-800 uppercase tracking-wider">Authorized Signatory</span>
+                            <span class="text-[9px] text-slate-400">@(string.IsNullOrWhiteSpace(InstituteName) ? "Accounts Department" : $"{InstituteName} Accounts Department")</span>
+                        </div>
+                    </div>
+
+                    <!-- 7. TERMS & CONDITIONS -->
+                    <div class="relative mt-5 pt-2 border-t border-slate-100 text-[9px] text-slate-400 leading-relaxed">
+                        <p class="font-semibold text-slate-500">Terms & Conditions:</p>
+                        <ol class="list-decimal list-inside space-y-0.5 mt-0.5">
+                            <li>Fees once paid are non-refundable and non-transferable under any circumstances.</li>
+                            <li>Subject to payment clearance (cheque/online transfer realization).</li>
+                            <li>Please produce this original receipt for identity card collection and examination hall tickets.</li>
+                        </ol>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- MODAL BOTTOM BAR (Screen Only) -->
+            <div class="no-print px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-[#152328]/60 shrink-0">
+                <span class="text-xs text-slate-500 dark:text-slate-400">
+                    Use <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-[10px] font-mono">Ctrl+P</kbd> or click Print for standard A4 PDF.
+                </span>
+                <div class="flex items-center gap-2">
+                    <button type="button" @onclick="CloseAsync" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer">
+                        Close
+                    </button>
+                    <button type="button" @onclick="PrintReceiptAsync" class="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#003d33] hover:to-[#00796b] rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span>Print Receipt</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+<style>
+    @@media print {
+        /* Hide everything except the receipt during printing */
+        body * {
+            visibility: hidden !important;
+        }
+
+        #vargshala-fee-receipt, #vargshala-fee-receipt * {
+            visibility: visible !important;
+        }
+
+        #vargshala-fee-receipt {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border: 2px solid #004D40 !important;
+            border-radius: 8px !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            page-break-inside: avoid !important;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        @@page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public PaymentDto? Receipt { get; set; }
+    [Parameter] public string? InstituteName { get; set; }
+    [Parameter] public string? InstituteTagline { get; set; }
+    [Parameter] public string? LogoUrl { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "I";
+        var parts = name.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[1][0])}";
+        }
+        return char.ToUpperInvariant(name.Trim()[0]).ToString();
+    }
+
+    private async Task CloseAsync()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task PrintReceiptAsync()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private async Task CopyReceiptNumberAsync()
+    {
+        if (Receipt != null && !string.IsNullOrWhiteSpace(Receipt.ReceiptNumber))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", Receipt.ReceiptNumber);
+            Toast.Success($"Receipt number {Receipt.ReceiptNumber} copied to clipboard!");
+        }
+    }
+}

@@ -2,11 +2,13 @@
 @implements IDisposable
 @inject INotificationService NotificationService
 
-<div class="fixed @PositionClass z-50 flex flex-col gap-2.5 max-w-[340px] sm:max-w-[360px] w-full pointer-events-none px-3 sm:px-0"
+<div class="fixed @PositionClass z-[99999] flex flex-col gap-2.5 max-w-[340px] sm:max-w-[360px] w-full pointer-events-none px-3 sm:px-0"
+     style="z-index: 99999;"
      aria-live="polite">
     @foreach (var item in _notifications)
     {
-        <div class="pointer-events-auto transition-all duration-300 animate-in slide-in-from-top-4 fade-in shadow-lg shadow-emerald-950/10 rounded-xl">
+        <div class="pointer-events-auto transition-all duration-300 animate-in slide-in-from-top-4 fade-in shadow-2xl rounded-xl"
+             style="z-index: 99999;">
             <AlertNotification Type="item.Type"
                                Title="@item.Title"
                                Message="@item.Message"

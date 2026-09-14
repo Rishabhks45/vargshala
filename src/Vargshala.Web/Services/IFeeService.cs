@@ -37,4 +37,12 @@ public interface IFeeService
     Task<ApiResponse<PaymentDto>> GetPaymentReceiptAsync(
         Guid paymentId,
         CancellationToken cancellationToken = default);
+
+    Task<byte[]?> GetPaymentReceiptPdfAsync(
+        Guid paymentId,
+        CancellationToken cancellationToken = default);
+
+    Task<byte[]?> GetStudentFeeReceiptPdfAsync(
+        Guid feeId,
+        CancellationToken cancellationToken = default);
 }

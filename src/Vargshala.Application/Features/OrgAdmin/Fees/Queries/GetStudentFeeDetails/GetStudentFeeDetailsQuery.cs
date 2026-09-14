@@ -33,6 +33,7 @@ public class GetStudentFeeDetailsQueryHandler : IRequestHandler<GetStudentFeeDet
             return ApiResponse<StudentFeeDetailDto>.FailureResponse("Student fee record not found.");
         }
 
-        return ApiResponse<StudentFeeDetailDto>.SuccessResponse(fee.ToDetailDto());
+        var payments = await _feeRepository.GetPaymentsByStudentFeeIdAsync(query.Id, cancellationToken);
+        return ApiResponse<StudentFeeDetailDto>.SuccessResponse(fee.ToDetailDto(payments));
     }
 }

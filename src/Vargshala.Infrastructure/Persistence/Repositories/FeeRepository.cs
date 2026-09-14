@@ -108,7 +108,10 @@ public class FeeRepository : IFeeRepository
 
         if (branchId.HasValue && branchId.Value != Guid.Empty)
         {
-            query = query.Where(sf => sf.FeeStructure.BranchId == branchId.Value);
+            query = query.Where(sf =>
+                (sf.FeeStructure != null && sf.FeeStructure.BranchId == branchId.Value) &&
+                (sf.Student.BatchStudents.Any(bs => bs.IsActive && !bs.Batch.IsDeleted && !bs.Batch.Class.IsDeleted && bs.Batch.Class.BranchId == branchId.Value) ||
+                 sf.Student.User.UserBranchAccesses.Any(uba => uba.IsActive && uba.BranchId == branchId.Value)));
         }
 
         if (classId.HasValue && classId.Value != Guid.Empty)
@@ -143,7 +146,10 @@ public class FeeRepository : IFeeRepository
 
         if (branchId.HasValue && branchId.Value != Guid.Empty)
         {
-            query = query.Where(sf => sf.FeeStructure.BranchId == branchId.Value);
+            query = query.Where(sf =>
+                (sf.FeeStructure != null && sf.FeeStructure.BranchId == branchId.Value) &&
+                (sf.Student.BatchStudents.Any(bs => bs.IsActive && !bs.Batch.IsDeleted && !bs.Batch.Class.IsDeleted && bs.Batch.Class.BranchId == branchId.Value) ||
+                 sf.Student.User.UserBranchAccesses.Any(uba => uba.IsActive && uba.BranchId == branchId.Value)));
         }
 
         var totalExpected = await query.SumAsync(sf => (decimal?)sf.FinalAmount, ct) ?? 0m;
@@ -174,6 +180,23 @@ public class FeeRepository : IFeeRepository
             .Include(p => p.CreatedByUser)
             .Include(p => p.Allocations).ThenInclude(a => a.FeeInstallment)
             .FirstOrDefaultAsync(p => p.Id == paymentId && !p.IsDeleted, ct);
+    }
+
+    public async Task<List<Payment>> GetPaymentsByStudentFeeIdAsync(Guid studentFeeId, CancellationToken ct = default)
+    {
+        var installmentIds = await _db.FeeInstallments
+            .Where(fi => fi.StudentFeeId == studentFeeId)
+            .Select(fi => fi.Id)
+            .ToListAsync(ct);
+
+        return await _db.Payments
+            .AsNoTracking()
+            .Include(p => p.Branch)
+            .Include(p => p.Student).ThenInclude(s => s.User)
+            .Include(p => p.Allocations).ThenInclude(a => a.FeeInstallment)
+            .Where(p => p.Allocations.Any(a => installmentIds.Contains(a.FeeInstallmentId)) && !p.IsDeleted)
+            .OrderByDescending(p => p.PaymentDate)
+            .ToListAsync(ct);
     }
 
     public async Task<List<StudentLookupForFeeDto>> GetStudentsForFeeAssignmentAsync(

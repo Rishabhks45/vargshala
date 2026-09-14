@@ -12,6 +12,7 @@ When asked to perform a coding task, find your target scenario in the table belo
 | **Build a new feature end-to-end** | [`07_FEATURE_DEVELOPMENT.md`](./07_FEATURE_DEVELOPMENT.md)<br>[`12_FEATURE_SPECIFICATION.md`](./12_FEATURE_SPECIFICATION.md) | Follow vertical slice: `Domain` ➔ `Contracts` ➔ `Application` ➔ `Infrastructure` ➔ `API` ➔ `Web` |
 | **Write unit or integration tests** | [`08_TESTING_GUIDE.md`](./08_TESTING_GUIDE.md) | `tests/Vargshala.UnitTests/`<br>`tests/Vargshala.IntegrationTests/` |
 | **Check where a file belongs** | [`02_PROJECT_STRUCTURE.md`](./02_PROJECT_STRUCTURE.md)<br>[`10_FILE_CREATION_RULES.md`](./10_FILE_CREATION_RULES.md) | Refer to file placement matrix in `10_FILE_CREATION_RULES.md` |
+| **Check past chat history / architecture discussions** | [`docs/chat_history/README.md`](./chat_history/README.md) | `docs/chat_history/` |
 | **Check formatting, naming, C# idioms** | [`06_CODING_STANDARDS.md`](./06_CODING_STANDARDS.md) | All `.cs` files across solution |
 
 ---

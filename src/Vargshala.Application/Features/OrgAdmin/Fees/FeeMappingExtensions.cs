@@ -97,6 +97,7 @@ public static class FeeMappingExtensions
             StudentId = entity.StudentId,
             StudentName = studentName,
             StudentRollNumber = entity.Student?.RollNumber,
+            StudentCode = entity.Student?.StudentCode,
             ReceiptNumber = entity.ReceiptNumber,
             Amount = entity.Amount,
             PaymentDate = entity.PaymentDate,

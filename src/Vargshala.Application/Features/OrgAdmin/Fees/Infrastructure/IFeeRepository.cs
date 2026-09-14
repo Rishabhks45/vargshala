@@ -19,6 +19,7 @@ public interface IFeeRepository
         CancellationToken ct = default);
     Task<FeeStatisticsDto> GetFeeStatisticsAsync(Guid orgId, Guid? branchId = null, CancellationToken ct = default);
     Task<Payment?> GetPaymentReceiptByIdAsync(Guid paymentId, CancellationToken ct = default);
+    Task<List<Payment>> GetPaymentsByStudentFeeIdAsync(Guid studentFeeId, CancellationToken ct = default);
     Task<List<StudentLookupForFeeDto>> GetStudentsForFeeAssignmentAsync(
         Guid orgId,
         Guid? branchId = null,
