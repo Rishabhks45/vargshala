@@ -37,6 +37,8 @@ public class ChatConversationDto
     public string Name { get; set; } = string.Empty;
     public string Subtitle { get; set; } = string.Empty;
     public ConversationType Type { get; set; } = ConversationType.Direct;
+    public bool IsAnnouncement { get; set; } = false;
+    public string? GroupPhotoUrl { get; set; }
     public string BranchName { get; set; } = "Main Campus — Patna";
     public string BatchName { get; set; } = string.Empty;
     public string Initials { get; set; } = string.Empty;

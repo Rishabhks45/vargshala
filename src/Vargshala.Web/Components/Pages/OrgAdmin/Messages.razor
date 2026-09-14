@@ -1,172 +1,153 @@
 @page "/messages"
 @attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher,BranchAdmin,Student")]
+@using Vargshala.Contracts.Common
 @using Vargshala.Contracts.Messages
 @using Vargshala.Contracts.Messages.Enums
-@using Vargshala.Web.Components.UI.Badges
-@using Vargshala.Web.Components.UI.Buttons
-@using Vargshala.Web.Components.UI.Inputs
-@using Vargshala.Web.Components.UI.Modals
+@using Vargshala.Web.Services
+@inject IMessageService MessageService
+@inject INotificationService NotificationService
 @rendermode InteractiveServer
 
-<PageTitle>Messages & Channels | Vargshala</PageTitle>
+<PageTitle>Messages | Vargshala</PageTitle>
 
-<!-- Full-Height High-Contrast Teams Hub Container -->
-<div class="h-[calc(100vh-5.5rem)] max-h-[calc(100vh-5.5rem)] rounded-2xl bg-white dark:bg-[#111c21] border border-slate-300 dark:border-slate-800 shadow-md flex overflow-hidden select-none transition-colors duration-200">
+<!-- Full-Height Modern Messaging Hub Container (Matching Exact Design) -->
+<div class="h-[calc(100vh-5.5rem)] max-h-[calc(100vh-5.5rem)] rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-800 shadow-sm flex overflow-hidden select-none transition-colors duration-200">
 
     <!-- ========================================================================= -->
-    <!-- LEFT PANEL: Channels & Direct Chats Sidebar -->
+    <!-- 1. LEFT PANEL: Conversations Sidebar -->
     <!-- ========================================================================= -->
-    <div class="w-80 lg:w-84 shrink-0 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-[#0c1417]">
+    <div class="w-80 lg:w-88 shrink-0 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111c21]">
         
         <!-- Sidebar Header -->
-        <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111c21] space-y-3 shrink-0">
-            
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800/80 space-y-3 shrink-0">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950 border border-teal-300 dark:border-teal-800 text-[#004D40] dark:text-teal-300 flex items-center justify-center font-bold shadow-2xs">
-                        <svg class="w-4 h-4 text-[#00796b] dark:text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-black text-slate-900 dark:text-white tracking-tight">
-                            Channels & Chats
-                        </h2>
-                    </div>
+                <div>
+                    <h1 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                        Messages
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        Stay connected with your students, teachers and staff
+                    </p>
                 </div>
 
-                <div class="flex items-center gap-1.5">
-                    <!-- Role Dropdown Pill -->
-                    <select @bind="CurrentUserRole" class="text-[11px] font-extrabold bg-slate-100 dark:bg-[#18262c] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-2 py-1 focus:outline-none cursor-pointer">
-                        <option value="Admin">Admin</option>
-                        <option value="Teacher">Teacher</option>
-                        <option value="Student">Student</option>
-                    </select>
-
-                    <button type="button" 
-                            @onclick="OpenCreateChannelModal" 
-                            class="p-1.5 rounded-lg bg-[#00796b] hover:bg-[#004D40] text-white shadow-xs transition-all cursor-pointer"
-                            title="Create New Channel / Chat">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Search Input -->
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                <button type="button" 
+                        @onclick="OpenCreateModal" 
+                        class="p-2 rounded-xl bg-[#00796b] hover:bg-[#004D40] text-white shadow-xs transition-all cursor-pointer"
+                        title="New Conversation / Group">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
-                </span>
-                <input type="text" 
-                       @bind="_searchQuery" 
-                       @bind:event="oninput"
-                       placeholder="Search discussions & batches..." 
-                       class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-300 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 dark:text-white font-medium transition-all placeholder-slate-500" />
+                </button>
             </div>
 
-            <!-- Filter Category Tabs -->
-            <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+            <!-- Filter Category Pills (Exact Design) -->
+            <div class="flex items-center gap-1.5 text-xs font-semibold">
                 <button type="button" 
                         @onclick='() => _activeCategory = "All"'
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap @(_activeCategory == "All" ? "bg-[#00796b] text-white shadow-xs" : "hover:bg-slate-200 dark:hover:bg-slate-800")">
+                        class="px-3.5 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "All" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
                     All
                 </button>
                 <button type="button" 
-                        @onclick='() => _activeCategory = "Channels"'
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap @(_activeCategory == "Channels" ? "bg-[#00796b] text-white shadow-xs" : "hover:bg-slate-200 dark:hover:bg-slate-800")">
-                    Channels (@_conversations.Count(c => c.Type == ConversationType.Channel))
+                        @onclick='() => _activeCategory = "Groups"'
+                        class="px-3 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "Groups" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                    Groups
                 </button>
                 <button type="button" 
-                        @onclick='() => _activeCategory = "Direct"'
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap @(_activeCategory == "Direct" ? "bg-[#00796b] text-white shadow-xs" : "hover:bg-slate-200 dark:hover:bg-slate-800")">
-                    Direct (@_conversations.Count(c => c.Type == ConversationType.Direct))
+                        @onclick='() => _activeCategory = "Announcements"'
+                        class="px-3 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "Announcements" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                    Announcements
                 </button>
                 <button type="button" 
                         @onclick='() => _activeCategory = "Unread"'
-                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap @(_activeCategory == "Unread" ? "bg-[#00796b] text-white shadow-xs" : "hover:bg-slate-200 dark:hover:bg-slate-800")">
-                    Unread (@_conversations.Count(c => c.UnreadCount > 0))
+                        class="px-3 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "Unread" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                    Unread
                 </button>
             </div>
         </div>
 
         <!-- Conversations Scrollable Feed -->
-        <div class="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
-            @if (FilteredConversations.Any())
+        <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+            @if (_isLoadingConversations)
+            {
+                <div class="p-6 text-center space-y-2">
+                    <div class="w-6 h-6 border-2 border-[#00796b] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p class="text-xs text-slate-400 font-medium">Loading conversations...</p>
+                </div>
+            }
+            else if (FilteredConversations.Any())
             {
                 @foreach (var conv in FilteredConversations)
                 {
                     var isSelected = conv.Id == _selectedConversation?.Id;
-                    <div @onclick="() => SelectConversation(conv)"
-                         class="p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-all border @(isSelected ? "bg-white dark:bg-[#18262c] border-l-4 border-l-[#009488] border-slate-300 dark:border-slate-700 shadow-sm text-slate-900 dark:text-white" : "bg-white/70 dark:bg-transparent border-transparent hover:bg-white dark:hover:bg-slate-800/60 hover:border-slate-200 text-slate-800 dark:text-slate-300")">
+                    <div @onclick="() => SelectConversationAsync(conv)"
+                         class="px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors @(isSelected ? "bg-teal-50/70 dark:bg-teal-950/30 border-l-4 border-l-[#00796b]" : "hover:bg-slate-50 dark:hover:bg-slate-800/40")">
                         
                         <!-- Avatar -->
-                        <div class="relative shrink-0 mt-0.5">
-                            @if (conv.Type == ConversationType.Channel)
+                        <div class="relative shrink-0">
+                            @if (conv.IsAnnouncement)
                             {
-                                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00796b] to-[#004D40] text-white font-black text-sm flex items-center justify-center shadow-xs">
-                                    #
+                                <div class="w-11 h-11 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                                    </svg>
                                 </div>
+                            }
+                            else if (conv.Type == ConversationType.Direct)
+                            {
+                                @if (!string.IsNullOrEmpty(conv.GroupPhotoUrl))
+                                {
+                                    <img src="@conv.GroupPhotoUrl" alt="@conv.Name" class="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                                }
+                                else
+                                {
+                                    <div class="w-11 h-11 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-bold text-sm flex items-center justify-center border border-teal-200 dark:border-teal-800">
+                                        @conv.Initials
+                                    </div>
+                                }
                             }
                             else
                             {
-                                <div class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-950 border border-teal-300 dark:border-teal-800 text-[#004D40] dark:text-teal-300 font-extrabold text-xs flex items-center justify-center">
-                                    @conv.Initials
+                                <div class="w-11 h-11 rounded-full bg-teal-50 dark:bg-teal-950/50 text-[#00796b] dark:text-teal-300 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 16v-1a4 4 0 00-3-3.87 4.004 4.004 0 013 4.87zM4 15a4 4 0 003-3.87A4.004 4.004 0 004 16v-1z" />
+                                    </svg>
                                 </div>
-                                @if (conv.IsOnline)
-                                {
-                                    <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
-                                }
                             }
                         </div>
 
                         <!-- Info -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-1 mb-0.5">
-                                <h4 class="text-xs font-black truncate text-slate-900 dark:text-white">
+                            <div class="flex items-center justify-between gap-1">
+                                <h3 class="text-xs font-bold text-slate-900 dark:text-white truncate">
                                     @conv.Name
-                                </h4>
-                                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold shrink-0">@conv.LastMessageTime</span>
+                                </h3>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium shrink-0">@conv.LastMessageTime</span>
                             </div>
 
-                            <p class="text-[11.5px] text-slate-600 dark:text-slate-400 truncate leading-snug @(conv.UnreadCount > 0 ? "font-bold text-slate-900 dark:text-white" : "font-medium")">
-                                @conv.LastMessage
-                            </p>
+                            <div class="flex items-center justify-between gap-2 mt-0.5">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
+                                    @(string.IsNullOrWhiteSpace(conv.LastMessage) ? "No messages yet" : conv.LastMessage)
+                                </p>
 
-                            <!-- Tags -->
-                            <div class="flex items-center gap-1.5 mt-1.5">
-                                @if (conv.Type == ConversationType.Channel)
+                                @if (conv.UnreadCount > 0)
                                 {
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-extrabold bg-teal-100/90 dark:bg-teal-950/60 text-[#004D40] dark:text-teal-300 border border-teal-300/80 dark:border-teal-800/60">
-                                        @conv.BatchName
-                                    </span>
-                                }
-                                @if (conv.WhoCanPost != ChannelPostingPermission.AllMembers)
-                                {
-                                    <span class="text-[9.5px] font-extrabold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                                        🔒 Announcement
+                                    <span class="w-4.5 h-4.5 rounded-full bg-[#00796b] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                                        @conv.UnreadCount
                                     </span>
                                 }
                             </div>
                         </div>
 
-                        <!-- Unread Pill -->
-                        @if (conv.UnreadCount > 0)
-                        {
-                            <div class="w-5 h-5 rounded-full bg-[#00796b] text-white text-[10px] font-black flex items-center justify-center shrink-0 shadow-xs">
-                                @conv.UnreadCount
-                            </div>
-                        }
                     </div>
                 }
             }
             else
             {
-                <div class="p-8 text-center text-slate-500 space-y-1">
-                    <p class="text-xs font-semibold">No discussions found</p>
+                <div class="p-8 text-center text-slate-400 space-y-2">
+                    <p class="text-xs font-medium">No conversations found</p>
+                    <button type="button" @onclick="OpenCreateModal" class="px-3 py-1.5 rounded-lg bg-teal-50 text-[#00796b] font-bold text-xs hover:bg-teal-100 transition-colors">
+                        + Start Conversation
+                    </button>
                 </div>
             }
         </div>
@@ -174,276 +155,406 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MIDDLE PANEL: High-Contrast Light & Dark Chat Stream & Composer -->
+    <!-- 2. MIDDLE PANEL: Active Chat Window -->
     <!-- ========================================================================= -->
-    <div class="flex-1 min-w-0 h-full flex flex-col bg-slate-100/80 dark:bg-[#0c1417]">
+    <div class="flex-1 min-w-0 h-full flex flex-col bg-[#F9FBFA] dark:bg-[#0c1417]">
         
         @if (_selectedConversation != null)
         {
-            <!-- Active Conversation Header -->
+            <!-- Chat Header -->
             <div class="px-5 py-3.5 bg-white dark:bg-[#111c21] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 shadow-2xs">
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="relative shrink-0">
-                        @if (_selectedConversation.Type == ConversationType.Channel)
-                        {
-                            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00796b] to-[#004D40] text-white font-black text-sm flex items-center justify-center shadow-xs">
-                                #
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-950 border border-teal-300 dark:border-teal-800 text-[#004D40] dark:text-teal-300 font-black text-xs flex items-center justify-center">
-                                @_selectedConversation.Initials
-                            </div>
-                        }
+                    <div class="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-950/50 text-[#00796b] dark:text-teal-300 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 16v-1a4 4 0 00-3-3.87 4.004 4.004 0 013 4.87zM4 15a4 4 0 003-3.87A4.004 4.004 0 004 16v-1z" />
+                        </svg>
                     </div>
 
                     <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-black text-slate-900 dark:text-white truncate">
-                                @_selectedConversation.Name
-                            </h3>
-                            @if (_selectedConversation.Type == ConversationType.Channel)
-                            {
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-100 dark:bg-teal-950/60 text-[#004D40] dark:text-teal-300 border border-teal-300 dark:border-teal-800">
-                                    @_selectedConversation.BatchName
-                                </span>
-                            }
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate">
-                            @_selectedConversation.Subtitle
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                            @_selectedConversation.Name
+                        </h2>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                            @_selectedConversation.MemberCount members | @_selectedConversation.Type
                         </p>
                     </div>
                 </div>
 
-                <!-- Header Actions -->
-                <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" 
-                            @onclick="TogglePin" 
-                            class="p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-600 hover:text-amber-600 transition-colors cursor-pointer shadow-2xs"
-                            title="Pin">
-                        <span class="text-xs">📌</span>
-                    </button>
-
-                    <button type="button" 
-                            @onclick="() => _showRightPanel = !_showRightPanel" 
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-800 dark:text-slate-100 text-xs font-bold hover:border-[#009488] shadow-2xs transition-colors cursor-pointer">
-                        <svg class="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <!-- Right Header Actions (Search, Call, Video, Three Dots) -->
+                <div class="flex items-center gap-1.5 shrink-0 text-slate-600 dark:text-slate-300">
+                    <button type="button" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Search">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
-                        <span>Channel Details</span>
+                    </button>
+                    <button type="button" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Voice Call">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Video Call">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                    <button type="button" 
+                            @onclick="() => _showRightPanel = !_showRightPanel"
+                            class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" 
+                            title="Group Info">
+                        <svg class="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Messages Stream (High Contrast Canvas) -->
-            <div class="flex-1 min-h-0 overflow-y-auto p-5 space-y-4 select-text">
+            <!-- Messages Stream -->
+            <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 select-text">
                 
-                <!-- Date Separator -->
-                <div class="flex items-center justify-center my-2">
-                    <span class="px-3 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10.5px] font-extrabold text-slate-600 dark:text-slate-400 uppercase tracking-wider shadow-2xs">
-                        Today • Academic Discussion
-                    </span>
-                </div>
-
-                @foreach (var msg in CurrentMessages)
+                @if (_isLoadingMessages)
                 {
-                    @if (msg.IsAnnouncement)
+                    <div class="p-8 text-center space-y-2">
+                        <div class="w-6 h-6 border-2 border-[#00796b] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        <p class="text-xs text-slate-400 font-medium">Loading messages...</p>
+                    </div>
+                }
+                else if (_currentMessages.Any())
+                {
+                    <!-- Date Separator Pill -->
+                    <div class="flex items-center justify-center my-1">
+                        <span class="px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            @(_currentMessages.First().SentAt.ToString("MMM dd, yyyy"))
+                        </span>
+                    </div>
+
+                    @foreach (var msg in _currentMessages)
                     {
-                        <!-- High Contrast Pinned Announcement Banner -->
-                        <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-300 dark:border-amber-700 shadow-sm space-y-2">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-black text-amber-950 dark:text-amber-200 uppercase tracking-wider flex items-center gap-1.5">
-                                        <span>📢</span>
-                                        <span>Announcement: @msg.AnnouncementTitle</span>
-                                    </span>
-                                </div>
-                                <span class="text-[11px] text-amber-800 dark:text-amber-400 font-bold">@msg.SentAt.ToString("hh:mm tt")</span>
+                        @if (msg.MessageType == MessageType.System)
+                        {
+                            <!-- System Event Notice (Centered Card) -->
+                            <div class="max-w-md mx-auto p-2.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 text-center text-xs text-slate-600 dark:text-slate-300">
+                                <p class="font-medium">@msg.Content</p>
+                                <span class="text-[10px] text-slate-400">@msg.SentAt.ToString("hh:mm tt")</span>
                             </div>
-                            <div class="text-xs text-amber-950 dark:text-amber-100 leading-relaxed font-semibold break-words">
-                                @((MarkupString)RenderFormattedContent(msg.Content))
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- Crisp High-Contrast Message Item -->
-                        <div class="flex items-start gap-3 group @(msg.IsOutgoing ? "flex-row-reverse" : "")">
-                            
-                            <!-- Sender Avatar -->
-                            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 shadow-2xs @(msg.IsOutgoing ? "bg-gradient-to-br from-[#00796b] to-[#004D40] text-white" : "bg-white dark:bg-[#18262c] border border-slate-300 dark:border-slate-700 text-[#004D40] dark:text-teal-300")">
-                                @msg.SenderInitials
-                            </div>
-
-                            <!-- Message Content Box -->
-                            <div class="max-w-xl space-y-1 @(msg.IsOutgoing ? "items-end text-right" : "")">
-                                <div class="flex items-center gap-2 text-[11px] @(msg.IsOutgoing ? "justify-end" : "")">
-                                    <span class="font-extrabold text-slate-900 dark:text-white">@msg.SenderName</span>
-                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black @(msg.SenderRole == "Teacher" ? "bg-teal-100 dark:bg-teal-950 text-[#004D40] dark:text-teal-300 border border-teal-300 dark:border-teal-800" : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300")">
-                                        @msg.SenderRole
-                                    </span>
-                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">@msg.SentAt.ToString("hh:mm tt")</span>
-                                </div>
-
-                                <!-- Text Bubble (Crisp White with Dark Slate Font in Light Mode) -->
-                                <div class="p-3.5 rounded-2xl text-xs leading-relaxed text-left break-words overflow-hidden shadow-xs @(msg.IsOutgoing ? "bg-[#00796b] dark:bg-[#009488] text-white font-medium" : "bg-white dark:bg-[#18262c] border border-slate-300/90 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium")">
-                                    <div>
-                                        @((MarkupString)RenderFormattedContent(msg.Content))
-                                    </div>
-
-                                    @if (!string.IsNullOrEmpty(msg.AttachmentName))
+                        }
+                        else if (msg.IsOutgoing)
+                        {
+                            <!-- OUTGOING MESSAGE (Right Aligned, Mint Green Bubble) -->
+                            <div class="flex items-end justify-end gap-2 group">
+                                <div class="max-w-lg rounded-2xl rounded-tr-xs bg-[#E8F8F0] dark:bg-[#16382f] p-3 text-xs text-slate-800 dark:text-slate-100 shadow-2xs space-y-2 border border-[#d2f0e0] dark:border-teal-900/40">
+                                    
+                                    @if (!string.IsNullOrWhiteSpace(msg.Content))
                                     {
-                                        <div class="mt-2.5 p-2 rounded-xl flex items-center justify-between gap-2 @(msg.IsOutgoing ? "bg-white/20 text-white" : "bg-slate-50 dark:bg-[#111c21] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white")">
-                                            <div class="flex items-center gap-2 min-w-0">
-                                                <span class="text-xs font-black text-rose-600 dark:text-rose-400">PDF</span>
-                                                <span class="text-xs font-bold truncate">@msg.AttachmentName</span>
+                                        <div class="leading-relaxed whitespace-pre-wrap font-normal">
+                                            @msg.Content
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                    {
+                                        <div class="flex items-center justify-between gap-3 p-2.5 bg-white dark:bg-[#102922] rounded-xl border border-teal-100 dark:border-teal-800">
+                                            <div class="flex items-center gap-2.5 min-w-0">
+                                                <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                                                    FILE
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
+                                                    <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "Attachment")</span>
+                                                </div>
                                             </div>
-                                            <button type="button" @onclick="() => DownloadAttachment(msg.AttachmentName)" class="text-xs font-bold underline hover:opacity-80">
-                                                Download
-                                            </button>
+                                            <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    }
+
+                                    <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium">
+                                        <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                        <svg class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- INCOMING MESSAGE (Left Aligned, White Bubble) -->
+                            <div class="flex items-start gap-2.5 group">
+                                <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 mt-0.5 border border-slate-200">
+                                    @if (!string.IsNullOrWhiteSpace(msg.SenderAvatarColor) && msg.SenderAvatarColor.StartsWith("http"))
+                                    {
+                                        <img src="@msg.SenderAvatarColor" alt="@msg.SenderName" class="w-full h-full object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-bold text-xs flex items-center justify-center">
+                                            @msg.SenderInitials
                                         </div>
                                     }
                                 </div>
 
-                                <!-- Reactions -->
-                                <div class="flex items-center gap-1 pt-0.5 @(msg.IsOutgoing ? "justify-end" : "")">
-                                    @foreach (var reaction in msg.Reactions)
-                                    {
-                                        <button type="button" 
-                                                @onclick="() => ToggleReaction(msg, reaction.Key)"
-                                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-black bg-white dark:bg-[#18262c] border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-teal-500 shadow-2xs transition-colors cursor-pointer">
-                                            <span>@reaction.Key</span>
-                                            <span class="text-[#00796b] dark:text-teal-300">@reaction.Value</span>
-                                        </button>
-                                    }
-                                    <button type="button" @onclick='() => ToggleReaction(msg, "👍")' class="opacity-0 group-hover:opacity-100 p-0.5 text-xs text-slate-500 hover:text-teal-700 transition-opacity">
-                                        👍
-                                    </button>
-                                </div>
+                                <div class="max-w-lg space-y-1">
+                                    <span class="text-[11px] font-bold text-[#00796b] dark:text-teal-400">
+                                        @msg.SenderName
+                                    </span>
 
+                                    <div class="rounded-2xl rounded-tl-xs bg-white dark:bg-[#18262c] p-3 text-xs text-slate-800 dark:text-slate-100 shadow-2xs space-y-2 border border-slate-200 dark:border-slate-800">
+                                        @if (!string.IsNullOrWhiteSpace(msg.Content))
+                                        {
+                                            <div class="leading-relaxed whitespace-pre-wrap font-normal">
+                                                @msg.Content
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                        {
+                                            <div class="flex items-center justify-between gap-3 p-2.5 bg-slate-50 dark:bg-[#121e23] rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <div class="flex items-center gap-2.5 min-w-0">
+                                                    <div class="w-8 h-8 rounded-lg bg-rose-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                                                        PDF
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
+                                                        <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "PDF")</span>
+                                                    </div>
+                                                </div>
+                                                <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        }
+
+                                        <div class="flex items-center justify-end text-[10px] text-slate-400 font-medium">
+                                            <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        }
                     }
+                }
+                else
+                {
+                    <div class="p-8 text-center text-slate-400 space-y-1">
+                        <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No messages yet</p>
+                        <p class="text-xs">Send a message below to start the conversation.</p>
+                    </div>
                 }
 
             </div>
 
-            <!-- ========================================================================= -->
-            <!-- HIGH CONTRAST COMPOSER -->
-            <!-- ========================================================================= -->
-            <div class="p-4 bg-white dark:bg-[#111c21] border-t border-slate-200 dark:border-slate-800 shrink-0">
+            <!-- Chat Composer Bar -->
+            <div class="px-5 py-3.5 bg-white dark:bg-[#111c21] border-t border-slate-200 dark:border-slate-800 flex items-center gap-2.5 shrink-0">
                 
-                @if (CanCurrentUserPostInSelectedConversation())
-                {
-                    <div class="border-2 border-slate-300 dark:border-slate-700 focus-within:border-[#00796b] focus-within:ring-2 focus-within:ring-teal-500/20 rounded-2xl bg-white dark:bg-[#18262c] shadow-xs transition-all overflow-hidden flex flex-col">
-                        
-                        <!-- Textarea Area -->
-                        <div class="px-3.5 pt-3 pb-1">
-                            <textarea @bind="_messageInput"
-                                      @bind:event="oninput"
-                                      @onkeydown="HandleKeyPress"
-                                      @onkeydown:preventDefault="_preventEnterDefault"
-                                      placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
-                                      rows="2"
-                                      class="w-full text-xs text-slate-900 dark:text-white font-medium placeholder-slate-500 focus:outline-none resize-none bg-transparent max-h-32"></textarea>
-                        </div>
+                <button type="button" 
+                        class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer"
+                        title="Attach File">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                    </svg>
+                </button>
 
-                        <!-- Action Bar -->
-                        <div class="px-3 py-2 bg-slate-100 dark:bg-[#142025] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-                            
-                            <!-- Formatting & Emojis -->
-                            <div class="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
-                                <button type="button" @onclick='() => WrapSelection("**", "**")' class="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 font-black" title="Bold">B</button>
-                                <button type="button" @onclick='() => WrapSelection("*", "*")' class="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 italic font-serif font-bold" title="Italic">I</button>
-                                <button type="button" @onclick='() => WrapSelection("`", "`")' class="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 font-mono font-bold" title="Code">&lt;/&gt;</button>
-                                <button type="button" @onclick="SimulateAttachment" class="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 font-bold" title="Attach">📎</button>
-                                <button type="button" @onclick='() => InsertAtCursor("👍 ")' class="p-1 hover:scale-125 transition-transform" title="Like">👍</button>
-                                <button type="button" @onclick='() => InsertAtCursor("🔥 ")' class="p-1 hover:scale-125 transition-transform" title="Fire">🔥</button>
-                            </div>
+                <div class="flex-1 relative flex items-center">
+                    <input type="text" 
+                           @bind="_messageInput"
+                           @bind:event="oninput"
+                           @onkeydown="HandleKeyPress"
+                           disabled="@_isSending"
+                           placeholder="Type a message..."
+                           class="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#00796b] transition-all" />
 
-                            <!-- Send Button -->
-                            <button type="button" 
-                                    @onclick="SendMessage"
-                                    disabled="@(string.IsNullOrWhiteSpace(_messageInput) && string.IsNullOrEmpty(_pendingAttachmentName))"
-                                    class="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-black text-white bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] disabled:opacity-40 rounded-xl shadow-xs transition-all cursor-pointer shrink-0">
-                                <span>Send</span>
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                                </svg>
-                            </button>
+                    <button type="button" 
+                            @onclick='() => _messageInput += " 😊"'
+                            class="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" 
+                            title="Add Emoji">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </button>
+                </div>
 
-                        </div>
-
-                    </div>
-                }
-                else
-                {
-                    <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-800 text-center text-xs font-black text-amber-950 dark:text-amber-300">
-                        🔒 Only Teachers and Admins can post in this announcement channel.
-                    </div>
-                }
+                <button type="button" 
+                        @onclick="SendMessageAsync"
+                        disabled="@(string.IsNullOrWhiteSpace(_messageInput) || _isSending)"
+                        class="w-10 h-10 rounded-full bg-[#00796b] hover:bg-[#004D40] disabled:opacity-40 text-white flex items-center justify-center shadow-xs transition-all shrink-0 cursor-pointer">
+                    @if (_isSending)
+                    {
+                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    }
+                    else
+                    {
+                        <svg class="w-4.5 h-4.5 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    }
+                </button>
 
             </div>
         }
         else
         {
-            <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2">
-                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Select a discussion to start messaging</p>
+            <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Select a conversation to start messaging</p>
+                <p class="text-xs text-slate-500 mt-1">Choose an existing conversation or create a new group.</p>
             </div>
         }
 
     </div>
 
     <!-- ========================================================================= -->
-    <!-- RIGHT PANEL: Clean Channel Details -->
+    <!-- 3. RIGHT PANEL: Group Info / Details Sidebar (Matching Exact Design) -->
     <!-- ========================================================================= -->
     @if (_selectedConversation != null && _showRightPanel)
     {
-        <div class="w-72 shrink-0 h-full border-l border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-[#111c21] p-4 flex flex-col overflow-y-auto space-y-4">
+        <div class="w-80 lg:w-84 shrink-0 h-full border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111c21] flex flex-col overflow-y-auto">
             
-            <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                <h3 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Channel Info</h3>
-                <button type="button" @onclick="() => _showRightPanel = false" class="text-slate-500 hover:text-slate-800 dark:hover:text-white font-bold">
-                    ✕
-                </button>
+            <div class="p-3.5 border-b border-slate-100 dark:border-slate-800/80">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" 
+                           placeholder="Search messages, people or groups..." 
+                           class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b] text-slate-900 dark:text-white placeholder-slate-400" />
+                </div>
             </div>
 
-            <!-- Overview Box -->
-            <div class="p-3.5 rounded-2xl bg-white dark:bg-[#18262c] text-center space-y-1.5 border border-slate-200 dark:border-slate-800 shadow-xs">
-                <h4 class="text-xs font-black text-slate-900 dark:text-white truncate">@_selectedConversation.Name</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold truncate">@_selectedConversation.BranchName • @_selectedConversation.BatchName</p>
-            </div>
+            <!-- Group Info Card -->
+            <div class="p-4 space-y-4">
+                
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Group Info</h3>
+                    <button type="button" @onclick="() => _showRightPanel = false" class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm font-bold cursor-pointer">
+                        ✕
+                    </button>
+                </div>
 
-            <!-- Admins -->
-            @if (_selectedConversation.Type == ConversationType.Channel)
-            {
-                <div class="space-y-1.5">
-                    <span class="text-[11px] font-black text-slate-900 dark:text-slate-200 uppercase tracking-wider">Channel Admins</span>
-                    <div class="space-y-1">
-                        @foreach (var admin in _selectedConversation.Admins)
+                <!-- Group Avatar & Title with Edit Button -->
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-950/50 text-[#00796b] dark:text-teal-300 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 16v-1a4 4 0 00-3-3.87 4.004 4.004 0 013 4.87zM4 15a4 4 0 003-3.87A4.004 4.004 0 004 16v-1z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-white">@_selectedConversation.Name</h4>
+                            <p class="text-[11px] text-slate-400">@_selectedConversation.Type • @_selectedConversation.MemberCount members</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description Card -->
+                <div class="p-3 bg-slate-50 dark:bg-[#18262c] rounded-xl border border-slate-100 dark:border-slate-800 flex items-start justify-between gap-2">
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                        @(!string.IsNullOrWhiteSpace(_selectedConversation.Subtitle) ? _selectedConversation.Subtitle : "No description provided.")
+                    </p>
+                </div>
+
+                <!-- Media, Starred, Notification Settings Rows -->
+                <div class="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
+                    <button type="button" class="w-full py-2.5 flex items-center justify-between hover:text-[#00796b] text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <span class="flex items-center gap-2">
+                            <span>🖼️</span> Media, Links and Files
+                        </span>
+                        <span class="text-slate-400 flex items-center gap-1 font-medium">
+                            0 <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                    <button type="button" class="w-full py-2.5 flex items-center justify-between hover:text-[#00796b] text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <span class="flex items-center gap-2">
+                            <span>⭐</span> Starred Messages
+                        </span>
+                        <span class="text-slate-400 flex items-center gap-1 font-medium">
+                            0 <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                    <button type="button" class="w-full py-2.5 flex items-center justify-between hover:text-[#00796b] text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <span class="flex items-center gap-2">
+                            <span>🔔</span> Notification Settings
+                        </span>
+                        <span class="text-slate-400 flex items-center gap-1 font-medium">
+                            All messages <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Toggle Switches (Mute Chat & Allow Replies) -->
+                <div class="space-y-3 pt-1 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                            <span>🔕</span> Mute Chat
+                        </span>
+                        <button type="button" 
+                                @onclick="() => _isMuted = !_isMuted"
+                                class="w-10 h-5 rounded-full p-0.5 transition-colors cursor-pointer @(_isMuted ? "bg-[#00796b]" : "bg-slate-300 dark:bg-slate-700")">
+                            <div class="w-4 h-4 rounded-full bg-white transition-transform @(_isMuted ? "translate-x-5" : "translate-x-0")"></div>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                            <span>ℹ️</span> Allow Replies
+                        </span>
+                        <button type="button" 
+                                @onclick="() => _allowReplies = !_allowReplies"
+                                class="w-10 h-5 rounded-full p-0.5 transition-colors cursor-pointer @(_allowReplies ? "bg-[#00796b]" : "bg-slate-300 dark:bg-slate-700")">
+                            <div class="w-4 h-4 rounded-full bg-white transition-transform @(_allowReplies ? "translate-x-5" : "translate-x-0")"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Participants Section -->
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">Participants (@(_selectedConversation.Members?.Count ?? 0))</h4>
+                    </div>
+
+                    <!-- Member Items List -->
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        @if (_selectedConversation.Members != null && _selectedConversation.Members.Any())
                         {
-                            <div class="p-2.5 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between shadow-2xs">
-                                <span class="truncate">@admin</span>
-                                <span class="text-[9.5px] font-extrabold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">Admin</span>
-                            </div>
+                            @foreach (var member in _selectedConversation.Members)
+                            {
+                                <div class="flex items-center justify-between py-1">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-200 font-bold text-xs flex items-center justify-center border border-slate-200">
+                                            @member.Initials
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">@member.Name</p>
+                                            <span class="text-[10px] text-slate-400">@member.Role</span>
+                                        </div>
+                                    </div>
+
+                                    @if (member.IsAdmin)
+                                    {
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold text-[#00796b] bg-teal-50 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800">
+                                            Admin
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-xs text-slate-400 py-2">No participant details available</p>
                         }
                     </div>
                 </div>
-            }
 
-            <!-- Members List -->
-            <div class="space-y-2 flex-1 flex flex-col min-h-0">
-                <span class="text-[11px] font-black text-slate-900 dark:text-slate-200 uppercase tracking-wider">Members (@_selectedConversation.Members.Count)</span>
-                <div class="space-y-1 overflow-y-auto flex-1">
-                    @foreach (var member in _selectedConversation.Members)
-                    {
-                        <div class="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-[#18262c] text-xs transition-colors">
-                            <span class="font-bold text-slate-900 dark:text-slate-100 truncate">@member.Name</span>
-                            <span class="text-[9.5px] font-extrabold text-slate-500 dark:text-slate-400">@member.Role</span>
-                        </div>
-                    }
-                </div>
             </div>
 
         </div>
@@ -451,227 +562,102 @@
 
 </div>
 
-<!-- Create Modal -->
-@if (_showNewChatModal)
+<!-- ========================================================================= -->
+<!-- CREATE CONVERSATION MODAL -->
+<!-- ========================================================================= -->
+@if (_showCreateModal)
 {
-    <Modal IsOpen="true" 
-           Title="Create Channel" 
-           Subtitle="Start a new batch discussion" 
-           MaxWidth="max-w-md" 
-           OnClose="() => _showNewChatModal = false">
-        <ChildContent>
-            <div class="space-y-3">
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Channel Name *</label>
-                    <input type="text" @bind="_newChatName" placeholder="e.g. Class 10 Science Doubt Session" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none font-bold text-slate-800 dark:text-white" />
-                </div>
-                <div class="space-y-1">
-                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Batch</label>
-                    <select @bind="_newChatBatch" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white">
-                        <option>Class 10 — Maths</option>
-                        <option>Class 10 — Science</option>
-                        <option>Class 12 — Physics</option>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white dark:bg-[#111c21] rounded-2xl shadow-xl w-full max-w-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Create New Channel / Group</h3>
+                <button type="button" @onclick="() => _showCreateModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Type</label>
+                    <select @bind="_newConversationType" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]">
+                        <option value="@ConversationType.Group">Group Discussion</option>
+                        <option value="@ConversationType.Channel">Announcement Channel</option>
                     </select>
                 </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                    <input type="text" @bind="_newConversationName" placeholder="e.g. Class 10 - Mathematics" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]" />
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                    <textarea @bind="_newConversationDescription" rows="2" placeholder="Brief description of the channel..." class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]"></textarea>
+                </div>
             </div>
-        </ChildContent>
-        <FooterTemplate>
-            <button type="button" @onclick="() => _showNewChatModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-                Cancel
-            </button>
-            <button type="button" @onclick="CreateNewConversation" class="px-5 py-2 text-xs font-bold text-white bg-[#009488] rounded-xl">
-                Create
-            </button>
-        </FooterTemplate>
-    </Modal>
+
+            <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#18262c] border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 text-xs">
+                <button type="button" @onclick="() => _showCreateModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 font-semibold">
+                    Cancel
+                </button>
+                <button type="button" @onclick="CreateConversationAsync" disabled="@_isCreating" class="px-4 py-2 rounded-xl bg-[#00796b] text-white hover:bg-[#004D40] font-bold disabled:opacity-50">
+                    @(_isCreating ? "Creating..." : "Create Channel")
+                </button>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    private string _currentUserRole = "Admin";
-    private string CurrentUserRole
-    {
-        get => _currentUserRole;
-        set
-        {
-            _currentUserRole = value;
-            _currentUserName = value switch
-            {
-                "Admin" => "Rishabh Sharma (Admin)",
-                "Teacher" => "Dr. Vikram Sharma (Faculty)",
-                "Student" => "Aarav Mehta (Student)",
-                _ => "Rishabh Sharma"
-            };
-        }
-    }
-    private string _currentUserName = "Rishabh Sharma (Admin)";
-
-    private string _searchQuery = string.Empty;
     private string _activeCategory = "All";
-    private bool _showRightPanel = true;
     private string _messageInput = string.Empty;
-    private string? _pendingAttachmentName = null;
+    private bool _showRightPanel = true;
+    private bool _isMuted = false;
+    private bool _allowReplies = true;
 
-    private bool _showNewChatModal = false;
-    private string _newChatName = string.Empty;
-    private string _newChatBatch = "Class 10 — Maths";
+    private bool _isLoadingConversations = false;
+    private bool _isLoadingMessages = false;
+    private bool _isSending = false;
+    private bool _isCreating = false;
+    private bool _showCreateModal = false;
+
+    private string _newConversationName = string.Empty;
+    private string _newConversationDescription = string.Empty;
+    private ConversationType _newConversationType = ConversationType.Group;
 
     private ChatConversationDto? _selectedConversation;
-
-    private readonly List<ChatConversationDto> _conversations = new()
-    {
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Class 10 — Physics & Chemistry",
-            Subtitle = "42 students • 3 teachers",
-            Type = ConversationType.Channel,
-            BranchName = "Main Campus",
-            BatchName = "Class 10 — Science",
-            Initials = "10S",
-            MemberCount = 42,
-            WhoCanPost = ChannelPostingPermission.AllMembers,
-            Admins = new() { "Rishabh Sharma", "Dr. Vikram Sharma" },
-            LastMessage = "Sir, please share the solutions for Homework 4.2.",
-            LastMessageTime = "10:42 AM",
-            UnreadCount = 2,
-            Members = new()
-            {
-                new() { Name = "Dr. Vikram Sharma", Role = "Teacher", Initials = "VS", IsOnline = true },
-                new() { Name = "Aarav Mehta", Role = "Student", Initials = "AM", IsOnline = true },
-                new() { Name = "Isha Agarwal", Role = "Student", Initials = "IA", IsOnline = true },
-                new() { Name = "Prof. Meenakshi Sundaram", Role = "Teacher", Initials = "MS", IsOnline = true }
-            }
-        },
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "IIT-JEE 2026 Official Announcements",
-            Subtitle = "Broadcast • 35 students",
-            Type = ConversationType.Channel,
-            BranchName = "Main Campus",
-            BatchName = "IIT-JEE Morning",
-            Initials = "JEE",
-            MemberCount = 35,
-            WhoCanPost = ChannelPostingPermission.AdminsAndTeachersOnly,
-            Admins = new() { "Rishabh Sharma", "Prof. Rakesh Verma" },
-            LastMessage = "📢 Test Series #03 scheduled for Sunday.",
-            LastMessageTime = "09:15 AM",
-            UnreadCount = 1,
-            Members = new()
-            {
-                new() { Name = "Prof. Rakesh Verma", Role = "Teacher", Initials = "RV", IsOnline = true },
-                new() { Name = "Vivaan Chopra", Role = "Student", Initials = "VC", IsOnline = true }
-            }
-        },
-        new()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Aarav Mehta",
-            Subtitle = "Roll: 10A-01",
-            Type = ConversationType.Direct,
-            BranchName = "Main Campus",
-            BatchName = "Class 10 — Maths",
-            Initials = "AM",
-            IsOnline = true,
-            LastMessage = "Thank you sir! I understood the derivation.",
-            LastMessageTime = "Yesterday",
-            Members = new()
-            {
-                new() { Name = "Aarav Mehta", Role = "Student", Initials = "AM", IsOnline = true }
-            }
-        }
-    };
-
-    private readonly Dictionary<Guid, List<ChatMessageDto>> _messagesDb = new();
-
-    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
-
-    protected override void OnInitialized()
-    {
-        var c1 = _conversations[0].Id;
-        _messagesDb[c1] = new List<ChatMessageDto>
-        {
-            new()
-            {
-                ConversationId = c1,
-                SenderName = "Dr. Vikram Sharma",
-                SenderRole = "Teacher",
-                SenderInitials = "VS",
-                Content = "Good morning students! Today we will begin **Wave Optics**. Please bring your geometry box and textbook.",
-                SentAt = DateTime.Today.AddHours(8).AddMinutes(30),
-                IsOutgoing = false,
-                Reactions = new() { { "👍", 12 }, { "🙌", 5 } }
-            },
-            new()
-            {
-                ConversationId = c1,
-                SenderName = "Dr. Vikram Sharma",
-                SenderRole = "Teacher",
-                SenderInitials = "VS",
-                IsAnnouncement = true,
-                AnnouncementTitle = "Physics Assignment #4 Due Date",
-                Content = "Please note that **Physics Assignment #4** on Ray Optics is due this Friday by **5:00 PM**.",
-                SentAt = DateTime.Today.AddHours(9).AddMinutes(15),
-                IsOutgoing = false
-            },
-            new()
-            {
-                ConversationId = c1,
-                SenderName = "Isha Agarwal",
-                SenderRole = "Student",
-                SenderInitials = "IA",
-                Content = "Sir, question 7 in the assignment has a typo in the refractive index. Is it `1.33` or `1.5`?",
-                SentAt = DateTime.Today.AddHours(10).AddMinutes(12),
-                IsOutgoing = false
-            },
-            new()
-            {
-                ConversationId = c1,
-                SenderName = "Rishabh Sharma (Admin)",
-                SenderRole = "Teacher",
-                SenderInitials = "RS",
-                Content = "@Isha Please take `1.5` for crown glass. I have updated the formula sheet.",
-                SentAt = DateTime.Today.AddHours(10).AddMinutes(25),
-                IsOutgoing = true,
-                Reactions = new() { { "❤️", 4 }, { "👍", 8 } }
-            }
-        };
-
-        _selectedConversation = _conversations[0];
-    }
+    private List<ChatConversationDto> _conversations = new();
+    private List<ChatMessageDto> _currentMessages = new();
 
     protected override async Task OnInitializedAsync()
     {
-        if (AuthStateTask != null)
-        {
-            var authState = await AuthStateTask;
-            if (authState.User.Identity?.IsAuthenticated == true)
-            {
-                var user = authState.User;
-                var roleStr = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
-                           ?? user.FindFirst("role")?.Value 
-                           ?? user.FindFirst("Role")?.Value;
-                var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
-                        ?? user.Identity?.Name;
+        await LoadConversationsAsync();
+    }
 
-                if (user.IsInRole("Student") || string.Equals(roleStr, "Student", StringComparison.OrdinalIgnoreCase) || roleStr == "5")
+    private async Task LoadConversationsAsync()
+    {
+        _isLoadingConversations = true;
+        try
+        {
+            var response = await MessageService.GetConversationsAsync(new GetConversationsPagedRequest { PageSize = 100 });
+            if (response.Success && response.Data != null)
+            {
+                _conversations = response.Data.Items ?? new();
+                if (_conversations.Any())
                 {
-                    _currentUserRole = "Student";
-                    _currentUserName = !string.IsNullOrWhiteSpace(name) && !name.Equals("student", StringComparison.OrdinalIgnoreCase)
-                        ? $"{name} (Student)"
-                        : "Aryan Kapoor (Student)";
-                }
-                else if (user.IsInRole("Teacher") || string.Equals(roleStr, "Teacher", StringComparison.OrdinalIgnoreCase) || roleStr == "3")
-                {
-                    _currentUserRole = "Teacher";
-                    _currentUserName = !string.IsNullOrWhiteSpace(name) ? $"{name} (Faculty)" : "Dr. Vikram Sharma (Faculty)";
-                }
-                else
-                {
-                    _currentUserRole = "Admin";
-                    _currentUserName = !string.IsNullOrWhiteSpace(name) ? $"{name} (Admin)" : "Rishabh Sharma (Admin)";
+                    await SelectConversationAsync(_conversations.First());
                 }
             }
+            else
+            {
+                NotificationService.Error(response.Message ?? "Failed to load conversations.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Error loading conversations: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingConversations = false;
         }
     }
 
@@ -681,138 +667,139 @@
         {
             var query = _conversations.AsEnumerable();
 
-            if (!string.IsNullOrWhiteSpace(_searchQuery))
-            {
-                query = query.Where(c => 
-                    c.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                    c.BatchName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (_activeCategory == "Channels") query = query.Where(c => c.Type == ConversationType.Channel);
-            else if (_activeCategory == "Direct") query = query.Where(c => c.Type == ConversationType.Direct);
+            if (_activeCategory == "Groups") query = query.Where(c => c.Type == ConversationType.Group);
+            else if (_activeCategory == "Announcements") query = query.Where(c => c.IsAnnouncement || c.Type == ConversationType.Channel);
             else if (_activeCategory == "Unread") query = query.Where(c => c.UnreadCount > 0);
 
             return query.ToList();
         }
     }
 
-    private List<ChatMessageDto> CurrentMessages => _selectedConversation != null && _messagesDb.ContainsKey(_selectedConversation.Id)
-        ? _messagesDb[_selectedConversation.Id]
-        : new();
-
-    private bool CanCurrentUserPostInSelectedConversation()
-    {
-        if (_selectedConversation == null) return false;
-        if (CurrentUserRole == "Admin" || CurrentUserRole == "Teacher") return true;
-        if (_selectedConversation.Type == ConversationType.Direct) return true;
-        return _selectedConversation.WhoCanPost == ChannelPostingPermission.AllMembers;
-    }
-
-    private string RenderFormattedContent(string content)
-    {
-        if (string.IsNullOrEmpty(content)) return string.Empty;
-        var html = System.Net.WebUtility.HtmlEncode(content);
-        html = System.Text.RegularExpressions.Regex.Replace(html, @"\*\*(.+?)\*\*", "<strong class='font-extrabold text-slate-900 dark:text-white'>$1</strong>");
-        html = System.Text.RegularExpressions.Regex.Replace(html, @"\*(.+?)\*", "<em>$1</em>");
-        html = System.Text.RegularExpressions.Regex.Replace(html, @"`(.+?)`", "<code class='px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[11px] text-teal-800 dark:text-teal-300 font-bold border border-slate-300 dark:border-slate-700'>$1</code>");
-        return html.Replace("\n", "<br/>");
-    }
-
-    private void SelectConversation(ChatConversationDto conv)
+    private async Task SelectConversationAsync(ChatConversationDto conv)
     {
         _selectedConversation = conv;
-        conv.UnreadCount = 0;
+        _isLoadingMessages = true;
+        _currentMessages.Clear();
+
+        try
+        {
+            var response = await MessageService.GetMessagesAsync(conv.Id, new PagedRequest { PageSize = 100 });
+            if (response.Success && response.Data != null)
+            {
+                _currentMessages = response.Data.Items ?? new();
+                conv.UnreadCount = 0;
+
+                if (_currentMessages.Any())
+                {
+                    await MessageService.MarkAsReadAsync(conv.Id, _currentMessages.Last().Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Error loading messages: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingMessages = false;
+        }
     }
-
-    private void TogglePin()
-    {
-        if (_selectedConversation != null) _selectedConversation.IsPinned = !_selectedConversation.IsPinned;
-    }
-
-    private void ToggleReaction(ChatMessageDto msg, string emoji)
-    {
-        if (!msg.Reactions.ContainsKey(emoji)) msg.Reactions[emoji] = 1;
-        else msg.Reactions[emoji]++;
-    }
-
-    private void WrapSelection(string prefix, string suffix) => _messageInput += $" {prefix}text{suffix} ";
-    private void InsertAtCursor(string text) => _messageInput += text;
-    private void SimulateAttachment() => _pendingAttachmentName = "Physics_Problem_Set.pdf";
-    private void DownloadAttachment(string fileName) { }
-
-    private bool _preventEnterDefault = false;
 
     private void HandleKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !e.ShiftKey)
         {
-            _preventEnterDefault = true;
-            SendMessage();
-        }
-        else
-        {
-            _preventEnterDefault = false;
+            SendMessageAsync();
         }
     }
 
-    private void SendMessage()
+    private async void SendMessageAsync()
     {
-        if (string.IsNullOrWhiteSpace(_messageInput) && string.IsNullOrEmpty(_pendingAttachmentName)) return;
-        if (_selectedConversation == null || !CanCurrentUserPostInSelectedConversation()) return;
+        if (string.IsNullOrWhiteSpace(_messageInput) || _selectedConversation == null || _isSending) return;
 
-        var newMsg = new ChatMessageDto
+        var text = _messageInput.Trim();
+        _isSending = true;
+
+        try
         {
-            ConversationId = _selectedConversation.Id,
-            SenderName = _currentUserName,
-            SenderRole = CurrentUserRole,
-            SenderInitials = CurrentUserRole == "Student" ? "AM" : CurrentUserRole == "Teacher" ? "VS" : "RS",
-            Content = _messageInput.Trim(),
-            SentAt = DateTime.Now,
-            IsOutgoing = true,
-            AttachmentName = _pendingAttachmentName
-        };
-
-        if (!_messagesDb.ContainsKey(_selectedConversation.Id)) _messagesDb[_selectedConversation.Id] = new();
-        _messagesDb[_selectedConversation.Id].Add(newMsg);
-
-        _selectedConversation.LastMessage = newMsg.Content;
-        _selectedConversation.LastMessageTime = DateTime.Now.ToString("hh:mm tt");
-        _messageInput = string.Empty;
-        _pendingAttachmentName = null;
-        StateHasChanged();
-    }
-
-    private void OpenCreateChannelModal()
-    {
-        _newChatName = string.Empty;
-        _showNewChatModal = true;
-    }
-
-    private void CreateNewConversation()
-    {
-        if (string.IsNullOrWhiteSpace(_newChatName)) return;
-
-        var conv = new ChatConversationDto
-        {
-            Name = _newChatName,
-            Subtitle = _newChatBatch,
-            Type = ConversationType.Channel,
-            BranchName = "Main Campus",
-            BatchName = _newChatBatch,
-            WhoCanPost = ChannelPostingPermission.AllMembers,
-            Admins = new() { _currentUserName },
-            Initials = _newChatName.Length >= 2 ? _newChatName[..2].ToUpper() : "CH",
-            LastMessage = "Channel created.",
-            LastMessageTime = "Just now",
-            Members = new()
+            var request = new SendMessageRequest
             {
-                new() { Name = _currentUserName, Role = CurrentUserRole, Initials = "ME", IsOnline = true }
-            }
-        };
+                ConversationId = _selectedConversation.Id,
+                MessageType = MessageType.Text,
+                MessageText = text
+            };
 
-        _conversations.Insert(0, conv);
-        _messagesDb[conv.Id] = new List<ChatMessageDto>();
-        _selectedConversation = conv;
-        _showNewChatModal = false;
+            var response = await MessageService.SendMessageAsync(request);
+            if (response.Success && response.Data != null)
+            {
+                _currentMessages.Add(response.Data);
+                _selectedConversation.LastMessage = response.Data.Content;
+                _selectedConversation.LastMessageTime = response.Data.SentAt.ToString("hh:mm tt");
+                _messageInput = string.Empty;
+            }
+            else
+            {
+                NotificationService.Error(response.Message ?? "Failed to send message.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Error sending message: {ex.Message}");
+        }
+        finally
+        {
+            _isSending = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        _newConversationName = string.Empty;
+        _newConversationDescription = string.Empty;
+        _newConversationType = ConversationType.Group;
+        _showCreateModal = true;
+    }
+
+    private async Task CreateConversationAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newConversationName))
+        {
+            NotificationService.Warning("Please enter a name for the group or channel.");
+            return;
+        }
+
+        _isCreating = true;
+        try
+        {
+            var request = new CreateConversationRequest
+            {
+                Type = _newConversationType,
+                Name = _newConversationName.Trim(),
+                Description = _newConversationDescription.Trim(),
+                IsAnnouncement = _newConversationType == ConversationType.Channel
+            };
+
+            var response = await MessageService.CreateConversationAsync(request);
+            if (response.Success && response.Data != null)
+            {
+                _conversations.Insert(0, response.Data);
+                _showCreateModal = false;
+                await SelectConversationAsync(response.Data);
+                NotificationService.Success("Conversation created successfully!");
+            }
+            else
+            {
+                NotificationService.Error(response.Message ?? "Failed to create conversation.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Error creating conversation: {ex.Message}");
+        }
+        finally
+        {
+            _isCreating = false;
+        }
     }
 }

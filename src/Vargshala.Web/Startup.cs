@@ -93,6 +93,7 @@ public static class StartupExtensions
         builder.Services.AddScoped<ICouponService, CouponService>();
         builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
         builder.Services.AddScoped<IFeeService, FeeService>();
+        builder.Services.AddScoped<IMessageService, MessageService>();
         builder.Services.AddScoped<IFileUploadService, FileUploadService>();
         builder.Services.AddCropper();
 

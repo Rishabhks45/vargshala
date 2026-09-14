@@ -98,6 +98,8 @@ public static class MessageMappingExtensions
             Name = name,
             Subtitle = subtitle,
             Type = c.Type,
+            IsAnnouncement = c.IsAnnouncement,
+            GroupPhotoUrl = c.GroupPhotoUrl,
             Initials = initials,
             AvatarColor = GetAvatarColor(c.Id),
             MemberCount = c.Participants.Count(p => !p.IsDeleted && p.IsActive),
