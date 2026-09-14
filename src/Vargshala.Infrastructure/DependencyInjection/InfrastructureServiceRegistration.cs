@@ -23,6 +23,7 @@ using Vargshala.Application.Features.OrgAdmin.Branches.Infrastructure;
 using Vargshala.Application.Features.Authentication.Infrastructure;
 using Vargshala.Application.Features.Coupons.Infrastructure;
 using Vargshala.Application.Features.Emails.Infrastructure;
+using Vargshala.Application.Features.Messages.Infrastructure;
 using Vargshala.Infrastructure.Persistence.Repositories;
 
 namespace Vargshala.Infrastructure.DependencyInjection;
@@ -78,6 +79,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
+        services.AddScoped<IMessageRepository, MessageRepository>();
 
         // QuestPDF PDF Receipt Generator
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;

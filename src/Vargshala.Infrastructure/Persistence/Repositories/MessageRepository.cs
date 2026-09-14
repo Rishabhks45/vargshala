@@ -1,0 +1,369 @@
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
+using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Common;
+using Vargshala.Application.Features.Messages.Infrastructure;
+using Vargshala.Contracts.Common;
+using Vargshala.Contracts.Messages.Enums;
+using Vargshala.Domain.Entities;
+
+namespace Vargshala.Infrastructure.Persistence.Repositories;
+
+public class MessageRepository : IMessageRepository
+{
+    #region Fields & Constructor
+    private readonly IVargshalaDbContext _db;
+
+    public MessageRepository(IVargshalaDbContext db)
+    {
+        _db = db;
+    }
+    #endregion
+
+    #region Search & Sort Mappings
+    private static Func<string, Expression<Func<Conversation, bool>>> ConversationSearchPredicate => term =>
+    {
+        var lowerTerm = $"%{term.ToLower()}%";
+        return c => (c.Name != null && EF.Functions.Like(c.Name.ToLower(), lowerTerm))
+                 || (c.Description != null && EF.Functions.Like(c.Description.ToLower(), lowerTerm))
+                 || (c.DirectUser1 != null && (EF.Functions.Like(c.DirectUser1.FirstName.ToLower(), lowerTerm) || EF.Functions.Like(c.DirectUser1.LastName.ToLower(), lowerTerm)))
+                 || (c.DirectUser2 != null && (EF.Functions.Like(c.DirectUser2.FirstName.ToLower(), lowerTerm) || EF.Functions.Like(c.DirectUser2.LastName.ToLower(), lowerTerm)));
+    };
+
+    private static readonly Dictionary<string, Expression<Func<Conversation, object>>> ConversationSortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["lastmessageat"] = c => c.LastMessageAt ?? c.CreatedAt,
+        ["createdat"] = c => c.CreatedAt,
+        ["name"] = c => c.Name ?? string.Empty,
+        ["type"] = c => c.Type
+    };
+
+    private static readonly Dictionary<string, Expression<Func<Message, object>>> MessageSortMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["sentat"] = m => m.SentAt,
+        ["createdat"] = m => m.SentAt,
+        ["ispinned"] = m => m.IsPinned
+    };
+    #endregion
+
+    #region Conversation Queries
+    public async Task<Conversation?> GetConversationByIdAsync(Guid conversationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Conversations
+            .AsNoTracking()
+            .Include(c => c.DirectUser1)
+            .Include(c => c.DirectUser2)
+            .Include(c => c.LastMessageSender)
+            .FirstOrDefaultAsync(c => c.Id == conversationId && !c.IsDeleted, cancellationToken);
+    }
+
+    public async Task<Conversation?> GetConversationWithParticipantsAsync(Guid conversationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Conversations
+            .Include(c => c.Participants.Where(p => !p.IsDeleted))
+                .ThenInclude(p => p.User)
+            .Include(c => c.Admins.Where(a => !a.IsDeleted))
+            .Include(c => c.ReplyPermissions.Where(p => !p.IsDeleted))
+            .FirstOrDefaultAsync(c => c.Id == conversationId && !c.IsDeleted, cancellationToken);
+    }
+
+    public async Task<Conversation?> FindDirectConversationAsync(Guid organizationId, Guid user1Id, Guid user2Id, CancellationToken cancellationToken = default)
+    {
+        var u1 = user1Id.CompareTo(user2Id) < 0 ? user1Id : user2Id;
+        var u2 = user1Id.CompareTo(user2Id) < 0 ? user2Id : user1Id;
+
+        return await _db.Conversations
+            .AsNoTracking()
+            .Include(c => c.DirectUser1)
+            .Include(c => c.DirectUser2)
+            .Include(c => c.LastMessageSender)
+            .FirstOrDefaultAsync(c => 
+                c.OrganizationId == organizationId 
+                && c.Type == ConversationType.Direct 
+                && c.DirectUser1Id == u1 
+                && c.DirectUser2Id == u2 
+                && !c.IsDeleted, cancellationToken);
+    }
+
+    public async Task<bool> ConversationExistsAsync(Guid conversationId, Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Conversations
+            .AnyAsync(c => c.Id == conversationId && c.OrganizationId == organizationId && !c.IsDeleted, cancellationToken);
+    }
+
+    public async Task<(List<Conversation> Items, int TotalRecords)> GetUserConversationsPagedAsync(
+        Guid organizationId, 
+        Guid userId, 
+        PagedRequest request, 
+        ConversationType? type = null, 
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Conversations
+            .AsNoTracking()
+            .Include(c => c.DirectUser1)
+            .Include(c => c.DirectUser2)
+            .Include(c => c.LastMessageSender)
+            .Include(c => c.Participants.Where(p => !p.IsDeleted && p.IsActive))
+                .ThenInclude(p => p.User)
+            .Where(c => c.OrganizationId == organizationId && !c.IsDeleted && c.IsActive)
+            .Where(c => c.Participants.Any(p => p.UserId == userId && !p.IsDeleted && p.IsActive));
+
+        if (type.HasValue)
+        {
+            query = query.Where(c => c.Type == type.Value);
+        }
+
+        return await query.ToPagedResultAsync(
+            request,
+            searchPredicate: ConversationSearchPredicate,
+            sortMappings: ConversationSortMappings,
+            defaultSortExpression: c => c.LastMessageAt ?? c.CreatedAt,
+            defaultAscending: false,
+            cancellationToken: cancellationToken);
+    }
+    #endregion
+
+    #region Conversation Commands
+    public async Task AddConversationAsync(Conversation conversation, CancellationToken cancellationToken = default)
+    {
+        await _db.Conversations.AddAsync(conversation, cancellationToken);
+    }
+
+    public void UpdateConversation(Conversation conversation)
+    {
+        conversation.UpdatedAt = DateTime.UtcNow;
+        _db.Conversations.Update(conversation);
+    }
+
+    public void DeleteConversation(Conversation conversation, Guid deletedBy)
+    {
+        conversation.IsDeleted = true;
+        conversation.DeletedBy = deletedBy;
+        conversation.DeletedAt = DateTime.UtcNow;
+    }
+    #endregion
+
+    #region Participant Operations
+    public async Task<ConversationParticipant?> GetParticipantAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationParticipants
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted, cancellationToken);
+    }
+
+    public async Task<List<ConversationParticipant>> GetParticipantsAsync(Guid conversationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationParticipants
+            .AsNoTracking()
+            .Include(p => p.User)
+            .Where(p => p.ConversationId == conversationId && !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.JoinedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> IsParticipantAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationParticipants
+            .AnyAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted && p.IsActive, cancellationToken);
+    }
+
+    public async Task<bool> IsAdminAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationParticipants
+            .AnyAsync(p => p.ConversationId == conversationId && p.UserId == userId && p.IsAdmin && !p.IsDeleted && p.IsActive, cancellationToken)
+            || await _db.ConversationAdmins
+            .AnyAsync(a => a.ConversationId == conversationId && a.UserId == userId && !a.IsDeleted && a.IsActive, cancellationToken);
+    }
+
+    public async Task AddParticipantAsync(ConversationParticipant participant, CancellationToken cancellationToken = default)
+    {
+        await _db.ConversationParticipants.AddAsync(participant, cancellationToken);
+    }
+
+    public async Task AddParticipantsRangeAsync(IEnumerable<ConversationParticipant> participants, CancellationToken cancellationToken = default)
+    {
+        await _db.ConversationParticipants.AddRangeAsync(participants, cancellationToken);
+    }
+
+    public void UpdateParticipant(ConversationParticipant participant)
+    {
+        participant.UpdatedAt = DateTime.UtcNow;
+        _db.ConversationParticipants.Update(participant);
+    }
+    #endregion
+
+    #region Message Operations
+    public async Task<Message?> GetMessageByIdAsync(Guid messageId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Messages
+            .AsNoTracking()
+            .Include(m => m.Sender)
+            .Include(m => m.Attachments.Where(a => !a.IsDeleted))
+            .Include(m => m.ReplyToMessage)
+                .ThenInclude(r => r!.Sender)
+            .FirstOrDefaultAsync(m => m.Id == messageId && !m.IsDeleted, cancellationToken);
+    }
+
+    public async Task<Message?> GetMessageWithAttachmentsAsync(Guid messageId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Messages
+            .Include(m => m.Attachments.Where(a => !a.IsDeleted))
+            .FirstOrDefaultAsync(m => m.Id == messageId && !m.IsDeleted, cancellationToken);
+    }
+
+    public async Task<(List<Message> Items, int TotalRecords)> GetMessagesPagedAsync(
+        Guid conversationId, 
+        PagedRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Messages
+            .AsNoTracking()
+            .Include(m => m.Sender)
+            .Include(m => m.Attachments.Where(a => !a.IsDeleted))
+            .Include(m => m.ReplyToMessage)
+                .ThenInclude(r => r!.Sender)
+            .Where(m => m.ConversationId == conversationId && !m.IsDeleted);
+
+        return await query.ToPagedResultAsync(
+            request,
+            sortMappings: MessageSortMappings,
+            defaultSortExpression: m => m.SentAt,
+            defaultAscending: false,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task AddMessageAsync(Message message, CancellationToken cancellationToken = default)
+    {
+        await _db.Messages.AddAsync(message, cancellationToken);
+    }
+
+    public void UpdateMessage(Message message)
+    {
+        message.EditedAt = DateTime.UtcNow;
+        _db.Messages.Update(message);
+    }
+
+    public void SoftDeleteMessage(Message message, Guid deletedBy)
+    {
+        message.IsDeleted = true;
+        message.DeletedBy = deletedBy;
+        message.DeletedAt = DateTime.UtcNow;
+        _db.Messages.Update(message);
+    }
+    #endregion
+
+    #region Read Tracking
+    public async Task MarkMessagesAsReadAsync(Guid conversationId, Guid userId, Guid latestMessageId, CancellationToken cancellationToken = default)
+    {
+        var participant = await _db.ConversationParticipants
+            .FirstOrDefaultAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted, cancellationToken);
+
+        if (participant != null)
+        {
+            participant.LastReadAt = DateTime.UtcNow;
+            participant.LastReadMessageId = latestMessageId;
+            participant.UpdatedAt = DateTime.UtcNow;
+        }
+
+        // Insert ReadReceipt if not already tracked
+        var alreadyRead = await _db.MessageReads
+            .AnyAsync(r => r.MessageId == latestMessageId && r.UserId == userId, cancellationToken);
+
+        if (!alreadyRead)
+        {
+            var msg = await _db.Messages
+                .AsNoTracking()
+                .Select(m => new { m.Id, m.OrganizationId })
+                .FirstOrDefaultAsync(m => m.Id == latestMessageId, cancellationToken);
+
+            if (msg != null)
+            {
+                await _db.MessageReads.AddAsync(new MessageRead
+                {
+                    OrganizationId = msg.OrganizationId,
+                    MessageId = msg.Id,
+                    UserId = userId,
+                    ReadAt = DateTime.UtcNow
+                }, cancellationToken);
+            }
+        }
+    }
+
+    public async Task<int> GetUnreadCountAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var participant = await _db.ConversationParticipants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted, cancellationToken);
+
+        if (participant == null) return 0;
+
+        var lastReadAt = participant.LastReadAt ?? participant.JoinedAt;
+
+        return await _db.Messages
+            .Where(m => m.ConversationId == conversationId && m.SenderId != userId && !m.IsDeleted && m.SentAt > lastReadAt)
+            .CountAsync(cancellationToken);
+    }
+    #endregion
+
+    #region Posting Permissions
+    public async Task<bool> CanUserPostAsync(Guid conversationId, Guid userId, UserRole userRole, CancellationToken cancellationToken = default)
+    {
+        // SuperAdmin and Institute OrgAdmin can always post in their institute
+        if (userRole == UserRole.SuperAdmin || userRole == UserRole.OrganizationAdmin)
+        {
+            return true;
+        }
+
+        var conversation = await _db.Conversations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == conversationId && !c.IsDeleted && c.IsActive, cancellationToken);
+
+        if (conversation == null) return false;
+
+        // In Direct chats: both participants can post
+        if (conversation.Type == ConversationType.Direct)
+        {
+            return await _db.ConversationParticipants
+                .AnyAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted && p.IsActive, cancellationToken);
+        }
+
+        // Creator of the conversation can always post
+        if (conversation.CreatedBy == userId) return true;
+
+        // Check if user is conversation admin
+        var isConvAdmin = await _db.ConversationParticipants
+            .AnyAsync(p => p.ConversationId == conversationId && p.UserId == userId && p.IsAdmin && !p.IsDeleted && p.IsActive, cancellationToken)
+            || await _db.ConversationAdmins
+            .AnyAsync(a => a.ConversationId == conversationId && a.UserId == userId && !a.IsDeleted && a.IsActive, cancellationToken);
+
+        if (isConvAdmin) return true;
+
+        // If it's an Announcement channel: check specific role permissions
+        if (conversation.IsAnnouncement)
+        {
+            var rolePermission = await _db.AnnouncementReplyPermissions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ConversationId == conversationId && p.Role == userRole && !p.IsDeleted, cancellationToken);
+
+            return rolePermission?.CanReply ?? false;
+        }
+
+        // Standard Group: check WhoCanReply policy
+        return conversation.WhoCanReply switch
+        {
+            WhoCanReply.Everyone => await _db.ConversationParticipants
+                .AnyAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted && p.IsActive, cancellationToken),
+            WhoCanReply.AdminsOnly => isConvAdmin,
+            WhoCanReply.TeachersAndAdmins => isConvAdmin || userRole == UserRole.Teacher || userRole == UserRole.BranchAdmin,
+            _ => false
+        };
+    }
+    #endregion
+
+    #region Persistence
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _db.SaveChangesAsync(cancellationToken);
+    }
+    #endregion
+}

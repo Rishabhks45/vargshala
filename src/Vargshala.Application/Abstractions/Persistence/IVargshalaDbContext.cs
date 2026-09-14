@@ -27,6 +27,13 @@ public interface IVargshalaDbContext
     DbSet<FeeInstallment> FeeInstallments { get; }
     DbSet<Payment> Payments { get; }
     DbSet<PaymentAllocation> PaymentAllocations { get; }
+    DbSet<Conversation> Conversations { get; }
+    DbSet<ConversationParticipant> ConversationParticipants { get; }
+    DbSet<ConversationAdmin> ConversationAdmins { get; }
+    DbSet<Message> Messages { get; }
+    DbSet<MessageAttachment> MessageAttachments { get; }
+    DbSet<MessageRead> MessageReads { get; }
+    DbSet<AnnouncementReplyPermission> AnnouncementReplyPermissions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -32,6 +32,13 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<FeeInstallment> FeeInstallments => Set<FeeInstallment>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ConversationParticipant> ConversationParticipants => Set<ConversationParticipant>();
+    public DbSet<ConversationAdmin> ConversationAdmins => Set<ConversationAdmin>();
+    public DbSet<Message> Messages => Set<Message>();
+    public DbSet<MessageAttachment> MessageAttachments => Set<MessageAttachment>();
+    public DbSet<MessageRead> MessageReads => Set<MessageRead>();
+    public DbSet<AnnouncementReplyPermission> AnnouncementReplyPermissions => Set<AnnouncementReplyPermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,6 +63,12 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
         modelBuilder.Entity<StudentFee>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Payment>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<PaymentAllocation>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Conversation>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<ConversationParticipant>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<ConversationAdmin>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Message>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<MessageAttachment>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<AnnouncementReplyPermission>().HasQueryFilter(e => !e.IsDeleted);
     }
 
 
