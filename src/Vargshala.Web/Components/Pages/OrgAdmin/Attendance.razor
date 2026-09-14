@@ -35,14 +35,6 @@
 
     <!-- Right: Top Filters Toolbar & Primary "+ Take Attendance" Action (Single Row) -->
     <div class="flex items-center gap-2 shrink-0">
-        <!-- Branch Filter -->
-        <div class="w-36">
-            <CustomSelect Value="@_selectedBranchId"
-                          ValueChanged="OnBranchChanged"
-                          Options="@_branchOptions"
-                          Placeholder="Main Branch" />
-        </div>
-
         <!-- Class Filter -->
         <div class="w-32">
             <CustomSelect Value="@_selectedClassId"
@@ -1659,18 +1651,6 @@ private async Task LoadBatchesAsync(Guid? classId = null)
         _isLoadingSheet = false;
         Toast.Error("Failed to load batches: " + ex.Message);
     }
-}
-
-private async Task OnBranchChanged(string branchIdStr)
-{
-    _selectedBranchId = branchIdStr;
-    _selectedClassId = string.Empty;
-    _selectedBatchId = string.Empty;
-
-    Guid? bId = Guid.TryParse(branchIdStr, out var id) ? id : null;
-    await BranchContext.SetBranchAsync(bId);
-    await LoadClassesAsync(bId);
-    await LoadBatchesAsync(null);
 }
 
 private async Task OnClassChanged(string classIdStr)

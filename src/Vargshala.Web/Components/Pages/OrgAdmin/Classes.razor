@@ -158,14 +158,6 @@
 
         <!-- Filter Dropdowns & View Mode Controls -->
         <div class="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap justify-end">
-            <!-- Branch Filter with CustomSelect -->
-            <div class="w-36">
-                <CustomSelect Value="@(_selectedBranchId?.ToString() ?? "")"
-                              ValueChanged="HandleBranchChanged"
-                              Options="_branchFilterOptions"
-                              Placeholder="All Branches" />
-            </div>
-
             <!-- Status Filter with CustomSelect -->
             <div class="w-32">
                 <CustomSelect Value="@(_selectedStatus.HasValue ? (_selectedStatus.Value ? EntityStatusNames.Active : EntityStatusNames.Inactive) : "")"
@@ -730,7 +722,6 @@
     private List<BranchDto> _branches = new();
 
     // CustomSelect Filter Options
-    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new() { new("", "All Branches") };
     private List<CustomSelect.CustomSelectOption> _drawerBranchOptions = new();
     private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions("All Statuses", "Active Only", "Inactive Only");
     private bool _isLoading = true;
@@ -740,7 +731,6 @@
     private readonly TableQueryState _query = new();
     private TableSortState _sortState => _query.SortState;
     private string _searchQuery = string.Empty;
-    private Guid? _selectedBranchId;
     private bool? _selectedStatus;
     private int _totalRecords = 0;
 
@@ -764,7 +754,6 @@
         {
             await BranchContext.InitializeAsync();
         }
-        _selectedBranchId = BranchContext.CurrentBranchId;
         await LoadBranchesAsync();
         await LoadClassesAsync();
     }
@@ -777,8 +766,6 @@
             if (res.Success && res.Data != null)
             {
                 _branches = res.Data;
-                _branchFilterOptions = new() { new("", "All Branches") };
-                _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
                 _drawerBranchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
             }
         }
@@ -804,7 +791,7 @@
                 SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : (_sortState.Direction == SortDirection.Ascending ? "asc" : null)
             };
 
-            var res = await ClassService.GetClassesPagedAsync(pagedRequest, _selectedBranchId, _selectedStatus);
+            var res = await ClassService.GetClassesPagedAsync(pagedRequest, BranchContext.CurrentBranchId, _selectedStatus);
             if (res.Success && res.Data != null)
             {
                 _classes = res.Data.Items;
@@ -851,13 +838,6 @@
         await LoadClassesAsync(1);
     }
 
-    private async Task HandleBranchChanged(string val)
-    {
-        _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
-        await BranchContext.SetBranchAsync(_selectedBranchId);
-        await LoadClassesAsync(1);
-    }
-
     private async Task HandleStatusChanged(string val)
     {
         _selectedStatus = EntityStatusExtensions.FromString(val).ToNullableBool();
@@ -870,7 +850,7 @@
         _submitted = false;
         _formModel = new ClassFormModel
         {
-            BranchId = _branches.FirstOrDefault()?.Id ?? Guid.Empty,
+            BranchId = BranchContext.CurrentBranchId ?? _branches.FirstOrDefault()?.Id ?? Guid.Empty,
             IsActive = true
         };
         _showAddEditModal = true;
@@ -1043,15 +1023,11 @@
 
     private async Task HandleGlobalBranchChangedAsync()
     {
-        if (_selectedBranchId != BranchContext.CurrentBranchId)
+        await InvokeAsync(async () =>
         {
-            _selectedBranchId = BranchContext.CurrentBranchId;
-            await InvokeAsync(async () =>
-            {
-                await LoadClassesAsync(1);
-                StateHasChanged();
-            });
-        }
+            await LoadClassesAsync(1);
+            StateHasChanged();
+        });
     }
 
     public void Dispose()

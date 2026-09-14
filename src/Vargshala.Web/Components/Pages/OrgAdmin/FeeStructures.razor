@@ -160,14 +160,6 @@
 
         <!-- Filter Dropdowns & View Mode Controls -->
         <div class="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap justify-end">
-            <!-- Branch Filter -->
-            <div class="w-36">
-                <CustomSelect Value="@(_selectedBranchId?.ToString() ?? "")"
-                              ValueChanged="HandleBranchChanged"
-                              Options="_branchFilterOptions"
-                              Placeholder="All Branches" />
-            </div>
-
             <!-- Class Filter -->
             <div class="w-36">
                 <CustomSelect Value="@(_selectedClassId?.ToString() ?? "")"
@@ -852,14 +844,12 @@
 
     // Filtering State
     private string _searchQuery = string.Empty;
-    private Guid? _selectedBranchId;
     private Guid? _selectedClassId;
     private string _selectedSession = string.Empty;
     private EntityStatus _statusFilter = EntityStatus.All;
     private bool? _selectedStatus => _statusFilter.ToNullableBool();
 
     // Dropdown Select Options
-    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new();
     private List<CustomSelect.CustomSelectOption> _classFilterOptions = new();
     private List<CustomSelect.CustomSelectOption> _sessionFilterOptions = new();
     private List<CustomSelect.CustomSelectOption> _statusFilterOptions = new();
@@ -888,9 +878,25 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BranchContext.OnBranchChanged += HandleGlobalBranchChangedAsync;
+        if (!BranchContext.IsInitialized)
+        {
+            await BranchContext.InitializeAsync();
+        }
         InitializeFilterOptions();
         await LoadLookupsAsync();
         await LoadDataAsync(1);
+    }
+
+    private async Task HandleGlobalBranchChangedAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+            _selectedClassId = null;
+            UpdateClassFilterOptions();
+            await LoadDataAsync(1);
+            StateHasChanged();
+        });
     }
 
     private void InitializeFilterOptions()
@@ -909,9 +915,6 @@
             if (branchRes.Success && branchRes.Data?.Items != null)
             {
                 _branches = branchRes.Data.Items;
-                _branchFilterOptions = new List<CustomSelect.CustomSelectOption> { new("", "All Branches") };
-                _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
-
                 _drawerBranchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)).ToList();
             }
 
@@ -931,8 +934,8 @@
 
     private void UpdateClassFilterOptions()
     {
-        var filtered = _selectedBranchId.HasValue && _selectedBranchId.Value != Guid.Empty
-            ? _allClasses.Where(c => c.BranchId == _selectedBranchId.Value)
+        var filtered = BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId.Value != Guid.Empty
+            ? _allClasses.Where(c => c.BranchId == BranchContext.CurrentBranchId.Value)
             : _allClasses;
 
         _classFilterOptions = new List<CustomSelect.CustomSelectOption> { new("", "All Classes") };
@@ -958,7 +961,7 @@
         {
             var res = await FeeStructureService.GetFeeStructuresPagedAsync(
                 _query,
-                _selectedBranchId,
+                BranchContext.CurrentBranchId,
                 _selectedClassId,
                 _selectedSession,
                 _selectedStatus);
@@ -993,13 +996,6 @@
     private async Task HandlePageSizeChangedAsync(int newSize)
     {
         _query.PageSize = newSize;
-        await LoadDataAsync(1);
-    }
-
-    private async Task HandleBranchChanged(string val)
-    {
-        _selectedBranchId = string.IsNullOrEmpty(val) ? null : Guid.Parse(val);
-        UpdateClassFilterOptions();
         await LoadDataAsync(1);
     }
 
@@ -1050,7 +1046,7 @@
         _editingItem = null;
         _submitted = false;
 
-        var defaultBranch = _branches.FirstOrDefault()?.Id ?? Guid.Empty;
+        var defaultBranch = BranchContext.CurrentBranchId ?? _branches.FirstOrDefault()?.Id ?? Guid.Empty;
         var currentYear = DateTime.UtcNow.Year;
 
         _formModel = new FeeStructureFormModel
@@ -1275,6 +1271,7 @@
 
     public void Dispose()
     {
+        BranchContext.OnBranchChanged -= HandleGlobalBranchChangedAsync;
         _debounceTimer?.Dispose();
     }
 

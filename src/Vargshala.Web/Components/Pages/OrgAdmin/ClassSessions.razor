@@ -163,14 +163,6 @@
 
         <!-- Filter Dropdowns & View Mode Controls -->
         <div class="flex items-center gap-2 w-full md:w-auto flex-wrap md:flex-nowrap justify-end">
-            <!-- Branch Filter with CustomSelect -->
-            <div class="w-36">
-                <CustomSelect Value="@(_selectedBranchId?.ToString() ?? "")"
-                              ValueChanged="HandleBranchChanged"
-                              Options="_branchFilterOptions"
-                              Placeholder="All Branches" />
-            </div>
-
             <!-- Class Filter with CustomSelect -->
             <div class="w-32">
                 <CustomSelect Value="@(_selectedClassId?.ToString() ?? "")"
@@ -220,7 +212,7 @@
     </div>
 
     <!-- Active Filters Badge Row -->
-    @if (!string.IsNullOrWhiteSpace(_searchQuery) || _selectedBranchId.HasValue || _selectedClassId.HasValue || _selectedBatchId.HasValue || _selectedTeacherId.HasValue || !string.IsNullOrWhiteSpace(_selectedStatus))
+    @if (!string.IsNullOrWhiteSpace(_searchQuery) || _selectedClassId.HasValue || _selectedBatchId.HasValue || _selectedTeacherId.HasValue || !string.IsNullOrWhiteSpace(_selectedStatus))
     {
         <div class="shrink-0 flex flex-wrap items-center gap-2 px-1 text-xs">
             <span class="text-slate-400 font-semibold text-[11px]">Active Filters:</span>
@@ -230,14 +222,6 @@
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
                     Search: "@_searchQuery"
                     <button type="button" @onclick="ClearSearch" class="hover:text-teal-900 cursor-pointer">×</button>
-                </span>
-            }
-            @if (_selectedBranchId.HasValue)
-            {
-                var branchName = _branches.FirstOrDefault(b => b.Id == _selectedBranchId)?.Name ?? "Branch";
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200/60 font-semibold text-[11px]">
-                    Branch: @branchName
-                    <button type="button" @onclick="async () => { _selectedBranchId = null; await LoadSessionsAsync(); }" class="hover:text-teal-900 cursor-pointer">×</button>
                 </span>
             }
             @if (_selectedClassId.HasValue)
@@ -1238,7 +1222,6 @@
     private string _searchQuery = string.Empty;
 
     // CustomSelect Filter Options
-    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new() { new("", "All Branches") };
     private List<CustomSelect.CustomSelectOption> _classFilterOptions = new() { new("", "All Classes") };
     private List<CustomSelect.CustomSelectOption> _batchFilterOptions = new() { new("", "All Batches") };
     private List<CustomSelect.CustomSelectOption> _teacherFilterOptions = new() { new("", "All Teachers") };
@@ -1262,7 +1245,6 @@
         new(ClassSessionStatusNames.Cancelled, "Cancelled"),
         new(ClassSessionStatusNames.Postponed, "Postponed")
     };
-    private Guid? _selectedBranchId;
     private Guid? _selectedClassId;
     private Guid? _selectedBatchId;
     private Guid? _selectedTeacherId;
@@ -1305,7 +1287,6 @@
         {
             await BranchContext.InitializeAsync();
         }
-        _selectedBranchId = BranchContext.CurrentBranchId;
         await LoadLookupsAsync();
         await LoadSessionsAsync();
     }
@@ -1324,8 +1305,6 @@
             if (branchTask.Result.Success && branchTask.Result.Data != null)
             {
                 _branches = branchTask.Result.Data;
-                _branchFilterOptions = new() { new("", "All Branches") };
-                _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name)));
             }
             if (classTask.Result.Success && classTask.Result.Data != null)
             {
@@ -1375,7 +1354,7 @@
 
             var res = await ClassSessionService.GetClassSessionsPagedAsync(
                 req,
-                _selectedBranchId,
+                BranchContext.CurrentBranchId,
                 _selectedClassId,
                 _selectedBatchId,
                 _selectedTeacherId,
@@ -1422,13 +1401,6 @@
         await LoadSessionsAsync(1);
     }
 
-    private async Task HandleBranchChanged(string val)
-    {
-        _selectedBranchId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
-        await BranchContext.SetBranchAsync(_selectedBranchId);
-        await LoadSessionsAsync(1);
-    }
-
     private async Task HandleClassChanged(string val)
     {
         _selectedClassId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
@@ -1456,7 +1428,6 @@
     private async Task ClearAllFilters()
     {
         _searchQuery = string.Empty;
-        _selectedBranchId = null;
         _selectedClassId = null;
         _selectedBatchId = null;
         _selectedTeacherId = null;
@@ -1892,15 +1863,11 @@
 
     private async Task HandleGlobalBranchChangedAsync()
     {
-        if (_selectedBranchId != BranchContext.CurrentBranchId)
+        await InvokeAsync(async () =>
         {
-            _selectedBranchId = BranchContext.CurrentBranchId;
-            await InvokeAsync(async () =>
-            {
-                await LoadSessionsAsync(1);
-                StateHasChanged();
-            });
-        }
+            await LoadSessionsAsync(1);
+            StateHasChanged();
+        });
     }
 
     public void Dispose()

@@ -176,13 +176,6 @@
 
         <!-- Filter Selectors -->
         <div class="w-full md:w-auto flex flex-wrap items-center gap-2.5">
-            <!-- Branch Filter -->
-            <div class="w-40">
-                <CustomSelect Value="@_selectedBranchId"
-                              ValueChanged="HandleBranchFilterChanged"
-                              Options="@_branchFilterOptions"
-                              Placeholder="All Branches" />
-            </div>
 
             <!-- Class Filter -->
             <div class="w-40">
@@ -1027,26 +1020,17 @@
     private int _pageSize = 10;
 
     private string _searchTerm = string.Empty;
-    private string _selectedBranchId = string.Empty;
     private string _selectedClassId = string.Empty;
     private string _selectedStatus = string.Empty;
     private readonly TableSortState _sortState = new();
 
-    private bool HasActiveFilters
-    {
-        get
-        {
-            var mainBranchId = _branches.FirstOrDefault(b => b.IsMainBranch)?.Id.ToString() ?? string.Empty;
-            return !string.IsNullOrWhiteSpace(_searchTerm) ||
-                   (!string.IsNullOrWhiteSpace(_selectedBranchId) && _selectedBranchId != mainBranchId) ||
-                   !string.IsNullOrWhiteSpace(_selectedClassId) ||
-                   !string.IsNullOrWhiteSpace(_selectedStatus);
-        }
-    }
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(_searchTerm) ||
+        !string.IsNullOrWhiteSpace(_selectedClassId) ||
+        !string.IsNullOrWhiteSpace(_selectedStatus);
 
     // Filter Options
     private List<BranchDto> _branches = new();
-    private List<CustomSelect.CustomSelectOption> _branchFilterOptions = new();
     private List<CustomSelect.CustomSelectOption> _classFilterOptions = new();
     private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = FeeFilterHelper.GetStatusFilterOptions();
 
@@ -1102,63 +1086,33 @@
             await BranchContext.InitializeAsync();
         }
 
-        // Auto-select current branch if present
-        if (BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId != Guid.Empty)
-        {
-            _selectedBranchId = BranchContext.CurrentBranchId.Value.ToString();
-        }
-        else
-        {
-            _selectedBranchId = string.Empty;
-        }
-
         await LoadFilterDropdownsAsync();
         await LoadDataAsync(1);
     }
 
     private async Task HandleBranchContextChangedAsync()
     {
-        var newBranchId = BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId != Guid.Empty
-            ? BranchContext.CurrentBranchId.Value.ToString()
-            : string.Empty;
-
-        if (_selectedBranchId != newBranchId)
+        _selectedClassId = string.Empty;
+        await InvokeAsync(async () =>
         {
-            _selectedBranchId = newBranchId;
-            _selectedClassId = string.Empty;
-            await InvokeAsync(async () =>
-            {
-                await LoadFilterDropdownsAsync(keepBranchSelection: !string.IsNullOrWhiteSpace(newBranchId));
-                await LoadDataAsync(1);
-                StateHasChanged();
-            });
-        }
+            await LoadFilterDropdownsAsync();
+            await LoadDataAsync(1);
+            StateHasChanged();
+        });
     }
 
-    private async Task LoadFilterDropdownsAsync(bool keepBranchSelection = false)
+    private async Task LoadFilterDropdownsAsync()
     {
-        // 1. Branches
+        // 1. Branches (for drawer branch options)
         var branchRes = await BranchService.GetAllActiveBranchesAsync();
         if (branchRes.Success && branchRes.Data != null)
         {
             _branches = branchRes.Data;
-            _branchFilterOptions = new() { new("", "All Branches") };
-            _branchFilterOptions.AddRange(_branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name + (b.IsMainBranch ? " (Main Branch)" : ""))));
             _drawerBranchOptions = _branches.Select(b => new CustomSelect.CustomSelectOption(b.Id.ToString(), b.Name + (b.IsMainBranch ? " (Main Branch)" : ""))).ToList();
-
-            // Default selected branch to Main Branch if not explicitly chosen or kept
-            if (!keepBranchSelection && string.IsNullOrWhiteSpace(_selectedBranchId))
-            {
-                var mainBranch = _branches.FirstOrDefault(b => b.IsMainBranch) ?? _branches.FirstOrDefault();
-                if (mainBranch != null)
-                {
-                    _selectedBranchId = mainBranch.Id.ToString();
-                }
-            }
         }
 
-        // 2. Classes (Filtered by the selected branch)
-        Guid? bId = Guid.TryParse(_selectedBranchId, out var g) && g != Guid.Empty ? g : null;
+        // 2. Classes (Filtered by the currently selected global branch)
+        Guid? bId = BranchContext.CurrentBranchId;
         var classRes = await ClassService.GetAllActiveClassesAsync(bId);
         if (classRes.Success && classRes.Data != null)
         {
@@ -1186,7 +1140,7 @@
         _isLoading = true;
         _currentPage = page;
 
-        Guid? branchId = Guid.TryParse(_selectedBranchId, out var b) && b != Guid.Empty ? b : null;
+        Guid? branchId = BranchContext.CurrentBranchId;
         Guid? classId = Guid.TryParse(_selectedClassId, out var c) && c != Guid.Empty ? c : null;
 
         var req = new PagedRequest
@@ -1240,19 +1194,6 @@
         await LoadDataAsync(1);
     }
 
-    private async Task HandleBranchFilterChanged(string val)
-    {
-        _selectedBranchId = val;
-        _selectedClassId = string.Empty;
-        Guid? bId = Guid.TryParse(val, out var g) && g != Guid.Empty ? g : null;
-        if (BranchContext.CurrentBranchId != bId)
-        {
-            await BranchContext.SetBranchAsync(bId);
-        }
-        await LoadFilterDropdownsAsync(keepBranchSelection: true);
-        await LoadDataAsync(1);
-    }
-
     private async Task HandleClassFilterChanged(string val)
     {
         _selectedClassId = val;
@@ -1268,16 +1209,9 @@
     private async Task ClearFiltersAsync()
     {
         _searchTerm = string.Empty;
-        var mainBranch = _branches.FirstOrDefault(b => b.IsMainBranch) ?? _branches.FirstOrDefault();
-        _selectedBranchId = mainBranch != null ? mainBranch.Id.ToString() : string.Empty;
         _selectedClassId = string.Empty;
         _selectedStatus = string.Empty;
         _sortState.Reset();
-        if (mainBranch != null && BranchContext.CurrentBranchId != mainBranch.Id)
-        {
-            await BranchContext.SetBranchAsync(mainBranch.Id);
-        }
-        await LoadFilterDropdownsAsync(keepBranchSelection: true);
         await LoadDataAsync(1);
     }
 
@@ -1303,26 +1237,20 @@
     // =========================================================================
     private string DetermineDefaultDrawerBranchId()
     {
-        // 1. Check if page filter has a valid selected branch
-        if (!string.IsNullOrWhiteSpace(_selectedBranchId) && Guid.TryParse(_selectedBranchId, out var selB) && selB != Guid.Empty)
-        {
-            return _selectedBranchId;
-        }
-
-        // 2. Check if BranchContext has a current branch selected
+        // 1. Check if BranchContext has a current branch selected
         if (BranchContext.CurrentBranchId.HasValue && BranchContext.CurrentBranchId.Value != Guid.Empty)
         {
             return BranchContext.CurrentBranchId.Value.ToString();
         }
 
-        // 3. Find the main branch from loaded branches
+        // 2. Find the main branch from loaded branches
         var main = _branches.FirstOrDefault(b => b.IsMainBranch);
         if (main != null)
         {
             return main.Id.ToString();
         }
 
-        // 4. Fallback to first branch if any
+        // 3. Fallback to first branch if any
         return _branches.FirstOrDefault()?.Id.ToString() ?? string.Empty;
     }
 
