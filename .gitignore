@@ -84,3 +84,4 @@ appsettings.Production.json
 # Database dumps (contain password hashes)
 db_data_dump.sql
 db_full_dump.sql
+/scratch
