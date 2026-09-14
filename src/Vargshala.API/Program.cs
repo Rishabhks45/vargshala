@@ -2,7 +2,9 @@ using Scalar.AspNetCore;
 using Serilog;
 using Vargshala.API.Extensions;
 using Vargshala.API.Middleware;
+using Vargshala.API.Services;
 using Vargshala.Application.DependencyInjection;
+using Vargshala.Application.Features.Messages.Infrastructure;
 using Vargshala.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,10 +17,12 @@ builder.Host.UseSerilog((context, config) =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerServices();
+builder.Services.AddSignalR();
 
 // Application & Infrastructure DI
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddScoped<IChatNotificationService, ChatNotificationService>();
 
 // JWT Authentication
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -73,6 +77,7 @@ app.UseCors("AllowBlazor");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHub<Vargshala.API.Hubs.ChatHub>("/hubs/chat");
 app.MapControllers();
 
 app.Run();

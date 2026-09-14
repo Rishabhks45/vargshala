@@ -77,4 +77,60 @@ public class MessagesController : ControllerBase
         }
         return Ok(result);
     }
+
+    [HttpPost("conversations/{conversationId:guid}/admins/{userId:guid}")]
+    public async Task<IActionResult> PromoteAdmin([FromRoute] Guid conversationId, [FromRoute] Guid userId)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Commands.PromoteAdmin.PromoteAdminCommand(conversationId, userId));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpDelete("conversations/{conversationId:guid}/participants/{userId:guid}")]
+    public async Task<IActionResult> RemoveParticipant([FromRoute] Guid conversationId, [FromRoute] Guid userId)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Commands.RemoveParticipant.RemoveParticipantCommand(conversationId, userId));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpPost("conversations/{conversationId:guid}/participants/{userId:guid}")]
+    public async Task<IActionResult> AddParticipant([FromRoute] Guid conversationId, [FromRoute] Guid userId)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Commands.AddParticipant.AddParticipantCommand(conversationId, userId));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpPut("conversations/{conversationId:guid}/photo")]
+    public async Task<IActionResult> ChangeGroupPhoto([FromRoute] Guid conversationId, [FromBody] ChangeGroupPhotoRequest request)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Commands.ChangeGroupPhoto.ChangeGroupPhotoCommand(conversationId, request.GroupPhotoUrl));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpGet("recipients/eligible")]
+    public async Task<IActionResult> GetEligibleRecipients([FromQuery] GetEligibleRecipientsRequest request)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Queries.GetEligibleRecipients.GetEligibleRecipientsQuery(request));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
 }
+

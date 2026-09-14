@@ -156,4 +156,102 @@ public class MessageService : IMessageService
             return ApiResponse<bool>.FailureResponse($"Network or server error: {ex.Message}");
         }
     }
+
+    public async Task<ApiResponse<bool>> PromoteAdminAsync(
+        Guid conversationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/v1/messages/conversations/{conversationId}/admins/{userId}", null, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<bool>.FailureResponse("Failed to promote user to Group Admin.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error promoting admin in conversation {ConversationId}", conversationId);
+            return ApiResponse<bool>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<bool>> RemoveParticipantAsync(
+        Guid conversationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/v1/messages/conversations/{conversationId}/participants/{userId}", cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<bool>.FailureResponse("Failed to remove participant.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing participant from conversation {ConversationId}", conversationId);
+            return ApiResponse<bool>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<bool>> AddParticipantAsync(
+        Guid conversationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/v1/messages/conversations/{conversationId}/participants/{userId}", null, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<bool>.FailureResponse("Failed to add participant.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding participant to conversation {ConversationId}", conversationId);
+            return ApiResponse<bool>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<bool>> ChangeGroupPhotoAsync(
+        Guid conversationId,
+        string photoUrl,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = new ChangeGroupPhotoRequest { ConversationId = conversationId, GroupPhotoUrl = photoUrl };
+            var response = await _httpClient.PutAsJsonAsync("api/v1/messages/conversations/{conversationId}/photo", request, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<bool>.FailureResponse("Failed to update group photo.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing photo for conversation {ConversationId}", conversationId);
+            return ApiResponse<bool>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<PagedResponse<EligibleUserDto>>> GetEligibleRecipientsAsync(
+        GetEligibleRecipientsRequest? request = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var req = request ?? new GetEligibleRecipientsRequest();
+            var queryParams = $"?pageNumber={req.PageNumber}&pageSize={req.PageSize}";
+            if (!string.IsNullOrWhiteSpace(req.SearchTerm))
+            {
+                queryParams += $"&searchTerm={Uri.EscapeDataString(req.SearchTerm)}";
+            }
+
+            var response = await _httpClient.GetAsync($"api/v1/messages/recipients/eligible{queryParams}", cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<PagedResponse<EligibleUserDto>>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<PagedResponse<EligibleUserDto>>.FailureResponse("Empty response from server.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching eligible recipients");
+            return ApiResponse<PagedResponse<EligibleUserDto>>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
 }
+

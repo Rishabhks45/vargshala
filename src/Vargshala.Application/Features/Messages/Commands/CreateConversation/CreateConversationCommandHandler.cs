@@ -2,6 +2,7 @@ using MediatR;
 using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Features.Messages.Common;
 using Vargshala.Application.Features.Messages.Infrastructure;
+using Vargshala.Application.Features.Messages.Security;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Messages;
 using Vargshala.Contracts.Messages.Enums;
@@ -14,13 +15,16 @@ public class CreateConversationCommandHandler
 {
     private readonly IMessageRepository _messageRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IConversationAuthorizationService _authService;
 
     public CreateConversationCommandHandler(
         IMessageRepository messageRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IConversationAuthorizationService authService)
     {
         _messageRepository = messageRepository;
         _currentUser = currentUser;
+        _authService = authService;
     }
 
     public async Task<ApiResponse<ChatConversationDto>> Handle(
@@ -41,13 +45,25 @@ public class CreateConversationCommandHandler
         var currentUserId = _currentUser.UserId;
         var req = command.Request;
 
-        // If Direct Chat: check if direct conversation already exists between these two users
+        // If Direct Chat: check authorization and existing conversation
         if (req.Type == ConversationType.Direct)
         {
-            var targetUserId = req.TargetUserId!.Value;
+            if (!req.TargetUserId.HasValue || req.TargetUserId.Value == Guid.Empty)
+            {
+                return ApiResponse<ChatConversationDto>.FailureResponse("Target user is required for direct messaging.");
+            }
+
+            var targetUserId = req.TargetUserId.Value;
             if (targetUserId == currentUserId)
             {
                 return ApiResponse<ChatConversationDto>.FailureResponse("You cannot start a direct conversation with yourself.");
+            }
+
+            // Centralized Matrix Authorization Validation (Source of Truth)
+            var canMessage = await _authService.CanMessageUserAsync(currentUserId, targetUserId, cancellationToken);
+            if (!canMessage)
+            {
+                return ApiResponse<ChatConversationDto>.FailureResponse("You are not authorized to initiate a conversation with this user.");
             }
 
             var existing = await _messageRepository.FindDirectConversationAsync(orgId, currentUserId, targetUserId, cancellationToken);
@@ -112,7 +128,23 @@ public class CreateConversationCommandHandler
         }
 
         // Group / Announcement / Batch / Branch Conversation
+        // Centralized Matrix Authorization Validation
+        var memberIds = req.ParticipantUserIds ?? new List<Guid>();
+        var canCreateGroup = await _authService.CanCreateGroupAsync(
+            currentUserId, 
+            memberIds, 
+            req.Type, 
+            req.BatchId, 
+            req.BranchId, 
+            cancellationToken);
+
+        if (!canCreateGroup)
+        {
+            return ApiResponse<ChatConversationDto>.FailureResponse("You are not authorized to create this conversation with the specified participants.");
+        }
+
         var conversation = new Conversation
+
         {
             Id = Guid.NewGuid(),
             OrganizationId = orgId,

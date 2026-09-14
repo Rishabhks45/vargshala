@@ -198,6 +198,7 @@ public class MessageRepository : IMessageRepository
         return await _db.Messages
             .AsNoTracking()
             .Include(m => m.Sender)
+            .Include(m => m.Reads)
             .Include(m => m.Attachments.Where(a => !a.IsDeleted))
             .Include(m => m.ReplyToMessage)
                 .ThenInclude(r => r!.Sender)
@@ -219,6 +220,7 @@ public class MessageRepository : IMessageRepository
         var query = _db.Messages
             .AsNoTracking()
             .Include(m => m.Sender)
+            .Include(m => m.Reads)
             .Include(m => m.Attachments.Where(a => !a.IsDeleted))
             .Include(m => m.ReplyToMessage)
                 .ThenInclude(r => r!.Sender)
@@ -265,27 +267,38 @@ public class MessageRepository : IMessageRepository
             participant.UpdatedAt = DateTime.UtcNow;
         }
 
-        // Insert ReadReceipt if not already tracked
-        var alreadyRead = await _db.MessageReads
-            .AnyAsync(r => r.MessageId == latestMessageId && r.UserId == userId, cancellationToken);
+        // Get latest message sent time if available
+        var latestMsg = await _db.Messages
+            .AsNoTracking()
+            .Where(m => m.Id == latestMessageId)
+            .Select(m => new { m.Id, m.SentAt })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!alreadyRead)
+        var cutoffTime = latestMsg?.SentAt ?? DateTime.UtcNow;
+
+        // Find all unread messages up to latestMessageId/cutoffTime in this conversation not sent by this user
+        var unreadMessages = await _db.Messages
+            .AsNoTracking()
+            .Where(m => m.ConversationId == conversationId
+                     && m.SenderId != userId
+                     && !m.IsDeleted
+                     && m.SentAt <= cutoffTime
+                     && !_db.MessageReads.Any(r => r.MessageId == m.Id && r.UserId == userId))
+            .Select(m => new { m.Id, m.OrganizationId })
+            .ToListAsync(cancellationToken);
+
+        if (unreadMessages.Any())
         {
-            var msg = await _db.Messages
-                .AsNoTracking()
-                .Select(m => new { m.Id, m.OrganizationId })
-                .FirstOrDefaultAsync(m => m.Id == latestMessageId, cancellationToken);
-
-            if (msg != null)
+            var now = DateTime.UtcNow;
+            var readsToAdd = unreadMessages.Select(m => new MessageRead
             {
-                await _db.MessageReads.AddAsync(new MessageRead
-                {
-                    OrganizationId = msg.OrganizationId,
-                    MessageId = msg.Id,
-                    UserId = userId,
-                    ReadAt = DateTime.UtcNow
-                }, cancellationToken);
-            }
+                OrganizationId = m.OrganizationId,
+                MessageId = m.Id,
+                UserId = userId,
+                ReadAt = now
+            }).ToList();
+
+            await _db.MessageReads.AddRangeAsync(readsToAdd, cancellationToken);
         }
     }
 

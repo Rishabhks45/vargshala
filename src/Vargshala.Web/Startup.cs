@@ -94,6 +94,7 @@ public static class StartupExtensions
         builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
         builder.Services.AddScoped<IFeeService, FeeService>();
         builder.Services.AddScoped<IMessageService, MessageService>();
+        builder.Services.AddScoped<IChatHubService, ChatHubService>();
         builder.Services.AddScoped<IFileUploadService, FileUploadService>();
         builder.Services.AddCropper();
 

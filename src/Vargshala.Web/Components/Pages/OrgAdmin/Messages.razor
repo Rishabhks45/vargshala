@@ -1,11 +1,16 @@
 @page "/messages"
 @attribute [Authorize(Roles = "SuperAdmin,OrganizationAdmin,Teacher,BranchAdmin,Student")]
+@using System.Security.Claims
 @using Vargshala.Contracts.Common
 @using Vargshala.Contracts.Messages
 @using Vargshala.Contracts.Messages.Enums
 @using Vargshala.Web.Services
 @inject IMessageService MessageService
+@inject IChatHubService ChatHubService
 @inject INotificationService NotificationService
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
+@implements IAsyncDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Messages | Vargshala</PageTitle>
@@ -67,12 +72,9 @@
 
         <!-- Conversations Scrollable Feed -->
         <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
-            @if (_isLoadingConversations)
+            @if (_isLoadingConversations && !_conversations.Any())
             {
-                <div class="p-6 text-center space-y-2">
-                    <div class="w-6 h-6 border-2 border-[#00796b] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                    <p class="text-xs text-slate-400 font-medium">Loading conversations...</p>
-                </div>
+                <SkeletonConversations Count="6" />
             }
             else if (FilteredConversations.Any())
             {
@@ -209,14 +211,11 @@
             </div>
 
             <!-- Messages Stream -->
-            <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 select-text">
+            <div id="messages-stream" class="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 select-text scroll-smooth">
                 
-                @if (_isLoadingMessages)
+                @if (_isLoadingMessages && !_currentMessages.Any())
                 {
-                    <div class="p-8 text-center space-y-2">
-                        <div class="w-6 h-6 border-2 border-[#00796b] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                        <p class="text-xs text-slate-400 font-medium">Loading messages...</p>
-                    </div>
+                    <SkeletonMessages Count="4" />
                 }
                 else if (_currentMessages.Any())
                 {
@@ -272,9 +271,25 @@
 
                                     <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium">
                                         <span>@msg.SentAt.ToString("hh:mm tt")</span>
-                                        <svg class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                        </svg>
+                                        @if (msg.IsRead)
+                                        {
+                                            <!-- Double Tick (Read) -->
+                                            <span title="Read" class="inline-flex items-center text-[#009488] dark:text-teal-400">
+                                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M18 6L7 17l-5-5"/>
+                                                    <path d="M22 10l-7.5 7.5-1.5-1.5"/>
+                                                </svg>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <!-- Single Tick (Sent) -->
+                                            <span title="Sent" class="inline-flex items-center text-slate-400 dark:text-slate-500">
+                                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M20 6L9 17l-5-5"/>
+                                                </svg>
+                                            </span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -346,6 +361,18 @@
                     </div>
                 }
 
+                @if (ActiveTypingUsers.Any())
+                {
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-50/90 dark:bg-teal-950/60 border border-teal-200/60 dark:border-teal-800/60 w-fit text-xs text-[#00796b] dark:text-teal-300 font-medium transition-all shadow-2xs">
+                        <div class="flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#00796b] dark:bg-teal-400 animate-bounce" style="animation-delay: 0ms"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#00796b] dark:bg-teal-400 animate-bounce" style="animation-delay: 150ms"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#00796b] dark:bg-teal-400 animate-bounce" style="animation-delay: 300ms"></span>
+                        </div>
+                        <span>@GetTypingText()</span>
+                    </div>
+                }
+
             </div>
 
             <!-- Chat Composer Bar -->
@@ -361,8 +388,8 @@
 
                 <div class="flex-1 relative flex items-center">
                     <input type="text" 
-                           @bind="_messageInput"
-                           @bind:event="oninput"
+                           value="@_messageInput"
+                           @oninput="HandleInput"
                            @onkeydown="HandleKeyPress"
                            disabled="@_isSending"
                            placeholder="Type a message..."
@@ -444,10 +471,21 @@
                 <!-- Group Avatar & Title with Edit Button -->
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-950/50 text-[#00796b] dark:text-teal-300 flex items-center justify-center shrink-0">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 16v-1a4 4 0 00-3-3.87 4.004 4.004 0 013 4.87zM4 15a4 4 0 003-3.87A4.004 4.004 0 004 16v-1z" />
-                            </svg>
+                        <div class="relative group w-12 h-12 rounded-full bg-[#004D40] text-teal-300 font-bold text-sm flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                            @if (!string.IsNullOrWhiteSpace(_selectedConversation.AvatarUrl))
+                            {
+                                <img src="@_selectedConversation.AvatarUrl" class="w-full h-full object-cover" />
+                            }
+                            else
+                            {
+                                <span>@_selectedConversation.Initials</span>
+                            }
+                            @if (_selectedConversation.IsAdmin && _selectedConversation.Type != ConversationType.Direct)
+                            {
+                                <button type="button" @onclick="PromptChangeGroupPhotoAsync" title="Change Group Photo (Admin)" class="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </button>
+                            }
                         </div>
                         <div>
                             <h4 class="text-xs font-bold text-slate-900 dark:text-white">@_selectedConversation.Name</h4>
@@ -539,13 +577,25 @@
                                         </div>
                                     </div>
 
-                                    @if (member.IsAdmin)
-                                    {
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold text-[#00796b] bg-teal-50 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800">
-                                            Admin
-                                        </span>
-                                    }
+                                    <div class="flex items-center gap-1">
+                                        @if (member.IsAdmin)
+                                        {
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold text-[#00796b] bg-teal-50 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800">
+                                                Admin
+                                            </span>
+                                        }
+                                        else if (_selectedConversation.IsAdmin)
+                                        {
+                                            <button type="button" @onclick="() => PromoteMemberAsync(member)" title="Promote to Group Admin" class="p-1 text-slate-400 hover:text-[#00796b] rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                                            </button>
+                                            <button type="button" @onclick="() => RemoveMemberAsync(member)" title="Remove Member" class="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
+
                             }
                         }
                         else
@@ -577,21 +627,60 @@
             <div class="p-5 space-y-4 text-xs">
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Type</label>
-                    <select @bind="_newConversationType" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]">
+                    <select @bind="_newConversationType" @bind:after="OnConversationTypeChangedAsync" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]">
+                        <option value="@ConversationType.Direct">Direct 1-on-1 Message</option>
                         <option value="@ConversationType.Group">Group Discussion</option>
                         <option value="@ConversationType.Channel">Announcement Channel</option>
                     </select>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                    <input type="text" @bind="_newConversationName" placeholder="e.g. Class 10 - Mathematics" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]" />
-                </div>
+                @if (_newConversationType == ConversationType.Direct)
+                {
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Select Authorized Contact</label>
+                        <input type="text" @bind="_contactSearchTerm" @bind:event="oninput" @bind:after="SearchEligibleContactsAsync" placeholder="Type name or email..." class="w-full mb-2 px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]" />
 
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                    <textarea @bind="_newConversationDescription" rows="2" placeholder="Brief description of the channel..." class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]"></textarea>
-                </div>
+                        <div class="max-h-48 overflow-y-auto space-y-1 border border-slate-100 dark:border-slate-800 rounded-xl p-1 bg-slate-50/50 dark:bg-[#18262c]/50">
+                            @if (_isLoadingContacts)
+                            {
+                                <p class="text-slate-400 text-center py-3">Loading authorized contacts...</p>
+                            }
+                            else if (_eligibleContacts.Any())
+                            {
+                                @foreach (var contact in _eligibleContacts)
+                                {
+                                    <div @onclick="() => _selectedTargetUserId = contact.UserId"
+                                         class="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors @(_selectedTargetUserId == contact.UserId ? "bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700 text-[#00796b]" : "hover:bg-slate-100 dark:hover:bg-slate-800")">
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
+                                            <p class="text-[10px] text-slate-400">@contact.Role @(!string.IsNullOrWhiteSpace(contact.Email) ? $"• {contact.Email}" : "")</p>
+                                        </div>
+                                        @if (_selectedTargetUserId == contact.UserId)
+                                        {
+                                            <span class="text-[#00796b] font-bold">✓</span>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-slate-400 text-center py-3">No authorized contacts found</p>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                        <input type="text" @bind="_newConversationName" placeholder="e.g. Class 10 - Mathematics" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]" />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                        <textarea @bind="_newConversationDescription" rows="2" placeholder="Brief description of the channel..." class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]"></textarea>
+                    </div>
+                }
             </div>
 
             <div class="px-5 py-3.5 bg-slate-50 dark:bg-[#18262c] border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 text-xs">
@@ -599,9 +688,10 @@
                     Cancel
                 </button>
                 <button type="button" @onclick="CreateConversationAsync" disabled="@_isCreating" class="px-4 py-2 rounded-xl bg-[#00796b] text-white hover:bg-[#004D40] font-bold disabled:opacity-50">
-                    @(_isCreating ? "Creating..." : "Create Channel")
+                    @(_isCreating ? "Creating..." : (_newConversationType == ConversationType.Direct ? "Start Chat" : "Create Channel"))
                 </button>
             </div>
+
         </div>
     </div>
 }
@@ -623,13 +713,145 @@
     private string _newConversationDescription = string.Empty;
     private ConversationType _newConversationType = ConversationType.Group;
 
+    private List<EligibleUserDto> _eligibleContacts = new();
+    private Guid? _selectedTargetUserId;
+    private string _contactSearchTerm = string.Empty;
+    private bool _isLoadingContacts = false;
+
     private ChatConversationDto? _selectedConversation;
     private List<ChatConversationDto> _conversations = new();
     private List<ChatMessageDto> _currentMessages = new();
 
+    private Guid _currentUserId = Guid.Empty;
+    private string _currentUserName = "User";
+    private readonly Dictionary<string, DateTime> _typingUsers = new();
+    private System.Threading.Timer? _typingDebounceTimer;
+    private bool _isCurrentlyTyping = false;
+
+    private List<string> ActiveTypingUsers => _typingUsers
+        .Where(kv => kv.Value > DateTime.UtcNow)
+        .Select(kv => kv.Key)
+        .ToList();
+
+    private string GetTypingText()
+    {
+        var users = ActiveTypingUsers;
+        if (users.Count == 1) return $"{users[0]} is typing...";
+        if (users.Count == 2) return $"{users[0]} and {users[1]} are typing...";
+        return "Multiple people are typing...";
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst("sub")?.Value;
+        if (Guid.TryParse(userIdStr, out var parsedGuid))
+        {
+            _currentUserId = parsedGuid;
+        }
+
+        _currentUserName = user.FindFirst(ClaimTypes.Name)?.Value 
+                          ?? user.FindFirst("name")?.Value 
+                          ?? "User";
+
+        ChatHubService.OnMessageReceived += HandleIncomingMessageAsync;
+        ChatHubService.OnMessagesRead += HandleMessagesRead;
+        ChatHubService.OnUserTyping += HandleUserTyping;
+
+        await ChatHubService.ConnectAsync();
         await LoadConversationsAsync();
+    }
+
+    private async Task HandleIncomingMessageAsync(ChatMessageDto message)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (_typingUsers.ContainsKey(message.SenderName))
+            {
+                _typingUsers.Remove(message.SenderName);
+            }
+
+            if (_selectedConversation != null && _selectedConversation.Id == message.ConversationId)
+            {
+                if (!_currentMessages.Any(m => m.Id == message.Id))
+                {
+                    message.IsOutgoing = message.SenderId == _currentUserId.ToString();
+                    _currentMessages.Add(message);
+                    _selectedConversation.LastMessage = message.Content;
+                    _selectedConversation.LastMessageTime = message.SentAt.ToString("hh:mm tt");
+
+                    if (!message.IsOutgoing)
+                    {
+                        await MessageService.MarkAsReadAsync(message.ConversationId, message.Id);
+                    }
+                    await ScrollToBottomAsync();
+                }
+            }
+            else
+            {
+                var conv = _conversations.FirstOrDefault(c => c.Id == message.ConversationId);
+                if (conv != null)
+                {
+                    conv.LastMessage = message.Content;
+                    conv.LastMessageTime = message.SentAt.ToString("hh:mm tt");
+                    if (message.SenderId != _currentUserId.ToString())
+                    {
+                        conv.UnreadCount++;
+                    }
+                }
+            }
+            StateHasChanged();
+        });
+    }
+
+    private void HandleMessagesRead(MessagesReadNotification notification)
+    {
+        InvokeAsync(() =>
+        {
+            if (_selectedConversation != null && _selectedConversation.Id == notification.ConversationId)
+            {
+                if (notification.ReadByUserId != _currentUserId)
+                {
+                    var hasChanges = false;
+                    foreach (var msg in _currentMessages.Where(m => m.IsOutgoing && !m.IsRead))
+                    {
+                        if (msg.SentAt <= notification.ReadAt || msg.Id == notification.LatestMessageId)
+                        {
+                            msg.IsRead = true;
+                            msg.ReadAt = notification.ReadAt;
+                            hasChanges = true;
+                        }
+                    }
+                    if (hasChanges)
+                    {
+                        StateHasChanged();
+                    }
+                }
+            }
+        });
+    }
+
+    private void HandleUserTyping(string convId, string userName, bool isTyping)
+    {
+        InvokeAsync(() =>
+        {
+            if (_selectedConversation != null && _selectedConversation.Id.ToString() == convId)
+            {
+                if (userName != _currentUserName)
+                {
+                    if (isTyping)
+                    {
+                        _typingUsers[userName] = DateTime.UtcNow.AddSeconds(3);
+                    }
+                    else
+                    {
+                        _typingUsers.Remove(userName);
+                    }
+                    StateHasChanged();
+                }
+            }
+        });
     }
 
     private async Task LoadConversationsAsync()
@@ -677,9 +899,16 @@
 
     private async Task SelectConversationAsync(ChatConversationDto conv)
     {
+        if (_selectedConversation != null)
+        {
+            await ChatHubService.LeaveConversationAsync(_selectedConversation.Id);
+        }
+        await ChatHubService.JoinConversationAsync(conv.Id);
+
         _selectedConversation = conv;
         _isLoadingMessages = true;
         _currentMessages.Clear();
+        _typingUsers.Clear();
 
         try
         {
@@ -693,6 +922,7 @@
                 {
                     await MessageService.MarkAsReadAsync(conv.Id, _currentMessages.Last().Id);
                 }
+                await ScrollToBottomAsync();
             }
         }
         catch (Exception ex)
@@ -713,12 +943,43 @@
         }
     }
 
+    private async Task HandleInput(ChangeEventArgs e)
+    {
+        _messageInput = e.Value?.ToString() ?? string.Empty;
+
+        if (_selectedConversation != null)
+        {
+            if (!_isCurrentlyTyping && !string.IsNullOrWhiteSpace(_messageInput))
+            {
+                _isCurrentlyTyping = true;
+                await ChatHubService.SendTypingAsync(_selectedConversation.Id, _currentUserName, true);
+            }
+
+            _typingDebounceTimer?.Dispose();
+            _typingDebounceTimer = new System.Threading.Timer(async _ =>
+            {
+                if (_isCurrentlyTyping && _selectedConversation != null)
+                {
+                    _isCurrentlyTyping = false;
+                    await ChatHubService.SendTypingAsync(_selectedConversation.Id, _currentUserName, false);
+                }
+            }, null, 2500, Timeout.Infinite);
+        }
+    }
+
     private async void SendMessageAsync()
     {
         if (string.IsNullOrWhiteSpace(_messageInput) || _selectedConversation == null || _isSending) return;
 
         var text = _messageInput.Trim();
         _isSending = true;
+
+        if (_isCurrentlyTyping && _selectedConversation != null)
+        {
+            _isCurrentlyTyping = false;
+            _typingDebounceTimer?.Dispose();
+            await ChatHubService.SendTypingAsync(_selectedConversation.Id, _currentUserName, false);
+        }
 
         try
         {
@@ -732,10 +993,15 @@
             var response = await MessageService.SendMessageAsync(request);
             if (response.Success && response.Data != null)
             {
-                _currentMessages.Add(response.Data);
+                if (!_currentMessages.Any(m => m.Id == response.Data.Id))
+                {
+                    response.Data.IsOutgoing = true;
+                    _currentMessages.Add(response.Data);
+                }
                 _selectedConversation.LastMessage = response.Data.Content;
                 _selectedConversation.LastMessageTime = response.Data.SentAt.ToString("hh:mm tt");
                 _messageInput = string.Empty;
+                await ScrollToBottomAsync();
             }
             else
             {
@@ -753,20 +1019,129 @@
         }
     }
 
-    private void OpenCreateModal()
+    private async Task ScrollToBottomAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function() { var el = document.getElementById('messages-stream'); if (el) el.scrollTop = el.scrollHeight; }, 60);");
+        }
+        catch { }
+    }
+
+    private async Task OpenCreateModal()
     {
         _newConversationName = string.Empty;
         _newConversationDescription = string.Empty;
-        _newConversationType = ConversationType.Group;
+        _newConversationType = ConversationType.Direct;
+        _selectedTargetUserId = null;
+        _contactSearchTerm = string.Empty;
         _showCreateModal = true;
+        await SearchEligibleContactsAsync();
+    }
+
+    private async Task OnConversationTypeChangedAsync()
+    {
+        if (_newConversationType == ConversationType.Direct && !_eligibleContacts.Any())
+        {
+            await SearchEligibleContactsAsync();
+        }
+    }
+
+    private async Task SearchEligibleContactsAsync()
+    {
+        _isLoadingContacts = true;
+        try
+        {
+            var result = await MessageService.GetEligibleRecipientsAsync(new GetEligibleRecipientsRequest
+            {
+                SearchTerm = _contactSearchTerm,
+                PageSize = 30
+            });
+            if (result.Success && result.Data != null)
+            {
+                _eligibleContacts = result.Data.Items.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Error searching contacts: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingContacts = false;
+        }
+    }
+
+    private async Task PromoteMemberAsync(ChatMemberDto member)
+    {
+        if (_selectedConversation == null) return;
+        var response = await MessageService.PromoteAdminAsync(_selectedConversation.Id, member.UserId);
+        if (response.Success)
+        {
+            member.IsAdmin = true;
+            NotificationService.Success($"{member.Name} has been promoted to Group Admin!");
+            await SelectConversationAsync(_selectedConversation);
+        }
+        else
+        {
+            NotificationService.Error(response.Message ?? "Failed to promote member.");
+        }
+    }
+
+    private async Task RemoveMemberAsync(ChatMemberDto member)
+    {
+        if (_selectedConversation == null) return;
+        var response = await MessageService.RemoveParticipantAsync(_selectedConversation.Id, member.UserId);
+        if (response.Success)
+        {
+            _selectedConversation.Members.Remove(member);
+            _selectedConversation.MemberCount--;
+            NotificationService.Success($"{member.Name} was removed from the conversation.");
+            await SelectConversationAsync(_selectedConversation);
+        }
+        else
+        {
+            NotificationService.Error(response.Message ?? "Failed to remove member.");
+        }
+    }
+
+    private async Task PromptChangeGroupPhotoAsync()
+    {
+        if (_selectedConversation == null) return;
+        var promptResult = await JSRuntime.InvokeAsync<string?>("prompt", "Enter new group photo URL:", _selectedConversation.AvatarUrl ?? "");
+        if (!string.IsNullOrWhiteSpace(promptResult))
+        {
+            var response = await MessageService.ChangeGroupPhotoAsync(_selectedConversation.Id, promptResult.Trim());
+            if (response.Success)
+            {
+                _selectedConversation.AvatarUrl = promptResult.Trim();
+                NotificationService.Success("Group photo updated successfully!");
+                await SelectConversationAsync(_selectedConversation);
+            }
+            else
+            {
+                NotificationService.Error(response.Message ?? "Failed to update group photo.");
+            }
+        }
     }
 
     private async Task CreateConversationAsync()
     {
-        if (string.IsNullOrWhiteSpace(_newConversationName))
+        if (_newConversationType == ConversationType.Direct)
         {
-            NotificationService.Warning("Please enter a name for the group or channel.");
-            return;
+            if (!_selectedTargetUserId.HasValue)
+            {
+                NotificationService.Warning("Please select an authorized contact to start a direct message.");
+                return;
+            }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(_newConversationName))
+            {
+                NotificationService.Warning("Please enter a name for the group or channel.");
+                return;
+            }
         }
 
         _isCreating = true;
@@ -777,6 +1152,7 @@
                 Type = _newConversationType,
                 Name = _newConversationName.Trim(),
                 Description = _newConversationDescription.Trim(),
+                TargetUserId = _selectedTargetUserId,
                 IsAnnouncement = _newConversationType == ConversationType.Channel
             };
 
@@ -801,5 +1177,14 @@
         {
             _isCreating = false;
         }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _typingDebounceTimer?.Dispose();
+        ChatHubService.OnMessageReceived -= HandleIncomingMessageAsync;
+        ChatHubService.OnMessagesRead -= HandleMessagesRead;
+        ChatHubService.OnUserTyping -= HandleUserTyping;
+        return ValueTask.CompletedTask;
     }
 }

@@ -1,0 +1,30 @@
+@namespace Vargshala.Web.Components.UI.Skeletons
+
+<div class="divide-y divide-slate-100 dark:divide-slate-800/60">
+    @for (int i = 0; i < Count; i++)
+    {
+        <div class="px-4 py-3 flex items-center gap-3">
+            <!-- Avatar Circle -->
+            <Skeleton Width="44px" Height="44px" Shape="Skeleton.SkeletonShape.Circle" />
+
+            <!-- Conversation Text Details -->
+            <div class="flex-1 min-w-0 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <Skeleton Width="@(i % 3 == 0 ? "140px" : (i % 2 == 0 ? "115px" : "90px"))" Height="13px" />
+                    <Skeleton Width="36px" Height="10px" />
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <Skeleton Width="@(i % 2 == 0 ? "180px" : "130px")" Height="11px" />
+                    @if (i % 2 == 0)
+                    {
+                        <Skeleton Width="18px" Height="18px" Shape="Skeleton.SkeletonShape.Circle" />
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Count { get; set; } = 6;
+}

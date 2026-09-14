@@ -26,4 +26,28 @@ public interface IMessageService
         Guid conversationId,
         Guid latestMessageId,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<bool>> PromoteAdminAsync(
+        Guid conversationId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<bool>> RemoveParticipantAsync(
+        Guid conversationId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<bool>> AddParticipantAsync(
+        Guid conversationId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<bool>> ChangeGroupPhotoAsync(
+        Guid conversationId,
+        string photoUrl,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<PagedResponse<EligibleUserDto>>> GetEligibleRecipientsAsync(
+        GetEligibleRecipientsRequest? request = null,
+        CancellationToken cancellationToken = default);
 }

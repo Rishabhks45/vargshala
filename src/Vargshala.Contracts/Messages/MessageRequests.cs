@@ -70,3 +70,37 @@ public class GetMessagesPagedRequest : PagedRequest
     public DateTime? BeforeSentAt { get; set; } // Cursor pagination support for smooth infinite scroll
     public MessageType? MessageType { get; set; }
 }
+
+public class PromoteGroupAdminRequest
+{
+    public Guid ConversationId { get; set; }
+    public Guid TargetUserId { get; set; }
+}
+
+public class RemoveGroupMemberRequest
+{
+    public Guid ConversationId { get; set; }
+    public Guid TargetUserId { get; set; }
+}
+
+public class ChangeGroupPhotoRequest
+{
+    public Guid ConversationId { get; set; }
+    public string GroupPhotoUrl { get; set; } = string.Empty;
+}
+
+public class GetEligibleRecipientsRequest : PagedRequest
+{
+    public string? SearchTerm { get; set; }
+}
+
+public class EligibleUserDto
+{
+    public Guid UserId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string? Role { get; set; }
+    public string? Email { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? Subtitle { get; set; }
+}
+

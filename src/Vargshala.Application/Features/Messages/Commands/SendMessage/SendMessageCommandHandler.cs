@@ -13,13 +13,19 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Api
 {
     private readonly IMessageRepository _messageRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly Vargshala.Application.Features.Messages.Security.IConversationAuthorizationService _authService;
+    private readonly IChatNotificationService _chatNotificationService;
 
     public SendMessageCommandHandler(
         IMessageRepository messageRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        Vargshala.Application.Features.Messages.Security.IConversationAuthorizationService authService,
+        IChatNotificationService chatNotificationService)
     {
         _messageRepository = messageRepository;
         _currentUser = currentUser;
+        _authService = authService;
+        _chatNotificationService = chatNotificationService;
     }
 
     public async Task<ApiResponse<ChatMessageDto>> Handle(
@@ -38,7 +44,6 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Api
 
         var orgId = _currentUser.OrganizationId.Value;
         var currentUserId = _currentUser.UserId;
-        var userRole = _currentUser.UserRole ?? UserRole.Student;
         var req = command.Request;
 
         // Check if conversation exists and belongs to current tenant
@@ -48,8 +53,8 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Api
             return ApiResponse<ChatMessageDto>.FailureResponse("Conversation was not found.");
         }
 
-        // Verify posting permissions
-        var canPost = await _messageRepository.CanUserPostAsync(conversation.Id, currentUserId, userRole, cancellationToken);
+        // Verify posting permissions via centralized authorization service
+        var canPost = await _authService.CanSendMessageAsync(currentUserId, conversation.Id, cancellationToken);
         if (!canPost)
         {
             return ApiResponse<ChatMessageDto>.FailureResponse("You do not have permission to post in this conversation.");
@@ -115,6 +120,18 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Api
         // Fetch fresh message with sender details
         var savedMessage = await _messageRepository.GetMessageByIdAsync(message.Id, cancellationToken);
         var dto = (savedMessage ?? message).ToDto(currentUserId);
+
+        // Real-time broadcast to conversation and participant channels
+        var participantIds = conversation.Participants
+            .Where(p => !p.IsDeleted && p.IsActive)
+            .Select(p => p.UserId)
+            .ToList();
+
+        await _chatNotificationService.NotifyMessageReceivedAsync(
+            conversation.Id, 
+            dto, 
+            participantIds, 
+            cancellationToken);
 
         return ApiResponse<ChatMessageDto>.SuccessResponse(dto, "Message sent successfully.");
     }

@@ -10,13 +10,16 @@ public class MarkConversationAsReadCommandHandler
 {
     private readonly IMessageRepository _messageRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly IChatNotificationService _chatNotificationService;
 
     public MarkConversationAsReadCommandHandler(
         IMessageRepository messageRepository,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IChatNotificationService chatNotificationService)
     {
         _messageRepository = messageRepository;
         _currentUser = currentUser;
+        _chatNotificationService = chatNotificationService;
     }
 
     public async Task<ApiResponse<bool>> Handle(
@@ -37,6 +40,13 @@ public class MarkConversationAsReadCommandHandler
             cancellationToken);
 
         await _messageRepository.SaveChangesAsync(cancellationToken);
+
+        // Real-time broadcast that messages up to latestMessageId have been read
+        await _chatNotificationService.NotifyMessagesReadAsync(
+            command.ConversationId, 
+            currentUserId, 
+            command.LatestMessageId, 
+            cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Conversation marked as read.");
     }

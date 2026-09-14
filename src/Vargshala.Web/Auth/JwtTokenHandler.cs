@@ -45,6 +45,15 @@ public class JwtTokenHandler : DelegatingHandler
         }
     }
 
+    public static string? GetUserAccessToken(string userId)
+    {
+        if (!string.IsNullOrWhiteSpace(userId) && _tokenCache.TryGetValue(userId, out var cached) && !string.IsNullOrEmpty(cached.AccessToken))
+        {
+            return cached.AccessToken;
+        }
+        return null;
+    }
+
     private string? GetCurrentAccessToken(HttpContext httpContext, string? userId)
     {
         if (!string.IsNullOrEmpty(userId) && _tokenCache.TryGetValue(userId, out var cached) && !string.IsNullOrEmpty(cached.AccessToken))

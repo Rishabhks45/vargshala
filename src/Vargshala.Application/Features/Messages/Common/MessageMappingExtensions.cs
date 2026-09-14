@@ -125,7 +125,8 @@ public static class MessageMappingExtensions
                     IsAdmin = p.IsAdmin,
                     ConversationParticipantRole = p.Role,
                     CanPost = true
-                }).ToList()
+                }).ToList(),
+            IsAdmin = c.Participants.Any(p => p.UserId == currentUserId && (p.IsAdmin || p.Role == ConversationParticipantRole.Admin) && !p.IsDeleted && p.IsActive)
         };
 
         return dto;
@@ -138,6 +139,9 @@ public static class MessageMappingExtensions
             : "User";
 
         var att = m.Attachments.FirstOrDefault(a => !a.IsDeleted);
+        var isOutgoing = m.SenderId == currentUserId;
+        var readReceipt = m.Reads.FirstOrDefault(r => r.UserId != m.SenderId);
+        var isRead = isOutgoing && (readReceipt != null || m.Reads.Any(r => r.UserId != currentUserId));
 
         return new ChatMessageDto
         {
@@ -153,7 +157,9 @@ public static class MessageMappingExtensions
             SystemEventType = m.SystemEventType,
             Content = m.MessageText ?? string.Empty,
             SentAt = m.SentAt,
-            IsOutgoing = m.SenderId == currentUserId,
+            IsOutgoing = isOutgoing,
+            IsRead = isRead,
+            ReadAt = readReceipt?.ReadAt,
             IsPinned = m.IsPinned,
             AttachmentName = att?.FileName,
             AttachmentSize = FormatFileSize(att?.FileSize),

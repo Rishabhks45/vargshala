@@ -18,6 +18,8 @@ public class ChatMessageDto
     public string Content { get; set; } = string.Empty;
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
     public bool IsOutgoing { get; set; } = false;
+    public bool IsRead { get; set; } = false;
+    public DateTime? ReadAt { get; set; }
     public bool IsAnnouncement { get; set; } = false;
     public bool IsPinned { get; set; } = false;
     public string? AnnouncementTitle { get; set; }
@@ -57,6 +59,8 @@ public class ChatConversationDto
     public ChannelPostingPermission WhoCanPost { get; set; } = ChannelPostingPermission.AllMembers;
     public WhoCanReply WhoCanReply { get; set; } = WhoCanReply.Everyone;
     public List<string> Admins { get; set; } = new();
+    public bool IsAdmin { get; set; } = false;
+    public string? AvatarUrl { get => GroupPhotoUrl; set => GroupPhotoUrl = value; }
     public string CreatedByRole { get; set; } = "Admin"; // "Admin", "Teacher", "Student"
     public UserRole? CreatedByUserRole { get; set; }
     
@@ -85,3 +89,12 @@ public class SharedFileDto
     public string UploadDate { get; set; } = string.Empty;
     public string Extension { get; set; } = "pdf";
 }
+
+public class MessagesReadNotification
+{
+    public Guid ConversationId { get; set; }
+    public Guid ReadByUserId { get; set; }
+    public Guid LatestMessageId { get; set; }
+    public DateTime ReadAt { get; set; } = DateTime.UtcNow;
+}
+
