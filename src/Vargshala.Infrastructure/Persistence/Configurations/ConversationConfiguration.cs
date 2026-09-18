@@ -27,7 +27,7 @@ public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(30)
-            .HasDefaultValue(Contracts.Messages.Enums.WhoCanReply.Everyone);
+            .HasDefaultValue(WhoCanReply.Everyone);
 
         builder.Property(c => c.IsAnnouncement)
             .IsRequired()

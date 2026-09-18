@@ -4,7 +4,7 @@ using Vargshala.Application.Abstractions.Persistence;
 using Vargshala.Application.Common;
 using Vargshala.Application.Features.Messages.Infrastructure;
 using Vargshala.Contracts.Common;
-using Vargshala.Contracts.Messages.Enums;
+using Vargshala.SharedKernel.Enums;
 using Vargshala.Domain.Entities;
 
 namespace Vargshala.Infrastructure.Persistence.Repositories;

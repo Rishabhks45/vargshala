@@ -3,7 +3,7 @@ using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Abstractions.Persistence;
 using Vargshala.Application.Features.Messages.Security;
 using Vargshala.Contracts.Common;
-using Vargshala.Contracts.Messages.Enums;
+using Vargshala.SharedKernel.Enums;
 using Vargshala.Domain.Entities;
 
 namespace Vargshala.Infrastructure.Services.Messages;

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Contracts.Common;
-using Vargshala.Contracts.Messages.Enums;
+using Vargshala.SharedKernel.Enums;
 using Vargshala.Domain.Entities;
 using Vargshala.Infrastructure.Persistence;
 using Vargshala.Infrastructure.Services.Messages;

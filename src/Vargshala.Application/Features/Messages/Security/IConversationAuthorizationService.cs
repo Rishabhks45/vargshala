@@ -1,4 +1,4 @@
-using Vargshala.Contracts.Messages.Enums;
+using Vargshala.SharedKernel.Enums;
 
 namespace Vargshala.Application.Features.Messages.Security;
 

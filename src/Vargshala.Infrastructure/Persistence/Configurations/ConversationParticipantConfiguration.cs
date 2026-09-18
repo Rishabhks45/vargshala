@@ -20,7 +20,7 @@ public class ConversationParticipantConfiguration : IEntityTypeConfiguration<Con
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(20)
-            .HasDefaultValue(Contracts.Messages.Enums.ConversationParticipantRole.Member);
+            .HasDefaultValue(ConversationParticipantRole.Member);
 
         builder.Property(cp => cp.IsAdmin)
             .IsRequired()

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Vargshala.Contracts.Common;
+namespace Vargshala.SharedKernel.Enums;
 
 /// <summary>
 /// Defines marketing and promotional campaign categories for coupons and discounts.

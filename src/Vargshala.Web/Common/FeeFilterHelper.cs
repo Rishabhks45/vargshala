@@ -1,4 +1,4 @@
-using Vargshala.Contracts.Fees.Enums;
+using Vargshala.SharedKernel.Enums;
 using Vargshala.Web.Components.UI.Inputs;
 
 namespace Vargshala.Web.Common;

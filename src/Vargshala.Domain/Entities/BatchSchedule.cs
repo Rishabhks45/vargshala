@@ -1,4 +1,4 @@
-using DayOfWeek = Vargshala.Contracts.Common.DayOfWeek;
+using DayOfWeek = Vargshala.SharedKernel.Enums.DayOfWeek;
 using Vargshala.Domain.Common;
 
 namespace Vargshala.Domain.Entities;

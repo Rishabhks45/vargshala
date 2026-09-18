@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
-namespace Vargshala.Contracts.Common;
+namespace Vargshala.SharedKernel.Enums;
 
 /// <summary>
 /// High-performance helper and cache for enum metadata, display names, and dropdown items.
@@ -59,13 +59,16 @@ public static class EnumHelper
         {
             var values = Enum.GetValues<TEnum>();
             var list = new List<EnumItem>(values.Length);
+
             foreach (var val in values)
             {
-                var strVal = val.ToString();
-                var displayName = GetDisplayName(val);
-                var intVal = Convert.ToInt32(val);
-                list.Add(new EnumItem(strVal, displayName, intVal));
+                list.Add(new EnumItem(
+                    Value: val.ToString(),
+                    DisplayName: GetDisplayName(val),
+                    IntValue: Convert.ToInt32(val)
+                ));
             }
+
             return list.AsReadOnly();
         });
     }
@@ -88,36 +91,27 @@ public static class EnumHelper
 
     /// <summary>
     /// Attempts to parse an enum value from its display name, member name, or integer string.
-    /// Supports exact and case-insensitive matching.
+    /// Case-insensitive. Returns true if match found, false otherwise.
     /// </summary>
     public static bool TryParseFromDisplayName<TEnum>(string? text, out TEnum result) where TEnum : struct, Enum
     {
         result = default;
         if (string.IsNullOrWhiteSpace(text)) return false;
 
-        var clean = text.Trim();
+        var trimmed = text.Trim();
 
-        // 1. Direct standard parse (matches member name or numeric value)
-        if (Enum.TryParse<TEnum>(clean, ignoreCase: true, out result))
+        // 1. Direct standard enum parse (matches member name or int value)
+        if (Enum.TryParse<TEnum>(trimmed, ignoreCase: true, out result))
             return true;
 
-        // 2. Exact or case-insensitive match against display names
-        foreach (var item in GetItems<TEnum>())
+        // 2. Scan display names cached for this enum
+        var items = GetItems<TEnum>();
+        foreach (var item in items)
         {
-            if (string.Equals(item.DisplayName, clean, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(item.DisplayName, trimmed, StringComparison.OrdinalIgnoreCase))
             {
-                return Enum.TryParse<TEnum>(item.Value, ignoreCase: true, out result);
-            }
-        }
-
-        // 3. Normalized fuzzy match (ignoring spaces, hyphens, and dots)
-        var normalized = NormalizeForLookup(clean);
-        foreach (var item in GetItems<TEnum>())
-        {
-            if (NormalizeForLookup(item.DisplayName) == normalized ||
-                NormalizeForLookup(item.Value) == normalized)
-            {
-                return Enum.TryParse<TEnum>(item.Value, ignoreCase: true, out result);
+                if (Enum.TryParse<TEnum>(item.Value, ignoreCase: true, out result))
+                    return true;
             }
         }
 
@@ -126,7 +120,7 @@ public static class EnumHelper
 
     /// <summary>
     /// Parses an enum value from its display name or member name.
-    /// Throws ArgumentException if not found.
+    /// Throws ArgumentException if no match is found.
     /// </summary>
     public static TEnum ParseFromDisplayName<TEnum>(string? text) where TEnum : struct, Enum
     {
@@ -136,43 +130,30 @@ public static class EnumHelper
         throw new ArgumentException($"Requested value or display name '{text}' was not found in enum '{typeof(TEnum).Name}'.");
     }
 
-    private static string NormalizeForLookup(string value)
+    /// <summary>
+    /// Clears internal reflection caches. Useful for test isolation if needed.
+    /// </summary>
+    public static void ClearCache()
     {
-        return value.Replace(" ", "")
-                    .Replace("-", "")
-                    .Replace("_", "")
-                    .Replace(".", "")
-                    .ToLowerInvariant();
+        DisplayNameCache.Clear();
+        EnumItemsCache.Clear();
     }
 }
 
 /// <summary>
-/// Universal extension methods for enums.
+/// Convenient extension methods on System.Enum for display name resolution.
 /// Automatically provides .GetDisplayName() on any enum without boilerplate extension classes.
 /// </summary>
 public static class EnumExtensions
 {
     /// <summary>
-    /// Gets the human-readable display name defined by [Display(Name = "...")] or falls back to member name.
+    /// Returns the cached human-friendly display name of this enum value.
+    /// Falls back to enum member name if no [Display] or [Description] attribute exists.
     /// </summary>
-    public static string GetDisplayName<TEnum>(this TEnum value) where TEnum : struct, Enum
-    {
-        return EnumHelper.GetDisplayName(value);
-    }
+    public static string GetDisplayName(this Enum? value) => EnumHelper.GetDisplayName(value);
 
     /// <summary>
     /// Gets the display name for a nullable enum value, returning empty string if null.
     /// </summary>
-    public static string GetDisplayName<TEnum>(this TEnum? value) where TEnum : struct, Enum
-    {
-        return value.HasValue ? EnumHelper.GetDisplayName(value.Value) : string.Empty;
-    }
-
-    /// <summary>
-    /// Non-generic fallback for boxed System.Enum instances.
-    /// </summary>
-    public static string GetDisplayName(this Enum? value)
-    {
-        return EnumHelper.GetDisplayName(value);
-    }
+    public static string ToDisplayName(this Enum? value) => EnumHelper.GetDisplayName(value);
 }

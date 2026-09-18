@@ -6,7 +6,7 @@ using Vargshala.Contracts.ClassSessions;
 using Vargshala.Contracts.Common;
 using Vargshala.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using DayOfWeek = Vargshala.Contracts.Common.DayOfWeek;
+using DayOfWeek = Vargshala.SharedKernel.Enums.DayOfWeek;
 
 namespace Vargshala.Application.Features.OrgAdmin.ClassSessions.Commands.GenerateSessionsFromSchedule;
 

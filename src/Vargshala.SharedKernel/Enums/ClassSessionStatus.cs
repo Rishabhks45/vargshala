@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Vargshala.Contracts.ClassSessions;
+namespace Vargshala.SharedKernel.Enums;
 
 public enum ClassSessionStatus
 {

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Vargshala.Contracts\Vargshala.Contracts.csproj" />
+    <ProjectReference Include="..\Vargshala.SharedKernel\Vargshala.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>

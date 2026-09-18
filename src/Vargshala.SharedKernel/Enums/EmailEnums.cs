@@ -1,6 +1,22 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
-namespace Vargshala.Contracts.Common;
+namespace Vargshala.SharedKernel.Enums;
+
+public enum EmailTemplateCategory
+{
+    [Display(Name = "Onboarding")]
+    Onboarding = 1,
+
+    [Display(Name = "Auth & Security")]
+    AuthAndSecurity = 2,
+
+    [Display(Name = "Billing & Invoicing")]
+    BillingAndInvoicing = 3,
+
+    [Display(Name = "System Notices")]
+    SystemNotices = 4
+}
 
 public enum EmailTemplateName
 {
@@ -63,8 +79,8 @@ public static class EmailTemplateNameExtensions
             return string.Empty;
 
         var cleaned = displayName.Trim().Replace("&", "").Replace("-", " ");
-        var withUnderscores = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", "_");
-        withUnderscores = System.Text.RegularExpressions.Regex.Replace(withUnderscores, @"_+", "_");
+        var withUnderscores = Regex.Replace(cleaned, @"\s+", "_");
+        withUnderscores = Regex.Replace(withUnderscores, @"_+", "_");
         return withUnderscores.Trim('_').ToUpperInvariant();
     }
 

@@ -20,7 +20,7 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(30)
-            .HasDefaultValue(Contracts.Messages.Enums.MessageType.Text);
+            .HasDefaultValue(MessageType.Text);
 
         builder.Property(m => m.SystemEventType)
             .HasConversion<string>()

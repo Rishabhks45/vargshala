@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Vargshala.Contracts.Common;
+namespace Vargshala.SharedKernel.Enums;
 
 /// <summary>
 /// Universal operational status for entities, records, and dropdown filters across Vargshala SaaS.

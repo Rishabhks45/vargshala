@@ -2,7 +2,7 @@ using FluentValidation;
 using MediatR;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Messages;
-using Vargshala.Contracts.Messages.Enums;
+using Vargshala.SharedKernel.Enums;
 
 namespace Vargshala.Application.Features.Messages.Commands.CreateConversation;
 

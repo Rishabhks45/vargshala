@@ -109,10 +109,10 @@ public class TeacherDto
     public bool IsActive { get; set; } = true;
     public string Status
     {
-        get => IsActive ? Vargshala.Contracts.Common.EntityStatusNames.Active : Vargshala.Contracts.Common.EntityStatusNames.Inactive;
-        set => IsActive = Vargshala.Contracts.Common.EntityStatusExtensions.FromString(value) == Vargshala.Contracts.Common.EntityStatus.Active;
+        get => IsActive ? EntityStatusNames.Active : EntityStatusNames.Inactive;
+        set => IsActive = EntityStatusExtensions.FromString(value) == EntityStatus.Active;
     }
-    public Vargshala.Contracts.Common.EntityStatus EntityStatus => Vargshala.Contracts.Common.EntityStatusExtensions.FromBool(IsActive);
+    public EntityStatus EntityStatus => EntityStatusExtensions.FromBool(IsActive);
 
     // Backwards-compatibility with UI
     public List<string> Batches { get; set; } = new();

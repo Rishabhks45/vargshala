@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Vargshala.Contracts.Common;
+namespace Vargshala.SharedKernel.Enums;
 
 public enum DayOfWeek
 {

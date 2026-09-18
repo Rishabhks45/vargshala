@@ -1,5 +1,5 @@
 using Vargshala.Domain.Common;
-using Vargshala.Contracts.Common;
+using Vargshala.SharedKernel.Enums;
 
 namespace Vargshala.Domain.Entities;
 

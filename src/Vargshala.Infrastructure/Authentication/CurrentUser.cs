@@ -50,5 +50,5 @@ public class CurrentUser : ICurrentUser
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 
-    public bool IsSuperAdmin => UserRole == Contracts.Common.UserRole.SuperAdmin || Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase);
+    public bool IsSuperAdmin => UserRole == Vargshala.SharedKernel.Enums.UserRole.SuperAdmin || Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase);
 }

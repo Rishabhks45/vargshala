@@ -1,5 +1,5 @@
-using Vargshala.Contracts.Teachers;
 using Vargshala.Domain.Common;
+using Vargshala.SharedKernel.Enums;
 
 namespace Vargshala.Domain.Entities;
 
