@@ -104,3 +104,9 @@ public class EligibleUserDto
     public string? Subtitle { get; set; }
 }
 
+public class ToggleMessageReactionRequest
+{
+    public string Emoji { get; set; } = string.Empty;
+}
+
+

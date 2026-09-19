@@ -219,7 +219,7 @@ public class MessageService : IMessageService
         try
         {
             var request = new ChangeGroupPhotoRequest { ConversationId = conversationId, GroupPhotoUrl = photoUrl };
-            var response = await _httpClient.PutAsJsonAsync("api/v1/messages/conversations/{conversationId}/photo", request, cancellationToken);
+            var response = await _httpClient.PutAsJsonAsync($"api/v1/messages/conversations/{conversationId}/photo", request, cancellationToken);
             var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
             return result ?? ApiResponse<bool>.FailureResponse("Failed to update group photo.");
         }
@@ -251,6 +251,25 @@ public class MessageService : IMessageService
         {
             _logger.LogError(ex, "Error fetching eligible recipients");
             return ApiResponse<PagedResponse<EligibleUserDto>>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<ToggleReactionResultDto>> ToggleReactionAsync(
+        Guid messageId,
+        string emoji,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = new ToggleMessageReactionRequest { Emoji = emoji };
+            var response = await _httpClient.PostAsJsonAsync($"api/v1/messages/{messageId}/reactions", request, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<ToggleReactionResultDto>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<ToggleReactionResultDto>.FailureResponse("Failed to toggle reaction.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling reaction on message {MessageId}", messageId);
+            return ApiResponse<ToggleReactionResultDto>.FailureResponse($"Network error: {ex.Message}");
         }
     }
 }

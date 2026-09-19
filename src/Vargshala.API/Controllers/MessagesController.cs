@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Vargshala.Application.Features.Messages.Commands.CreateConversation;
 using Vargshala.Application.Features.Messages.Commands.MarkConversationAsRead;
 using Vargshala.Application.Features.Messages.Commands.SendMessage;
+using Vargshala.Application.Features.Messages.Commands.ToggleReaction;
 using Vargshala.Application.Features.Messages.Queries.GetConversations;
 using Vargshala.Application.Features.Messages.Queries.GetMessages;
 using Vargshala.Contracts.Common;
@@ -132,5 +133,17 @@ public class MessagesController : ControllerBase
         }
         return Ok(result);
     }
+
+    [HttpPost("{messageId:guid}/reactions")]
+    public async Task<IActionResult> ToggleReaction([FromRoute] Guid messageId, [FromBody] ToggleMessageReactionRequest request)
+    {
+        var result = await _mediator.Send(new ToggleMessageReactionCommand(messageId, request.Emoji));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
 }
+
 

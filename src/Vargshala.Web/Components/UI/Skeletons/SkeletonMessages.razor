@@ -12,9 +12,9 @@
 
         @if (isOutgoing)
         {
-            <!-- Outgoing Bubble Skeleton (Right Aligned, Teal-Tinted) -->
+            <!-- Outgoing Bubble Skeleton (Right Aligned, Dynamic Theme-Tinted) -->
             <div class="flex items-end justify-end">
-                <div class="max-w-md w-full sm:w-auto min-w-[200px] p-3.5 rounded-2xl rounded-tr-xs bg-teal-50/70 dark:bg-[#122b24]/80 border border-teal-100 dark:border-teal-900/60 shadow-2xs space-y-2">
+                <div class="max-w-md w-full sm:w-auto min-w-[200px] p-3.5 rounded-2xl rounded-tr-xs outgoing-chat-bubble shadow-2xs space-y-2">
                     <Skeleton Width="@(i % 3 == 0 ? "240px" : "170px")" Height="13px" />
                     @if (i % 3 == 0)
                     {

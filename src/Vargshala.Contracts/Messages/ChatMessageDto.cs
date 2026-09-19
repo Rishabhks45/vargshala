@@ -29,6 +29,7 @@ public class ChatMessageDto
     public string? AttachmentType { get; set; } // "PDF", "Image", "Code", "Archive"
     public string? AttachmentUrl { get; set; }
     public Dictionary<string, int> Reactions { get; set; } = new();
+    public string? MyReaction { get; set; }
 }
 
 public class ChatConversationDto
@@ -99,4 +100,12 @@ public class MessagesReadNotification
     public Guid LatestMessageId { get; set; }
     public DateTime ReadAt { get; set; } = DateTime.UtcNow;
 }
+
+public class ToggleReactionResultDto
+{
+    public Guid MessageId { get; set; }
+    public Dictionary<string, int> Reactions { get; set; } = new();
+    public string? ActiveEmoji { get; set; }
+}
+
 

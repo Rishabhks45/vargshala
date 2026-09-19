@@ -38,6 +38,7 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<MessageAttachment> MessageAttachments => Set<MessageAttachment>();
     public DbSet<MessageRead> MessageReads => Set<MessageRead>();
+    public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
     public DbSet<AnnouncementReplyPermission> AnnouncementReplyPermissions => Set<AnnouncementReplyPermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

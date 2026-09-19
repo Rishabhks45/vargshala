@@ -63,6 +63,14 @@ public interface IMessageRepository
     Task MarkMessagesAsReadAsync(Guid conversationId, Guid userId, Guid latestMessageId, CancellationToken cancellationToken = default);
     Task<int> GetUnreadCountAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
 
+    // Reaction Operations
+    Task<(Dictionary<string, int> Reactions, string? ActiveEmoji)> ToggleReactionAsync(
+        Guid messageId, 
+        Guid userId, 
+        Guid organizationId, 
+        string emoji, 
+        CancellationToken cancellationToken = default);
+
     // Posting Permissions
     Task<bool> CanUserPostAsync(Guid conversationId, Guid userId, UserRole userRole, CancellationToken cancellationToken = default);
 

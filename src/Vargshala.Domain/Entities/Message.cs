@@ -37,5 +37,6 @@ public class Message : BaseEntity
 
     public ICollection<MessageAttachment> Attachments { get; set; } = new List<MessageAttachment>();
     public ICollection<MessageRead> Reads { get; set; } = new List<MessageRead>();
+    public ICollection<MessageReaction> Reactions { get; set; } = new List<MessageReaction>();
     public ICollection<Message> Replies { get; set; } = new List<Message>();
 }

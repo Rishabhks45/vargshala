@@ -280,6 +280,7 @@ public class MessageRepository : IMessageRepository
             .AsNoTracking()
             .Include(m => m.Sender)
             .Include(m => m.Reads)
+            .Include(m => m.Reactions)
             .Include(m => m.Attachments.Where(a => !a.IsDeleted))
             .Include(m => m.ReplyToMessage)
                 .ThenInclude(r => r!.Sender)
@@ -302,6 +303,7 @@ public class MessageRepository : IMessageRepository
             .AsNoTracking()
             .Include(m => m.Sender)
             .Include(m => m.Reads)
+            .Include(m => m.Reactions)
             .Include(m => m.Attachments.Where(a => !a.IsDeleted))
             .Include(m => m.ReplyToMessage)
                 .ThenInclude(r => r!.Sender)
@@ -396,6 +398,64 @@ public class MessageRepository : IMessageRepository
         return await _db.Messages
             .Where(m => m.ConversationId == conversationId && m.SenderId != userId && !m.IsDeleted && m.SentAt > lastReadAt)
             .CountAsync(cancellationToken);
+    }
+    #endregion
+
+    #region Reaction Operations
+    public async Task<(Dictionary<string, int> Reactions, string? ActiveEmoji)> ToggleReactionAsync(
+        Guid messageId, 
+        Guid userId, 
+        Guid organizationId, 
+        string emoji, 
+        CancellationToken cancellationToken = default)
+    {
+        var existing = await _db.MessageReactions
+            .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId, cancellationToken);
+
+        string? activeEmoji = null;
+
+        if (existing != null)
+        {
+            if (string.Equals(existing.Emoji, emoji, StringComparison.Ordinal))
+            {
+                // User clicked same emoji -> Remove reaction
+                _db.MessageReactions.Remove(existing);
+                activeEmoji = null;
+            }
+            else
+            {
+                // User clicked different emoji -> Swap reaction
+                existing.Emoji = emoji;
+                existing.ReactedAt = DateTime.UtcNow;
+                activeEmoji = emoji;
+            }
+        }
+        else
+        {
+            // Add new reaction
+            var newReaction = new MessageReaction
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = organizationId,
+                MessageId = messageId,
+                UserId = userId,
+                Emoji = emoji,
+                ReactedAt = DateTime.UtcNow
+            };
+            await _db.MessageReactions.AddAsync(newReaction, cancellationToken);
+            activeEmoji = emoji;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // Fetch current aggregated reaction counts for this message
+        var reactions = await _db.MessageReactions
+            .Where(r => r.MessageId == messageId)
+            .GroupBy(r => r.Emoji)
+            .Select(g => new { Emoji = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Emoji, g => g.Count, cancellationToken);
+
+        return (reactions, activeEmoji);
     }
     #endregion
 

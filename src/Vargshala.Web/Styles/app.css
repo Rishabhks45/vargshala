@@ -616,6 +616,25 @@ select:focus-visible,
   caret-color: var(--theme-primary, #009488) !important;
 }
 
+/* Chat Composer Textarea Reset (Prevent double border / ring on input) */
+#chat-composer-textarea,
+#chat-composer-textarea:focus,
+#chat-composer-textarea:focus-visible,
+#chat-composer-textarea:hover,
+#chat-composer-textarea:active,
+.chat-composer-input,
+.chat-composer-input:focus,
+.chat-composer-input:focus-visible {
+  border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
+  outline-width: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-offset-shadow: none !important;
+}
+
 .focus\:border-\[\#009488\]:focus,
 .focus\:border-\[\#009488\]:focus-visible,
 .focus\:border-teal-500:focus,
@@ -712,6 +731,84 @@ input[type="radio"]:checked {
 .dark .border-teal-800,
 .dark .border-teal-800\/60 {
   border-color: color-mix(in srgb, var(--theme-primary, #009488) 35%, transparent) !important;
+}
+
+/* Messages & Chat Theming Utilities */
+.outgoing-chat-bubble {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 14%, white) !important;
+  border-color: color-mix(in srgb, var(--theme-primary, #009488) 26%, transparent) !important;
+}
+
+.dark .outgoing-chat-bubble {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 22%, #111c21) !important;
+  border-color: color-mix(in srgb, var(--theme-primary, #009488) 35%, transparent) !important;
+}
+
+.selected-conversation-active {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 10%, transparent) !important;
+  border-left-color: var(--theme-primary, #009488) !important;
+}
+
+.dark .selected-conversation-active {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 22%, transparent) !important;
+  border-left-color: var(--theme-primary-light, #14B8A6) !important;
+}
+
+.reaction-pill-active {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 12%, transparent) !important;
+  border-color: var(--theme-primary, #009488) !important;
+  color: var(--theme-primary, #009488) !important;
+}
+
+.dark .reaction-pill-active {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 25%, transparent) !important;
+  border-color: var(--theme-primary-light, #14B8A6) !important;
+  color: var(--theme-primary-light, #14B8A6) !important;
+}
+
+.border-theme-primary {
+  border-color: var(--theme-primary, #009488) !important;
+}
+
+.border-l-theme-primary {
+  border-left-color: var(--theme-primary, #009488) !important;
+}
+
+.border-b-theme-primary {
+  border-bottom-color: var(--theme-primary, #009488) !important;
+}
+
+.focus-within\:border-theme-primary:focus-within {
+  border-color: var(--theme-primary, #009488) !important;
+}
+
+.bg-theme-primary {
+  background-color: var(--theme-primary, #009488) !important;
+}
+
+.hover\:bg-theme-header:hover {
+  background-color: var(--theme-header, #004D40) !important;
+}
+
+.text-theme-primary {
+  color: var(--theme-primary, #009488) !important;
+}
+
+.dark .text-theme-primary {
+  color: var(--theme-primary-light, #14B8A6) !important;
+}
+
+.bg-theme-primary-subtle {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 12%, transparent) !important;
+}
+
+.dark .bg-theme-primary-subtle {
+  background-color: color-mix(in srgb, var(--theme-primary, #009488) 22%, transparent) !important;
+}
+
+.avatar-theme-gradient {
+  background: linear-gradient(135deg, var(--theme-primary, #009488), var(--theme-header, #004D40)) !important;
+  color: #ffffff !important;
 }
 
 /* Action Tooltips (Custom Rich Styled) */

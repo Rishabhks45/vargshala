@@ -50,4 +50,10 @@ public interface IMessageService
     Task<ApiResponse<PagedResponse<EligibleUserDto>>> GetEligibleRecipientsAsync(
         GetEligibleRecipientsRequest? request = null,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<ToggleReactionResultDto>> ToggleReactionAsync(
+        Guid messageId,
+        string emoji,
+        CancellationToken cancellationToken = default);
 }
+

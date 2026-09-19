@@ -147,6 +147,14 @@ public static class MessageMappingExtensions
         var readReceipt = m.Reads.FirstOrDefault(r => r.UserId != m.SenderId);
         var isRead = isOutgoing && (readReceipt != null || m.Reads.Any(r => r.UserId != currentUserId));
 
+        var reactions = m.Reactions != null && m.Reactions.Any()
+            ? m.Reactions
+                .GroupBy(r => r.Emoji)
+                .ToDictionary(g => g.Key, g => g.Count())
+            : new Dictionary<string, int>();
+
+        var myReaction = m.Reactions?.FirstOrDefault(r => r.UserId == currentUserId)?.Emoji;
+
         return new ChatMessageDto
         {
             Id = m.Id,
@@ -169,7 +177,9 @@ public static class MessageMappingExtensions
             AttachmentName = att?.FileName,
             AttachmentSize = FormatFileSize(att?.FileSize),
             AttachmentType = att?.ContentType,
-            AttachmentUrl = att?.FileUrl
+            AttachmentUrl = att?.FileUrl,
+            Reactions = reactions,
+            MyReaction = myReaction
         };
     }
 }

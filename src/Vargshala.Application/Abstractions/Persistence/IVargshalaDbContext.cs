@@ -34,6 +34,7 @@ public interface IVargshalaDbContext
     DbSet<MessageAttachment> MessageAttachments { get; }
     DbSet<MessageRead> MessageReads { get; }
     DbSet<AnnouncementReplyPermission> AnnouncementReplyPermissions { get; }
+    DbSet<MessageReaction> MessageReactions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
