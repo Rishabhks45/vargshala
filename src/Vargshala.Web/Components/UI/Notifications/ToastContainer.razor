@@ -7,13 +7,16 @@
      aria-live="polite">
     @foreach (var item in _notifications)
     {
-        <div class="pointer-events-auto transition-all duration-300 animate-in slide-in-from-top-4 fade-in shadow-2xl rounded-xl"
-             style="z-index: 99999;">
+        <div class="pointer-events-auto transition-all duration-300"
+             style="z-index: 99999;"
+             @key="item.Id">
             <AlertNotification Type="item.Type"
                                Title="@item.Title"
                                Message="@item.Message"
                                Dismissible="item.Dismissible"
                                DurationSeconds="item.DurationSeconds"
+                               IsToast="true"
+                               ForceClose="@(_dismissingIds.Contains(item.Id))"
                                OnClose="() => RemoveNotification(item.Id)" />
         </div>
     }
@@ -23,6 +26,7 @@
     [Parameter] public string PositionClass { get; set; } = "top-20 right-5 sm:right-6";
 
     private readonly List<NotificationItem> _notifications = new();
+    private readonly HashSet<Guid> _dismissingIds = new();
 
     protected override void OnInitialized()
     {
@@ -41,9 +45,14 @@
 
     private void HandleNotificationDismissed(Guid id)
     {
-        InvokeAsync(() =>
+        _ = InvokeAsync(async () =>
         {
+            if (_dismissingIds.Contains(id)) return;
+            _dismissingIds.Add(id);
+            StateHasChanged();
+            await Task.Delay(320);
             RemoveNotification(id);
+            _dismissingIds.Remove(id);
         });
     }
 

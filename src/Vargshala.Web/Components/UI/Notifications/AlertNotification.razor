@@ -3,7 +3,7 @@
 
 @if (IsVisible && (!string.IsNullOrWhiteSpace(Message) || ChildContent != null))
 {
-    <div class="@ContainerClasses @(IsFloating ? "fixed top-20 right-5 sm:right-6 z-[99999] max-w-[360px] shadow-2xl animate-in slide-in-from-top-4 duration-300" : "w-full shadow-md shadow-emerald-950/5 animate-in fade-in duration-200")"
+    <div class="@ContainerClasses @AnimationClass @ShadowClass @(IsFloating ? "fixed top-20 right-5 sm:right-6 z-[99999] max-w-[360px]" : "w-full")"
          style="@(IsFloating ? "z-index: 99999;" : null)"
          @onmouseenter="HandleMouseEnter"
          @onmouseleave="HandleMouseLeave"
@@ -109,7 +109,7 @@
             {
                 <button type="button"
                         @onclick="CloseAsync"
-                        class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0 -mt-1.5 -mr-1"
+                        class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-90 cursor-pointer shrink-0 -mt-1.5 -mr-1"
                         aria-label="Dismiss notification">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -128,6 +128,8 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public bool Dismissible { get; set; } = true;
     [Parameter] public bool IsFloating { get; set; } = false;
+    [Parameter] public bool IsToast { get; set; } = false;
+    [Parameter] public bool ForceClose { get; set; } = false;
     [Parameter] public int DurationSeconds { get; set; } = 2;
 
     [Parameter] public bool IsVisible { get; set; } = true;
@@ -140,13 +142,32 @@
     private CancellationTokenSource? _autoDismissCts;
     private bool _isDisposed;
     private bool _isClosing;
+    private bool _isLeaving;
     private bool _isHovered;
+    private string? _lastMessage;
+    private bool _lastVisible;
 
     protected override void OnParametersSet()
     {
+        if (IsVisible && (!_lastVisible || Message != _lastMessage))
+        {
+            _isClosing = false;
+            _isLeaving = false;
+        }
+        _lastVisible = IsVisible;
+        _lastMessage = Message;
+
         if (IsVisible && DurationSeconds > 0 && !_isHovered && !_isClosing && !_isDisposed)
         {
             StartAutoDismissTimer();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ForceClose && !_isClosing && !_isDisposed)
+        {
+            await CloseAsync();
         }
     }
 
@@ -207,14 +228,15 @@
 
     private void HandleMouseEnter()
     {
+        if (_isClosing || _isDisposed) return;
         _isHovered = true;
         CancelTimer();
     }
 
     private async Task HandleMouseLeave()
     {
-        _isHovered = false;
         if (_isClosing || _isDisposed || !IsVisible) return;
+        _isHovered = false;
 
         // User requirement: "cursor hatte hi close"
         try
@@ -237,6 +259,22 @@
         }
 
         CancelTimer();
+        _isLeaving = true;
+
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch { }
+
+        try
+        {
+            await Task.Delay(320);
+        }
+        catch (TaskCanceledException) { }
+
+        if (_isDisposed) return;
+
         IsVisible = false;
 
         try
@@ -248,7 +286,7 @@
 
         try
         {
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
         catch { }
     }
@@ -261,6 +299,14 @@
         }
         CancelTimer();
     }
+
+    private string AnimationClass => (IsToast || IsFloating)
+        ? (_isLeaving ? "alert-toast-out" : "alert-toast-in")
+        : (_isLeaving ? "alert-inline-out" : "alert-inline-in");
+
+    private string ShadowClass => (IsToast || IsFloating)
+        ? "shadow-2xl"
+        : "shadow-md shadow-emerald-950/5";
 
     private string ContainerClasses => IsThemed
         ? "relative overflow-hidden rounded-xl alert-themed px-3.5 py-2.5 select-none"

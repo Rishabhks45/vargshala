@@ -28,6 +28,7 @@ public interface IUserService
         CancellationToken cancellationToken = default);
 
     Task<ApiResponse<UserDto>> GetMyProfileAsync(
+        bool forceRefresh = false,
         CancellationToken cancellationToken = default);
 
     Task<ApiResponse<UserDto>> UpdateMyProfileAsync(

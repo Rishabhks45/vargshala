@@ -798,3 +798,121 @@ input[type="radio"]:checked {
 .dark .alert-themed-title {
   color: var(--theme-primary-light, var(--theme-primary, #009488)) !important;
 }
+
+/* Dynamic Themed User Popup Header */
+.user-popup-header {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #009488) 7%, #ffffff) 0%, color-mix(in srgb, var(--theme-primary, #009488) 2%, #f8fafc) 100%) !important;
+}
+
+.dark .user-popup-header {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #009488) 12%, #142025) 0%, color-mix(in srgb, var(--theme-primary, #009488) 4%, #111c21) 100%) !important;
+}
+
+/* ==========================================================================
+   Alert & Toast Entrance and Exit Close Animations
+   ========================================================================== */
+
+/* Floating Toast Entrance: Glides smoothly in from top-right */
+@keyframes alert-toast-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(36px, -6px, 0) scale(0.94);
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(-3px, 0, 0) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Floating Toast Exit: Tactile micro-anticipation then smooth slide-out to right with fade and height collapse */
+@keyframes alert-toast-exit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    max-height: 140px;
+    margin-bottom: 0;
+  }
+  20% {
+    opacity: 0.95;
+    transform: translate3d(-4px, 0, 0) scale(1.01);
+  }
+  70% {
+    opacity: 0.15;
+    transform: translate3d(45px, 0, 0) scale(0.94);
+    max-height: 140px;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(90px, 0, 0) scale(0.88);
+    max-height: 0;
+    margin-top: -10px;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    box-shadow: none !important;
+    overflow: hidden;
+  }
+}
+
+/* Inline Alert Entrance: Clean fade-in & drop */
+@keyframes alert-inline-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Inline Alert Exit: Smooth fade-out & collapse */
+@keyframes alert-inline-exit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    max-height: 160px;
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate3d(0, -4px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.95);
+    max-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    box-shadow: none !important;
+    overflow: hidden;
+  }
+}
+
+.alert-toast-in {
+  animation: alert-toast-enter 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.alert-toast-out {
+  animation: alert-toast-exit 320ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  will-change: transform, opacity, max-height;
+  pointer-events: none !important;
+}
+
+.alert-inline-in {
+  animation: alert-inline-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.alert-inline-out {
+  animation: alert-inline-exit 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  will-change: transform, opacity, max-height;
+  pointer-events: none !important;
+}

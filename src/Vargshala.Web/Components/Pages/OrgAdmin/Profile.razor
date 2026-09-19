@@ -720,7 +720,7 @@ else
         // await Task.Delay(2000); //Intentionally preserved for user's skeleton test
         try
         {
-            var res = await UserService.GetMyProfileAsync();
+            var res = await UserService.GetMyProfileAsync(forceRefresh: true);
             if (res.Success && res.Data != null)
             {
                 _profile = res.Data;

@@ -11,6 +11,7 @@ public class UserService : IUserService
 
     public event Action<UserDto>? OnProfileUpdated;
     public UserDto? CurrentProfile { get; private set; }
+    private Task<ApiResponse<UserDto>>? _ongoingFetchProfileTask;
 
     public void NotifyProfileUpdated(UserDto profile)
     {
@@ -167,7 +168,24 @@ public class UserService : IUserService
     }
 
     public async Task<ApiResponse<UserDto>> GetMyProfileAsync(
+        bool forceRefresh = false,
         CancellationToken cancellationToken = default)
+    {
+        if (!forceRefresh && CurrentProfile != null)
+        {
+            return ApiResponse<UserDto>.SuccessResponse(CurrentProfile);
+        }
+
+        if (_ongoingFetchProfileTask != null && !_ongoingFetchProfileTask.IsCompleted)
+        {
+            return await _ongoingFetchProfileTask;
+        }
+
+        _ongoingFetchProfileTask = FetchMyProfileInternalAsync(cancellationToken);
+        return await _ongoingFetchProfileTask;
+    }
+
+    private async Task<ApiResponse<UserDto>> FetchMyProfileInternalAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -183,7 +201,7 @@ public class UserService : IUserService
             var result = await response.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken: cancellationToken);
             if (result?.Success == true && result.Data != null)
             {
-                CurrentProfile = result.Data;
+                NotifyProfileUpdated(result.Data);
             }
             return result ?? ApiResponse<UserDto>.FailureResponse("Received null response from server.");
         }
@@ -191,6 +209,10 @@ public class UserService : IUserService
         {
             _logger.LogError(ex, "Error fetching user profile");
             return ApiResponse<UserDto>.FailureResponse($"Error fetching profile: {ex.Message}");
+        }
+        finally
+        {
+            _ongoingFetchProfileTask = null;
         }
     }
 
@@ -221,8 +243,7 @@ public class UserService : IUserService
             var result = await response.Content.ReadFromJsonAsync<ApiResponse<UserDto>>(cancellationToken: cancellationToken);
             if (result?.Success == true && result.Data != null)
             {
-                CurrentProfile = result.Data;
-                OnProfileUpdated?.Invoke(result.Data);
+                NotifyProfileUpdated(result.Data);
             }
             return result ?? ApiResponse<UserDto>.FailureResponse("Profile update failed.");
         }
