@@ -9,6 +9,8 @@ public interface IChatHubService : IAsyncDisposable
     event Action<MessagesReadNotification>? OnMessagesRead;
     event Action<string, string, bool>? OnUserTyping;
     event Action<string, string, string, int>? OnReactionUpdated;
+    event Action<MessageDeletedNotification>? OnMessageDeleted;
+    event Func<ChatMessageDto, Task>? OnMessageRestored;
 
     HubConnectionState State { get; }
 

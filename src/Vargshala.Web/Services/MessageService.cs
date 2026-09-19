@@ -272,5 +272,79 @@ public class MessageService : IMessageService
             return ApiResponse<ToggleReactionResultDto>.FailureResponse($"Network error: {ex.Message}");
         }
     }
+
+    public async Task<ApiResponse<MessageAttachmentUploadResponse>> UploadAttachmentAsync(
+        Guid conversationId,
+        Microsoft.AspNetCore.Components.Forms.IBrowserFile file,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var maxAllowedSize = 15 * 1024 * 1024; // 15 MB
+            using var stream = file.OpenReadStream(maxAllowedSize, cancellationToken);
+            using var streamContent = new StreamContent(stream);
+            
+            if (!string.IsNullOrWhiteSpace(file.ContentType))
+            {
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            }
+            
+            content.Add(streamContent, "file", file.Name);
+
+            var response = await _httpClient.PostAsync(
+                $"api/v1/messages/conversations/{conversationId}/attachments", 
+                content, 
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<MessageAttachmentUploadResponse>>(cancellationToken: cancellationToken);
+                return errorResponse ?? ApiResponse<MessageAttachmentUploadResponse>.FailureResponse($"Failed to upload file ({response.StatusCode}).");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<MessageAttachmentUploadResponse>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<MessageAttachmentUploadResponse>.FailureResponse("Empty response from server.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading attachment for conversation {ConversationId}", conversationId);
+            return ApiResponse<MessageAttachmentUploadResponse>.FailureResponse($"Attachment upload failed: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<bool>> DeleteMessageAsync(
+        Guid messageId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/v1/messages/{messageId}", cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<bool>.FailureResponse("Failed to delete message.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting message {MessageId}", messageId);
+            return ApiResponse<bool>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<ChatMessageDto>> RestoreMessageAsync(
+        Guid messageId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/v1/messages/{messageId}/restore", null, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<ChatMessageDto>>(cancellationToken: cancellationToken);
+            return result ?? ApiResponse<ChatMessageDto>.FailureResponse("Failed to restore message.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring message {MessageId}", messageId);
+            return ApiResponse<ChatMessageDto>.FailureResponse($"Network error: {ex.Message}");
+        }
+    }
 }
 

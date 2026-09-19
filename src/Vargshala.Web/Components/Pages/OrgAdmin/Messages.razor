@@ -315,6 +315,17 @@
                                                 title="More Reactions">
                                             +
                                         </button>
+                                        <!-- Delete Outgoing Message -->
+                                        <div class="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5"></div>
+                                        <button type="button" 
+                                                @onclick="() => DeleteMessageAsync(msg)" 
+                                                class="w-5 h-5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer" 
+                                                title="Delete Message">
+                                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
                                     </div>
 
                                     <!-- Reaction Picker Popup for this message -->
@@ -354,24 +365,53 @@
                                     }
 
                                     <div class="rounded-2xl rounded-tr-xs outgoing-chat-bubble px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 shadow-2xs border">
-                                        @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                        @if (!string.IsNullOrWhiteSpace(msg.AttachmentUrl))
                                         {
-                                            <div class="flex items-center justify-between gap-3 p-2 bg-white/90 dark:bg-[#111c21]/90 rounded-xl border border-slate-200/50 dark:border-slate-700/50 mb-1">
-                                                <div class="flex items-center gap-2.5 min-w-0">
-                                                    <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
-                                                        FILE
-                                                    </div>
-                                                    <div class="min-w-0">
-                                                        <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
-                                                        <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "Attachment")</span>
-                                                    </div>
+                                            @if (IsImageAttachment(msg.AttachmentName, msg.AttachmentType))
+                                            {
+                                                <div class="mb-1.5 rounded-xl overflow-hidden max-w-xs">
+                                                    <a href="@msg.AttachmentUrl" target="_blank" title="View full image">
+                                                        <img src="@msg.AttachmentUrl" alt="@msg.AttachmentName" class="max-h-60 w-auto rounded-lg object-contain hover:opacity-95 transition-opacity" loading="lazy" />
+                                                    </a>
+                                                    @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                                    {
+                                                        <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                                            <span class="truncate max-w-[180px]">@msg.AttachmentName</span>
+                                                            <div class="flex items-center gap-2">
+                                                                @if (!string.IsNullOrWhiteSpace(msg.AttachmentSize))
+                                                                {
+                                                                    <span>@msg.AttachmentSize</span>
+                                                                }
+                                                                <a href="@GetDownloadUrl(msg.AttachmentUrl, msg.AttachmentName)" target="_blank" download="@msg.AttachmentName" class="p-0.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" title="Download Image">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                                    </svg>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    }
                                                 </div>
-                                                <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                    </svg>
-                                                </a>
-                                            </div>
+                                            }
+                                            else
+                                            {
+                                                var isDocx = IsDocxAttachment(msg.AttachmentName, msg.AttachmentType);
+                                                <div class="flex items-center justify-between gap-3 p-2 bg-white/90 dark:bg-[#111c21]/90 rounded-xl border border-slate-200/50 dark:border-slate-700/50 mb-1">
+                                                    <div class="flex items-center gap-2.5 min-w-0">
+                                                        <div class="w-8 h-8 rounded-lg @(isDocx ? "bg-blue-600" : "bg-rose-600") text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                                                            @(isDocx ? "DOCX" : "PDF")
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
+                                                            <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? (isDocx ? "Word Document" : "PDF Document"))</span>
+                                                        </div>
+                                                    </div>
+                                                    <a href="@GetDownloadUrl(msg.AttachmentUrl, msg.AttachmentName)" target="_blank" download="@msg.AttachmentName" class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300" title="Download">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                        </svg>
+                                                    </a>
+                                                </div>
+                                            }
                                         }
 
                                         @if (!string.IsNullOrWhiteSpace(msg.Content))
@@ -496,6 +536,19 @@
                                                     title="More Reactions">
                                                 +
                                             </button>
+                                            @if (_selectedConversation?.IsAdmin == true)
+                                            {
+                                                <div class="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5"></div>
+                                                <button type="button" 
+                                                        @onclick="() => DeleteMessageAsync(msg)" 
+                                                        class="w-5 h-5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer" 
+                                                        title="Delete Message (Admin)">
+                                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    </svg>
+                                                </button>
+                                            }
                                         </div>
 
                                         <!-- Reaction Picker Popup for this message -->
@@ -535,24 +588,53 @@
                                         }
 
                                         <div class="rounded-2xl rounded-tl-xs bg-white dark:bg-[#18262c] px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 shadow-2xs border border-slate-200 dark:border-slate-800">
-                                            @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                            @if (!string.IsNullOrWhiteSpace(msg.AttachmentUrl))
                                             {
-                                                <div class="flex items-center justify-between gap-3 p-2 bg-slate-50 dark:bg-[#121e23] rounded-xl border border-slate-200 dark:border-slate-700 mb-1">
-                                                    <div class="flex items-center gap-2.5 min-w-0">
-                                                        <div class="w-8 h-8 rounded-lg bg-rose-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
-                                                            PDF
-                                                        </div>
-                                                        <div class="min-w-0">
-                                                            <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
-                                                            <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "PDF")</span>
-                                                        </div>
+                                                @if (IsImageAttachment(msg.AttachmentName, msg.AttachmentType))
+                                                {
+                                                    <div class="mb-1.5 rounded-xl overflow-hidden max-w-xs">
+                                                        <a href="@msg.AttachmentUrl" target="_blank" title="View full image">
+                                                            <img src="@msg.AttachmentUrl" alt="@msg.AttachmentName" class="max-h-60 w-auto rounded-lg object-contain hover:opacity-95 transition-opacity" loading="lazy" />
+                                                        </a>
+                                                        @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                                        {
+                                                            <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                                                <span class="truncate max-w-[180px]">@msg.AttachmentName</span>
+                                                                <div class="flex items-center gap-2">
+                                                                    @if (!string.IsNullOrWhiteSpace(msg.AttachmentSize))
+                                                                    {
+                                                                        <span>@msg.AttachmentSize</span>
+                                                                    }
+                                                                    <a href="@GetDownloadUrl(msg.AttachmentUrl, msg.AttachmentName)" target="_blank" download="@msg.AttachmentName" class="p-0.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" title="Download Image">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                                        </svg>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        }
                                                     </div>
-                                                    <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                        </svg>
-                                                    </a>
-                                                </div>
+                                                }
+                                                else
+                                                {
+                                                    var isDocx = IsDocxAttachment(msg.AttachmentName, msg.AttachmentType);
+                                                    <div class="flex items-center justify-between gap-3 p-2 bg-slate-50 dark:bg-[#121e23] rounded-xl border border-slate-200 dark:border-slate-700 mb-1">
+                                                        <div class="flex items-center gap-2.5 min-w-0">
+                                                            <div class="w-8 h-8 rounded-lg @(isDocx ? "bg-blue-600" : "bg-rose-600") text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                                                                @(isDocx ? "DOCX" : "PDF")
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
+                                                                <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? (isDocx ? "Word Document" : "PDF Document"))</span>
+                                                            </div>
+                                                        </div>
+                                                        <a href="@GetDownloadUrl(msg.AttachmentUrl, msg.AttachmentName)" target="_blank" download="@msg.AttachmentName" class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300" title="Download">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                            </svg>
+                                                        </a>
+                                                    </div>
+                                                }
                                             }
 
                                             @if (!string.IsNullOrWhiteSpace(msg.Content))
@@ -623,6 +705,34 @@
             <!-- Chat Composer Bar (Matching Exact Unified Input Style) -->
             <div class="px-4 py-3 bg-white/80 dark:bg-[#111c21]/80 backdrop-blur-xs border-t border-slate-200/50 dark:border-slate-800/50 shrink-0 relative">
                 
+                <!-- Floating Undo Delete Notification Banner -->
+                @if (_recentlyDeletedMessage != null)
+                {
+                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/95 dark:bg-[#18262c]/95 text-white shadow-xl backdrop-blur-sm border border-slate-700/60 animate-in fade-in slide-in-from-bottom-2 duration-200 text-xs whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span class="font-medium">Message deleted</span>
+                        </div>
+                        <div class="h-3.5 w-px bg-slate-700"></div>
+                        <button type="button" 
+                                @onclick="UndoDeleteAsync" 
+                                class="font-bold text-teal-300 hover:text-teal-200 cursor-pointer flex items-center gap-1 hover:underline">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4" transform="matrix(-1 0 0 1 24 0)"/>
+                            </svg>
+                            <span>Undo (@_undoCountdown s)</span>
+                        </button>
+                        <button type="button" 
+                                @onclick="DismissUndo" 
+                                class="text-slate-400 hover:text-white cursor-pointer ml-1 text-sm font-bold leading-none"
+                                title="Dismiss">
+                            ✕
+                        </button>
+                    </div>
+                }
+
                 <!-- Full Emoji Picker Popover for Input -->
                 @if (_showInputEmojiPicker)
                 {
@@ -671,6 +781,52 @@
                     </div>
                 }
 
+                <!-- Pending Attachment Preview Banner -->
+                @if (_isUploadingAttachment)
+                {
+                    <div class="mb-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3.5 h-3.5 border-2 border-theme-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span class="font-medium">Uploading document to Supabase Storage...</span>
+                        </div>
+                    </div>
+                }
+                else if (_pendingAttachment != null)
+                {
+                    <div class="mb-2 px-3 py-2 rounded-xl bg-teal-50 dark:bg-[#14262c] border border-teal-200 dark:border-teal-800 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            @if (IsImageAttachment(_pendingAttachment.FileName, _pendingAttachment.ContentType))
+                            {
+                                <div class="w-7 h-7 rounded bg-teal-100 dark:bg-teal-900/60 text-theme-primary flex items-center justify-center font-bold text-xs shrink-0">
+                                    IMG
+                                </div>
+                            }
+                            else if (IsDocxAttachment(_pendingAttachment.FileName, _pendingAttachment.ContentType))
+                            {
+                                <div class="w-7 h-7 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-600 flex items-center justify-center font-bold text-[10px] shrink-0">
+                                    DOCX
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="w-7 h-7 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                    PDF
+                                </div>
+                            }
+                            <div class="truncate">
+                                <p class="font-bold text-slate-800 dark:text-white truncate text-xs">@_pendingAttachment.FileName</p>
+                                <span class="text-[10px] text-slate-500">@FormatFileSize(_pendingAttachment.FileSize) • Ready to send</span>
+                            </div>
+                        </div>
+                        <button type="button" 
+                                @onclick="() => _pendingAttachment = null" 
+                                class="text-slate-400 hover:text-rose-600 p-1 cursor-pointer font-bold text-xs transition-colors" 
+                                title="Remove attachment">
+                            ✕
+                        </button>
+                    </div>
+                }
+
                 <!-- Unified Input Card (Textarea + Action Icons + Send) -->
                 <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#18262c] border border-slate-300 dark:border-slate-700 shadow-2xs transition-all focus-within:border-theme-primary focus-within:ring-2 focus-within:ring-theme-primary/20">
                     
@@ -687,14 +843,17 @@
                     <!-- Right-Side Action Icons Strip (Only Upload & Emoji) -->
                     <div class="flex items-center gap-1 sm:gap-1.5 text-slate-500 dark:text-slate-300 shrink-0 select-none">
                         
-                        <!-- 1. Attachment / Upload Paperclip Icon -->
-                        <button type="button" 
-                                class="p-1 hover:text-theme-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer" 
-                                title="Attach File">
+                        <!-- Hidden InputFile for Attachments -->
+                        <InputFile id="chat-file-input" OnChange="HandleFileSelected" class="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.doc" />
+
+                        <!-- 1. Attachment / Upload Paperclip Icon as label -->
+                        <label for="chat-file-input" 
+                               class="p-1 hover:text-theme-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer" 
+                               title="Attach Document or Image (PDF, DOCX, PNG, JPG)">
                             <svg class="w-5 h-5 shrink-0" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                             </svg>
-                        </button>
+                        </label>
 
                         <!-- 2. Emoji Smiley Icon -->
                         <button type="button" 
@@ -713,8 +872,8 @@
                         <button type="button" 
                                 id="chat-send-btn"
                                 @onclick="SendMessageAsync"
-                                disabled="@(string.IsNullOrWhiteSpace(_messageInput) || _isSending)"
-                                class="p-1 transition-all cursor-pointer @(string.IsNullOrWhiteSpace(_messageInput) || _isSending ? "text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60" : "text-theme-primary hover:opacity-80 hover:scale-110")"
+                                disabled="@((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _isSending || _isUploadingAttachment)"
+                                class="p-1 transition-all cursor-pointer @((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _isSending || _isUploadingAttachment ? "text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60" : "text-theme-primary hover:opacity-80 hover:scale-110")"
                                 title="Send (Enter)">
                             @if (_isSending)
                             {
@@ -1262,6 +1421,15 @@
     private readonly Dictionary<Guid, string> _myReactions = new();
     private bool _needsInputSetup = true;
 
+    // Attachment State
+    private MessageAttachmentUploadResponse? _pendingAttachment;
+    private bool _isUploadingAttachment = false;
+
+    // Soft Delete & Undo State
+    private ChatMessageDto? _recentlyDeletedMessage;
+    private int _undoCountdown = 5;
+    private System.Threading.Timer? _undoTimer;
+
     private IEnumerable<string> FilteredEmojis => EmojiHelper.FilterEmojis(_activeEmojiCategory, _emojiSearchTerm);
 
 
@@ -1306,6 +1474,8 @@
         ChatHubService.OnMessagesRead += HandleMessagesRead;
         ChatHubService.OnUserTyping += HandleUserTyping;
         ChatHubService.OnReactionUpdated += HandleReactionUpdated;
+        ChatHubService.OnMessageDeleted += HandleMessageDeleted;
+        ChatHubService.OnMessageRestored += HandleMessageRestoredAsync;
 
         await ChatHubService.ConnectAsync();
         await LoadConversationsAsync();
@@ -1502,11 +1672,11 @@
         }
     }
 
-    private void HandleKeyPress(KeyboardEventArgs e)
+    private async Task HandleKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !e.ShiftKey)
         {
-            SendMessageAsync();
+            await SendMessageAsync();
         }
     }
 
@@ -1534,11 +1704,117 @@
         }
     }
 
-    private async void SendMessageAsync()
+    private static bool IsImageAttachment(string? name, string? type)
     {
-        if (string.IsNullOrWhiteSpace(_messageInput) || _selectedConversation == null || _isSending) return;
+        if (!string.IsNullOrWhiteSpace(type) && type.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
 
-        var text = _messageInput.Trim();
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            var ext = Path.GetExtension(name).ToLowerInvariant();
+            return ext is ".png" or ".jpg" or ".jpeg" or ".webp" or ".gif";
+        }
+
+        return false;
+    }
+
+    private static bool IsDocxAttachment(string? name, string? type)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            var ext = Path.GetExtension(name).ToLowerInvariant();
+            return ext is ".docx" or ".doc";
+        }
+        return false;
+    }
+
+    private static string FormatFileSize(long? bytes)
+    {
+        if (bytes == null || bytes == 0) return string.Empty;
+        var b = bytes.Value;
+        if (b >= 1024 * 1024) return $"{b / (1024.0 * 1024.0):0.#} MB";
+        if (b >= 1024) return $"{b / (1024.0 * 1024.0 < 1 ? b / 1024.0 : b / 1024.0):0.#} KB";
+        return $"{b} B";
+    }
+
+    private static string GetDownloadUrl(string? url, string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return "#";
+        if (url.Contains("supabase.co", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(fileName))
+        {
+            var separator = url.Contains('?') ? "&" : "?";
+            return $"{url}{separator}download={Uri.EscapeDataString(fileName)}";
+        }
+        return url;
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        if (_selectedConversation == null)
+        {
+            NotificationService.Warning("Please select a conversation first.");
+            return;
+        }
+
+        var file = e.File;
+        if (file == null) return;
+
+        const long maxFileSize = 15 * 1024 * 1024; // 15 MB
+        if (file.Size > maxFileSize)
+        {
+            NotificationService.Warning("File size exceeds the 15 MB limit.");
+            return;
+        }
+
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".pdf", ".png", ".jpg", ".jpeg", ".webp", ".docx", ".doc"
+        };
+
+        if (!allowedExtensions.Contains(ext))
+        {
+            NotificationService.Warning("Only PDF, DOCX, PNG, JPG, JPEG, and WEBP files are supported.");
+            return;
+        }
+
+        _isUploadingAttachment = true;
+        StateHasChanged();
+
+        try
+        {
+            var uploadResult = await MessageService.UploadAttachmentAsync(
+                _selectedConversation.Id,
+                file);
+
+            if (uploadResult.Success && uploadResult.Data != null)
+            {
+                _pendingAttachment = uploadResult.Data;
+                NotificationService.Success($"Attached {file.Name}");
+            }
+            else
+            {
+                NotificationService.Error(uploadResult.Message ?? "Failed to upload file to Supabase.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Error($"Upload failed: {ex.Message}");
+        }
+        finally
+        {
+            _isUploadingAttachment = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if ((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _selectedConversation == null || _isSending || _isUploadingAttachment) return;
+
+        var text = _messageInput?.Trim() ?? string.Empty;
         _isSending = true;
 
         if (_isCurrentlyTyping && _selectedConversation != null)
@@ -1550,12 +1826,33 @@
 
         try
         {
+            var messageType = MessageType.Text;
+            if (_pendingAttachment != null)
+            {
+                messageType = IsImageAttachment(_pendingAttachment.FileName, _pendingAttachment.ContentType)
+                    ? MessageType.Image
+                    : MessageType.File;
+            }
+
             var request = new SendMessageRequest
             {
-                ConversationId = _selectedConversation.Id,
-                MessageType = MessageType.Text,
+                ConversationId = _selectedConversation!.Id,
+                MessageType = messageType,
                 MessageText = text
             };
+
+            if (_pendingAttachment != null)
+            {
+                request.Attachments.Add(new MessageAttachmentRequest
+                {
+                    FileName = _pendingAttachment.FileName,
+                    ContentType = _pendingAttachment.ContentType,
+                    FileSize = _pendingAttachment.FileSize,
+                    FileUrl = _pendingAttachment.FileUrl,
+                    ThumbnailUrl = _pendingAttachment.ThumbnailUrl,
+                    StorageKey = _pendingAttachment.StorageKey
+                });
+            }
 
             var response = await MessageService.SendMessageAsync(request);
             if (response.Success && response.Data != null)
@@ -1570,6 +1867,7 @@
                 _selectedConversation.LastMessageAt = response.Data.SentAt;
                 MoveConversationToTop(_selectedConversation);
                 _messageInput = string.Empty;
+                _pendingAttachment = null;
                 await ResetTextareaHeightAsync();
                 await ScrollToBottomAsync();
             }
@@ -1745,6 +2043,177 @@
             _activeEmojiCategory = "Smileys";
             _emojiSearchTerm = string.Empty;
         }
+    }
+
+    private async Task DeleteMessageAsync(ChatMessageDto message)
+    {
+        if (message == null) return;
+
+        // Clean up existing undo timer
+        _undoTimer?.Dispose();
+        _recentlyDeletedMessage = message;
+        _undoCountdown = 5;
+
+        // Optimistically remove from current message list
+        _currentMessages.Remove(message);
+
+        // Update active conversation's last message snippet if this was the last message
+        if (_selectedConversation != null && _selectedConversation.Id == message.ConversationId)
+        {
+            var latest = _currentMessages.LastOrDefault();
+            if (latest != null)
+            {
+                _selectedConversation.LastMessage = latest.Content;
+                _selectedConversation.LastMessageTime = latest.SentAt.ToString("hh:mm tt");
+                _selectedConversation.LastMessageAt = latest.SentAt;
+            }
+            else
+            {
+                _selectedConversation.LastMessage = string.Empty;
+                _selectedConversation.LastMessageTime = string.Empty;
+            }
+        }
+
+        StateHasChanged();
+
+        // Call backend API to soft delete
+        var response = await MessageService.DeleteMessageAsync(message.Id);
+        if (!response.Success)
+        {
+            NotificationService.Error(response.Message ?? "Failed to delete message.");
+            // Rollback optimistic removal
+            if (!_currentMessages.Any(m => m.Id == message.Id))
+            {
+                _currentMessages.Add(message);
+                _currentMessages = _currentMessages.OrderBy(m => m.SentAt).ToList();
+            }
+            _recentlyDeletedMessage = null;
+            StateHasChanged();
+            return;
+        }
+
+        // Start 5-second countdown timer for undo
+        _undoTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(() =>
+            {
+                if (_undoCountdown > 1)
+                {
+                    _undoCountdown--;
+                    StateHasChanged();
+                }
+                else
+                {
+                    _undoTimer?.Dispose();
+                    _undoTimer = null;
+                    _recentlyDeletedMessage = null;
+                    StateHasChanged();
+                }
+            });
+        }, null, 1000, 1000);
+    }
+
+    private async Task UndoDeleteAsync()
+    {
+        if (_recentlyDeletedMessage == null) return;
+
+        var messageToRestore = _recentlyDeletedMessage;
+        _undoTimer?.Dispose();
+        _undoTimer = null;
+        _recentlyDeletedMessage = null;
+
+        var response = await MessageService.RestoreMessageAsync(messageToRestore.Id);
+        if (response.Success && response.Data != null)
+        {
+            var restored = response.Data;
+            restored.IsOutgoing = restored.SenderId == _currentUserId.ToString();
+
+            if (_selectedConversation != null && _selectedConversation.Id == restored.ConversationId)
+            {
+                if (!_currentMessages.Any(m => m.Id == restored.Id))
+                {
+                    _currentMessages.Add(restored);
+                    _currentMessages = _currentMessages.OrderBy(m => m.SentAt).ToList();
+                }
+
+                var latest = _currentMessages.LastOrDefault();
+                if (latest != null)
+                {
+                    _selectedConversation.LastMessage = latest.Content;
+                    _selectedConversation.LastMessageTime = latest.SentAt.ToString("hh:mm tt");
+                    _selectedConversation.LastMessageAt = latest.SentAt;
+                }
+                await ScrollToBottomAsync();
+            }
+            NotificationService.Success("Message restored!");
+        }
+        else
+        {
+            NotificationService.Error(response.Message ?? "Failed to restore message.");
+        }
+        StateHasChanged();
+    }
+
+    private void DismissUndo()
+    {
+        _undoTimer?.Dispose();
+        _undoTimer = null;
+        _recentlyDeletedMessage = null;
+        StateHasChanged();
+    }
+
+    private void HandleMessageDeleted(MessageDeletedNotification notification)
+    {
+        InvokeAsync(() =>
+        {
+            if (_selectedConversation != null && _selectedConversation.Id == notification.ConversationId)
+            {
+                var existing = _currentMessages.FirstOrDefault(m => m.Id == notification.MessageId);
+                if (existing != null)
+                {
+                    _currentMessages.Remove(existing);
+                    var latest = _currentMessages.LastOrDefault();
+                    if (latest != null)
+                    {
+                        _selectedConversation.LastMessage = latest.Content;
+                        _selectedConversation.LastMessageTime = latest.SentAt.ToString("hh:mm tt");
+                        _selectedConversation.LastMessageAt = latest.SentAt;
+                    }
+                    else
+                    {
+                        _selectedConversation.LastMessage = string.Empty;
+                        _selectedConversation.LastMessageTime = string.Empty;
+                    }
+                    StateHasChanged();
+                }
+            }
+        });
+    }
+
+    private async Task HandleMessageRestoredAsync(ChatMessageDto message)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (_selectedConversation != null && _selectedConversation.Id == message.ConversationId)
+            {
+                if (!_currentMessages.Any(m => m.Id == message.Id))
+                {
+                    message.IsOutgoing = message.SenderId == _currentUserId.ToString();
+                    _currentMessages.Add(message);
+                    _currentMessages = _currentMessages.OrderBy(m => m.SentAt).ToList();
+
+                    var latest = _currentMessages.LastOrDefault();
+                    if (latest != null)
+                    {
+                        _selectedConversation.LastMessage = latest.Content;
+                        _selectedConversation.LastMessageTime = latest.SentAt.ToString("hh:mm tt");
+                        _selectedConversation.LastMessageAt = latest.SentAt;
+                    }
+                    await ScrollToBottomAsync();
+                    StateHasChanged();
+                }
+            }
+        });
     }
 
     private void ToggleInputEmojiPicker()
@@ -2033,10 +2502,13 @@
     public ValueTask DisposeAsync()
     {
         _typingDebounceTimer?.Dispose();
+        _undoTimer?.Dispose();
         ChatHubService.OnMessageReceived -= HandleIncomingMessageAsync;
         ChatHubService.OnMessagesRead -= HandleMessagesRead;
         ChatHubService.OnUserTyping -= HandleUserTyping;
         ChatHubService.OnReactionUpdated -= HandleReactionUpdated;
+        ChatHubService.OnMessageDeleted -= HandleMessageDeleted;
+        ChatHubService.OnMessageRestored -= HandleMessageRestoredAsync;
         return ValueTask.CompletedTask;
     }
 }

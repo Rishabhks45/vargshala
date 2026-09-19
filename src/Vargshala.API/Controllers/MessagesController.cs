@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vargshala.Application.Abstractions.CurrentUser;
+using Vargshala.Application.Abstractions.Storage;
 using Vargshala.Application.Features.Messages.Commands.CreateConversation;
 using Vargshala.Application.Features.Messages.Commands.MarkConversationAsRead;
 using Vargshala.Application.Features.Messages.Commands.SendMessage;
@@ -138,6 +140,89 @@ public class MessagesController : ControllerBase
     public async Task<IActionResult> ToggleReaction([FromRoute] Guid messageId, [FromBody] ToggleMessageReactionRequest request)
     {
         var result = await _mediator.Send(new ToggleMessageReactionCommand(messageId, request.Emoji));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpPost("conversations/{conversationId:guid}/attachments")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(15 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 15 * 1024 * 1024)]
+    public async Task<IActionResult> UploadAttachment(
+        [FromRoute] Guid conversationId,
+        IFormFile? file,
+        [FromServices] IStorageService storageService,
+        [FromServices] ICurrentUser currentUser)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<MessageAttachmentUploadResponse>.FailureResponse("No file was uploaded."));
+        }
+
+        if (currentUser.OrganizationId is null || currentUser.UserId == Guid.Empty)
+        {
+            return Unauthorized(ApiResponse<MessageAttachmentUploadResponse>.FailureResponse("User is not authenticated."));
+        }
+
+        var ext = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+        var allowedExts = new[] { ".pdf", ".png", ".jpg", ".jpeg", ".webp", ".docx", ".doc" };
+        if (string.IsNullOrEmpty(ext) || !allowedExts.Contains(ext))
+        {
+            return BadRequest(ApiResponse<MessageAttachmentUploadResponse>.FailureResponse(
+                $"File type '{ext}' is not supported. Allowed: PDF, PNG, JPG, JPEG, WEBP, DOCX, DOC"));
+        }
+
+        if (file.Length > 15 * 1024 * 1024)
+        {
+            return BadRequest(ApiResponse<MessageAttachmentUploadResponse>.FailureResponse("File size exceeds 15 MB limit."));
+        }
+
+        // Subfolder routing matching Supabase bucket structure: DOCX, Image, PDF
+        var subFolder = ext switch
+        {
+            ".pdf" => "PDF",
+            ".png" or ".jpg" or ".jpeg" or ".webp" => "Image",
+            ".docx" or ".doc" => "DOCX",
+            _ => "DOCX"
+        };
+
+        var orgId = currentUser.OrganizationId.Value;
+        var folderPath = subFolder;
+
+        using var stream = file.OpenReadStream();
+        var result = await storageService.UploadFileAsync(
+            stream, 
+            file.FileName, 
+            file.ContentType, 
+            folderPath, 
+            HttpContext.RequestAborted);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpDelete("{messageId:guid}")]
+    public async Task<IActionResult> DeleteMessage([FromRoute] Guid messageId)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Commands.DeleteMessage.DeleteMessageCommand(messageId));
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpPost("{messageId:guid}/restore")]
+    public async Task<IActionResult> RestoreMessage([FromRoute] Guid messageId)
+    {
+        var result = await _mediator.Send(new Vargshala.Application.Features.Messages.Commands.RestoreMessage.RestoreMessageCommand(messageId));
         if (!result.Success)
         {
             return BadRequest(result);

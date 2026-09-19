@@ -62,4 +62,22 @@ public class ChatNotificationService : IChatNotificationService
         await _hubContext.Clients.Group($"conv_{conversationId}")
             .SendAsync("ConversationUpdated", conversation, cancellationToken);
     }
+
+    public async Task NotifyMessageDeletedAsync(
+        Guid conversationId, 
+        Guid messageId, 
+        CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group($"conv_{conversationId}")
+            .SendAsync("MessageDeleted", new MessageDeletedNotification { ConversationId = conversationId, MessageId = messageId }, cancellationToken);
+    }
+
+    public async Task NotifyMessageRestoredAsync(
+        Guid conversationId, 
+        ChatMessageDto message, 
+        CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group($"conv_{conversationId}")
+            .SendAsync("MessageRestored", message, cancellationToken);
+    }
 }

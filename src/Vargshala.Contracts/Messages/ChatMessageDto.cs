@@ -101,11 +101,28 @@ public class MessagesReadNotification
     public DateTime ReadAt { get; set; } = DateTime.UtcNow;
 }
 
+public class MessageDeletedNotification
+{
+    public Guid ConversationId { get; set; }
+    public Guid MessageId { get; set; }
+}
+
 public class ToggleReactionResultDto
 {
     public Guid MessageId { get; set; }
     public Dictionary<string, int> Reactions { get; set; } = new();
     public string? ActiveEmoji { get; set; }
 }
+
+public class MessageAttachmentUploadResponse
+{
+    public string FileName { get; set; } = string.Empty;
+    public string? ContentType { get; set; }
+    public long FileSize { get; set; }
+    public string FileUrl { get; set; } = string.Empty;
+    public string? ThumbnailUrl { get; set; }
+    public string? StorageKey { get; set; }
+}
+
 
 

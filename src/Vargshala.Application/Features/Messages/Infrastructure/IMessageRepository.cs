@@ -51,6 +51,8 @@ public interface IMessageRepository
     // Message Operations
     Task<Message?> GetMessageByIdAsync(Guid messageId, CancellationToken cancellationToken = default);
     Task<Message?> GetMessageWithAttachmentsAsync(Guid messageId, CancellationToken cancellationToken = default);
+    Task<Message?> GetMessageForUpdateAsync(Guid messageId, CancellationToken cancellationToken = default);
+    Task<Message?> GetMessageForRestoreAsync(Guid messageId, CancellationToken cancellationToken = default);
     Task<(List<Message> Items, int TotalRecords)> GetMessagesPagedAsync(
         Guid conversationId, 
         PagedRequest request, 
@@ -58,6 +60,9 @@ public interface IMessageRepository
     Task AddMessageAsync(Message message, CancellationToken cancellationToken = default);
     void UpdateMessage(Message message);
     void SoftDeleteMessage(Message message, Guid deletedBy);
+    void RestoreMessage(Message message);
+    Task<Message?> GetMessageIncludingDeletedAsync(Guid messageId, CancellationToken cancellationToken = default);
+    Task<Message?> GetLatestActiveMessageAsync(Guid conversationId, CancellationToken cancellationToken = default);
 
     // Read Tracking
     Task MarkMessagesAsReadAsync(Guid conversationId, Guid userId, Guid latestMessageId, CancellationToken cancellationToken = default);

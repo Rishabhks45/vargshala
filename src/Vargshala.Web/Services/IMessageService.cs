@@ -55,5 +55,19 @@ public interface IMessageService
         Guid messageId,
         string emoji,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<MessageAttachmentUploadResponse>> UploadAttachmentAsync(
+        Guid conversationId,
+        Microsoft.AspNetCore.Components.Forms.IBrowserFile file,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<bool>> DeleteMessageAsync(
+        Guid messageId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResponse<ChatMessageDto>> RestoreMessageAsync(
+        Guid messageId,
+        CancellationToken cancellationToken = default);
 }
+
 

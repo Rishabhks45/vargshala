@@ -20,4 +20,14 @@ public interface IChatNotificationService
         Guid conversationId, 
         ChatConversationDto conversation, 
         CancellationToken cancellationToken = default);
+
+    Task NotifyMessageDeletedAsync(
+        Guid conversationId, 
+        Guid messageId, 
+        CancellationToken cancellationToken = default);
+
+    Task NotifyMessageRestoredAsync(
+        Guid conversationId, 
+        ChatMessageDto message, 
+        CancellationToken cancellationToken = default);
 }

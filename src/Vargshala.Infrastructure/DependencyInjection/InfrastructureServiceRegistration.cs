@@ -10,6 +10,7 @@ using Vargshala.Application.Abstractions.Authentication;
 using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Abstractions.Email;
 using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Storage;
 using Vargshala.Application.Settings;
 using Vargshala.Infrastructure.Authentication;
 using Vargshala.Infrastructure.Persistence;
@@ -55,6 +56,10 @@ public static class InfrastructureServiceRegistration
 
         // Encryption Settings
         services.Configure<EncryptionSettings>(configuration.GetSection(EncryptionSettings.SectionName));
+
+        // Supabase Storage
+        services.Configure<SupabaseStorageOptions>(configuration.GetSection(SupabaseStorageOptions.SectionName));
+        services.AddHttpClient<IStorageService, SupabaseStorageService>();
 
         // Authentication, Security & Encryption services
         services.AddScoped<IEncryptionService, EncryptionService>();

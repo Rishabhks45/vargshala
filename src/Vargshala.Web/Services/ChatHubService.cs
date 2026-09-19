@@ -21,6 +21,8 @@ public class ChatHubService : IChatHubService
     public event Action<MessagesReadNotification>? OnMessagesRead;
     public event Action<string, string, bool>? OnUserTyping;
     public event Action<string, string, string, int>? OnReactionUpdated;
+    public event Action<MessageDeletedNotification>? OnMessageDeleted;
+    public event Func<ChatMessageDto, Task>? OnMessageRestored;
 
     public HubConnectionState State => _hubConnection?.State ?? HubConnectionState.Disconnected;
 
@@ -115,6 +117,33 @@ public class ChatHubService : IChatHubService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error processing MessageReactionUpdated in ChatHubService");
+                }
+            });
+
+            _hubConnection.On<MessageDeletedNotification>("MessageDeleted", (notification) =>
+            {
+                try
+                {
+                    OnMessageDeleted?.Invoke(notification);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing MessageDeleted in ChatHubService");
+                }
+            });
+
+            _hubConnection.On<ChatMessageDto>("MessageRestored", async (message) =>
+            {
+                if (OnMessageRestored != null)
+                {
+                    try
+                    {
+                        await OnMessageRestored.Invoke(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error processing MessageRestored in ChatHubService");
+                    }
                 }
             });
 

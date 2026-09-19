@@ -132,7 +132,10 @@ public class MessageRepository : IMessageRepository
     public void UpdateConversation(Conversation conversation)
     {
         conversation.UpdatedAt = DateTime.UtcNow;
-        _db.Conversations.Update(conversation);
+        if (_db is not DbContext dbContext || dbContext.Entry(conversation).State == EntityState.Detached)
+        {
+            _db.Conversations.Update(conversation);
+        }
     }
 
     public void DeleteConversation(Conversation conversation, Guid deletedBy)
@@ -294,6 +297,19 @@ public class MessageRepository : IMessageRepository
             .FirstOrDefaultAsync(m => m.Id == messageId && !m.IsDeleted, cancellationToken);
     }
 
+    public async Task<Message?> GetMessageForUpdateAsync(Guid messageId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Messages
+            .FirstOrDefaultAsync(m => m.Id == messageId && !m.IsDeleted, cancellationToken);
+    }
+
+    public async Task<Message?> GetMessageForRestoreAsync(Guid messageId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Messages
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(m => m.Id == messageId, cancellationToken);
+    }
+
     public async Task<(List<Message> Items, int TotalRecords)> GetMessagesPagedAsync(
         Guid conversationId, 
         PagedRequest request, 
@@ -325,7 +341,10 @@ public class MessageRepository : IMessageRepository
     public void UpdateMessage(Message message)
     {
         message.EditedAt = DateTime.UtcNow;
-        _db.Messages.Update(message);
+        if (_db is not DbContext dbContext || dbContext.Entry(message).State == EntityState.Detached)
+        {
+            _db.Messages.Update(message);
+        }
     }
 
     public void SoftDeleteMessage(Message message, Guid deletedBy)
@@ -333,7 +352,46 @@ public class MessageRepository : IMessageRepository
         message.IsDeleted = true;
         message.DeletedBy = deletedBy;
         message.DeletedAt = DateTime.UtcNow;
-        _db.Messages.Update(message);
+        if (_db is not DbContext dbContext || dbContext.Entry(message).State == EntityState.Detached)
+        {
+            _db.Messages.Update(message);
+        }
+    }
+
+    public void RestoreMessage(Message message)
+    {
+        message.IsDeleted = false;
+        message.DeletedBy = null;
+        message.DeletedAt = null;
+        message.UpdatedAt = DateTime.UtcNow;
+        if (_db is not DbContext dbContext || dbContext.Entry(message).State == EntityState.Detached)
+        {
+            _db.Messages.Update(message);
+        }
+    }
+
+    public async Task<Message?> GetMessageIncludingDeletedAsync(Guid messageId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Messages
+            .IgnoreQueryFilters()
+            .Include(m => m.Sender)
+            .Include(m => m.Reads)
+            .Include(m => m.Reactions)
+            .Include(m => m.Attachments.Where(a => !a.IsDeleted))
+            .Include(m => m.ReplyToMessage)
+                .ThenInclude(r => r!.Sender)
+            .FirstOrDefaultAsync(m => m.Id == messageId, cancellationToken);
+    }
+
+    public async Task<Message?> GetLatestActiveMessageAsync(Guid conversationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Messages
+            .AsNoTracking()
+            .Include(m => m.Sender)
+            .Include(m => m.Attachments.Where(a => !a.IsDeleted))
+            .Where(m => m.ConversationId == conversationId && !m.IsDeleted)
+            .OrderByDescending(m => m.SentAt)
+            .FirstOrDefaultAsync(cancellationToken);
     }
     #endregion
 
