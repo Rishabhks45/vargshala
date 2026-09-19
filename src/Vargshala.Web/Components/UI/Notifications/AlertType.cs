@@ -6,5 +6,6 @@ public enum AlertType
     Error,
     Failed,
     Warning,
-    Info
+    Info,
+    Theme
 }

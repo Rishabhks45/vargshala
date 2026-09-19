@@ -1,4 +1,5 @@
 using MediatR;
+using Vargshala.Application.Abstractions.CurrentUser;
 using Vargshala.Application.Features.OrgAdmin.Attendances.Infrastructure;
 using Vargshala.Contracts.Attendances;
 using Vargshala.Contracts.Common;
@@ -10,21 +11,31 @@ public record GetSessionAttendanceSheetQuery(Guid SessionId) : IRequest<ApiRespo
 public class GetSessionAttendanceSheetQueryHandler : IRequestHandler<GetSessionAttendanceSheetQuery, ApiResponse<SessionAttendanceSheetDto>>
 {
     private readonly IAttendanceRepository _attendanceRepo;
+    private readonly ICurrentUser _currentUser;
 
-    public GetSessionAttendanceSheetQueryHandler(IAttendanceRepository attendanceRepo)
+    public GetSessionAttendanceSheetQueryHandler(
+        IAttendanceRepository attendanceRepo,
+        ICurrentUser currentUser)
     {
         _attendanceRepo = attendanceRepo;
+        _currentUser = currentUser;
     }
 
     public async Task<ApiResponse<SessionAttendanceSheetDto>> Handle(GetSessionAttendanceSheetQuery request, CancellationToken cancellationToken)
     {
-        var session = await _attendanceRepo.GetSessionWithDetailsAsync(request.SessionId, cancellationToken);
+        var orgId = _currentUser.OrganizationId;
+        if (!orgId.HasValue || orgId.Value == Guid.Empty)
+        {
+            return ApiResponse<SessionAttendanceSheetDto>.FailureResponse("No active organization context found.");
+        }
+
+        var session = await _attendanceRepo.GetSessionWithDetailsAsync(request.SessionId, orgId.Value, cancellationToken);
         if (session == null)
         {
             return ApiResponse<SessionAttendanceSheetDto>.FailureResponse("Class session not found.");
         }
 
-        var batchStudents = await _attendanceRepo.GetEnrolledStudentsForBatchAsync(session.BatchId, cancellationToken);
+        var batchStudents = await _attendanceRepo.GetEnrolledStudentsForBatchAsync(session.BatchId, orgId.Value, cancellationToken);
         var existingAttendances = await _attendanceRepo.GetAttendancesForSessionAsync(request.SessionId, cancellationToken);
         var attendanceMap = existingAttendances.ToDictionary(a => a.StudentId);
 

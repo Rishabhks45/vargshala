@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.Students.Commands.CreateStudent;
 using Vargshala.Application.Features.OrgAdmin.Students.Commands.DeleteStudent;
 using Vargshala.Application.Features.OrgAdmin.Students.Commands.UpdateStudent;
@@ -22,9 +20,8 @@ public class StudentsController : BaseBranchAdminController
 {
     public StudentsController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -67,10 +64,7 @@ public class StudentsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var studentExistsInBranch = await Db.Students.AsNoTracking()
-            .AnyAsync(s => s.Id == id && !s.IsDeleted && s.BatchStudents.Any(bs => bs.Batch.Class.BranchId == branchId), cancellationToken);
-
-        if (!studentExistsInBranch)
+        if (!await BranchAuthService.CanAccessStudentAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<StudentDto>.FailureResponse("Student not found in this branch."));
         }
@@ -122,10 +116,7 @@ public class StudentsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var studentExistsInBranch = await Db.Students.AsNoTracking()
-            .AnyAsync(s => s.Id == id && !s.IsDeleted && s.BatchStudents.Any(bs => bs.Batch.Class.BranchId == branchId), cancellationToken);
-
-        if (!studentExistsInBranch)
+        if (!await BranchAuthService.CanAccessStudentAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<StudentDto>.FailureResponse("Student not found in this branch."));
         }
@@ -150,10 +141,7 @@ public class StudentsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var studentExistsInBranch = await Db.Students.AsNoTracking()
-            .AnyAsync(s => s.Id == id && !s.IsDeleted && s.BatchStudents.Any(bs => bs.Batch.Class.BranchId == branchId), cancellationToken);
-
-        if (!studentExistsInBranch)
+        if (!await BranchAuthService.CanAccessStudentAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Student not found in this branch."));
         }

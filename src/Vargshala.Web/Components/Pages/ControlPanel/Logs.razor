@@ -67,20 +67,13 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-            <select @bind="_levelFilter" class="px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none">
-                <option value="All">All Levels</option>
-                <option value="Info">Information Only</option>
-                <option value="Warning">Warnings Only</option>
-                <option value="Error">Errors Only</option>
-                <option value="Security">Security &amp; Auth</option>
-            </select>
+            <CustomSelect @bind-Value="_levelFilter" 
+                          Options="_levelOptions" 
+                          Compact="true" />
 
-            <select @bind="_sourceFilter" class="px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none">
-                <option value="All">All Sources</option>
-                <option value="Auth">Auth &amp; Cookie</option>
-                <option value="EFCore">EF Core &amp; Database</option>
-                <option value="Api">API Gateway</option>
-            </select>
+            <CustomSelect @bind-Value="_sourceFilter" 
+                          Options="_sourceOptions" 
+                          Compact="true" />
         </div>
     </div>
 
@@ -133,7 +126,22 @@
 @code {
     private string _search = "";
     private string _levelFilter = "All";
+    private readonly List<CustomSelect.CustomSelectOption> _levelOptions = new()
+    {
+        new("All", "All Levels"),
+        new("Info", "Information Only"),
+        new("Warning", "Warnings Only"),
+        new("Error", "Errors Only"),
+        new("Security", "Security & Auth")
+    };
     private string _sourceFilter = "All";
+    private readonly List<CustomSelect.CustomSelectOption> _sourceOptions = new()
+    {
+        new("All", "All Sources"),
+        new("Auth", "Auth & Cookie"),
+        new("EFCore", "EF Core & Database"),
+        new("Api", "API Gateway")
+    };
     private bool _isRefreshing = false;
 
     public record LogEntry(

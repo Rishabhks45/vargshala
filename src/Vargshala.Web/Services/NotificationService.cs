@@ -7,7 +7,7 @@ public class NotificationService : INotificationService
     public event Action<NotificationItem>? OnNotificationReceived;
     public event Action<Guid>? OnNotificationDismissed;
 
-    public void Show(AlertType type, string message, string? title = null, int durationSeconds = 4)
+    public void Show(AlertType type, string message, string? title = null, int durationSeconds = 2)
     {
         var notification = new NotificationItem
         {
@@ -20,29 +20,34 @@ public class NotificationService : INotificationService
         OnNotificationReceived?.Invoke(notification);
     }
 
-    public void Success(string message, string? title = "Success", int durationSeconds = 4)
+    public void Success(string message, string? title = "Success", int durationSeconds = 2)
     {
         Show(AlertType.Success, message, title, durationSeconds);
     }
 
-    public void Error(string message, string? title = "Error", int durationSeconds = 5)
+    public void Error(string message, string? title = "Error", int durationSeconds = 2)
     {
         Show(AlertType.Error, message, title, durationSeconds);
     }
 
-    public void Failed(string message, string? title = "Action Failed", int durationSeconds = 5)
+    public void Failed(string message, string? title = "Action Failed", int durationSeconds = 2)
     {
         Show(AlertType.Failed, message, title, durationSeconds);
     }
 
-    public void Warning(string message, string? title = "Warning", int durationSeconds = 5)
+    public void Warning(string message, string? title = "Warning", int durationSeconds = 2)
     {
         Show(AlertType.Warning, message, title, durationSeconds);
     }
 
-    public void Info(string message, string? title = "Information", int durationSeconds = 4)
+    public void Info(string message, string? title = "Information", int durationSeconds = 2)
     {
         Show(AlertType.Info, message, title, durationSeconds);
+    }
+
+    public void Theme(string message, string? title = "Theme Update", int durationSeconds = 2)
+    {
+        Show(AlertType.Theme, message, title, durationSeconds);
     }
 
     public void Dismiss(Guid id)

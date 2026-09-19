@@ -1,7 +1,6 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Messages.Infrastructure;
 using Vargshala.Application.Features.Messages.Security;
 using Vargshala.Contracts.Common;
 using Vargshala.SharedKernel.Enums;
@@ -11,16 +10,16 @@ namespace Vargshala.Application.Features.Messages.Commands.ChangeGroupPhoto;
 
 public class ChangeGroupPhotoCommandHandler : IRequestHandler<ChangeGroupPhotoCommand, ApiResponse<bool>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IMessageRepository _messageRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IConversationAuthorizationService _authService;
 
     public ChangeGroupPhotoCommandHandler(
-        IVargshalaDbContext db,
+        IMessageRepository messageRepository,
         ICurrentUser currentUser,
         IConversationAuthorizationService authService)
     {
-        _db = db;
+        _messageRepository = messageRepository;
         _currentUser = currentUser;
         _authService = authService;
     }
@@ -42,8 +41,7 @@ public class ChangeGroupPhotoCommandHandler : IRequestHandler<ChangeGroupPhotoCo
             return ApiResponse<bool>.FailureResponse("You do not have permission to change the group photo. Only Group Admins can perform this action.");
         }
 
-        var conversation = await _db.Conversations
-            .FirstOrDefaultAsync(c => c.Id == request.ConversationId && c.OrganizationId == orgId && !c.IsDeleted, cancellationToken);
+        var conversation = await _messageRepository.GetConversationForUpdateAsync(request.ConversationId, orgId, cancellationToken);
 
         if (conversation == null)
         {
@@ -54,7 +52,7 @@ public class ChangeGroupPhotoCommandHandler : IRequestHandler<ChangeGroupPhotoCo
         conversation.GroupPhotoUrl = request.GroupPhotoUrl?.Trim();
 
         // Fetch admin caller name
-        var caller = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken);
+        var caller = await _messageRepository.GetUserBasicAsync(currentUserId, cancellationToken);
         var callerName = caller != null ? $"{caller.FirstName} {caller.LastName}".Trim() : "An admin";
 
         // Create System Message
@@ -73,7 +71,7 @@ public class ChangeGroupPhotoCommandHandler : IRequestHandler<ChangeGroupPhotoCo
             IsPinned = false,
             IsDeleted = false
         };
-        await _db.Messages.AddAsync(systemMessage, cancellationToken);
+        await _messageRepository.AddMessageAsync(systemMessage, cancellationToken);
 
         // Update conversation last message cache
         conversation.LastMessageId = systemMessage.Id;
@@ -81,7 +79,7 @@ public class ChangeGroupPhotoCommandHandler : IRequestHandler<ChangeGroupPhotoCo
         conversation.LastMessageText = systemMessage.MessageText;
         conversation.LastMessageSenderId = currentUserId;
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _messageRepository.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Group photo updated successfully.");
     }

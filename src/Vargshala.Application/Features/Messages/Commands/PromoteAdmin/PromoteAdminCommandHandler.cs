@@ -1,7 +1,6 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Messages.Infrastructure;
 using Vargshala.Application.Features.Messages.Security;
 using Vargshala.Contracts.Common;
 using Vargshala.SharedKernel.Enums;
@@ -11,16 +10,16 @@ namespace Vargshala.Application.Features.Messages.Commands.PromoteAdmin;
 
 public class PromoteAdminCommandHandler : IRequestHandler<PromoteAdminCommand, ApiResponse<bool>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IMessageRepository _messageRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IConversationAuthorizationService _authService;
 
     public PromoteAdminCommandHandler(
-        IVargshalaDbContext db,
+        IMessageRepository messageRepository,
         ICurrentUser currentUser,
         IConversationAuthorizationService authService)
     {
-        _db = db;
+        _messageRepository = messageRepository;
         _currentUser = currentUser;
         _authService = authService;
     }
@@ -42,16 +41,14 @@ public class PromoteAdminCommandHandler : IRequestHandler<PromoteAdminCommand, A
             return ApiResponse<bool>.FailureResponse("You are not authorized to promote this user to Group Admin.");
         }
 
-        var conversation = await _db.Conversations
-            .FirstOrDefaultAsync(c => c.Id == request.ConversationId && c.OrganizationId == orgId && !c.IsDeleted, cancellationToken);
+        var conversation = await _messageRepository.GetConversationForUpdateAsync(request.ConversationId, orgId, cancellationToken);
 
         if (conversation == null)
         {
             return ApiResponse<bool>.FailureResponse("Conversation not found.");
         }
 
-        var participant = await _db.ConversationParticipants
-            .FirstOrDefaultAsync(cp => cp.ConversationId == request.ConversationId && cp.UserId == request.TargetUserId && cp.IsActive, cancellationToken);
+        var participant = await _messageRepository.GetActiveParticipantAsync(request.ConversationId, request.TargetUserId, cancellationToken);
 
         if (participant == null)
         {
@@ -61,6 +58,7 @@ public class PromoteAdminCommandHandler : IRequestHandler<PromoteAdminCommand, A
         // Promote participant
         participant.IsAdmin = true;
         participant.Role = ConversationParticipantRole.Admin;
+        _messageRepository.UpdateParticipant(participant);
 
         // Add ConversationAdmin entry
         var adminEntry = new ConversationAdmin
@@ -74,11 +72,11 @@ public class PromoteAdminCommandHandler : IRequestHandler<PromoteAdminCommand, A
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
-        await _db.ConversationAdmins.AddAsync(adminEntry, cancellationToken);
+        await _messageRepository.AddConversationAdminAsync(adminEntry, cancellationToken);
 
         // Fetch names for system message
-        var caller = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken);
-        var target = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.TargetUserId, cancellationToken);
+        var caller = await _messageRepository.GetUserBasicAsync(currentUserId, cancellationToken);
+        var target = await _messageRepository.GetUserBasicAsync(request.TargetUserId, cancellationToken);
         var callerName = caller != null ? $"{caller.FirstName} {caller.LastName}".Trim() : "An admin";
         var targetName = target != null ? $"{target.FirstName} {target.LastName}".Trim() : "user";
 
@@ -99,7 +97,7 @@ public class PromoteAdminCommandHandler : IRequestHandler<PromoteAdminCommand, A
             IsPinned = false,
             IsDeleted = false
         };
-        await _db.Messages.AddAsync(systemMessage, cancellationToken);
+        await _messageRepository.AddMessageAsync(systemMessage, cancellationToken);
 
         // Update conversation last message cache
         conversation.LastMessageId = systemMessage.Id;
@@ -107,7 +105,7 @@ public class PromoteAdminCommandHandler : IRequestHandler<PromoteAdminCommand, A
         conversation.LastMessageText = systemMessage.MessageText;
         conversation.LastMessageSenderId = currentUserId;
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _messageRepository.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "User promoted to Group Admin successfully.");
     }

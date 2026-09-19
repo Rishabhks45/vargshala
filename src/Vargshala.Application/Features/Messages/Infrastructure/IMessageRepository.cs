@@ -23,15 +23,30 @@ public interface IMessageRepository
     Task AddConversationAsync(Conversation conversation, CancellationToken cancellationToken = default);
     void UpdateConversation(Conversation conversation);
     void DeleteConversation(Conversation conversation, Guid deletedBy);
+    Task<Conversation?> GetConversationForUpdateAsync(Guid conversationId, Guid organizationId, CancellationToken cancellationToken = default);
 
     // Participant Operations
     Task<ConversationParticipant?> GetParticipantAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
+    Task<ConversationParticipant?> GetActiveParticipantAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
+    Task<ConversationParticipant?> GetParticipantForUpdateAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
     Task<List<ConversationParticipant>> GetParticipantsAsync(Guid conversationId, CancellationToken cancellationToken = default);
     Task<bool> IsParticipantAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
     Task<bool> IsAdminAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
+    Task<ConversationAdmin?> GetActiveAdminRecordAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default);
     Task AddParticipantAsync(ConversationParticipant participant, CancellationToken cancellationToken = default);
     Task AddParticipantsRangeAsync(IEnumerable<ConversationParticipant> participants, CancellationToken cancellationToken = default);
+    Task AddConversationAdminAsync(ConversationAdmin admin, CancellationToken cancellationToken = default);
     void UpdateParticipant(ConversationParticipant participant);
+    void UpdateConversationAdmin(ConversationAdmin admin);
+
+    // User Lookups for Messaging
+    Task<User?> GetUserBasicAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<(List<User> Items, int TotalRecords)> GetEligibleUsersPagedAsync(
+        IEnumerable<Guid> eligibleUserIds, 
+        string? searchTerm, 
+        int pageNumber, 
+        int pageSize, 
+        CancellationToken cancellationToken = default);
 
     // Message Operations
     Task<Message?> GetMessageByIdAsync(Guid messageId, CancellationToken cancellationToken = default);

@@ -53,7 +53,7 @@ public class AssignStudentFeeCommandHandler : IRequestHandler<AssignStudentFeeCo
         }
 
         // 3. Check if student already has this fee structure assigned and not cancelled
-        var existingActiveFee = await _feeRepository.GetActiveStudentFeeByStudentIdAsync(req.StudentId, cancellationToken);
+        var existingActiveFee = await _feeRepository.GetActiveStudentFeeByStudentIdAsync(req.StudentId, orgId.Value, cancellationToken);
         if (existingActiveFee != null && existingActiveFee.FeeStructureId == req.FeeStructureId && existingActiveFee.Status != "Cancelled")
         {
             return ApiResponse<StudentFeeDto>.FailureResponse("This fee structure has already been assigned to this student.");
@@ -141,7 +141,7 @@ public class AssignStudentFeeCommandHandler : IRequestHandler<AssignStudentFeeCo
         await _feeRepository.SaveChangesAsync(cancellationToken);
 
         // Fetch loaded detail for DTO mapping
-        var resultEntity = await _feeRepository.GetStudentFeeByIdAsync(studentFeeId, cancellationToken);
+        var resultEntity = await _feeRepository.GetStudentFeeByIdAsync(studentFeeId, orgId.Value, cancellationToken);
         return ApiResponse<StudentFeeDto>.SuccessResponse(
             (resultEntity ?? studentFee).ToDto(),
             "Fee structure successfully assigned to student.");

@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.Fees.Commands.AssignStudentFee;
 using Vargshala.Application.Features.OrgAdmin.Fees.Commands.CollectPayment;
 using Vargshala.Application.Features.OrgAdmin.Fees.Queries.GetFeeStatistics;
@@ -22,9 +20,8 @@ public class FeesController : BaseBranchAdminController
 {
     public FeesController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -64,13 +61,7 @@ public class FeesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var existsInBranch = await Db.StudentFees.AsNoTracking()
-            .AnyAsync(sf => sf.Id == id && !sf.IsDeleted &&
-                (sf.FeeStructure != null && sf.FeeStructure.BranchId == branchId) &&
-                (sf.Student.BatchStudents.Any(bs => bs.IsActive && bs.Batch.Class.BranchId == branchId) ||
-                 sf.Student.User.UserBranchAccesses.Any(uba => uba.IsActive && uba.BranchId == branchId)), cancellationToken);
-
-        if (!existsInBranch)
+        if (!await BranchAuthService.CanAccessStudentFeeAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<StudentFeeDetailDto>.FailureResponse("Student fee record not found in this branch."));
         }
@@ -102,20 +93,12 @@ public class FeesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        // Validate that the fee structure belongs to this branch
-        var feeStructureBelongsToBranch = await Db.FeeStructures.AsNoTracking()
-            .AnyAsync(fs => fs.Id == request.FeeStructureId && !fs.IsDeleted && fs.BranchId == branchId, cancellationToken);
-        if (!feeStructureBelongsToBranch)
+        if (!await BranchAuthService.CanAccessFeeStructureAsync(request.FeeStructureId, branchId, cancellationToken))
         {
             return BadRequest(ApiResponse<StudentFeeDto>.FailureResponse("Selected fee package does not belong to your branch."));
         }
 
-        // Validate that the student belongs to this branch
-        var studentBelongsToBranch = await Db.Students.AsNoTracking()
-            .AnyAsync(s => s.Id == request.StudentId && !s.IsDeleted &&
-                (s.BatchStudents.Any(bs => bs.IsActive && !bs.Batch.IsDeleted && bs.Batch.Class.BranchId == branchId) ||
-                 s.User.UserBranchAccesses.Any(uba => uba.IsActive && uba.BranchId == branchId)), cancellationToken);
-        if (!studentBelongsToBranch)
+        if (!await BranchAuthService.CanAccessStudentAsync(request.StudentId, branchId, cancellationToken))
         {
             return BadRequest(ApiResponse<StudentFeeDto>.FailureResponse("Selected student does not belong to your branch."));
         }
@@ -135,22 +118,14 @@ public class FeesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        // Validate that the student fee or student belongs to this branch
-        bool recordBelongsToBranch = false;
+        bool recordBelongsToBranch;
         if (request.StudentFeeId.HasValue && request.StudentFeeId.Value != Guid.Empty)
         {
-            recordBelongsToBranch = await Db.StudentFees.AsNoTracking()
-                .AnyAsync(sf => sf.Id == request.StudentFeeId.Value && !sf.IsDeleted &&
-                    (sf.FeeStructure != null && sf.FeeStructure.BranchId == branchId) &&
-                    (sf.Student.BatchStudents.Any(bs => bs.IsActive && bs.Batch.Class.BranchId == branchId) ||
-                     sf.Student.User.UserBranchAccesses.Any(uba => uba.IsActive && uba.BranchId == branchId)), cancellationToken);
+            recordBelongsToBranch = await BranchAuthService.CanAccessStudentFeeAsync(request.StudentFeeId.Value, branchId, cancellationToken);
         }
         else
         {
-            recordBelongsToBranch = await Db.Students.AsNoTracking()
-                .AnyAsync(s => s.Id == request.StudentId && !s.IsDeleted &&
-                    (s.BatchStudents.Any(bs => bs.IsActive && bs.Batch.Class.BranchId == branchId) ||
-                     s.User.UserBranchAccesses.Any(uba => uba.IsActive && uba.BranchId == branchId)), cancellationToken);
+            recordBelongsToBranch = await BranchAuthService.CanAccessStudentAsync(request.StudentId, branchId, cancellationToken);
         }
 
         if (!recordBelongsToBranch)
@@ -170,7 +145,7 @@ public class FeesController : BaseBranchAdminController
     [HttpGet("payments/{paymentId:guid}/receipt")]
     public async Task<IActionResult> GetReceipt(Guid paymentId, CancellationToken cancellationToken = default)
     {
-        var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
+        var (isValid, _, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
         var result = await Mediator.Send(new GetPaymentReceiptQuery(paymentId), cancellationToken);
@@ -185,7 +160,7 @@ public class FeesController : BaseBranchAdminController
     [HttpGet("payments/{paymentId:guid}/receipt/pdf")]
     public async Task<IActionResult> GetPaymentReceiptPdf(Guid paymentId, CancellationToken cancellationToken = default)
     {
-        var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
+        var (isValid, _, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
         var result = await Mediator.Send(new Vargshala.Application.Features.OrgAdmin.Fees.Queries.GetFeeReceiptPdf.GetPaymentReceiptPdfQuery(paymentId), cancellationToken);
@@ -200,7 +175,7 @@ public class FeesController : BaseBranchAdminController
     [HttpGet("student-fees/{feeId:guid}/receipt/pdf")]
     public async Task<IActionResult> GetStudentFeeReceiptPdf(Guid feeId, CancellationToken cancellationToken = default)
     {
-        var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
+        var (isValid, _, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
         var result = await Mediator.Send(new Vargshala.Application.Features.OrgAdmin.Fees.Queries.GetFeeReceiptPdf.GetStudentFeeReceiptPdfQuery(feeId), cancellationToken);

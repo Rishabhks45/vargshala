@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.Classes.Commands.CreateClass;
 using Vargshala.Application.Features.OrgAdmin.Classes.Commands.DeleteClass;
 using Vargshala.Application.Features.OrgAdmin.Classes.Commands.ToggleClassStatus;
@@ -22,9 +20,8 @@ public class ClassesController : BaseBranchAdminController
 {
     public ClassesController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -62,8 +59,7 @@ public class ClassesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var classEntity = await Db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
-        if (classEntity == null || classEntity.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<ClassDto>.FailureResponse("Class not found in this branch."));
         }
@@ -106,8 +102,7 @@ public class ClassesController : BaseBranchAdminController
             return BadRequest(ApiResponse<ClassDto>.FailureResponse("Mismatched Class ID."));
         }
 
-        var classEntity = await Db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
-        if (classEntity == null || classEntity.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<ClassDto>.FailureResponse("Class not found in this branch."));
         }
@@ -130,8 +125,7 @@ public class ClassesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var classEntity = await Db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
-        if (classEntity == null || classEntity.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Class not found in this branch."));
         }
@@ -151,8 +145,7 @@ public class ClassesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var classEntity = await Db.Classes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
-        if (classEntity == null || classEntity.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Class not found in this branch."));
         }

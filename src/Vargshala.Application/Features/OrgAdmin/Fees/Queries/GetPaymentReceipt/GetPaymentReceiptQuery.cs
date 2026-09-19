@@ -27,8 +27,8 @@ public class GetPaymentReceiptQueryHandler : IRequestHandler<GetPaymentReceiptQu
             return ApiResponse<PaymentDto>.FailureResponse("No active organization context found.");
         }
 
-        var payment = await _feeRepository.GetPaymentReceiptByIdAsync(query.PaymentId, cancellationToken);
-        if (payment == null || payment.OrganizationId != orgId.Value)
+        var payment = await _feeRepository.GetPaymentReceiptByIdAsync(query.PaymentId, orgId.Value, cancellationToken);
+        if (payment == null)
         {
             return ApiResponse<PaymentDto>.FailureResponse("Payment receipt not found.");
         }

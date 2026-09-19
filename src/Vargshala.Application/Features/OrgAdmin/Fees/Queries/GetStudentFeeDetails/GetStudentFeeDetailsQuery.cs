@@ -27,13 +27,13 @@ public class GetStudentFeeDetailsQueryHandler : IRequestHandler<GetStudentFeeDet
             return ApiResponse<StudentFeeDetailDto>.FailureResponse("No active organization context found.");
         }
 
-        var fee = await _feeRepository.GetStudentFeeDetailByIdAsync(query.Id, cancellationToken);
-        if (fee == null || fee.OrganizationId != orgId.Value)
+        var fee = await _feeRepository.GetStudentFeeDetailByIdAsync(query.Id, orgId.Value, cancellationToken);
+        if (fee == null)
         {
             return ApiResponse<StudentFeeDetailDto>.FailureResponse("Student fee record not found.");
         }
 
-        var payments = await _feeRepository.GetPaymentsByStudentFeeIdAsync(query.Id, cancellationToken);
+        var payments = await _feeRepository.GetPaymentsByStudentFeeIdAsync(query.Id, orgId.Value, cancellationToken);
         return ApiResponse<StudentFeeDetailDto>.SuccessResponse(fee.ToDetailDto(payments));
     }
 }

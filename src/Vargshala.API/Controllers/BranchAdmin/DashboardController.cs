@@ -1,8 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.BranchAdmin.Dashboard.Queries;
 
 namespace Vargshala.API.Controllers.BranchAdmin;
@@ -13,9 +12,8 @@ public class DashboardController : BaseBranchAdminController
 {
     public DashboardController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 

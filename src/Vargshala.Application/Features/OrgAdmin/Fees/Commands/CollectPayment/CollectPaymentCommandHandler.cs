@@ -34,14 +34,14 @@ public class CollectPaymentCommandHandler : IRequestHandler<CollectPaymentComman
         StudentFee? studentFee;
         if (req.StudentFeeId.HasValue && req.StudentFeeId.Value != Guid.Empty)
         {
-            studentFee = await _feeRepository.GetStudentFeeByIdAsync(req.StudentFeeId.Value, cancellationToken);
+            studentFee = await _feeRepository.GetStudentFeeByIdAsync(req.StudentFeeId.Value, orgId.Value, cancellationToken);
         }
         else
         {
-            studentFee = await _feeRepository.GetActiveStudentFeeByStudentIdAsync(req.StudentId, cancellationToken);
+            studentFee = await _feeRepository.GetActiveStudentFeeByStudentIdAsync(req.StudentId, orgId.Value, cancellationToken);
         }
 
-        if (studentFee == null || studentFee.OrganizationId != orgId.Value)
+        if (studentFee == null)
         {
             return ApiResponse<PaymentDto>.FailureResponse("No active fee account found for this student.");
         }
@@ -130,7 +130,7 @@ public class CollectPaymentCommandHandler : IRequestHandler<CollectPaymentComman
         await _feeRepository.SaveChangesAsync(cancellationToken);
 
         // 7. Return detailed receipt DTO
-        var receiptResult = await _feeRepository.GetPaymentReceiptByIdAsync(paymentId, cancellationToken);
+        var receiptResult = await _feeRepository.GetPaymentReceiptByIdAsync(paymentId, orgId.Value, cancellationToken);
         return ApiResponse<PaymentDto>.SuccessResponse(
             (receiptResult ?? payment).ToDto(),
             $"Payment of ₹{req.Amount:N2} recorded successfully with Receipt #{receiptNumber}.");

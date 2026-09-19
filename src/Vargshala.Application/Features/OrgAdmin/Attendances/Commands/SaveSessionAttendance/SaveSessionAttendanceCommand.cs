@@ -28,8 +28,14 @@ public class SaveSessionAttendanceCommandHandler : IRequestHandler<SaveSessionAt
 
     public async Task<ApiResponse<SessionAttendanceSheetDto>> Handle(SaveSessionAttendanceCommand command, CancellationToken cancellationToken)
     {
+        var orgId = _currentUser.OrganizationId;
+        if (!orgId.HasValue || orgId.Value == Guid.Empty)
+        {
+            return ApiResponse<SessionAttendanceSheetDto>.FailureResponse("No active organization context found.");
+        }
+
         var req = command.Request;
-        var session = await _attendanceRepo.GetSessionWithDetailsAsync(req.ClassSessionId, cancellationToken);
+        var session = await _attendanceRepo.GetSessionWithDetailsAsync(req.ClassSessionId, orgId.Value, cancellationToken);
         if (session == null)
         {
             return ApiResponse<SessionAttendanceSheetDto>.FailureResponse("Class session not found.");

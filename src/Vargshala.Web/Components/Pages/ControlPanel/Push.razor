@@ -64,22 +64,16 @@
             <div class="space-y-3 text-xs">
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Audience</label>
-                    <select @bind="_targetAudience" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none">
-                        <option value="All Users">All Platform Users (Admins, Teachers, Students)</option>
-                        <option value="Institute Admins">Institute Owners &amp; Admins Only</option>
-                        <option value="Teachers">Faculty &amp; Teachers Only</option>
-                        <option value="Students">Enrolled Students &amp; Parents</option>
-                    </select>
+                    <CustomSelect @bind-Value="_targetAudience" 
+                                  Options="_audienceOptions" 
+                                  Class="w-full" />
                 </div>
 
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Severity &amp; Type</label>
-                    <select @bind="_severity" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none">
-                        <option value="Info">General Information (Blue)</option>
-                        <option value="Update">New Feature Update (Teal)</option>
-                        <option value="Warning">System Maintenance (Amber)</option>
-                        <option value="Critical">Urgent Service Alert (Rose)</option>
-                    </select>
+                    <CustomSelect @bind-Value="_severity" 
+                                  Options="_severityOptions" 
+                                  Class="w-full" />
                 </div>
 
                 <div>
@@ -154,6 +148,20 @@
 @code {
     private string _targetAudience = "All Users";
     private string _severity = "Info";
+    private readonly List<CustomSelect.CustomSelectOption> _audienceOptions = new()
+    {
+        new("All Users", "All Platform Users (Admins, Teachers, Students)"),
+        new("Institute Admins", "Institute Owners & Admins Only"),
+        new("Teachers", "Faculty & Teachers Only"),
+        new("Students", "Enrolled Students & Parents")
+    };
+    private readonly List<CustomSelect.CustomSelectOption> _severityOptions = new()
+    {
+        new("Info", "General Information (Blue)"),
+        new("Update", "New Feature Update (Teal)"),
+        new("Warning", "System Maintenance (Amber)"),
+        new("Critical", "Urgent Service Alert (Rose)")
+    };
     private string _title = "";
     private string _message = "";
     private bool _sendMobilePush = true;

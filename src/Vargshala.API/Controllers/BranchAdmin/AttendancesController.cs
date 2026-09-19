@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.Attendances.Commands.SaveSessionAttendance;
 using Vargshala.Application.Features.OrgAdmin.Attendances.Queries.GetBatchAttendanceOverview;
 using Vargshala.Application.Features.OrgAdmin.Attendances.Queries.GetDateWiseReport;
@@ -20,9 +18,8 @@ public class AttendancesController : BaseBranchAdminController
 {
     public AttendancesController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -32,11 +29,7 @@ public class AttendancesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == sessionId && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(sessionId, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<SessionAttendanceSheetDto>.FailureResponse("Session not found in this branch."));
         }
@@ -61,11 +54,7 @@ public class AttendancesController : BaseBranchAdminController
             return BadRequest(ApiResponse<SessionAttendanceSheetDto>.FailureResponse("Invalid request body."));
         }
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == sessionId && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(sessionId, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<SessionAttendanceSheetDto>.FailureResponse("Session not found in this branch."));
         }
@@ -87,11 +76,7 @@ public class AttendancesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var batch = await Db.Batches.AsNoTracking()
-            .Include(b => b.Class)
-            .FirstOrDefaultAsync(b => b.Id == batchId && !b.IsDeleted, cancellationToken);
-
-        if (batch == null || batch.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessBatchAsync(batchId, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<BatchAttendanceOverviewDto>.FailureResponse("Batch not found in this branch."));
         }
@@ -111,11 +96,7 @@ public class AttendancesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var batch = await Db.Batches.AsNoTracking()
-            .Include(b => b.Class)
-            .FirstOrDefaultAsync(b => b.Id == batchId && !b.IsDeleted, cancellationToken);
-
-        if (batch == null || batch.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessBatchAsync(batchId, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<string>.FailureResponse("Batch not found in this branch."));
         }
@@ -134,11 +115,7 @@ public class AttendancesController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var batch = await Db.Batches.AsNoTracking()
-            .Include(b => b.Class)
-            .FirstOrDefaultAsync(b => b.Id == batchId && !b.IsDeleted, cancellationToken);
-
-        if (batch == null || batch.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessBatchAsync(batchId, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<string>.FailureResponse("Batch not found in this branch."));
         }

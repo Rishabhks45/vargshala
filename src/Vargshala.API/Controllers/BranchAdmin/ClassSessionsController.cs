@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.ClassSessions.Commands.CancelClassSession;
 using Vargshala.Application.Features.OrgAdmin.ClassSessions.Commands.CompleteClassSession;
 using Vargshala.Application.Features.OrgAdmin.ClassSessions.Commands.CreateClassSession;
@@ -23,9 +21,8 @@ public class ClassSessionsController : BaseBranchAdminController
 {
     public ClassSessionsController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -60,11 +57,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<ClassSessionDto>.FailureResponse("Class session not found in this branch."));
         }
@@ -84,11 +77,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var batch = await Db.Batches.AsNoTracking()
-            .Include(b => b.Class)
-            .FirstOrDefaultAsync(b => b.Id == request.BatchId && !b.IsDeleted, cancellationToken);
-
-        if (batch == null || batch.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessBatchAsync(request.BatchId, branchId, cancellationToken))
         {
             return BadRequest(ApiResponse<ClassSessionDto>.FailureResponse("Target batch does not belong to your branch."));
         }
@@ -108,11 +97,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<ClassSessionDto>.FailureResponse("Class session not found in this branch."));
         }
@@ -133,11 +118,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Class session not found in this branch."));
         }
@@ -157,11 +138,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Class session not found in this branch."));
         }
@@ -181,11 +158,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var session = await Db.ClassSessions.AsNoTracking()
-            .Include(s => s.Batch).ThenInclude(b => b.Class)
-            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken);
-
-        if (session == null || session.Batch?.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessClassSessionAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Class session not found in this branch."));
         }
@@ -205,11 +178,7 @@ public class ClassSessionsController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var batch = await Db.Batches.AsNoTracking()
-            .Include(b => b.Class)
-            .FirstOrDefaultAsync(b => b.Id == request.BatchId && !b.IsDeleted, cancellationToken);
-
-        if (batch == null || batch.Class?.BranchId != branchId)
+        if (!await BranchAuthService.CanAccessBatchAsync(request.BatchId, branchId, cancellationToken))
         {
             return BadRequest(ApiResponse<List<ClassSessionDto>>.FailureResponse("Target batch does not belong to your branch."));
         }

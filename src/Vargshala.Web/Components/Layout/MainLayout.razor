@@ -5,16 +5,16 @@
 @inject IUserService UserService
 @inject IBranchContextService BranchContext
 
-<div class="flex h-screen max-h-screen w-screen overflow-hidden bg-[#004D40] font-sans text-slate-800 antialiased select-none">
+<div class="flex h-screen max-h-screen w-screen overflow-hidden theme-shell-bg font-sans text-slate-800 antialiased select-none" style="background-color: var(--theme-header, #004D40);">
     
     <!-- Permanently Fixed Left Sidebar Navigation -->
     <NavMenu @bind-IsCollapsed="_sidebarCollapsed" />
 
     <!-- Right Shell: Fixed Header + Scrollable Main Content Canvas -->
-    <div class="flex flex-col flex-1 h-screen max-h-screen min-w-0 bg-[#004D40] overflow-hidden">
+    <div class="flex flex-col flex-1 h-screen max-h-screen min-w-0 theme-shell-bg overflow-hidden" style="background-color: var(--theme-header, #004D40);">
         
-        <!-- Deep Teal Top Header -->
-        <header class="h-16 shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 bg-[#004D40] text-white border-none">
+        <!-- Dynamic Themed Top Header -->
+        <header class="h-16 shrink-0 z-30 flex items-center justify-between px-4 sm:px-6 theme-shell-bg text-white border-none" style="background-color: var(--theme-header, #004D40);">
             
             <!-- Left: Sidebar Toggle + Dynamic Page Title & Organization Name -->
             <div class="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -274,7 +274,8 @@
         </header>
 
         <!-- Page Body Canvas (20px Curved Top-Left Radius, Fits Screen Height) -->
-        <main class="flex-1 flex flex-col bg-[#F4F9F8] dark:bg-[#0c1417] text-slate-800 dark:text-slate-100 rounded-tl-[20px] p-6 overflow-hidden min-h-0 shadow-inner select-text transition-colors duration-200 scrollbar-hidden">
+        <main class="flex-1 flex flex-col theme-canvas-bg text-slate-800 dark:text-slate-100 rounded-tl-[20px] p-6 overflow-hidden min-h-0 shadow-inner select-text transition-colors duration-200 scrollbar-hidden"
+              style="background-color: var(--theme-current-canvas, var(--theme-canvas-bg, #F0FDFA));">
             @Body
         </main>
     </div>

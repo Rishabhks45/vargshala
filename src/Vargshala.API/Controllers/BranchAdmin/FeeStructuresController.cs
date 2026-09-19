@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.FeeStructures.Commands.CreateFeeStructure;
 using Vargshala.Application.Features.OrgAdmin.FeeStructures.Commands.DeleteFeeStructure;
 using Vargshala.Application.Features.OrgAdmin.FeeStructures.Commands.ToggleFeeStructureStatus;
@@ -22,9 +20,8 @@ public class FeeStructuresController : BaseBranchAdminController
 {
     public FeeStructuresController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -66,9 +63,7 @@ public class FeeStructuresController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var existsInBranch = await Db.FeeStructures.AsNoTracking()
-            .AnyAsync(fs => fs.Id == id && !fs.IsDeleted && fs.BranchId == branchId, cancellationToken);
-        if (!existsInBranch)
+        if (!await BranchAuthService.CanAccessFeeStructureAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<FeeStructureDto>.FailureResponse("Fee structure not found in this branch."));
         }
@@ -110,9 +105,7 @@ public class FeeStructuresController : BaseBranchAdminController
             return BadRequest(ApiResponse<FeeStructureDto>.FailureResponse("Mismatched Fee Structure ID."));
         }
 
-        var existsInBranch = await Db.FeeStructures.AsNoTracking()
-            .AnyAsync(fs => fs.Id == id && !fs.IsDeleted && fs.BranchId == branchId, cancellationToken);
-        if (!existsInBranch)
+        if (!await BranchAuthService.CanAccessFeeStructureAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<FeeStructureDto>.FailureResponse("Fee structure not found in this branch."));
         }
@@ -134,9 +127,7 @@ public class FeeStructuresController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var existsInBranch = await Db.FeeStructures.AsNoTracking()
-            .AnyAsync(fs => fs.Id == id && !fs.IsDeleted && fs.BranchId == branchId, cancellationToken);
-        if (!existsInBranch)
+        if (!await BranchAuthService.CanAccessFeeStructureAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Fee structure not found in this branch."));
         }
@@ -156,9 +147,7 @@ public class FeeStructuresController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var existsInBranch = await Db.FeeStructures.AsNoTracking()
-            .AnyAsync(fs => fs.Id == id && !fs.IsDeleted && fs.BranchId == branchId, cancellationToken);
-        if (!existsInBranch)
+        if (!await BranchAuthService.CanAccessFeeStructureAsync(id, branchId, cancellationToken))
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Fee structure not found in this branch."));
         }

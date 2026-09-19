@@ -6,6 +6,6 @@ public class NotificationItem
     public string? Title { get; set; }
     public string Message { get; set; } = string.Empty;
     public AlertType Type { get; set; } = AlertType.Info;
-    public int DurationSeconds { get; set; } = 4;
+    public int DurationSeconds { get; set; } = 2;
     public bool Dismissible { get; set; } = true;
 }

@@ -141,6 +141,12 @@ public class MessageRepository : IMessageRepository
         conversation.DeletedBy = deletedBy;
         conversation.DeletedAt = DateTime.UtcNow;
     }
+
+    public async Task<Conversation?> GetConversationForUpdateAsync(Guid conversationId, Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Conversations
+            .FirstOrDefaultAsync(c => c.Id == conversationId && c.OrganizationId == organizationId && !c.IsDeleted, cancellationToken);
+    }
     #endregion
 
     #region Participant Operations
@@ -149,6 +155,18 @@ public class MessageRepository : IMessageRepository
         return await _db.ConversationParticipants
             .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.ConversationId == conversationId && p.UserId == userId && !p.IsDeleted, cancellationToken);
+    }
+
+    public async Task<ConversationParticipant?> GetActiveParticipantAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationParticipants
+            .FirstOrDefaultAsync(cp => cp.ConversationId == conversationId && cp.UserId == userId && cp.IsActive, cancellationToken);
+    }
+
+    public async Task<ConversationParticipant?> GetParticipantForUpdateAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationParticipants
+            .FirstOrDefaultAsync(cp => cp.ConversationId == conversationId && cp.UserId == userId, cancellationToken);
     }
 
     public async Task<List<ConversationParticipant>> GetParticipantsAsync(Guid conversationId, CancellationToken cancellationToken = default)
@@ -175,6 +193,12 @@ public class MessageRepository : IMessageRepository
             .AnyAsync(a => a.ConversationId == conversationId && a.UserId == userId && !a.IsDeleted && a.IsActive, cancellationToken);
     }
 
+    public async Task<ConversationAdmin?> GetActiveAdminRecordAsync(Guid conversationId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.ConversationAdmins
+            .FirstOrDefaultAsync(ca => ca.ConversationId == conversationId && ca.UserId == userId && ca.IsActive, cancellationToken);
+    }
+
     public async Task AddParticipantAsync(ConversationParticipant participant, CancellationToken cancellationToken = default)
     {
         await _db.ConversationParticipants.AddAsync(participant, cancellationToken);
@@ -185,10 +209,67 @@ public class MessageRepository : IMessageRepository
         await _db.ConversationParticipants.AddRangeAsync(participants, cancellationToken);
     }
 
+    public async Task AddConversationAdminAsync(ConversationAdmin admin, CancellationToken cancellationToken = default)
+    {
+        await _db.ConversationAdmins.AddAsync(admin, cancellationToken);
+    }
+
     public void UpdateParticipant(ConversationParticipant participant)
     {
         participant.UpdatedAt = DateTime.UtcNow;
         _db.ConversationParticipants.Update(participant);
+    }
+
+    public void UpdateConversationAdmin(ConversationAdmin admin)
+    {
+        _db.ConversationAdmins.Update(admin);
+    }
+
+    public async Task<User?> GetUserBasicAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+    }
+
+    public async Task<(List<User> Items, int TotalRecords)> GetEligibleUsersPagedAsync(
+        IEnumerable<Guid> eligibleUserIds, 
+        string? searchTerm, 
+        int pageNumber, 
+        int pageSize, 
+        CancellationToken cancellationToken = default)
+    {
+        var ids = eligibleUserIds.ToList();
+        if (!ids.Any())
+        {
+            return (new List<User>(), 0);
+        }
+
+        var usersQuery = _db.Users
+            .AsNoTracking()
+            .Where(u => ids.Contains(u.Id) && !u.IsDeleted && u.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            usersQuery = usersQuery.Where(u =>
+                u.FirstName.ToLower().Contains(term) ||
+                u.LastName.ToLower().Contains(term) ||
+                (u.Email != null && u.Email.ToLower().Contains(term)) ||
+                (u.Mobile != null && u.Mobile.Contains(term)));
+        }
+
+        var totalRecords = await usersQuery.CountAsync(cancellationToken);
+
+        var page = pageNumber <= 0 ? 1 : pageNumber;
+        var size = pageSize <= 0 ? 20 : pageSize;
+
+        var users = await usersQuery
+            .OrderBy(u => u.FirstName)
+            .ThenBy(u => u.LastName)
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToListAsync(cancellationToken);
+
+        return (users, totalRecords);
     }
     #endregion
 

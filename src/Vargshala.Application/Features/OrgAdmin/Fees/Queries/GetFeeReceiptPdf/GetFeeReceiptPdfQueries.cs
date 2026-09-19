@@ -39,14 +39,14 @@ public class GetStudentFeeReceiptPdfQueryHandler : IRequestHandler<GetStudentFee
             return ApiResponse<FeeReceiptPdfResult>.FailureResponse("No active organization context found.");
         }
 
-        var fee = await _feeRepository.GetStudentFeeDetailByIdAsync(query.StudentFeeId, cancellationToken);
-        if (fee == null || fee.OrganizationId != orgId.Value)
+        var fee = await _feeRepository.GetStudentFeeDetailByIdAsync(query.StudentFeeId, orgId.Value, cancellationToken);
+        if (fee == null)
         {
             return ApiResponse<FeeReceiptPdfResult>.FailureResponse("Student fee record not found.");
         }
 
         var org = await _organizationRepository.GetByIdAsync(orgId.Value, cancellationToken);
-        var payments = await _feeRepository.GetPaymentsByStudentFeeIdAsync(query.StudentFeeId, cancellationToken);
+        var payments = await _feeRepository.GetPaymentsByStudentFeeIdAsync(query.StudentFeeId, orgId.Value, cancellationToken);
         var latestPayment = payments.OrderByDescending(p => p.PaymentDate).FirstOrDefault();
 
         var student = fee.Student;
@@ -177,8 +177,8 @@ public class GetPaymentReceiptPdfQueryHandler : IRequestHandler<GetPaymentReceip
             return ApiResponse<FeeReceiptPdfResult>.FailureResponse("No active organization context found.");
         }
 
-        var payment = await _feeRepository.GetPaymentReceiptByIdAsync(query.PaymentId, cancellationToken);
-        if (payment == null || payment.OrganizationId != orgId.Value)
+        var payment = await _feeRepository.GetPaymentReceiptByIdAsync(query.PaymentId, orgId.Value, cancellationToken);
+        if (payment == null)
         {
             return ApiResponse<FeeReceiptPdfResult>.FailureResponse("Payment record not found.");
         }

@@ -50,7 +50,7 @@ public class FeeRepository : IFeeRepository
     };
     #endregion
 
-    public async Task<StudentFee?> GetStudentFeeByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<StudentFee?> GetStudentFeeByIdAsync(Guid id, Guid orgId, CancellationToken ct = default)
     {
         return await _db.StudentFees
             .Include(sf => sf.Student).ThenInclude(s => s.User)
@@ -59,10 +59,10 @@ public class FeeRepository : IFeeRepository
             .Include(sf => sf.FeeStructure).ThenInclude(fs => fs.Class)
             .Include(sf => sf.Installments)
             .Include(sf => sf.Discounts)
-            .FirstOrDefaultAsync(sf => sf.Id == id && !sf.IsDeleted, ct);
+            .FirstOrDefaultAsync(sf => sf.Id == id && sf.OrganizationId == orgId && !sf.IsDeleted, ct);
     }
 
-    public async Task<StudentFee?> GetStudentFeeDetailByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<StudentFee?> GetStudentFeeDetailByIdAsync(Guid id, Guid orgId, CancellationToken ct = default)
     {
         return await _db.StudentFees
             .AsNoTracking()
@@ -72,10 +72,10 @@ public class FeeRepository : IFeeRepository
             .Include(sf => sf.FeeStructure).ThenInclude(fs => fs.Class)
             .Include(sf => sf.Installments)
             .Include(sf => sf.Discounts).ThenInclude(d => d.ApprovedByUser)
-            .FirstOrDefaultAsync(sf => sf.Id == id && !sf.IsDeleted, ct);
+            .FirstOrDefaultAsync(sf => sf.Id == id && sf.OrganizationId == orgId && !sf.IsDeleted, ct);
     }
 
-    public async Task<StudentFee?> GetActiveStudentFeeByStudentIdAsync(Guid studentId, CancellationToken ct = default)
+    public async Task<StudentFee?> GetActiveStudentFeeByStudentIdAsync(Guid studentId, Guid orgId, CancellationToken ct = default)
     {
         return await _db.StudentFees
             .Include(sf => sf.Student).ThenInclude(s => s.User)
@@ -83,7 +83,7 @@ public class FeeRepository : IFeeRepository
             .Include(sf => sf.FeeStructure).ThenInclude(fs => fs.Class)
             .Include(sf => sf.Installments)
             .Include(sf => sf.Discounts)
-            .Where(sf => sf.StudentId == studentId && !sf.IsDeleted && sf.Status != "Cancelled")
+            .Where(sf => sf.StudentId == studentId && sf.OrganizationId == orgId && !sf.IsDeleted && sf.Status != "Cancelled")
             .OrderByDescending(sf => sf.AssignedAt)
             .FirstOrDefaultAsync(ct);
     }
@@ -171,7 +171,7 @@ public class FeeRepository : IFeeRepository
         };
     }
 
-    public async Task<Payment?> GetPaymentReceiptByIdAsync(Guid paymentId, CancellationToken ct = default)
+    public async Task<Payment?> GetPaymentReceiptByIdAsync(Guid paymentId, Guid orgId, CancellationToken ct = default)
     {
         return await _db.Payments
             .AsNoTracking()
@@ -179,10 +179,10 @@ public class FeeRepository : IFeeRepository
             .Include(p => p.Student).ThenInclude(s => s.User)
             .Include(p => p.CreatedByUser)
             .Include(p => p.Allocations).ThenInclude(a => a.FeeInstallment)
-            .FirstOrDefaultAsync(p => p.Id == paymentId && !p.IsDeleted, ct);
+            .FirstOrDefaultAsync(p => p.Id == paymentId && p.OrganizationId == orgId && !p.IsDeleted, ct);
     }
 
-    public async Task<List<Payment>> GetPaymentsByStudentFeeIdAsync(Guid studentFeeId, CancellationToken ct = default)
+    public async Task<List<Payment>> GetPaymentsByStudentFeeIdAsync(Guid studentFeeId, Guid orgId, CancellationToken ct = default)
     {
         var installmentIds = await _db.FeeInstallments
             .Where(fi => fi.StudentFeeId == studentFeeId)
@@ -194,7 +194,7 @@ public class FeeRepository : IFeeRepository
             .Include(p => p.Branch)
             .Include(p => p.Student).ThenInclude(s => s.User)
             .Include(p => p.Allocations).ThenInclude(a => a.FeeInstallment)
-            .Where(p => p.Allocations.Any(a => installmentIds.Contains(a.FeeInstallmentId)) && !p.IsDeleted)
+            .Where(p => p.OrganizationId == orgId && p.Allocations.Any(a => installmentIds.Contains(a.FeeInstallmentId)) && !p.IsDeleted)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync(ct);
     }

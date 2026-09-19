@@ -16,7 +16,7 @@ public class AttendanceRepository : IAttendanceRepository
         _db = db;
     }
 
-    public async Task<ClassSession?> GetSessionWithDetailsAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    public async Task<ClassSession?> GetSessionWithDetailsAsync(Guid sessionId, Guid organizationId, CancellationToken cancellationToken = default)
     {
         return await _db.ClassSessions
             .AsNoTracking()
@@ -27,16 +27,16 @@ public class AttendanceRepository : IAttendanceRepository
                 .ThenInclude(b => b.Subject)
             .Include(s => s.Teacher)
                 .ThenInclude(t => t!.User)
-            .FirstOrDefaultAsync(s => s.Id == sessionId && !s.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(s => s.Id == sessionId && s.Batch.Class.Branch.OrganizationId == organizationId && !s.IsDeleted, cancellationToken);
     }
 
-    public async Task<List<BatchStudent>> GetEnrolledStudentsForBatchAsync(Guid batchId, CancellationToken cancellationToken = default)
+    public async Task<List<BatchStudent>> GetEnrolledStudentsForBatchAsync(Guid batchId, Guid organizationId, CancellationToken cancellationToken = default)
     {
         return await _db.BatchStudents
             .AsNoTracking()
             .Include(bs => bs.Student)
                 .ThenInclude(s => s.User)
-            .Where(bs => bs.BatchId == batchId && bs.IsActive)
+            .Where(bs => bs.BatchId == batchId && bs.Batch.Class.Branch.OrganizationId == organizationId && bs.IsActive)
             .OrderBy(bs => bs.Student.RollNumber)
             .ThenBy(bs => bs.Student.User.FirstName)
             .ToListAsync(cancellationToken);
@@ -66,7 +66,7 @@ public class AttendanceRepository : IAttendanceRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<BatchAttendanceOverviewDto?> GetBatchOverviewAsync(Guid batchId, DateOnly referenceDate, CancellationToken cancellationToken = default)
+    public async Task<BatchAttendanceOverviewDto?> GetBatchOverviewAsync(Guid batchId, Guid organizationId, DateOnly referenceDate, CancellationToken cancellationToken = default)
     {
         var batch = await _db.Batches
             .AsNoTracking()
@@ -74,12 +74,12 @@ public class AttendanceRepository : IAttendanceRepository
                 .ThenInclude(c => c!.Branch)
             .Include(b => b.Subject)
             .Include(b => b.BatchSchedules)
-            .FirstOrDefaultAsync(b => b.Id == batchId && !b.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(b => b.Id == batchId && b.Class.Branch.OrganizationId == organizationId && !b.IsDeleted, cancellationToken);
 
         if (batch == null) return null;
 
         var totalStudents = await _db.BatchStudents
-            .CountAsync(bs => bs.BatchId == batchId && bs.IsActive, cancellationToken);
+            .CountAsync(bs => bs.BatchId == batchId && bs.Batch.Class.Branch.OrganizationId == organizationId && bs.IsActive, cancellationToken);
 
         // Schedule string
         var schedules = batch.BatchSchedules.OrderBy(s => s.DayOfWeek).ToList();
@@ -98,7 +98,7 @@ public class AttendanceRepository : IAttendanceRepository
         // Today's sessions on referenceDate
         var todaySessions = await _db.ClassSessions
             .AsNoTracking()
-            .Where(cs => cs.BatchId == batchId && cs.SessionDate == referenceDate && !cs.IsDeleted)
+            .Where(cs => cs.BatchId == batchId && cs.Batch.Class.Branch.OrganizationId == organizationId && cs.SessionDate == referenceDate && !cs.IsDeleted)
             .ToListAsync(cancellationToken);
 
         var todaySessionIds = todaySessions.Select(s => s.Id).ToList();
@@ -116,7 +116,7 @@ public class AttendanceRepository : IAttendanceRepository
         var startDate = referenceDate.AddDays(-6);
         var weekSessions = await _db.ClassSessions
             .AsNoTracking()
-            .Where(cs => cs.BatchId == batchId && cs.SessionDate >= startDate && cs.SessionDate <= referenceDate && !cs.IsDeleted)
+            .Where(cs => cs.BatchId == batchId && cs.Batch.Class.Branch.OrganizationId == organizationId && cs.SessionDate >= startDate && cs.SessionDate <= referenceDate && !cs.IsDeleted)
             .ToListAsync(cancellationToken);
 
         var weekSessionIds = weekSessions.Select(s => s.Id).ToList();
@@ -170,7 +170,7 @@ public class AttendanceRepository : IAttendanceRepository
             .Include(a => a.Student)
                 .ThenInclude(s => s.User)
             .Include(a => a.ClassSession)
-            .Where(a => a.ClassSession.BatchId == batchId && !a.IsDeleted && a.MarkedAt.HasValue)
+            .Where(a => a.ClassSession.BatchId == batchId && a.ClassSession.Batch.Class.Branch.OrganizationId == organizationId && !a.IsDeleted && a.MarkedAt.HasValue)
             .OrderByDescending(a => a.MarkedAt)
             .Take(6)
             .ToListAsync(cancellationToken);
@@ -202,14 +202,14 @@ public class AttendanceRepository : IAttendanceRepository
         };
     }
 
-    public async Task<List<DateAttendanceReportDto>> GetDateWiseReportAsync(Guid batchId, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken = default)
+    public async Task<List<DateAttendanceReportDto>> GetDateWiseReportAsync(Guid batchId, Guid organizationId, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken = default)
     {
         var query = _db.ClassSessions
             .AsNoTracking()
             .Include(cs => cs.Teacher)
                 .ThenInclude(t => t!.User)
             .Include(cs => cs.Batch)
-            .Where(cs => cs.BatchId == batchId && !cs.IsDeleted);
+            .Where(cs => cs.BatchId == batchId && cs.Batch.Class.Branch.OrganizationId == organizationId && !cs.IsDeleted);
 
         if (fromDate.HasValue) query = query.Where(cs => cs.SessionDate >= fromDate.Value);
         if (toDate.HasValue) query = query.Where(cs => cs.SessionDate <= toDate.Value);
@@ -226,7 +226,7 @@ public class AttendanceRepository : IAttendanceRepository
             .ToListAsync(cancellationToken);
 
         var totalEnrolled = await _db.BatchStudents
-            .CountAsync(bs => bs.BatchId == batchId && bs.IsActive, cancellationToken);
+            .CountAsync(bs => bs.BatchId == batchId && bs.Batch.Class.Branch.OrganizationId == organizationId && bs.IsActive, cancellationToken);
 
         var list = new List<DateAttendanceReportDto>();
         foreach (var s in sessions)
@@ -251,20 +251,20 @@ public class AttendanceRepository : IAttendanceRepository
         return list;
     }
 
-    public async Task<List<StudentAttendanceReportDto>> GetStudentWiseReportAsync(Guid batchId, CancellationToken cancellationToken = default)
+    public async Task<List<StudentAttendanceReportDto>> GetStudentWiseReportAsync(Guid batchId, Guid organizationId, CancellationToken cancellationToken = default)
     {
         var batchStudents = await _db.BatchStudents
             .AsNoTracking()
             .Include(bs => bs.Student)
                 .ThenInclude(s => s.User)
-            .Where(bs => bs.BatchId == batchId && bs.IsActive)
+            .Where(bs => bs.BatchId == batchId && bs.Batch.Class.Branch.OrganizationId == organizationId && bs.IsActive)
             .OrderBy(bs => bs.Student.RollNumber)
             .ThenBy(bs => bs.Student.User.FirstName)
             .ToListAsync(cancellationToken);
 
         var sessions = await _db.ClassSessions
             .AsNoTracking()
-            .Where(cs => cs.BatchId == batchId && !cs.IsDeleted)
+            .Where(cs => cs.BatchId == batchId && cs.Batch.Class.Branch.OrganizationId == organizationId && !cs.IsDeleted)
             .ToListAsync(cancellationToken);
 
         int totalSessions = sessions.Count;

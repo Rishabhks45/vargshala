@@ -56,10 +56,11 @@ public static class InfrastructureServiceRegistration
         // Encryption Settings
         services.Configure<EncryptionSettings>(configuration.GetSection(EncryptionSettings.SectionName));
 
-        // Authentication & Encryption services
+        // Authentication, Security & Encryption services
         services.AddScoped<IEncryptionService, EncryptionService>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<Vargshala.Application.Abstractions.Security.IBranchAuthorizationService, Vargshala.Infrastructure.Services.Security.BranchAuthorizationService>();
 
         // Repositories
         services.AddScoped<IOrganizationRepository,OrganizationRepository>();

@@ -6,9 +6,9 @@ namespace Vargshala.Application.Features.OrgAdmin.Fees.Infrastructure;
 
 public interface IFeeRepository
 {
-    Task<StudentFee?> GetStudentFeeByIdAsync(Guid id, CancellationToken ct = default);
-    Task<StudentFee?> GetStudentFeeDetailByIdAsync(Guid id, CancellationToken ct = default);
-    Task<StudentFee?> GetActiveStudentFeeByStudentIdAsync(Guid studentId, CancellationToken ct = default);
+    Task<StudentFee?> GetStudentFeeByIdAsync(Guid id, Guid orgId, CancellationToken ct = default);
+    Task<StudentFee?> GetStudentFeeDetailByIdAsync(Guid id, Guid orgId, CancellationToken ct = default);
+    Task<StudentFee?> GetActiveStudentFeeByStudentIdAsync(Guid studentId, Guid orgId, CancellationToken ct = default);
     Task<(List<StudentFee> Items, int TotalRecords)> GetPagedStudentFeesAsync(
         Guid orgId,
         PagedRequest request,
@@ -18,8 +18,8 @@ public interface IFeeRepository
         string? status = null,
         CancellationToken ct = default);
     Task<FeeStatisticsDto> GetFeeStatisticsAsync(Guid orgId, Guid? branchId = null, CancellationToken ct = default);
-    Task<Payment?> GetPaymentReceiptByIdAsync(Guid paymentId, CancellationToken ct = default);
-    Task<List<Payment>> GetPaymentsByStudentFeeIdAsync(Guid studentFeeId, CancellationToken ct = default);
+    Task<Payment?> GetPaymentReceiptByIdAsync(Guid paymentId, Guid orgId, CancellationToken ct = default);
+    Task<List<Payment>> GetPaymentsByStudentFeeIdAsync(Guid studentFeeId, Guid orgId, CancellationToken ct = default);
     Task<List<StudentLookupForFeeDto>> GetStudentsForFeeAssignmentAsync(
         Guid orgId,
         Guid? branchId = null,

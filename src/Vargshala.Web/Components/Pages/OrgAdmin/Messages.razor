@@ -639,11 +639,10 @@
             <div class="p-5 space-y-4 text-xs">
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Type</label>
-                    <select @bind="_newConversationType" @bind:after="OnConversationTypeChangedAsync" class="w-full px-3 py-2 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b]">
-                        <option value="@ConversationType.Direct">Direct 1-on-1 Message</option>
-                        <option value="@ConversationType.Group">Group Discussion</option>
-                        <option value="@ConversationType.Channel">Announcement Channel</option>
-                    </select>
+                    <CustomSelect Value="@_newConversationType.ToString()" 
+                                  ValueChanged="OnConversationTypeChanged" 
+                                  Options="_conversationTypeOptions" 
+                                  Class="w-full" />
                 </div>
 
                 @if (_newConversationType == ConversationType.Direct)
@@ -882,6 +881,12 @@
     private string _newConversationName = string.Empty;
     private string _newConversationDescription = string.Empty;
     private ConversationType _newConversationType = ConversationType.Group;
+    private readonly List<CustomSelect.CustomSelectOption> _conversationTypeOptions = new()
+    {
+        new(ConversationType.Direct.ToString(), "Direct 1-on-1 Message"),
+        new(ConversationType.Group.ToString(), "Group Discussion"),
+        new(ConversationType.Channel.ToString(), "Announcement Channel")
+    };
 
     private List<EligibleUserDto> _eligibleContacts = new();
     private Guid? _selectedTargetUserId;
@@ -1215,6 +1220,15 @@
         _contactSearchTerm = string.Empty;
         _showCreateModal = true;
         await SearchEligibleContactsAsync();
+    }
+
+    private async Task OnConversationTypeChanged(string value)
+    {
+        if (Enum.TryParse<ConversationType>(value, out var parsedType))
+        {
+            _newConversationType = parsedType;
+            await OnConversationTypeChangedAsync();
+        }
     }
 
     private async Task OnConversationTypeChangedAsync()

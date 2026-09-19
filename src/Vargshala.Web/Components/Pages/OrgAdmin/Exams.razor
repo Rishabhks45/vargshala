@@ -365,13 +365,9 @@
                                 Q@(_newQuizQuestions.Count + 1)
                             </span>
                             <!-- Category Selector -->
-                            <select @bind="_newQuestionDraft.Category" 
-                                    class="text-[10px] font-bold bg-white dark:bg-[#142025] border border-teal-300 dark:border-teal-700 text-[#00796b] dark:text-teal-300 rounded-lg px-2 py-1 focus:outline-none">
-                                @foreach (var cat in _availableCategories)
-                                {
-                                    <option value="@cat">@cat</option>
-                                }
-                            </select>
+                            <CustomSelect @bind-Value="_newQuestionDraft.Category" 
+                                          Options="CategorySelectOptions" 
+                                          Compact="true" />
                         </div>
 
                         <!-- Timing & Difficulty & Marks -->
@@ -750,13 +746,9 @@
                                     <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
                                         <div class="flex items-center gap-2">
                                             <span class="text-[10px] text-slate-400 font-medium">Category:</span>
-                                            <select @bind="q.Category" 
-                                                    class="text-[10px] font-bold bg-white dark:bg-[#142025] border border-slate-200 dark:border-slate-700 text-[#00796b] rounded-lg px-2 py-0.5 focus:outline-none">
-                                                @foreach (var cat in _availableCategories)
-                                                {
-                                                    <option value="@cat">@cat</option>
-                                                }
-                                            </select>
+                                            <CustomSelect @bind-Value="q.Category" 
+                                                          Options="CategorySelectOptions" 
+                                                          Compact="true" />
                                         </div>
 
                                         <div class="flex items-center gap-2 text-[11px]">
@@ -1059,6 +1051,8 @@
     private string _renameCategoryValue = string.Empty;
 
     private List<string> _availableCategories = new() { "Computer Science", "Teaching & Pedagogy", "General Knowledge", "Physics", "Mathematics" };
+    private List<CustomSelect.CustomSelectOption> CategorySelectOptions =>
+        _availableCategories.Select(c => new CustomSelect.CustomSelectOption(c, c)).ToList();
     private List<QuizQuestionModel> _newQuizQuestions = new();
 
     // Active Question Draft (stays at top of drawer)

@@ -1,9 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Abstractions.Security;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Commands.CreateTeacher;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Commands.DeleteTeacher;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Commands.UpdateTeacher;
@@ -12,7 +10,6 @@ using Vargshala.Application.Features.OrgAdmin.Teachers.Queries.GetTeacherById;
 using Vargshala.Application.Features.OrgAdmin.Teachers.Queries.GetTeachersPaged;
 using Vargshala.Contracts.Common;
 using Vargshala.Contracts.Teachers;
-using Vargshala.Domain.Entities;
 
 namespace Vargshala.API.Controllers.BranchAdmin;
 
@@ -22,9 +19,8 @@ public class TeachersController : BaseBranchAdminController
 {
     public TeachersController(
         IMediator mediator,
-        ICurrentUser currentUser,
-        IVargshalaDbContext db)
-        : base(mediator, currentUser, db)
+        IBranchAuthorizationService branchAuthService)
+        : base(mediator, branchAuthService)
     {
     }
 
@@ -66,19 +62,8 @@ public class TeachersController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var teacher = await Db.Teachers.AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted, cancellationToken);
-
-        if (teacher == null)
-        {
-            return NotFound(ApiResponse<TeacherDto>.FailureResponse("Teacher not found."));
-        }
-
-        var hasBranchAccess = await Db.UserBranchAccesses.AnyAsync(
-            uba => uba.UserId == teacher.UserId && uba.BranchId == branchId && uba.IsActive,
-            cancellationToken) || !await Db.UserBranchAccesses.AnyAsync(uba => uba.UserId == teacher.UserId && uba.IsActive, cancellationToken);
-
-        if (!hasBranchAccess)
+        var canAccess = await BranchAuthService.CanAccessTeacherAsync(id, branchId, cancellationToken);
+        if (!canAccess)
         {
             return NotFound(ApiResponse<TeacherDto>.FailureResponse("Teacher not found in this branch."));
         }
@@ -104,25 +89,8 @@ public class TeachersController : BaseBranchAdminController
             return BadRequest(result);
         }
 
-        // Automatically associate teacher with this branch in UserBranchAccess
-        var accessExists = await Db.UserBranchAccesses.AnyAsync(
-            a => a.UserId == result.Data.UserId && a.BranchId == branchId,
-            cancellationToken);
-
-        if (!accessExists)
-        {
-            await Db.UserBranchAccesses.AddAsync(new UserBranchAccess
-            {
-                Id = Guid.NewGuid(),
-                UserId = result.Data.UserId,
-                BranchId = branchId,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = CurrentUser.UserId
-            }, cancellationToken);
-
-            await Db.SaveChangesAsync(cancellationToken);
-        }
+        // Automatically associate teacher with this branch
+        await BranchAuthService.EnsureTeacherBranchAccessAsync(result.Data.Id, branchId, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id = result.Data.Id }, result);
     }
@@ -133,17 +101,8 @@ public class TeachersController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var teacher = await Db.Teachers.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted, cancellationToken);
-        if (teacher == null)
-        {
-            return NotFound(ApiResponse<TeacherDto>.FailureResponse("Teacher not found."));
-        }
-
-        var hasBranchAccess = await Db.UserBranchAccesses.AnyAsync(
-            uba => uba.UserId == teacher.UserId && uba.BranchId == branchId && uba.IsActive,
-            cancellationToken) || !await Db.UserBranchAccesses.AnyAsync(uba => uba.UserId == teacher.UserId && uba.IsActive, cancellationToken);
-
-        if (!hasBranchAccess)
+        var canAccess = await BranchAuthService.CanAccessTeacherAsync(id, branchId, cancellationToken);
+        if (!canAccess)
         {
             return NotFound(ApiResponse<TeacherDto>.FailureResponse("Teacher not found in this branch."));
         }
@@ -168,17 +127,8 @@ public class TeachersController : BaseBranchAdminController
         var (isValid, branchId, errorResult) = await ValidateBranchAccessAsync(cancellationToken);
         if (!isValid) return errorResult!;
 
-        var teacher = await Db.Teachers.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted, cancellationToken);
-        if (teacher == null)
-        {
-            return NotFound(ApiResponse<bool>.FailureResponse("Teacher not found."));
-        }
-
-        var hasBranchAccess = await Db.UserBranchAccesses.AnyAsync(
-            uba => uba.UserId == teacher.UserId && uba.BranchId == branchId && uba.IsActive,
-            cancellationToken) || !await Db.UserBranchAccesses.AnyAsync(uba => uba.UserId == teacher.UserId && uba.IsActive, cancellationToken);
-
-        if (!hasBranchAccess)
+        var canAccess = await BranchAuthService.CanAccessTeacherAsync(id, branchId, cancellationToken);
+        if (!canAccess)
         {
             return NotFound(ApiResponse<bool>.FailureResponse("Teacher not found in this branch."));
         }

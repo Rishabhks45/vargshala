@@ -1,7 +1,6 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Vargshala.Application.Abstractions.CurrentUser;
-using Vargshala.Application.Abstractions.Persistence;
+using Vargshala.Application.Features.Messages.Infrastructure;
 using Vargshala.Application.Features.Messages.Security;
 using Vargshala.Contracts.Common;
 using Vargshala.SharedKernel.Enums;
@@ -11,16 +10,16 @@ namespace Vargshala.Application.Features.Messages.Commands.RemoveParticipant;
 
 public class RemoveParticipantCommandHandler : IRequestHandler<RemoveParticipantCommand, ApiResponse<bool>>
 {
-    private readonly IVargshalaDbContext _db;
+    private readonly IMessageRepository _messageRepository;
     private readonly ICurrentUser _currentUser;
     private readonly IConversationAuthorizationService _authService;
 
     public RemoveParticipantCommandHandler(
-        IVargshalaDbContext db,
+        IMessageRepository messageRepository,
         ICurrentUser currentUser,
         IConversationAuthorizationService authService)
     {
-        _db = db;
+        _messageRepository = messageRepository;
         _currentUser = currentUser;
         _authService = authService;
     }
@@ -42,16 +41,14 @@ public class RemoveParticipantCommandHandler : IRequestHandler<RemoveParticipant
             return ApiResponse<bool>.FailureResponse("You are not authorized to remove this participant.");
         }
 
-        var conversation = await _db.Conversations
-            .FirstOrDefaultAsync(c => c.Id == request.ConversationId && c.OrganizationId == orgId && !c.IsDeleted, cancellationToken);
+        var conversation = await _messageRepository.GetConversationForUpdateAsync(request.ConversationId, orgId, cancellationToken);
 
         if (conversation == null)
         {
             return ApiResponse<bool>.FailureResponse("Conversation not found.");
         }
 
-        var participant = await _db.ConversationParticipants
-            .FirstOrDefaultAsync(cp => cp.ConversationId == request.ConversationId && cp.UserId == request.TargetUserId && cp.IsActive, cancellationToken);
+        var participant = await _messageRepository.GetActiveParticipantAsync(request.ConversationId, request.TargetUserId, cancellationToken);
 
         if (participant == null)
         {
@@ -63,17 +60,17 @@ public class RemoveParticipantCommandHandler : IRequestHandler<RemoveParticipant
         participant.LeftAt = DateTime.UtcNow;
 
         // Deactivate admin record if present
-        var adminRecord = await _db.ConversationAdmins
-            .FirstOrDefaultAsync(ca => ca.ConversationId == request.ConversationId && ca.UserId == request.TargetUserId && ca.IsActive, cancellationToken);
+        var adminRecord = await _messageRepository.GetActiveAdminRecordAsync(request.ConversationId, request.TargetUserId, cancellationToken);
         if (adminRecord != null)
         {
             adminRecord.IsActive = false;
             adminRecord.RemovedAt = DateTime.UtcNow;
+            _messageRepository.UpdateConversationAdmin(adminRecord);
         }
 
         // Fetch names for system message
-        var caller = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId, cancellationToken);
-        var target = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.TargetUserId, cancellationToken);
+        var caller = await _messageRepository.GetUserBasicAsync(currentUserId, cancellationToken);
+        var target = await _messageRepository.GetUserBasicAsync(request.TargetUserId, cancellationToken);
         var callerName = caller != null ? $"{caller.FirstName} {caller.LastName}".Trim() : "An admin";
         var targetName = target != null ? $"{target.FirstName} {target.LastName}".Trim() : "user";
 
@@ -94,7 +91,7 @@ public class RemoveParticipantCommandHandler : IRequestHandler<RemoveParticipant
             IsPinned = false,
             IsDeleted = false
         };
-        await _db.Messages.AddAsync(systemMessage, cancellationToken);
+        await _messageRepository.AddMessageAsync(systemMessage, cancellationToken);
 
         // Update conversation last message cache
         conversation.LastMessageId = systemMessage.Id;
@@ -102,7 +99,7 @@ public class RemoveParticipantCommandHandler : IRequestHandler<RemoveParticipant
         conversation.LastMessageText = systemMessage.MessageText;
         conversation.LastMessageSenderId = currentUserId;
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _messageRepository.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<bool>.SuccessResponse(true, "Participant removed successfully.");
     }
