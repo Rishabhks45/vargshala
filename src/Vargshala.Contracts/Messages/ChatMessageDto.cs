@@ -13,6 +13,7 @@ public class ChatMessageDto
     public UserRole? SenderUserRole { get; set; }
     public string SenderInitials { get; set; } = string.Empty;
     public string SenderAvatarColor { get; set; } = "teal";
+    public string? SenderAvatarUrl { get; set; }
     public MessageType MessageType { get; set; } = MessageType.Text;
     public SystemEventType? SystemEventType { get; set; }
     public string Content { get; set; } = string.Empty;
@@ -75,6 +76,7 @@ public class ChatMemberDto
     public string Role { get; set; } = "Student"; // "Teacher", "Student", "Admin", "Parent"
     public UserRole? UserRole { get; set; }
     public string Initials { get; set; } = string.Empty;
+    public string? AvatarUrl { get; set; }
     public bool IsOnline { get; set; } = false;
     public bool IsAdmin { get; set; } = false;
     public ConversationParticipantRole ConversationParticipantRole { get; set; } = ConversationParticipantRole.Member;

@@ -58,4 +58,12 @@ public class ChatHub : Hub
             await Clients.OthersInGroup($"conv_{conversationId}").SendAsync("UserTyping", conversationId, userName, isTyping);
         }
     }
+
+    public async Task SendReaction(string conversationId, string messageId, string emoji, int count)
+    {
+        if (!string.IsNullOrWhiteSpace(conversationId) && !string.IsNullOrWhiteSpace(messageId) && !string.IsNullOrWhiteSpace(emoji))
+        {
+            await Clients.OthersInGroup($"conv_{conversationId}").SendAsync("MessageReactionUpdated", conversationId, messageId, emoji, count);
+        }
+    }
 }

@@ -20,6 +20,7 @@ public class ChatHubService : IChatHubService
     public event Func<ChatMessageDto, Task>? OnMessageReceived;
     public event Action<MessagesReadNotification>? OnMessagesRead;
     public event Action<string, string, bool>? OnUserTyping;
+    public event Action<string, string, string, int>? OnReactionUpdated;
 
     public HubConnectionState State => _hubConnection?.State ?? HubConnectionState.Disconnected;
 
@@ -105,6 +106,18 @@ public class ChatHubService : IChatHubService
                 }
             });
 
+            _hubConnection.On<string, string, string, int>("MessageReactionUpdated", (convId, messageId, emoji, count) =>
+            {
+                try
+                {
+                    OnReactionUpdated?.Invoke(convId, messageId, emoji, count);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing MessageReactionUpdated in ChatHubService");
+                }
+            });
+
             await _hubConnection.StartAsync();
             _logger.LogInformation("ChatHub connected successfully to {HubUrl}", hubUrl);
         }
@@ -155,6 +168,21 @@ public class ChatHubService : IChatHubService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending typing status for {ConversationId}", conversationId);
+            }
+        }
+    }
+
+    public async Task SendReactionAsync(Guid conversationId, Guid messageId, string emoji, int count)
+    {
+        if (_hubConnection?.State == HubConnectionState.Connected)
+        {
+            try
+            {
+                await _hubConnection.SendAsync("SendReaction", conversationId.ToString(), messageId.ToString(), emoji, count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending reaction for conversation {ConversationId}, message {MessageId}", conversationId, messageId);
             }
         }
     }

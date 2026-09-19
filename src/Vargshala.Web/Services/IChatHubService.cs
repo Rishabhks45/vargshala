@@ -8,6 +8,7 @@ public interface IChatHubService : IAsyncDisposable
     event Func<ChatMessageDto, Task>? OnMessageReceived;
     event Action<MessagesReadNotification>? OnMessagesRead;
     event Action<string, string, bool>? OnUserTyping;
+    event Action<string, string, string, int>? OnReactionUpdated;
 
     HubConnectionState State { get; }
 
@@ -16,4 +17,6 @@ public interface IChatHubService : IAsyncDisposable
     Task JoinConversationAsync(Guid conversationId);
     Task LeaveConversationAsync(Guid conversationId);
     Task SendTypingAsync(Guid conversationId, string userName, bool isTyping);
+    Task SendReactionAsync(Guid conversationId, Guid messageId, string emoji, int count);
 }
+

@@ -45,27 +45,33 @@
                 </button>
             </div>
 
-            <!-- Filter Category Pills (Exact Design) -->
-            <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <!-- Filter Category Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 select-none scroll-smooth">
                 <button type="button" 
                         @onclick='() => _activeCategory = "All"'
-                        class="px-3.5 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "All" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                        class="px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer @(_activeCategory == "All" ? "bg-[#00796b] text-white font-semibold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
                     All
                 </button>
                 <button type="button" 
                         @onclick='() => _activeCategory = "Groups"'
-                        class="px-3 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "Groups" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                        class="px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer @(_activeCategory == "Groups" ? "bg-[#00796b] text-white font-semibold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
                     Groups
                 </button>
                 <button type="button" 
                         @onclick='() => _activeCategory = "Announcements"'
-                        class="px-3 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "Announcements" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
+                        class="px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer @(_activeCategory == "Announcements" ? "bg-[#00796b] text-white font-semibold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
                     Announcements
                 </button>
                 <button type="button" 
                         @onclick='() => _activeCategory = "Unread"'
-                        class="px-3 py-1 rounded-full transition-all cursor-pointer @(_activeCategory == "Unread" ? "bg-[#00796b] text-white font-bold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200")">
-                    Unread
+                        class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 whitespace-nowrap cursor-pointer @(_activeCategory == "Unread" ? "bg-[#00796b] text-white font-semibold shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                    <span>Unread</span>
+                    @if (UnreadConversationsCount > 0)
+                    {
+                        <span class="px-1.5 py-0.2 text-[10px] rounded-full leading-none font-bold @(_activeCategory == "Unread" ? "bg-white text-[#00796b]" : "bg-[#00796b] text-white")">
+                            @UnreadConversationsCount
+                        </span>
+                    }
                 </button>
             </div>
         </div>
@@ -94,18 +100,15 @@
                                     </svg>
                                 </div>
                             }
+                            else if (!string.IsNullOrWhiteSpace(conv.AvatarUrl))
+                            {
+                                <img src="@conv.AvatarUrl" alt="@conv.Name" class="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-xs" />
+                            }
                             else if (conv.Type == ConversationType.Direct)
                             {
-                                @if (!string.IsNullOrEmpty(conv.GroupPhotoUrl))
-                                {
-                                    <img src="@conv.GroupPhotoUrl" alt="@conv.Name" class="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
-                                }
-                                else
-                                {
-                                    <div class="w-11 h-11 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-bold text-sm flex items-center justify-center border border-teal-200 dark:border-teal-800">
-                                        @conv.Initials
-                                    </div>
-                                }
+                                <div class="w-11 h-11 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-bold text-sm flex items-center justify-center border border-teal-200 dark:border-teal-800">
+                                    @conv.Initials
+                                </div>
                             }
                             else
                             {
@@ -165,22 +168,36 @@
         {
             <!-- Chat Header -->
             <div class="px-5 py-3.5 bg-white dark:bg-[#111c21] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 shadow-2xs">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-950/50 text-[#00796b] dark:text-teal-300 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 16v-1a4 4 0 00-3-3.87 4.004 4.004 0 013 4.87zM4 15a4 4 0 003-3.87A4.004 4.004 0 004 16v-1z" />
-                        </svg>
+                <button type="button" 
+                        @onclick="() => _showRightPanel = !_showRightPanel"
+                        class="flex items-center gap-3 min-w-0 text-left cursor-pointer group/header focus:outline-none"
+                        title="Click to view @(_selectedConversation.Type == ConversationType.Direct ? "contact" : "group") info">
+                    <div class="w-10 h-10 rounded-full bg-[#004D40] text-teal-300 font-bold text-sm flex items-center justify-center shrink-0 overflow-hidden shadow-xs ring-2 ring-transparent group-hover/header:ring-[#00796b]/60 transition-all">
+                        @if (!string.IsNullOrWhiteSpace(_selectedConversation.AvatarUrl))
+                        {
+                            <img src="@_selectedConversation.AvatarUrl" class="w-full h-full object-cover" />
+                        }
+                        else if (!string.IsNullOrWhiteSpace(_selectedConversation.Initials))
+                        {
+                            <span>@_selectedConversation.Initials</span>
+                        }
+                        else
+                        {
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 16v-1a4 4 0 00-3-3.87 4.004 4.004 0 013 4.87zM4 15a4 4 0 003-3.87A4.004 4.004 0 004 16v-1z" />
+                            </svg>
+                        }
                     </div>
 
                     <div class="min-w-0">
-                        <h2 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white truncate group-hover/header:text-[#00796b] dark:group-hover/header:text-teal-400 transition-colors">
                             @_selectedConversation.Name
                         </h2>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
                             @_selectedConversation.MemberCount members | @_selectedConversation.Type
                         </p>
                     </div>
-                </div>
+                </button>
 
                 <!-- Right Header Actions (Search, Call, Video, Three Dots) -->
                 <div class="flex items-center gap-1.5 shrink-0 text-slate-600 dark:text-slate-300">
@@ -211,7 +228,7 @@
             </div>
 
             <!-- Messages Stream -->
-            <div id="messages-stream" class="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 select-text scroll-smooth">
+            <div id="messages-stream" class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-2 select-text scroll-smooth">
                 
                 @if (_isLoadingMessages && !_currentMessages.Any())
                 {
@@ -239,101 +256,74 @@
                         else if (msg.IsOutgoing)
                         {
                             <!-- OUTGOING MESSAGE (Right Aligned, Mint Green Bubble) -->
-                            <div class="flex items-end justify-end gap-2 group">
-                                <div class="max-w-lg rounded-2xl rounded-tr-xs bg-[#E8F8F0] dark:bg-[#16382f] p-3 text-xs text-slate-800 dark:text-slate-100 shadow-2xs space-y-2 border border-[#d2f0e0] dark:border-teal-900/40">
-                                    
-                                    @if (!string.IsNullOrWhiteSpace(msg.Content))
-                                    {
-                                        <div class="leading-relaxed whitespace-pre-wrap font-normal">
-                                            @msg.Content
-                                        </div>
-                                    }
-
-                                    @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
-                                    {
-                                        <div class="flex items-center justify-between gap-3 p-2.5 bg-white dark:bg-[#102922] rounded-xl border border-teal-100 dark:border-teal-800">
-                                            <div class="flex items-center gap-2.5 min-w-0">
-                                                <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
-                                                    FILE
-                                                </div>
-                                                <div class="min-w-0">
-                                                    <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
-                                                    <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "Attachment")</span>
-                                                </div>
-                                            </div>
-                                            <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                </svg>
-                                            </a>
-                                        </div>
-                                    }
-
-                                    <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium">
-                                        <span>@msg.SentAt.ToString("hh:mm tt")</span>
-                                        @if (msg.IsRead)
+                            <div class="flex flex-col items-end">
+                                <div class="relative group/msg w-fit max-w-lg">
+                                    <!-- Floating Quick Reactions Bar (on hover of message bubble) -->
+                                    <div class="opacity-0 pointer-events-none group-hover/msg:pointer-events-auto group-hover/msg:opacity-100 transition-opacity duration-150 absolute -top-3.5 right-2 z-20 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white dark:bg-[#18262c] shadow-md border border-slate-200 dark:border-slate-700 text-sm">
+                                        @foreach (var qe in EmojiHelper.QuickReactions)
                                         {
-                                            <!-- Double Tick (Read) -->
-                                            <span title="Read" class="inline-flex items-center text-[#009488] dark:text-teal-400">
-                                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M18 6L7 17l-5-5"/>
-                                                    <path d="M22 10l-7.5 7.5-1.5-1.5"/>
-                                                </svg>
-                                            </span>
+                                            <button type="button" 
+                                                    @onclick="() => ToggleReaction(msg, qe)" 
+                                                    class="hover:scale-130 transition-transform p-1 cursor-pointer" 
+                                                    title="@qe">
+                                                @qe
+                                            </button>
                                         }
-                                        else
-                                        {
-                                            <!-- Single Tick (Sent) -->
-                                            <span title="Sent" class="inline-flex items-center text-slate-400 dark:text-slate-500">
-                                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M20 6L9 17l-5-5"/>
-                                                </svg>
-                                            </span>
-                                        }
+                                        <button type="button" 
+                                                @onclick="() => OpenReactionPicker(msg.Id)" 
+                                                class="w-5 h-5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 font-bold text-xs ml-0.5 cursor-pointer" 
+                                                title="More Reactions">
+                                            +
+                                        </button>
                                     </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <!-- INCOMING MESSAGE (Left Aligned, White Bubble) -->
-                            <div class="flex items-start gap-2.5 group">
-                                <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 mt-0.5 border border-slate-200">
-                                    @if (!string.IsNullOrWhiteSpace(msg.SenderAvatarColor) && msg.SenderAvatarColor.StartsWith("http"))
+
+                                    <!-- Reaction Picker Popup for this message -->
+                                    @if (_reactionPickerMessageId == msg.Id)
                                     {
-                                        <img src="@msg.SenderAvatarColor" alt="@msg.SenderName" class="w-full h-full object-cover" />
-                                    }
-                                    else
-                                    {
-                                        <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-bold text-xs flex items-center justify-center">
-                                            @msg.SenderInitials
+                                        <!-- Backdrop: Click outside to close reaction picker -->
+                                        <div class="fixed inset-0 z-20" 
+                                             style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100vw; height: 100vh; z-index: 20;" 
+                                             @onclick="() => _reactionPickerMessageId = null"></div>
+
+                                        <div class="absolute -top-72 right-0 z-30 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden text-xs">
+                                            <div class="p-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                                                    @foreach (var cat in EmojiHelper.Categories)
+                                                    {
+                                                        <button type="button" 
+                                                                @onclick="() => _activeEmojiCategory = cat.Key"
+                                                                class="px-2 py-0.5 rounded text-xs cursor-pointer @(_activeEmojiCategory == cat.Key ? "bg-teal-50 dark:bg-teal-950 text-[#00796b]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800")">
+                                                            @cat.Icon
+                                                        </button>
+                                                    }
+                                                </div>
+                                                <button type="button" @onclick="() => _reactionPickerMessageId = null" class="text-slate-400 hover:text-slate-600 cursor-pointer text-xs font-bold">✕</button>
+                                            </div>
+                                            <div class="p-2 max-h-52 overflow-y-auto grid grid-cols-8 gap-1 text-base">
+                                                @foreach (var emoji in FilteredEmojis)
+                                                {
+                                                    <button type="button" 
+                                                            @onclick="() => ToggleReaction(msg, emoji)"
+                                                            class="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center hover:scale-125 transition-transform cursor-pointer"
+                                                            title="@emoji">
+                                                        @emoji
+                                                    </button>
+                                                }
+                                            </div>
                                         </div>
                                     }
-                                </div>
 
-                                <div class="max-w-lg space-y-1">
-                                    <span class="text-[11px] font-bold text-[#00796b] dark:text-teal-400">
-                                        @msg.SenderName
-                                    </span>
-
-                                    <div class="rounded-2xl rounded-tl-xs bg-white dark:bg-[#18262c] p-3 text-xs text-slate-800 dark:text-slate-100 shadow-2xs space-y-2 border border-slate-200 dark:border-slate-800">
-                                        @if (!string.IsNullOrWhiteSpace(msg.Content))
-                                        {
-                                            <div class="leading-relaxed whitespace-pre-wrap font-normal">
-                                                @msg.Content
-                                            </div>
-                                        }
-
+                                    <div class="rounded-2xl rounded-tr-xs bg-[#E8F8F0] dark:bg-[#16382f] px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 shadow-2xs border border-[#d2f0e0] dark:border-teal-900/40">
                                         @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
                                         {
-                                            <div class="flex items-center justify-between gap-3 p-2.5 bg-slate-50 dark:bg-[#121e23] rounded-xl border border-slate-200 dark:border-slate-700">
+                                            <div class="flex items-center justify-between gap-3 p-2 bg-white dark:bg-[#102922] rounded-xl border border-teal-100 dark:border-teal-800 mb-1">
                                                 <div class="flex items-center gap-2.5 min-w-0">
-                                                    <div class="w-8 h-8 rounded-lg bg-rose-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
-                                                        PDF
+                                                    <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                                                        FILE
                                                     </div>
                                                     <div class="min-w-0">
                                                         <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
-                                                        <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "PDF")</span>
+                                                        <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "Attachment")</span>
                                                     </div>
                                                 </div>
                                                 <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
@@ -344,10 +334,225 @@
                                             </div>
                                         }
 
-                                        <div class="flex items-center justify-end text-[10px] text-slate-400 font-medium">
-                                            <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                        @if (!string.IsNullOrWhiteSpace(msg.Content))
+                                        {
+                                            <div class="leading-normal whitespace-pre-wrap font-normal break-words">
+                                                <span>@msg.Content</span>
+                                                <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-400 font-medium float-right ml-2.5 mt-0.5 select-none shrink-0">
+                                                    <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                                    @if (msg.IsRead)
+                                                    {
+                                                        <!-- Double Tick (Read) -->
+                                                        <span title="Read" class="inline-flex items-center text-[#009488] dark:text-teal-400">
+                                                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M18 6L7 17l-5-5"/>
+                                                                <path d="M22 10l-7.5 7.5-1.5-1.5"/>
+                                                            </svg>
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <!-- Single Tick (Sent) -->
+                                                        <span title="Sent" class="inline-flex items-center text-slate-400 dark:text-slate-500">
+                                                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M20 6L9 17l-5-5"/>
+                                                            </svg>
+                                                        </span>
+                                                    }
+                                                </span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium mt-0.5">
+                                                <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                                @if (msg.IsRead)
+                                                {
+                                                    <span title="Read" class="inline-flex items-center text-[#009488] dark:text-teal-400">
+                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="M18 6L7 17l-5-5"/>
+                                                            <path d="M22 10l-7.5 7.5-1.5-1.5"/>
+                                                        </svg>
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span title="Sent" class="inline-flex items-center text-slate-400 dark:text-slate-500">
+                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="M20 6L9 17l-5-5"/>
+                                                        </svg>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Reactions Badges -->
+                                @if (msg.Reactions.Any())
+                                {
+                                    <div class="flex flex-wrap gap-1 mt-1 justify-end">
+                                        @foreach (var kv in msg.Reactions)
+                                        {
+                                            var isMyReaction = _myReactions.TryGetValue(msg.Id, out var myEmoji) && myEmoji == kv.Key;
+                                            <button type="button" 
+                                                    @onclick="() => ToggleReaction(msg, kv.Key)"
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors cursor-pointer @(isMyReaction ? "bg-teal-50 dark:bg-teal-950/80 border border-[#00796b] text-[#00796b] font-bold shadow-2xs" : "bg-white dark:bg-[#18262c] hover:bg-teal-50 dark:hover:bg-teal-950 border border-slate-200 dark:border-slate-700 hover:border-[#00796b] shadow-2xs text-slate-700 dark:text-slate-300")"
+                                                    title="@(isMyReaction ? "Remove reaction" : "React with " + kv.Key)">
+                                                <span>@kv.Key</span>
+                                                @if (kv.Value > 1)
+                                                {
+                                                    <span class="text-[10px] font-bold @(isMyReaction ? "text-[#00796b] dark:text-teal-400" : "text-slate-600 dark:text-slate-300")">@kv.Value</span>
+                                                }
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- INCOMING MESSAGE (Left Aligned, White Bubble) -->
+                            <div class="flex items-start gap-2.5">
+                                <button type="button" 
+                                        @onclick="() => _showRightPanel = true"
+                                        class="w-8 h-8 rounded-full overflow-hidden shrink-0 mt-0.5 border border-slate-200 cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-[#00796b] transition-all"
+                                        title="View info for @msg.SenderName">
+                                    @if (!string.IsNullOrWhiteSpace(msg.SenderAvatarUrl))
+                                    {
+                                        <img src="@msg.SenderAvatarUrl" alt="@msg.SenderName" class="w-full h-full object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-200 font-bold text-xs flex items-center justify-center">
+                                            @msg.SenderInitials
+                                        </div>
+                                    }
+                                </button>
+
+                                <div class="space-y-1">
+                                    <button type="button" 
+                                            @onclick="() => _showRightPanel = true"
+                                            class="text-[11px] font-bold text-[#00796b] dark:text-teal-400 ml-1 block text-left cursor-pointer hover:underline"
+                                            title="View info for @msg.SenderName">
+                                        @msg.SenderName
+                                    </button>
+
+                                    <div class="relative group/msg w-fit max-w-lg">
+                                        <!-- Floating Quick Reactions Bar (on hover of message bubble) -->
+                                        <div class="opacity-0 pointer-events-none group-hover/msg:pointer-events-auto group-hover/msg:opacity-100 transition-opacity duration-150 absolute -top-3.5 left-2 z-20 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white dark:bg-[#18262c] shadow-md border border-slate-200 dark:border-slate-700 text-sm">
+                                            @foreach (var qe in EmojiHelper.QuickReactions)
+                                            {
+                                                <button type="button" 
+                                                        @onclick="() => ToggleReaction(msg, qe)" 
+                                                        class="hover:scale-130 transition-transform p-1 cursor-pointer" 
+                                                        title="@qe">
+                                                    @qe
+                                                </button>
+                                            }
+                                            <button type="button" 
+                                                    @onclick="() => OpenReactionPicker(msg.Id)" 
+                                                    class="w-5 h-5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 font-bold text-xs ml-0.5 cursor-pointer" 
+                                                    title="More Reactions">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <!-- Reaction Picker Popup for this message -->
+                                        @if (_reactionPickerMessageId == msg.Id)
+                                        {
+                                            <!-- Backdrop: Click outside to close reaction picker -->
+                                            <div class="fixed inset-0 z-20" 
+                                                 style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100vw; height: 100vh; z-index: 20;" 
+                                                 @onclick="() => _reactionPickerMessageId = null"></div>
+
+                                            <div class="absolute -top-72 left-0 z-30 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden text-xs">
+                                                <div class="p-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                                    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                                                        @foreach (var cat in EmojiHelper.Categories)
+                                                        {
+                                                            <button type="button" 
+                                                                    @onclick="() => _activeEmojiCategory = cat.Key"
+                                                                    class="px-2 py-0.5 rounded text-xs cursor-pointer @(_activeEmojiCategory == cat.Key ? "bg-teal-50 dark:bg-teal-950 text-[#00796b]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800")">
+                                                                @cat.Icon
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                    <button type="button" @onclick="() => _reactionPickerMessageId = null" class="text-slate-400 hover:text-slate-600 cursor-pointer text-xs font-bold">✕</button>
+                                                </div>
+                                                <div class="p-2 max-h-52 overflow-y-auto grid grid-cols-8 gap-1 text-base">
+                                                    @foreach (var emoji in FilteredEmojis)
+                                                    {
+                                                        <button type="button" 
+                                                                @onclick="() => ToggleReaction(msg, emoji)"
+                                                                class="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center hover:scale-125 transition-transform cursor-pointer"
+                                                                title="@emoji">
+                                                            @emoji
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <div class="rounded-2xl rounded-tl-xs bg-white dark:bg-[#18262c] px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 shadow-2xs border border-slate-200 dark:border-slate-800">
+                                            @if (!string.IsNullOrWhiteSpace(msg.AttachmentName))
+                                            {
+                                                <div class="flex items-center justify-between gap-3 p-2 bg-slate-50 dark:bg-[#121e23] rounded-xl border border-slate-200 dark:border-slate-700 mb-1">
+                                                    <div class="flex items-center gap-2.5 min-w-0">
+                                                        <div class="w-8 h-8 rounded-lg bg-rose-600 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                                                            PDF
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <p class="font-bold text-slate-900 dark:text-white truncate text-xs">@msg.AttachmentName</p>
+                                                            <span class="text-[10.5px] text-slate-400">@(msg.AttachmentSize ?? "PDF")</span>
+                                                        </div>
+                                                    </div>
+                                                    <a href="@msg.AttachmentUrl" target="_blank" download class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-300">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                        </svg>
+                                                    </a>
+                                                </div>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(msg.Content))
+                                            {
+                                                <div class="leading-normal whitespace-pre-wrap font-normal break-words">
+                                                    <span>@msg.Content</span>
+                                                    <span class="inline-flex items-center text-[10px] text-slate-400 dark:text-slate-400 font-medium float-right ml-2.5 mt-0.5 select-none shrink-0">
+                                                        <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                                    </span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="flex items-center justify-end text-[10px] text-slate-400 font-medium mt-0.5">
+                                                    <span>@msg.SentAt.ToString("hh:mm tt")</span>
+                                                </div>
+                                            }
                                         </div>
                                     </div>
+
+                                    <!-- Reactions Badges -->
+                                    @if (msg.Reactions.Any())
+                                    {
+                                        <div class="flex flex-wrap gap-1 mt-1 justify-start">
+                                            @foreach (var kv in msg.Reactions)
+                                            {
+                                                var isMyReaction = _myReactions.TryGetValue(msg.Id, out var myEmoji) && myEmoji == kv.Key;
+                                                <button type="button" 
+                                                        @onclick="() => ToggleReaction(msg, kv.Key)"
+                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors cursor-pointer @(isMyReaction ? "bg-teal-50 dark:bg-teal-950/80 border border-[#00796b] text-[#00796b] font-bold shadow-2xs" : "bg-white dark:bg-[#18262c] hover:bg-teal-50 dark:hover:bg-teal-950 border border-slate-200 dark:border-slate-700 hover:border-[#00796b] shadow-2xs text-slate-700 dark:text-slate-300")"
+                                                        title="@(isMyReaction ? "Remove reaction" : "React with " + kv.Key)">
+                                                    <span>@kv.Key</span>
+                                                    @if (kv.Value > 1)
+                                                    {
+                                                        <span class="text-[10px] font-bold @(isMyReaction ? "text-[#00796b] dark:text-teal-400" : "text-slate-600 dark:text-slate-300")">@kv.Value</span>
+                                                    }
+                                                </button>
+                                            }
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         }
@@ -375,51 +580,117 @@
 
             </div>
 
-            <!-- Chat Composer Bar -->
-            <div class="px-5 py-3.5 bg-white dark:bg-[#111c21] border-t border-slate-200 dark:border-slate-800 flex items-center gap-2.5 shrink-0">
+            <!-- Chat Composer Bar (Matching Exact Unified Input Style) -->
+            <div class="px-4 py-3 bg-white dark:bg-[#111c21] border-t border-slate-200 dark:border-slate-800 shrink-0 relative">
                 
-                <button type="button" 
-                        class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer"
-                        title="Attach File">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                    </svg>
-                </button>
+                <!-- Full Emoji Picker Popover for Input -->
+                @if (_showInputEmojiPicker)
+                {
+                    <!-- Backdrop: Click outside to close emoji picker -->
+                    <div class="fixed inset-0 z-40" 
+                         style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100vw; height: 100vh; z-index: 40;" 
+                         @onclick="() => _showInputEmojiPicker = false"></div>
 
-                <div class="flex-1 relative flex items-center">
-                    <input type="text" 
-                           value="@_messageInput"
-                           @oninput="HandleInput"
-                           @onkeydown="HandleKeyPress"
-                           disabled="@_isSending"
-                           placeholder="Type a message..."
-                           class="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#00796b] transition-all" />
+                    <div class="absolute bottom-16 right-4 z-50 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden animate-in fade-in duration-150">
+                        <div class="p-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                            <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                                @foreach (var cat in EmojiHelper.Categories)
+                                {
+                                    <button type="button" 
+                                            @onclick="() => _activeEmojiCategory = cat.Key"
+                                            class="px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors @(_activeEmojiCategory == cat.Key ? "bg-teal-50 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800")"
+                                            title="@cat.Title">
+                                        <span>@cat.Icon</span>
+                                    </button>
+                                }
+                            </div>
+                            <button type="button" @onclick="() => _showInputEmojiPicker = false" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-pointer">
+                                ✕
+                            </button>
+                        </div>
 
-                    <button type="button" 
-                            @onclick='() => _messageInput += " 😊"'
-                            class="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" 
-                            title="Add Emoji">
-                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </button>
+                        <div class="p-2 border-b border-slate-100 dark:border-slate-800">
+                            <input type="text" 
+                                   @bind="_emojiSearchTerm" 
+                                   @bind:event="oninput" 
+                                   placeholder="Search emojis..." 
+                                   class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-[#00796b] text-slate-900 dark:text-white placeholder-slate-400" />
+                        </div>
+
+                        <div class="p-2 max-h-56 overflow-y-auto grid grid-cols-8 gap-1 text-lg select-none">
+                            @foreach (var emoji in FilteredEmojis)
+                            {
+                                <button type="button" 
+                                        @onclick="() => InsertEmojiIntoInput(emoji)"
+                                        class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center hover:scale-125 transition-transform cursor-pointer"
+                                        title="@emoji">
+                                    @emoji
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Unified Input Card (Textarea + Action Icons + Send) -->
+                <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#18262c] border border-slate-300 dark:border-slate-700 shadow-2xs transition-all focus-within:border-[#00796b] focus-within:border-b-2 focus-within:border-b-[#00796b]">
+                    
+                    <!-- Auto-Growing Textarea (Shift + Enter for new line, Enter to send) -->
+                    <textarea id="chat-composer-textarea"
+                              rows="1"
+                              value="@_messageInput"
+                              @oninput="HandleInput"
+                              disabled="@_isSending"
+                              placeholder="Type a message"
+                              class="flex-1 min-w-0 bg-transparent border-0 focus:outline-none focus:ring-0 p-0 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 resize-none max-h-40 overflow-y-auto leading-normal"
+                              style="min-height: 24px; height: 24px;"></textarea>
+
+                    <!-- Right-Side Action Icons Strip (Only Upload & Emoji) -->
+                    <div class="flex items-center gap-1 sm:gap-1.5 text-slate-500 dark:text-slate-300 shrink-0 select-none">
+                        
+                        <!-- 1. Attachment / Upload Paperclip Icon -->
+                        <button type="button" 
+                                class="p-1 hover:text-[#00796b] dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer" 
+                                title="Attach File">
+                            <svg class="w-5 h-5 shrink-0" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                            </svg>
+                        </button>
+
+                        <!-- 2. Emoji Smiley Icon -->
+                        <button type="button" 
+                                @onclick="ToggleInputEmojiPicker" 
+                                class="p-1 hover:text-[#00796b] dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer @(_showInputEmojiPicker ? "text-[#00796b] dark:text-teal-400" : "")" 
+                                title="Choose Emoji">
+                            <svg class="w-5 h-5 shrink-0" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </button>
+
+                        <!-- Vertical Divider Separator -->
+                        <div class="h-5 w-[1px] bg-slate-300 dark:bg-slate-600 mx-0.5 shrink-0"></div>
+
+                        <!-- 3. Send Button (Paper Plane Outline) -->
+                        <button type="button" 
+                                id="chat-send-btn"
+                                @onclick="SendMessageAsync"
+                                disabled="@(string.IsNullOrWhiteSpace(_messageInput) || _isSending)"
+                                class="p-1 transition-all cursor-pointer @(string.IsNullOrWhiteSpace(_messageInput) || _isSending ? "text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60" : "text-[#00796b] dark:text-teal-400 hover:text-[#004D40] hover:scale-110")"
+                                title="Send (Enter)">
+                            @if (_isSending)
+                            {
+                                <div class="w-4 h-4 border-2 border-[#00796b] border-t-transparent rounded-full animate-spin"></div>
+                            }
+                            else
+                            {
+                                <svg class="w-5 h-5 shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            }
+                        </button>
+                    </div>
+
                 </div>
-
-                <button type="button" 
-                        @onclick="SendMessageAsync"
-                        disabled="@(string.IsNullOrWhiteSpace(_messageInput) || _isSending)"
-                        class="w-10 h-10 rounded-full bg-[#00796b] hover:bg-[#004D40] disabled:opacity-40 text-white flex items-center justify-center shadow-xs transition-all shrink-0 cursor-pointer">
-                    @if (_isSending)
-                    {
-                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    }
-                    else
-                    {
-                        <svg class="w-4.5 h-4.5 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                    }
-                </button>
 
             </div>
         }
@@ -580,8 +851,17 @@
                             {
                                 <div class="flex items-center justify-between py-1">
                                     <div class="flex items-center gap-2.5 min-w-0">
-                                        <div class="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-200 font-bold text-xs flex items-center justify-center border border-slate-200">
-                                            @member.Initials
+                                        <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                                            @if (!string.IsNullOrWhiteSpace(member.AvatarUrl))
+                                            {
+                                                <img src="@member.AvatarUrl" alt="@member.Name" class="w-full h-full object-cover" />
+                                            }
+                                            else
+                                            {
+                                                <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-200 font-bold text-xs flex items-center justify-center">
+                                                    @member.Initials
+                                                </div>
+                                            }
                                         </div>
                                         <div class="min-w-0">
                                             <p class="text-xs font-bold text-slate-900 dark:text-white truncate">@member.Name</p>
@@ -639,9 +919,10 @@
             <div class="p-5 space-y-4 text-xs">
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Type</label>
-                    <CustomSelect Value="@_newConversationType.ToString()" 
-                                  ValueChanged="OnConversationTypeChanged" 
-                                  Options="_conversationTypeOptions" 
+                    <CustomSelect Value="@_newConversationType.ToString()"
+                                  ValueChanged="OnConversationTypeChanged"
+                                  Options="_conversationTypeOptions"
+                                  Placeholder="Select Type"
                                   Class="w-full" />
                 </div>
 
@@ -662,9 +943,23 @@
                                 {
                                     <div @onclick="() => _selectedTargetUserId = contact.UserId"
                                          class="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors @(_selectedTargetUserId == contact.UserId ? "bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700 text-[#00796b]" : "hover:bg-slate-100 dark:hover:bg-slate-800")">
-                                        <div class="min-w-0">
-                                            <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
-                                            <p class="text-[10px] text-slate-400">@contact.Role @(!string.IsNullOrWhiteSpace(contact.Email) ? $"• {contact.Email}" : "")</p>
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                                                @if (!string.IsNullOrWhiteSpace(contact.AvatarUrl))
+                                                {
+                                                    <img src="@contact.AvatarUrl" alt="@contact.FullName" class="w-full h-full object-cover" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center">
+                                                        @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
+                                                <p class="text-[10px] text-slate-400">@contact.Role @(!string.IsNullOrWhiteSpace(contact.Email) ? $"• {contact.Email}" : "")</p>
+                                            </div>
                                         </div>
                                         @if (_selectedTargetUserId == contact.UserId)
                                         {
@@ -741,8 +1036,17 @@
                                     <div @onclick="() => ToggleGroupMember(contact.UserId)"
                                          class="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors @(isSelected ? "bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700 text-[#00796b]" : "hover:bg-slate-100 dark:hover:bg-slate-800")">
                                         <div class="flex items-center gap-2 min-w-0">
-                                            <div class="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0">
-                                                @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                            <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                                                @if (!string.IsNullOrWhiteSpace(contact.AvatarUrl))
+                                                {
+                                                    <img src="@contact.AvatarUrl" alt="@contact.FullName" class="w-full h-full object-cover" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center">
+                                                        @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                                    </div>
+                                                }
                                             </div>
                                             <div class="min-w-0">
                                                 <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
@@ -831,8 +1135,17 @@
                             {
                                 <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                                     <div class="flex items-center gap-2.5 min-w-0">
-                                        <div class="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0">
-                                            @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                        <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                                            @if (!string.IsNullOrWhiteSpace(contact.AvatarUrl))
+                                            {
+                                                <img src="@contact.AvatarUrl" alt="@contact.FullName" class="w-full h-full object-cover" />
+                                            }
+                                            else
+                                            {
+                                                <div class="w-full h-full bg-teal-100 dark:bg-teal-950 text-[#00796b] dark:text-teal-300 font-bold text-xs flex items-center justify-center">
+                                                    @(!string.IsNullOrWhiteSpace(contact.FullName) ? contact.FullName[0].ToString().ToUpper() : "?")
+                                                </div>
+                                            }
                                         </div>
                                         <div class="min-w-0">
                                             <p class="font-bold text-slate-900 dark:text-white truncate">@contact.FullName</p>
@@ -868,7 +1181,7 @@
 @code {
     private string _activeCategory = "All";
     private string _messageInput = string.Empty;
-    private bool _showRightPanel = true;
+    private bool _showRightPanel = false;
     private bool _isMuted = false;
     private bool _allowReplies = true;
 
@@ -897,6 +1210,17 @@
     private bool _showAddMemberModal = false;
     private string _addMemberSearchTerm = string.Empty;
     private bool _isAddingMember = false;
+
+    // Emoji Picker & Message Reactions State
+    private bool _showInputEmojiPicker = false;
+    private string _activeEmojiCategory = "Smileys";
+    private string _emojiSearchTerm = string.Empty;
+    private Guid? _reactionPickerMessageId;
+    private readonly Dictionary<Guid, string> _myReactions = new();
+    private bool _needsInputSetup = true;
+
+    private IEnumerable<string> FilteredEmojis => EmojiHelper.FilterEmojis(_activeEmojiCategory, _emojiSearchTerm);
+
 
     private ChatConversationDto? _selectedConversation;
     private List<ChatConversationDto> _conversations = new();
@@ -938,6 +1262,7 @@
         ChatHubService.OnMessageReceived += HandleIncomingMessageAsync;
         ChatHubService.OnMessagesRead += HandleMessagesRead;
         ChatHubService.OnUserTyping += HandleUserTyping;
+        ChatHubService.OnReactionUpdated += HandleReactionUpdated;
 
         await ChatHubService.ConnectAsync();
         await LoadConversationsAsync();
@@ -960,6 +1285,8 @@
                     _currentMessages.Add(message);
                     _selectedConversation.LastMessage = message.Content;
                     _selectedConversation.LastMessageTime = message.SentAt.ToString("hh:mm tt");
+                    _selectedConversation.LastMessageAt = message.SentAt;
+                    MoveConversationToTop(_selectedConversation);
 
                     if (!message.IsOutgoing)
                     {
@@ -975,10 +1302,12 @@
                 {
                     conv.LastMessage = message.Content;
                     conv.LastMessageTime = message.SentAt.ToString("hh:mm tt");
+                    conv.LastMessageAt = message.SentAt;
                     if (message.SenderId != _currentUserId.ToString())
                     {
                         conv.UnreadCount++;
                     }
+                    MoveConversationToTop(conv);
                 }
             }
             StateHasChanged();
@@ -1043,7 +1372,9 @@
             var response = await MessageService.GetConversationsAsync(new GetConversationsPagedRequest { PageSize = 100 });
             if (response.Success && response.Data != null)
             {
-                _conversations = response.Data.Items ?? new();
+                _conversations = (response.Data.Items ?? new())
+                    .OrderByDescending(c => c.LastMessageAt ?? DateTime.MinValue)
+                    .ToList();
                 if (_conversations.Any())
                 {
                     await SelectConversationAsync(_conversations.First());
@@ -1075,9 +1406,13 @@
             else if (_activeCategory == "Announcements") query = query.Where(c => c.IsAnnouncement || c.Type == ConversationType.Channel);
             else if (_activeCategory == "Unread") query = query.Where(c => c.UnreadCount > 0);
 
-            return query.ToList();
+            return query
+                .OrderByDescending(c => c.LastMessageAt ?? DateTime.MinValue)
+                .ToList();
         }
     }
+
+    private int UnreadConversationsCount => _conversations.Count(c => c.UnreadCount > 0);
 
     private async Task SelectConversationAsync(ChatConversationDto conv)
     {
@@ -1091,6 +1426,7 @@
         _isLoadingMessages = true;
         _currentMessages.Clear();
         _typingUsers.Clear();
+        _needsInputSetup = true;
 
         try
         {
@@ -1182,7 +1518,10 @@
                 }
                 _selectedConversation.LastMessage = response.Data.Content;
                 _selectedConversation.LastMessageTime = response.Data.SentAt.ToString("hh:mm tt");
+                _selectedConversation.LastMessageAt = response.Data.SentAt;
+                MoveConversationToTop(_selectedConversation);
                 _messageInput = string.Empty;
+                await ResetTextareaHeightAsync();
                 await ScrollToBottomAsync();
             }
             else
@@ -1201,11 +1540,185 @@
         }
     }
 
+    private async Task ToggleReaction(ChatMessageDto msg, string emoji)
+    {
+        _reactionPickerMessageId = null;
+
+        var convId = _selectedConversation?.Id;
+        bool hasExisting = _myReactions.TryGetValue(msg.Id, out var existingEmoji);
+
+        if (hasExisting && existingEmoji == emoji)
+        {
+            // Case 1: User clicked the SAME emoji -> Remove reaction (Toggle Off)
+            _myReactions.Remove(msg.Id);
+
+            int newCount = 0;
+            if (msg.Reactions.ContainsKey(emoji))
+            {
+                msg.Reactions[emoji]--;
+                if (msg.Reactions[emoji] <= 0)
+                {
+                    msg.Reactions.Remove(emoji);
+                    newCount = 0;
+                }
+                else
+                {
+                    newCount = msg.Reactions[emoji];
+                }
+            }
+
+            StateHasChanged();
+
+            if (convId.HasValue)
+            {
+                await ChatHubService.SendReactionAsync(convId.Value, msg.Id, emoji, newCount);
+            }
+        }
+        else if (hasExisting && !string.IsNullOrEmpty(existingEmoji))
+        {
+            // Case 2: User clicked a DIFFERENT emoji -> Swap reaction (Remove old, Add new)
+            // Step A: Decrement old reaction
+            int oldCount = 0;
+            if (msg.Reactions.ContainsKey(existingEmoji))
+            {
+                msg.Reactions[existingEmoji]--;
+                if (msg.Reactions[existingEmoji] <= 0)
+                {
+                    msg.Reactions.Remove(existingEmoji);
+                    oldCount = 0;
+                }
+                else
+                {
+                    oldCount = msg.Reactions[existingEmoji];
+                }
+            }
+
+            // Step B: Increment new reaction
+            int newCount;
+            if (msg.Reactions.ContainsKey(emoji))
+            {
+                msg.Reactions[emoji]++;
+                newCount = msg.Reactions[emoji];
+            }
+            else
+            {
+                msg.Reactions[emoji] = 1;
+                newCount = 1;
+            }
+
+            _myReactions[msg.Id] = emoji;
+            StateHasChanged();
+
+            if (convId.HasValue)
+            {
+                await ChatHubService.SendReactionAsync(convId.Value, msg.Id, existingEmoji, oldCount);
+                await ChatHubService.SendReactionAsync(convId.Value, msg.Id, emoji, newCount);
+            }
+        }
+        else
+        {
+            // Case 3: First reaction on this message by this user -> Add reaction
+            int newCount;
+            if (msg.Reactions.ContainsKey(emoji))
+            {
+                msg.Reactions[emoji]++;
+                newCount = msg.Reactions[emoji];
+            }
+            else
+            {
+                msg.Reactions[emoji] = 1;
+                newCount = 1;
+            }
+
+            _myReactions[msg.Id] = emoji;
+            StateHasChanged();
+
+            if (convId.HasValue)
+            {
+                await ChatHubService.SendReactionAsync(convId.Value, msg.Id, emoji, newCount);
+            }
+        }
+    }
+
+    private void HandleReactionUpdated(string convId, string messageIdStr, string emoji, int count)
+    {
+        if (_selectedConversation == null || _selectedConversation.Id.ToString() != convId) return;
+        if (!Guid.TryParse(messageIdStr, out var msgId)) return;
+
+        var targetMsg = _currentMessages.FirstOrDefault(m => m.Id == msgId);
+        if (targetMsg == null) return;
+
+        if (count > 0)
+        {
+            targetMsg.Reactions[emoji] = count;
+        }
+        else
+        {
+            targetMsg.Reactions.Remove(emoji);
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+
+    private void OpenReactionPicker(Guid messageId)
+    {
+        if (_reactionPickerMessageId == messageId)
+        {
+            _reactionPickerMessageId = null;
+        }
+        else
+        {
+            _reactionPickerMessageId = messageId;
+            _activeEmojiCategory = "Smileys";
+            _emojiSearchTerm = string.Empty;
+        }
+    }
+
+    private void ToggleInputEmojiPicker()
+    {
+        _showInputEmojiPicker = !_showInputEmojiPicker;
+        _activeEmojiCategory = "Smileys";
+        _emojiSearchTerm = string.Empty;
+    }
+
+    private async Task InsertEmojiIntoInput(string emoji)
+    {
+        _messageInput += emoji;
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("vargshalaChat.insertEmoji", "chat-composer-textarea", emoji);
+        }
+        catch { }
+    }
+
+    private async Task ResetTextareaHeightAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("vargshalaChat.resetHeight", "chat-composer-textarea", "24px");
+        }
+        catch { }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || _needsInputSetup)
+        {
+            _needsInputSetup = false;
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("vargshalaChat.initComposer", "chat-composer-textarea", "chat-send-btn");
+            }
+            catch { }
+        }
+    }
+
     private async Task ScrollToBottomAsync()
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("eval", "setTimeout(function() { var el = document.getElementById('messages-stream'); if (el) el.scrollTop = el.scrollHeight; }, 60);");
+            await JSRuntime.InvokeVoidAsync("vargshalaChat.scrollToBottom", "messages-stream", 60);
         }
         catch { }
     }
@@ -1410,6 +1923,7 @@
             var response = await MessageService.CreateConversationAsync(request);
             if (response.Success && response.Data != null)
             {
+                response.Data.LastMessageAt ??= DateTime.UtcNow;
                 _conversations.Insert(0, response.Data);
                 _showCreateModal = false;
                 await SelectConversationAsync(response.Data);
@@ -1430,12 +1944,27 @@
         }
     }
 
+    private void MoveConversationToTop(ChatConversationDto conv)
+    {
+        var existing = _conversations.FirstOrDefault(c => c.Id == conv.Id);
+        if (existing != null)
+        {
+            _conversations.Remove(existing);
+            _conversations.Insert(0, existing);
+        }
+        else
+        {
+            _conversations.Insert(0, conv);
+        }
+    }
+
     public ValueTask DisposeAsync()
     {
         _typingDebounceTimer?.Dispose();
         ChatHubService.OnMessageReceived -= HandleIncomingMessageAsync;
         ChatHubService.OnMessagesRead -= HandleMessagesRead;
         ChatHubService.OnUserTyping -= HandleUserTyping;
+        ChatHubService.OnReactionUpdated -= HandleReactionUpdated;
         return ValueTask.CompletedTask;
     }
 }

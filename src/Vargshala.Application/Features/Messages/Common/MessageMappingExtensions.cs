@@ -59,6 +59,7 @@ public static class MessageMappingExtensions
         string subtitle = c.Description ?? string.Empty;
         string initials = "G";
 
+        string? avatarUrl = null;
         if (c.Type == ConversationType.Direct)
         {
             var counterpart = c.DirectUser1Id == currentUserId ? c.DirectUser2 : c.DirectUser1;
@@ -72,6 +73,7 @@ public static class MessageMappingExtensions
                 name = $"{counterpart.FirstName} {counterpart.LastName}".Trim();
                 subtitle = counterpart.Role.ToString();
                 initials = GetInitials(name);
+                avatarUrl = counterpart.ProfilePictureUrl;
             }
             else
             {
@@ -87,6 +89,7 @@ public static class MessageMappingExtensions
                 ? c.Description 
                 : $"{c.Participants.Count(p => !p.IsDeleted && p.IsActive)} members";
             initials = GetInitials(name);
+            avatarUrl = c.GroupPhotoUrl;
         }
 
         var dto = new ChatConversationDto
@@ -99,7 +102,7 @@ public static class MessageMappingExtensions
             Subtitle = subtitle,
             Type = c.Type,
             IsAnnouncement = c.IsAnnouncement,
-            GroupPhotoUrl = c.GroupPhotoUrl,
+            GroupPhotoUrl = avatarUrl,
             Initials = initials,
             AvatarColor = GetAvatarColor(c.Id),
             MemberCount = c.Participants.Count(p => !p.IsDeleted && p.IsActive),
@@ -122,6 +125,7 @@ public static class MessageMappingExtensions
                     Role = p.User?.Role.ToString() ?? "Student",
                     UserRole = p.User?.Role,
                     Initials = p.User != null ? GetInitials($"{p.User.FirstName} {p.User.LastName}") : "M",
+                    AvatarUrl = p.User?.ProfilePictureUrl,
                     IsAdmin = p.IsAdmin,
                     ConversationParticipantRole = p.Role,
                     CanPost = true
@@ -153,6 +157,7 @@ public static class MessageMappingExtensions
             SenderUserRole = m.Sender?.Role,
             SenderInitials = GetInitials(senderName),
             SenderAvatarColor = GetAvatarColor(m.SenderId),
+            SenderAvatarUrl = m.Sender?.ProfilePictureUrl,
             MessageType = m.MessageType,
             SystemEventType = m.SystemEventType,
             Content = m.MessageText ?? string.Empty,
