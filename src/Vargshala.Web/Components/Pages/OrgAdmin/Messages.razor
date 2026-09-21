@@ -77,7 +77,7 @@
         </div>
 
         <!-- Conversations Scrollable Feed -->
-        <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 no-scrollbar scrollbar-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
             @if (_isLoadingConversations && !_conversations.Any())
             {
                 <SkeletonConversations Count="6" />
@@ -268,7 +268,7 @@
             {
 
                 <!-- Messages Stream -->
-                <div id="messages-stream" class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-2 select-text scroll-smooth">
+                <div id="messages-stream" class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-2 select-text scroll-smooth no-scrollbar scrollbar-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
                 
                 @if (_isLoadingMessages && !_currentMessages.Any())
                 {
@@ -420,7 +420,17 @@
                                                 <span>@msg.Content</span>
                                                 <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-400 font-medium float-right ml-2.5 mt-0.5 select-none shrink-0">
                                                     <span>@msg.SentAt.ToString("hh:mm tt")</span>
-                                                    @if (msg.IsRead)
+                                                    @if (_pendingOptimisticMessageIds.Contains(msg.Id))
+                                                    {
+                                                        <!-- Clock (Sending...) -->
+                                                        <span title="Sending..." class="inline-flex items-center text-slate-400 dark:text-slate-500 animate-pulse">
+                                                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                                            </svg>
+                                                        </span>
+                                                    }
+                                                    else if (msg.IsRead)
                                                     {
                                                         <!-- Double Tick (Read) -->
                                                         <span title="Read" class="inline-flex items-center" style="color: var(--theme-primary, #009488);">
@@ -446,7 +456,17 @@
                                         {
                                             <div class="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium mt-0.5">
                                                 <span>@msg.SentAt.ToString("hh:mm tt")</span>
-                                                @if (msg.IsRead)
+                                                @if (_pendingOptimisticMessageIds.Contains(msg.Id))
+                                                {
+                                                    <!-- Clock (Sending...) -->
+                                                    <span title="Sending..." class="inline-flex items-center text-slate-400 dark:text-slate-500 animate-pulse">
+                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                                        </svg>
+                                                    </span>
+                                                }
+                                                else if (msg.IsRead)
                                                 {
                                                     <span title="Read" class="inline-flex items-center" style="color: var(--theme-primary, #009488);">
                                                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -835,7 +855,7 @@
                               rows="1"
                               value="@_messageInput"
                               @oninput="HandleInput"
-                              disabled="@_isSending"
+                              disabled="@_isUploadingAttachment"
                               placeholder="Type a message"
                               class="chat-composer-input flex-1 min-w-0 bg-transparent border-0 focus:outline-none focus:ring-0 p-0 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 resize-none max-h-40 overflow-y-auto leading-normal"
                               style="min-height: 24px; height: 24px; border: none !important; outline: none !important; box-shadow: none !important; -webkit-box-shadow: none !important;"></textarea>
@@ -872,20 +892,13 @@
                         <button type="button" 
                                 id="chat-send-btn"
                                 @onclick="SendMessageAsync"
-                                disabled="@((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _isSending || _isUploadingAttachment)"
-                                class="p-1 transition-all cursor-pointer @((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _isSending || _isUploadingAttachment ? "text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60" : "text-theme-primary hover:opacity-80 hover:scale-110")"
+                                disabled="@((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _isUploadingAttachment)"
+                                class="p-1 transition-all cursor-pointer @((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _isUploadingAttachment ? "text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60" : "text-theme-primary hover:opacity-80 hover:scale-110")"
                                 title="Send (Enter)">
-                            @if (_isSending)
-                            {
-                                <div class="w-4 h-4 border-2 border-theme-primary border-t-transparent rounded-full animate-spin"></div>
-                            }
-                            else
-                            {
-                                <svg class="w-5 h-5 shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
-                            }
+                            <svg class="w-5 h-5 shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
                         </button>
                     </div>
 
@@ -916,7 +929,7 @@
     <!-- ========================================================================= -->
     @if (_selectedConversation != null && _showRightPanel)
     {
-        <div class="w-80 lg:w-84 shrink-0 h-full border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111c21] flex flex-col overflow-y-auto">
+        <div class="w-80 lg:w-84 shrink-0 h-full border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111c21] flex flex-col overflow-y-auto no-scrollbar scrollbar-hidden" style="scrollbar-width: none; -ms-overflow-style: none;">
             
             <div class="p-3.5 border-b border-slate-100 dark:border-slate-800/80">
                 <div class="relative">
@@ -1389,7 +1402,7 @@
 
     private bool _isLoadingConversations = true;
     private bool _isLoadingMessages = true;
-    private bool _isSending = false;
+    private readonly HashSet<Guid> _pendingOptimisticMessageIds = new();
     private bool _isCreating = false;
     private bool _showCreateModal = false;
 
@@ -1419,7 +1432,6 @@
     private string _emojiSearchTerm = string.Empty;
     private Guid? _reactionPickerMessageId;
     private readonly Dictionary<Guid, string> _myReactions = new();
-    private bool _needsInputSetup = true;
 
     // Attachment State
     private MessageAttachmentUploadResponse? _pendingAttachment;
@@ -1492,6 +1504,21 @@
 
             if (_selectedConversation != null && _selectedConversation.Id == message.ConversationId)
             {
+                // Reconcile optimistic outgoing message if incoming message is from current user
+                if (message.SenderId == _currentUserId.ToString())
+                {
+                    var optMsg = _currentMessages.FirstOrDefault(m => _pendingOptimisticMessageIds.Contains(m.Id) && m.Content == message.Content);
+                    if (optMsg != null)
+                    {
+                        _pendingOptimisticMessageIds.Remove(optMsg.Id);
+                        var idx = _currentMessages.IndexOf(optMsg);
+                        message.IsOutgoing = true;
+                        _currentMessages[idx] = message;
+                        StateHasChanged();
+                        return;
+                    }
+                }
+
                 if (!_currentMessages.Any(m => m.Id == message.Id))
                 {
                     message.IsOutgoing = message.SenderId == _currentUserId.ToString();
@@ -1639,7 +1666,6 @@
         _isLoadingMessages = true;
         _currentMessages.Clear();
         _typingUsers.Clear();
-        _needsInputSetup = true;
 
         try
         {
@@ -1812,79 +1838,138 @@
 
     private async Task SendMessageAsync()
     {
-        if ((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _selectedConversation == null || _isSending || _isUploadingAttachment) return;
+        if ((string.IsNullOrWhiteSpace(_messageInput) && _pendingAttachment == null) || _selectedConversation == null || _isUploadingAttachment) return;
 
         var text = _messageInput?.Trim() ?? string.Empty;
-        _isSending = true;
+        var attachment = _pendingAttachment;
+
+        // Instantly clear composer & reset input height for zero-delay UX
+        _messageInput = string.Empty;
+        _pendingAttachment = null;
+        await ResetTextareaHeightAsync();
 
         if (_isCurrentlyTyping && _selectedConversation != null)
         {
             _isCurrentlyTyping = false;
             _typingDebounceTimer?.Dispose();
-            await ChatHubService.SendTypingAsync(_selectedConversation.Id, _currentUserName, false);
+            _ = ChatHubService.SendTypingAsync(_selectedConversation.Id, _currentUserName, false);
         }
 
-        try
+        var messageType = MessageType.Text;
+        if (attachment != null)
         {
-            var messageType = MessageType.Text;
-            if (_pendingAttachment != null)
-            {
-                messageType = IsImageAttachment(_pendingAttachment.FileName, _pendingAttachment.ContentType)
-                    ? MessageType.Image
-                    : MessageType.File;
-            }
+            messageType = IsImageAttachment(attachment.FileName, attachment.ContentType)
+                ? MessageType.Image
+                : MessageType.File;
+        }
 
-            var request = new SendMessageRequest
-            {
-                ConversationId = _selectedConversation!.Id,
-                MessageType = messageType,
-                MessageText = text
-            };
+        // 1. Create optimistic local message and add immediately to chat stream
+        var tempId = Guid.NewGuid();
+        _pendingOptimisticMessageIds.Add(tempId);
 
-            if (_pendingAttachment != null)
+        var optimisticMsg = new ChatMessageDto
+        {
+            Id = tempId,
+            ConversationId = _selectedConversation!.Id,
+            SenderId = _currentUserId.ToString(),
+            SenderName = _currentUserName,
+            SenderInitials = !string.IsNullOrWhiteSpace(_currentUserName) 
+                ? (_currentUserName.Length > 1 ? _currentUserName[..2] : _currentUserName).ToUpperInvariant() 
+                : "U",
+            MessageType = messageType,
+            Content = text,
+            SentAt = DateTime.Now,
+            IsOutgoing = true,
+            IsRead = false
+        };
+
+        if (attachment != null)
+        {
+            optimisticMsg.AttachmentName = attachment.FileName;
+            optimisticMsg.AttachmentSize = FormatFileSize(attachment.FileSize);
+            optimisticMsg.AttachmentType = messageType == MessageType.Image ? "Image" : "Document";
+            optimisticMsg.AttachmentUrl = attachment.FileUrl;
+        }
+
+        _currentMessages.Add(optimisticMsg);
+        _selectedConversation.LastMessage = !string.IsNullOrWhiteSpace(text) ? text : (attachment?.FileName ?? "Attachment");
+        _selectedConversation.LastMessageTime = DateTime.Now.ToString("hh:mm tt");
+        _selectedConversation.LastMessageAt = DateTime.UtcNow;
+        MoveConversationToTop(_selectedConversation);
+
+        // Render immediately in chat and instant scroll to bottom
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        // 2. Dispatch network send in background
+        _ = Task.Run(async () =>
+        {
+            try
             {
-                request.Attachments.Add(new MessageAttachmentRequest
+                var request = new SendMessageRequest
                 {
-                    FileName = _pendingAttachment.FileName,
-                    ContentType = _pendingAttachment.ContentType,
-                    FileSize = _pendingAttachment.FileSize,
-                    FileUrl = _pendingAttachment.FileUrl,
-                    ThumbnailUrl = _pendingAttachment.ThumbnailUrl,
-                    StorageKey = _pendingAttachment.StorageKey
+                    ConversationId = optimisticMsg.ConversationId,
+                    MessageType = messageType,
+                    MessageText = text
+                };
+
+                if (attachment != null)
+                {
+                    request.Attachments.Add(new MessageAttachmentRequest
+                    {
+                        FileName = attachment.FileName,
+                        ContentType = attachment.ContentType,
+                        FileSize = attachment.FileSize,
+                        FileUrl = attachment.FileUrl,
+                        ThumbnailUrl = attachment.ThumbnailUrl,
+                        StorageKey = attachment.StorageKey
+                    });
+                }
+
+                var response = await MessageService.SendMessageAsync(request);
+                await InvokeAsync(() =>
+                {
+                    _pendingOptimisticMessageIds.Remove(tempId);
+                    if (response.Success && response.Data != null)
+                    {
+                        var existingIndex = _currentMessages.FindIndex(m => m.Id == tempId);
+                        if (existingIndex >= 0)
+                        {
+                            response.Data.IsOutgoing = true;
+                            _currentMessages[existingIndex] = response.Data;
+                        }
+                        else if (!_currentMessages.Any(m => m.Id == response.Data.Id))
+                        {
+                            response.Data.IsOutgoing = true;
+                            _currentMessages.Add(response.Data);
+                        }
+
+                        if (_selectedConversation != null && _selectedConversation.Id == response.Data.ConversationId)
+                        {
+                            _selectedConversation.LastMessage = response.Data.Content;
+                            _selectedConversation.LastMessageTime = response.Data.SentAt.ToLocalTime().ToString("hh:mm tt");
+                            _selectedConversation.LastMessageAt = response.Data.SentAt;
+                        }
+                    }
+                    else
+                    {
+                        _currentMessages.RemoveAll(m => m.Id == tempId);
+                        NotificationService.Error(response.Message ?? "Failed to send message.");
+                    }
+                    StateHasChanged();
                 });
             }
-
-            var response = await MessageService.SendMessageAsync(request);
-            if (response.Success && response.Data != null)
+            catch (Exception ex)
             {
-                if (!_currentMessages.Any(m => m.Id == response.Data.Id))
+                await InvokeAsync(() =>
                 {
-                    response.Data.IsOutgoing = true;
-                    _currentMessages.Add(response.Data);
-                }
-                _selectedConversation.LastMessage = response.Data.Content;
-                _selectedConversation.LastMessageTime = response.Data.SentAt.ToString("hh:mm tt");
-                _selectedConversation.LastMessageAt = response.Data.SentAt;
-                MoveConversationToTop(_selectedConversation);
-                _messageInput = string.Empty;
-                _pendingAttachment = null;
-                await ResetTextareaHeightAsync();
-                await ScrollToBottomAsync();
+                    _pendingOptimisticMessageIds.Remove(tempId);
+                    _currentMessages.RemoveAll(m => m.Id == tempId);
+                    NotificationService.Error($"Error sending message: {ex.Message}");
+                    StateHasChanged();
+                });
             }
-            else
-            {
-                NotificationService.Error(response.Message ?? "Failed to send message.");
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Error($"Error sending message: {ex.Message}");
-        }
-        finally
-        {
-            _isSending = false;
-            await InvokeAsync(StateHasChanged);
-        }
+        });
     }
 
     private async Task ToggleReaction(ChatMessageDto msg, string emoji)
@@ -2244,9 +2329,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender || _needsInputSetup)
+        if (_selectedConversation != null)
         {
-            _needsInputSetup = false;
             try
             {
                 await JSRuntime.InvokeVoidAsync("vargshalaChat.initComposer", "chat-composer-textarea", "chat-send-btn");

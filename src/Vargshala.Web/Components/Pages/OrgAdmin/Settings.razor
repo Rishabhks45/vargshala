@@ -1591,40 +1591,8 @@
         return $"{parts[0][0]}{parts[1][0]}".ToUpper();
     }
 
-    public record ThemeTemplate(
-        string Id,
-        string Name,
-        string Category,
-        string HeaderHex,
-        string PrimaryHex,
-        string GradientEndHex,
-        string LightBgHex);
-
     private string _currentThemeId = "deep-teal";
-
-    private readonly List<ThemeTemplate> _themeTemplates = new()
-    {
-        new("deep-teal", "Deep Teal", "Theme 4 (Default)", "#004D40", "#009488", "#00796B", "#F0FDFA"),
-        new("purple", "Purple", "Material Default", "#4A148C", "#9C27B0", "#6A1B9A", "#F3E5F5"),
-        new("deep-purple", "Deep Purple", "Material Default", "#311B92", "#673AB7", "#4527A0", "#EDE7F6"),
-        new("indigo", "Indigo", "Material Default", "#1A237E", "#3F51B5", "#283593", "#E8EAF6"),
-        new("blue", "Blue", "Material Default", "#0D47A1", "#2196F3", "#1565C0", "#E3F2FD"),
-        new("light-blue", "Light Blue", "Material Default", "#01579B", "#03A9F4", "#0277BD", "#E1F5FE"),
-        new("cyan", "Cyan", "Material Default", "#006064", "#00BCD4", "#00838F", "#E0F7FA"),
-        new("teal", "Teal", "Material Default", "#004D40", "#009688", "#00695C", "#E0F2F1"),
-        new("green", "Green", "Material Default", "#1B5E20", "#4CAF50", "#2E7D32", "#E8F5E9"),
-        new("light-green", "Light Green", "Material Default", "#33691E", "#8BC34A", "#558B2F", "#F1F8E9"),
-        new("lime", "Lime", "Material Default", "#827717", "#CDDC39", "#9E9D24", "#F9FBE7"),
-        new("yellow", "Yellow", "Material Default", "#F57F17", "#FFEB3B", "#F9A825", "#FFFDE7"),
-        new("amber", "Amber", "Material Default", "#FF6F00", "#FFC107", "#FFA000", "#FFF8E1"),
-        new("orange", "Orange", "Material Default", "#E65100", "#FF9800", "#EF6C00", "#FFF3E0"),
-        new("deep-orange", "Deep Orange", "Material Default", "#BF360C", "#FF5722", "#D84315", "#FBE9E7"),
-        new("red", "Red", "Material Default", "#B71C1C", "#F44336", "#C62828", "#FFEBEE"),
-        new("pink", "Pink", "Material Default", "#880E4F", "#E91E63", "#AD1457", "#FCE4EC"),
-        new("brown", "Brown", "Material Default", "#3E2723", "#795548", "#4E342E", "#EFEBE9"),
-        new("blue-gray", "Blue Gray", "Material Default", "#263238", "#607D8B", "#37474F", "#ECEFF1"),
-        new("gray", "Gray", "Material Default", "#212121", "#9E9E9E", "#424242", "#FAFAFA")
-    };
+    private readonly List<ThemeTemplate> _themeTemplates = ThemeConstants.AllThemes;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

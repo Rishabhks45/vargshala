@@ -2,26 +2,19 @@
 
 <aside class="@GetAsideClass()" style="background-color: var(--theme-header, #004D40);">
     
-    <!-- Top Brand Header: Logo.svg + BrandText.svg when expanded, Logo.svg when collapsed -->
+    <!-- Top Brand Header: Dynamic Theme-Responsive VargshalaLogo -->
     <div class="@GetHeaderClass()">
         @if (!IsCollapsed)
         {
             <a href="/" class="flex items-center gap-2.5 overflow-hidden py-1 group" title="Vargshala Institute SaaS">
-                <img src="images/Logo.svg" 
-                     alt="Vargshala" 
-                     class="w-10 h-10 shrink-0 object-contain drop-shadow-md transition-transform duration-200 group-hover:scale-105" />
-                <img src="images/BrandText.svg" 
-                     alt="Vargshala Institute SaaS" 
-                     class="h-9 w-auto object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-[1.02]" />
+                <VargshalaLogo Size="38" ShowText="true" UseSvgText="true" InvertText="true" Class="drop-shadow-md transition-transform duration-200 group-hover:scale-[1.02]" />
             </a>
         }
         else
         {
             <!-- Always Visible Centered Brand Logo in Collapsed Icon Mode -->
-            <a href="/" class="flex items-center justify-center" title="Vargshala Institute SaaS">
-                <img src="images/Logo.svg" 
-                     alt="Vargshala" 
-                     class="w-10 h-10 shrink-0 cursor-pointer object-contain drop-shadow-md transition-transform duration-200 hover:scale-105" />
+            <a href="/" class="flex items-center justify-center py-1" title="Vargshala Institute SaaS">
+                <VargshalaLogo Size="36" Class="drop-shadow-md transition-transform duration-200 hover:scale-105" />
             </a>
         }
     </div>
@@ -911,7 +904,7 @@
 
                 <!-- 9. Settings -->
                 <NavLink class="@GetNavLinkClass()" 
-                         href="settings" 
+                         href="student/settings" 
                          ActiveClass="theme-active-nav text-white shadow-sm font-semibold"
                          title="@(IsCollapsed ? "Settings" : "")">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,31 +1,131 @@
 @inherits LayoutComponentBase
+@using Vargshala.Web.Common
+@inject IJSRuntime JSRuntime
 
-<div class="h-screen max-h-screen overflow-hidden bg-[#00382E] font-sans text-teal-100 flex flex-col justify-between selection:bg-[#009488] selection:text-white relative">
+<div class="h-screen max-h-screen overflow-hidden font-sans text-slate-800 dark:text-slate-100 flex flex-col justify-between selection:bg-[var(--theme-primary,#009488)] selection:text-white relative transition-colors duration-200"
+     style="background-color: var(--theme-current-canvas, var(--theme-canvas-bg, #F8FCFA));">
     
-    
-    <!-- Background Gradient Ambience Matching Theme 4 -->
-    <div class="absolute -top-40 -left-40 w-96 h-96 bg-[#009488]/20 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-[#FB6868]/15 rounded-full blur-[100px] pointer-events-none"></div>
+    <!-- Background Gradient Ambience Matching Theme Palette -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"
+         style="background-color: var(--theme-primary, #009488); opacity: 0.12;"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-colors duration-300"
+         style="background-color: var(--theme-accent, #FB6868); opacity: 0.10;"></div>
+
+    <!-- Floating Top-Right Theme Controls -->
+    <div class="absolute top-3 right-4 sm:top-4 sm:right-6 z-40 flex items-center gap-2">
+        <!-- Theme Quick-Picker Dropdown -->
+        <div class="relative">
+            <button type="button" 
+                    @onclick="ToggleThemeMenu"
+                    class="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-[var(--theme-primary,#009488)] transition-all cursor-pointer shadow-2xs flex items-center gap-1.5 text-xs font-semibold"
+                    title="Choose Portal Theme">
+                <span class="w-3.5 h-3.5 rounded-full ring-1 ring-white/50 shadow-2xs inline-block" style="background-color: var(--theme-primary, #009488);"></span>
+                <span class="hidden md:inline text-[11px]">Theme</span>
+                <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            @if (_showThemeMenu)
+            {
+                <!-- Backdrop -->
+                <div class="fixed inset-0 z-40" @onclick="CloseThemeMenu"></div>
+
+                <!-- Menu Panel -->
+                <div class="absolute right-0 mt-2 w-60 p-2.5 rounded-2xl bg-white dark:bg-[#111c21] border border-slate-200 dark:border-slate-700/80 shadow-2xl z-50 text-left">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-xs font-bold text-slate-800 dark:text-white">Portal Palette</span>
+                        <span class="text-[10px] text-slate-400">@ThemeConstants.AllThemes.Count options</span>
+                    </div>
+                    <div class="max-h-60 overflow-y-auto space-y-0.5 pr-1" style="scrollbar-width: thin;">
+                        @foreach (var theme in ThemeConstants.AllThemes)
+                        {
+                            <button type="button" 
+                                    @onclick="() => SwitchThemeAsync(theme.Id)"
+                                    class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors cursor-pointer text-left @(_currentThemeId == theme.Id ? "bg-slate-100/90 dark:bg-slate-800 font-bold" : "text-slate-700 dark:text-slate-300")">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-3.5 h-3.5 rounded-full ring-1 ring-slate-300 dark:ring-slate-600 shrink-0" style="background-color: @theme.PrimaryHex;"></span>
+                                    <span class="text-xs">@theme.Name</span>
+                                </div>
+                                @if (_currentThemeId == theme.Id)
+                                {
+                                    <svg class="w-3.5 h-3.5 text-[var(--theme-primary,#009488)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Dark / Light Mode Toggle Button -->
+        <button type="button" 
+                onclick="window.toggleAppTheme()" 
+                class="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xs border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-[var(--theme-primary,#009488)] transition-all cursor-pointer shadow-2xs"
+                title="Toggle Dark / Light Mode">
+            <svg class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg class="w-4 h-4 hidden dark:block text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+        </button>
+    </div>
 
     <!-- Main Auth Content Area (Centered & Fits inside 100vh Viewport) -->
-    <main class="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 min-h-0 overflow-hidden relative z-10">
+    <main class="flex-1 w-full min-h-0 relative z-10 flex flex-col overflow-hidden">
         @Body
     </main>
 
     <!-- Minimal Fixed-Height Footer -->
-    <footer class="py-2 text-center text-[11px] text-teal-300/60 border-t border-teal-900/60 bg-[#002B23]/90 shrink-0 relative z-10">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-1">
+    <footer class="w-full px-6 sm:px-10 lg:px-14 py-2 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-800/80 shrink-0 relative z-20 bg-white/40 dark:bg-black/20 backdrop-blur-xs">
+        <div class="flex items-center gap-2">
             <span>© 2026 Vargshala • Coaching Institute Management SaaS</span>
-            <div class="flex items-center gap-3 text-teal-300/70">
-                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-                <span>•</span>
-                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-                <span>•</span>
-                <a href="#" class="hover:text-white transition-colors">Help Center</a>
-            </div>
+        </div>
+        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400 mt-1 sm:mt-0">
+            <a href="#" class="hover:text-[var(--theme-primary,#009488)] dark:hover:text-white transition-colors">Privacy Policy</a>
+            <span>•</span>
+            <a href="#" class="hover:text-[var(--theme-primary,#009488)] dark:hover:text-white transition-colors">Terms of Service</a>
+            <span>•</span>
+            <a href="#" class="hover:text-[var(--theme-primary,#009488)] dark:hover:text-white transition-colors">Help Center</a>
         </div>
     </footer>
 
     <!-- Global Toast / Alert Notifications Container -->
-    <ToastContainer PositionClass="top-6 right-5 sm:right-6" />
+    <ToastContainer PositionClass="top-14 right-5 sm:right-6" />
 </div>
+
+@code {
+    private bool _showThemeMenu = false;
+    private string _currentThemeId = "deep-teal";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _currentThemeId = await JSRuntime.InvokeAsync<string>("getAppTheme");
+                StateHasChanged();
+            }
+            catch { }
+        }
+    }
+
+    private void ToggleThemeMenu() => _showThemeMenu = !_showThemeMenu;
+    private void CloseThemeMenu() => _showThemeMenu = false;
+
+    private async Task SwitchThemeAsync(string themeId)
+    {
+        try
+        {
+            _currentThemeId = themeId;
+            _showThemeMenu = false;
+            await JSRuntime.InvokeVoidAsync("applyTheme", themeId);
+            StateHasChanged();
+        }
+        catch { }
+    }
+}

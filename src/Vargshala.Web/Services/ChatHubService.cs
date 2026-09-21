@@ -49,7 +49,7 @@ public class ChatHubService : IChatHubService
             var user = authState.User;
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst("sub")?.Value;
 
-            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:7288";
+            var apiBaseUrl = _configuration["ApiBaseUrl"] ?? "http://vargshala-staging-api.runasp.net";
             var hubUrl = $"{apiBaseUrl.TrimEnd('/')}/hubs/chat";
 
             _hubConnection = new HubConnectionBuilder()

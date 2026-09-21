@@ -137,7 +137,7 @@
     [Parameter] public EventCallback OnClose { get; set; }
 
     private AlertType ResolvedType => Type == AlertType.Failed ? AlertType.Error : Type;
-    private bool IsThemed => UseTheme || ResolvedType == AlertType.Theme || ResolvedType == AlertType.Info;
+    private bool IsThemed => UseTheme || ResolvedType == AlertType.Theme || ResolvedType == AlertType.Info || ResolvedType == AlertType.Success;
     private readonly object _ctsLock = new();
     private CancellationTokenSource? _autoDismissCts;
     private bool _isDisposed;

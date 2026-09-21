@@ -138,13 +138,15 @@
 
   /* Hide Scrollbar Utility (Scrollable without visible bar) */
   .scrollbar-hidden,
-  .no-scrollbar {
+  .no-scrollbar,
+  #messages-stream {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
   }
 
   .scrollbar-hidden::-webkit-scrollbar,
-  .no-scrollbar::-webkit-scrollbar {
+  .no-scrollbar::-webkit-scrollbar,
+  #messages-stream::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
@@ -877,12 +879,14 @@ input[type="radio"]:checked {
 
 /* Dynamic Themed Alert Styles */
 .alert-themed {
+  background: var(--theme-light-bg, #ffffff) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #009488) 12%, #ffffff), color-mix(in srgb, var(--theme-primary, #009488) 4%, #ffffff)) !important;
   border: 1px solid color-mix(in srgb, var(--theme-primary, #009488) 32%, transparent) !important;
   box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--theme-primary, #009488) 25%, transparent) !important;
 }
 
 .dark .alert-themed {
+  background: var(--theme-card-dark, #111c21) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #009488) 20%, #111c21), color-mix(in srgb, var(--theme-primary, #009488) 8%, #111c21)) !important;
   border: 1px solid color-mix(in srgb, var(--theme-primary, #009488) 42%, transparent) !important;
   box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--theme-primary, #009488) 30%, transparent) !important;

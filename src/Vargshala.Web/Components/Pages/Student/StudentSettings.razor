@@ -1,0 +1,397 @@
+@page "/student/settings"
+@attribute [Authorize(Roles = "Student")]
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject INotificationService Toast
+@inject IUserService UserService
+
+<PageTitle>Settings & Appearance | Student Portal</PageTitle>
+
+<div class="h-full overflow-y-auto pr-1 no-scrollbar space-y-5 select-none pb-10">
+
+    <!-- 1. Top Header Banner -->
+    <div class="relative overflow-hidden bg-white dark:bg-[#111c21] rounded-2xl p-5 border border-tealborder/70 dark:border-slate-800/80 shadow-2xs">
+        <div class="absolute -top-12 -right-12 w-44 h-44 rounded-full pointer-events-none opacity-20 blur-2xl"
+             style="background-color: var(--theme-primary, #009488);"></div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            <div class="flex items-start gap-3.5">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm"
+                     style="background: linear-gradient(135deg, var(--theme-primary, #009488), var(--theme-header, #004D40));">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                        Settings &amp; Preferences
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                        Customize your student learning portal, theme colors, dark mode, and alert preferences.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
+                @if (_currentThemeId != "deep-teal")
+                {
+                    <button type="button" 
+                            @onclick="ResetThemeToDefaultAsync" 
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Reset to Default</span>
+                    </button>
+                }
+                <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border bg-theme-primary-subtle text-theme-primary border-theme-primary/30 shadow-2xs">
+                    <span class="w-2 h-2 rounded-full" style="background-color: var(--theme-primary, #009488);"></span>
+                    Active: @(_themeTemplates.FirstOrDefault(t => t.Id == _currentThemeId)?.Name ?? "Deep Teal")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Dark / Light Mode Card -->
+    <div class="bg-white dark:bg-[#111c21] rounded-2xl p-5 border border-tealborder/70 dark:border-slate-800/80 shadow-2xs space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>🌓 Display Appearance</span>
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Choose between crisp daylight styling or high-contrast night mode for relaxed studying.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <!-- Light Mode Box -->
+            <div @onclick="() => SetDarkModeAsync(false)"
+                 class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-3.5 @(!_isDarkMode ? "border-[#009488] dark:border-teal-400 bg-teal-50/40 dark:bg-teal-950/20 shadow-xs ring-2 ring-[#009488]/15" : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#18262c]/40")">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white">Light Mode</span>
+                        @if (!_isDarkMode)
+                        {
+                            <span class="text-[10px] font-extrabold text-emerald-600 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full">Active</span>
+                        }
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Clean and luminous layout for well-lit classrooms and daytime study.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dark Mode Box -->
+            <div @onclick="() => SetDarkModeAsync(true)"
+                 class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-3.5 @(_isDarkMode ? "border-[#009488] dark:border-teal-400 bg-teal-50/40 dark:bg-teal-950/20 shadow-xs ring-2 ring-[#009488]/15" : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-[#18262c]/40")">
+                <div class="w-10 h-10 rounded-xl bg-slate-800 text-amber-300 flex items-center justify-center shrink-0 shadow-2xs">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white">Dark Mode</span>
+                        @if (_isDarkMode)
+                        {
+                            <span class="text-[10px] font-extrabold text-emerald-600 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full">Active</span>
+                        }
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Sleek low-glare dark theme optimized for night-time revision sessions.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Theme & Template Color Palette Grid -->
+    <div class="bg-white dark:bg-[#111c21] rounded-2xl p-5 border border-tealborder/70 dark:border-slate-800/80 shadow-2xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>🎨 Choose Portal Theme Palette</span>
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Select your favorite color theme below. It instantly customizes your top navigation header, active buttons, course pills, and portal accents.
+                </p>
+            </div>
+            <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 self-start sm:self-auto">
+                20 Color Palettes Available
+            </span>
+        </div>
+
+        <!-- 20 Themes Responsive Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+            @foreach (var theme in _themeTemplates)
+            {
+                var isSelected = _currentThemeId == theme.Id;
+                <div @onclick="() => SwitchThemeAsync(theme.Id)"
+                     class="relative group rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden p-3.5 flex flex-col justify-between select-none @(isSelected ? "border-2 border-[#009488] dark:border-teal-400 ring-2 ring-[#009488]/20 shadow-md shadow-[#009488]/10 scale-[1.01] bg-white dark:bg-[#131f24]" : "border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 bg-slate-50/70 dark:bg-[#131f24]/50 hover:bg-white dark:hover:bg-[#18262c]")">
+                    
+                    <!-- Mini Layout Mockup Bar -->
+                    <div class="w-full h-11 rounded-xl overflow-hidden shadow-inner flex mb-3 border border-black/5 dark:border-white/5">
+                        <!-- Mini Sidebar -->
+                        <div class="w-1/4 h-full" style="background-color: @theme.HeaderHex;"></div>
+                        <!-- Mini Main Window -->
+                        <div class="flex-1 h-full flex flex-col" style="background-color: @theme.LightBgHex;">
+                            <!-- Mini Top Header -->
+                            <div class="w-full h-3.5" style="background-color: @theme.HeaderHex;"></div>
+                            <!-- Mini Content Area with Accent Dot -->
+                            <div class="flex-1 flex items-center justify-between px-2">
+                                <div class="w-6 h-1.5 rounded-full bg-slate-300/80"></div>
+                                <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: @theme.PrimaryHex;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Title & Category -->
+                    <div class="space-y-1 mb-3">
+                        <div class="flex items-center justify-between gap-1">
+                            <h5 class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                @theme.Name
+                            </h5>
+                            @if (isSelected)
+                            {
+                                <span class="shrink-0 flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500 text-white shadow-2xs">
+                                    ✓ Active
+                                </span>
+                            }
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                            @theme.Category
+                        </p>
+                    </div>
+
+                    <!-- Color Swatches & Hex Codes -->
+                    <div class="pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] font-mono">
+                        <div class="flex items-center gap-1.5" title="Top Header & Sidebar Accent">
+                            <span class="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 shadow-xs" style="background-color: @theme.HeaderHex;"></span>
+                            <span class="text-slate-600 dark:text-slate-400">@theme.HeaderHex</span>
+                        </div>
+                        <div class="flex items-center gap-1.5" title="Primary Buttons & Focus Badges">
+                            <span class="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 shadow-xs" style="background-color: @theme.PrimaryHex;"></span>
+                            <span class="text-slate-600 dark:text-slate-400">@theme.PrimaryHex</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 4. Live Student Component Preview Showcase -->
+    <div class="bg-white dark:bg-[#111c21] rounded-2xl p-5 border border-tealborder/70 dark:border-slate-800/80 shadow-2xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>✨ Live Portal Components Preview</span>
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    See how your selected theme dynamically styles your student cards, buttons, badges, and alerts.
+                </p>
+            </div>
+            <button type="button" 
+                    @onclick='() => Toast.Theme($"Your student portal is actively running with the {_themeTemplates.FirstOrDefault(t => t.Id == _currentThemeId)?.Name ?? "Deep Teal"} theme.", "Theme Preview")'
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5"
+                    style="background-color: var(--theme-primary, #009488);">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span>Trigger Test Toast</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            <!-- Sample Card 1: Attendance Progress -->
+            <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-[#18262c]/50 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Class Attendance</span>
+                    <span class="text-xs font-extrabold text-theme-primary" style="color: var(--theme-primary, #009488);">94%</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-300" style="width: 94%; background-color: var(--theme-primary, #009488);"></div>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Consistent presence across all subjects</p>
+            </div>
+
+            <!-- Sample Card 2: Upcoming Quiz -->
+            <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-[#18262c]/50 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Physics Quiz #3</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold text-theme-primary bg-theme-primary-subtle border border-theme-primary/30">Tomorrow</span>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Chapters 4 &amp; 5: Electromagnetic Induction</p>
+                <div class="pt-1 flex items-center justify-end">
+                    <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow-2xs cursor-pointer hover:opacity-90 transition-opacity"
+                            style="background-color: var(--theme-primary, #009488);">
+                        Review Notes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sample Card 3: Interactive Quick Toggle -->
+            <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-[#18262c]/50 space-y-2.5">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Portal Experience</span>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-600 dark:text-slate-400">Compact Table Layout</span>
+                    <button type="button" 
+                            @onclick="() => _compactLayout = !_compactLayout"
+                            class="w-10 h-5 rounded-full transition-colors relative cursor-pointer @(_compactLayout ? "bg-theme-primary" : "bg-slate-300 dark:bg-slate-700")"
+                            style="@(_compactLayout ? "background-color: var(--theme-primary, #009488);" : "")">
+                        <span class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-150 @(_compactLayout ? "translate-x-5" : "translate-x-1")"></span>
+                    </button>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-600 dark:text-slate-400">Sound Effects on Alerts</span>
+                    <button type="button" 
+                            @onclick="() => _soundAlerts = !_soundAlerts"
+                            class="w-10 h-5 rounded-full transition-colors relative cursor-pointer @(_soundAlerts ? "bg-theme-primary" : "bg-slate-300 dark:bg-slate-700")"
+                            style="@(_soundAlerts ? "background-color: var(--theme-primary, #009488);" : "")">
+                        <span class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-150 @(_soundAlerts ? "translate-x-5" : "translate-x-1")"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Student Notifications Preferences Card -->
+    <div class="bg-white dark:bg-[#111c21] rounded-2xl p-5 border border-tealborder/70 dark:border-slate-800/80 shadow-2xs space-y-4">
+        <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>🔔 Notification &amp; Alert Preferences</span>
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Control which updates and reminders you wish to receive on your student dashboard.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-[#18262c]/30">
+                <div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Lecture Reminders</span>
+                    <p class="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">Alert 15 mins before your scheduled class</p>
+                </div>
+                <button type="button" 
+                        @onclick="() => _notifyLectures = !_notifyLectures"
+                        class="w-10 h-5 rounded-full transition-colors relative cursor-pointer @(_notifyLectures ? "bg-theme-primary" : "bg-slate-300 dark:bg-slate-700")"
+                        style="@(_notifyLectures ? "background-color: var(--theme-primary, #009488);" : "")">
+                    <span class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-150 @(_notifyLectures ? "translate-x-5" : "translate-x-1")"></span>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-[#18262c]/30">
+                <div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Assignment Deadlines</span>
+                    <p class="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">Reminders for upcoming homework and tasks</p>
+                </div>
+                <button type="button" 
+                        @onclick="() => _notifyAssignments = !_notifyAssignments"
+                        class="w-10 h-5 rounded-full transition-colors relative cursor-pointer @(_notifyAssignments ? "bg-theme-primary" : "bg-slate-300 dark:bg-slate-700")"
+                        style="@(_notifyAssignments ? "background-color: var(--theme-primary, #009488);" : "")">
+                    <span class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-150 @(_notifyAssignments ? "translate-x-5" : "translate-x-1")"></span>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-[#18262c]/30">
+                <div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Quiz &amp; Exam Results</span>
+                    <p class="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">Instant notification when report cards are published</p>
+                </div>
+                <button type="button" 
+                        @onclick="() => _notifyResults = !_notifyResults"
+                        class="w-10 h-5 rounded-full transition-colors relative cursor-pointer @(_notifyResults ? "bg-theme-primary" : "bg-slate-300 dark:bg-slate-700")"
+                        style="@(_notifyResults ? "background-color: var(--theme-primary, #009488);" : "")">
+                    <span class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-150 @(_notifyResults ? "translate-x-5" : "translate-x-1")"></span>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-[#18262c]/30">
+                <div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Institute Announcements</span>
+                    <p class="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">Holidays, exam notices, and event updates</p>
+                </div>
+                <button type="button" 
+                        @onclick="() => _notifyAnnouncements = !_notifyAnnouncements"
+                        class="w-10 h-5 rounded-full transition-colors relative cursor-pointer @(_notifyAnnouncements ? "bg-theme-primary" : "bg-slate-300 dark:bg-slate-700")"
+                        style="@(_notifyAnnouncements ? "background-color: var(--theme-primary, #009488);" : "")">
+                    <span class="w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-150 @(_notifyAnnouncements ? "translate-x-5" : "translate-x-1")"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string _currentThemeId = "deep-teal";
+    private bool _isDarkMode = false;
+    private readonly List<ThemeTemplate> _themeTemplates = ThemeConstants.AllThemes;
+
+    private bool _compactLayout = false;
+    private bool _soundAlerts = true;
+    private bool _notifyLectures = true;
+    private bool _notifyAssignments = true;
+    private bool _notifyResults = true;
+    private bool _notifyAnnouncements = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var theme = await JSRuntime.InvokeAsync<string>("getAppTheme");
+                if (!string.IsNullOrWhiteSpace(theme))
+                {
+                    _currentThemeId = theme;
+                }
+
+                _isDarkMode = await JSRuntime.InvokeAsync<bool>("eval", "document.documentElement.classList.contains('dark')");
+                StateHasChanged();
+            }
+            catch { }
+        }
+    }
+
+    private async Task SwitchThemeAsync(string themeId)
+    {
+        try
+        {
+            _currentThemeId = themeId;
+            await JSRuntime.InvokeVoidAsync("applyTheme", themeId);
+            var theme = _themeTemplates.FirstOrDefault(t => t.Id == themeId);
+            Toast.Theme($"Switched theme to {theme?.Name ?? themeId}!", "Theme Changed");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Could not apply theme: {ex.Message}");
+        }
+    }
+
+    private async Task ResetThemeToDefaultAsync()
+    {
+        await SwitchThemeAsync("deep-teal");
+    }
+
+    private async Task SetDarkModeAsync(bool enableDark)
+    {
+        try
+        {
+            if (_isDarkMode != enableDark)
+            {
+                await JSRuntime.InvokeVoidAsync("toggleAppTheme");
+                _isDarkMode = enableDark;
+                StateHasChanged();
+            }
+        }
+        catch { }
+    }
+}

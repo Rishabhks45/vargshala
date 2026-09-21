@@ -11,8 +11,8 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-[#004D40] p-1 flex items-center justify-center shadow-md shrink-0">
-                    <img src="images/Logo.svg" alt="Vargshala" class="w-full h-full object-contain" />
+                <div class="w-8 h-8 rounded-xl p-0.5 flex items-center justify-center shadow-md shrink-0" style="background-color: var(--theme-header, #004D40);">
+                    <VargshalaLogo Size="24" />
                 </div>
                 Platform Control Center
             </h1>
@@ -34,34 +34,39 @@
         </div>
     </div>
 
-    <!-- Vargshala Platform Hero Showcase with Section.svg -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004D40] via-[#00382E] to-[#002B23] border border-teal-700/60 shadow-xl p-5 sm:p-6 text-white flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div class="absolute -top-16 -left-16 w-64 h-64 bg-[#009488]/25 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-16 -right-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- Vargshala Platform Hero Showcase with VargshalaHeroBrand -->
+    <div class="relative overflow-hidden rounded-3xl border shadow-xl p-5 sm:p-6 text-white flex flex-col lg:flex-row items-center justify-between gap-6"
+         style="background: linear-gradient(135deg, var(--theme-header, #004D40) 0%, var(--theme-header-dark, #00382E) 50%, var(--theme-header, #002B23) 100%); border-color: rgba(255, 255, 255, 0.15);">
+        <div class="absolute -top-16 -left-16 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-40"
+             style="background-color: var(--theme-primary, #009488);"></div>
+        <div class="absolute -bottom-16 -right-16 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-30"
+             style="background-color: var(--theme-primary-light, #2DD4BF);"></div>
 
         <div class="relative z-10 space-y-2.5 max-w-xl">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-900/80 border border-teal-500/40 text-[11px] font-bold text-teal-300">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-bold"
+                 style="background-color: rgba(0, 0, 0, 0.25); border-color: rgba(255, 255, 255, 0.2); color: var(--theme-primary-light, #2DD4BF);">
+                <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: var(--theme-primary-light, #34D399);"></span>
                 SaaS Multi-Tenant Cloud Architecture
             </div>
             <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-                Vargshala <span class="text-[#2DD4BF]">Platform Core</span>
+                Vargshala <span style="color: var(--theme-primary-light, #2DD4BF);">Platform Core</span>
             </h2>
-            <p class="text-xs sm:text-sm text-teal-200/90 leading-relaxed">
+            <p class="text-xs sm:text-sm text-white/80 leading-relaxed">
                 Centralized tenant isolation, automated subscription lifecycle, tenant database partition, and unified system telemetry.
             </p>
             <div class="flex flex-wrap items-center gap-3 pt-1">
-                <a href="controlpanel/institutes" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] text-white text-xs font-bold shadow-md transition-all">
+                <a href="controlpanel/institutes" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold shadow-md transition-all hover:opacity-90"
+                   style="background: linear-gradient(135deg, var(--theme-primary, #009488) 0%, var(--theme-header, #00796b) 100%);">
                     <span>Manage Institutes</span>
                 </a>
-                <a href="controlpanel/subscriptions" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-teal-500/30 text-white text-xs font-semibold transition-all">
+                <a href="controlpanel/subscriptions" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-semibold transition-all">
                     <span>Subscriptions</span>
                 </a>
             </div>
         </div>
 
         <div class="relative z-10 w-full lg:w-auto flex justify-center lg:justify-end shrink-0">
-            <img src="images/Section.svg" alt="Vargshala Institutes" class="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition-transform duration-300" />
+            <VargshalaHeroBrand Class="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition-transform duration-300" />
         </div>
     </div>
 

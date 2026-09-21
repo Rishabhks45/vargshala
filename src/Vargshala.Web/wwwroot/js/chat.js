@@ -44,16 +44,52 @@ window.vargshalaChat = {
     resetHeight: function (textareaId, height) {
         var ta = document.getElementById(textareaId || 'chat-composer-textarea');
         if (ta) {
+            ta.value = '';
             ta.style.height = (height || '24px');
         }
     },
 
     scrollToBottom: function (containerId, delay) {
+        var el = document.getElementById(containerId || 'messages-stream');
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
         setTimeout(function () {
-            var el = document.getElementById(containerId || 'messages-stream');
-            if (el) {
-                el.scrollTop = el.scrollHeight;
+            var el2 = document.getElementById(containerId || 'messages-stream');
+            if (el2) {
+                el2.scrollTop = el2.scrollHeight;
             }
-        }, delay || 60);
+        }, delay || 50);
     }
 };
+
+// Global Delegated Capture Listeners (Guarantees Enter sends message and Shift+Enter adds newline on all renders)
+document.addEventListener('keydown', function (e) {
+    if (e.target && e.target.id === 'chat-composer-textarea') {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            // ENTER: Send message, PREVENT newline insertion
+            e.preventDefault();
+            e.stopPropagation();
+            var btn = document.getElementById('chat-send-btn');
+            if (btn) {
+                if (btn.disabled && e.target.value && e.target.value.trim().length > 0) {
+                    btn.disabled = false;
+                }
+                if (!btn.disabled) {
+                    btn.click();
+                }
+            }
+        } else if (e.key === 'Enter' && e.shiftKey) {
+            // SHIFT + ENTER: Allow newline, auto-grow height
+            setTimeout(function () {
+                window.vargshalaChat.autoResize(e.target);
+            }, 10);
+        }
+    }
+}, true);
+
+document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'chat-composer-textarea') {
+        window.vargshalaChat.autoResize(e.target);
+    }
+}, true);
