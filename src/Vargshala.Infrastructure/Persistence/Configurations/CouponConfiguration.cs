@@ -42,5 +42,10 @@ public class CouponConfiguration : IEntityTypeConfiguration<Coupon>
             .WithMany()
             .HasForeignKey(c => c.OrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(c => c.Plan)
+            .WithMany()
+            .HasForeignKey(c => c.PlanId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

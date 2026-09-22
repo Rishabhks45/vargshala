@@ -1,4 +1,7 @@
-<div class="relative text-left @(Class.Contains("w-") ? Class : $"w-full sm:w-auto {Class}")" @onclick:stopPropagation="true">
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div id="@_id" class="custom-select-root relative text-left @(Class.Contains("w-") ? Class : $"w-full sm:w-auto {Class}")" @onclick:stopPropagation="true">
     <!-- Trigger Button (Full Responsive with Exact SearchBox Focus Color) -->
     <button type="button" 
             @onclick="ToggleDropdown"
@@ -16,8 +19,7 @@
     <!-- Floating Custom Dropdown Menu with Pill Selection (Perfect Fit, No Gaps!) -->
     @if (_isOpen)
     {
-        <div class="fixed inset-0 z-40" @onclick="Close"></div>
-        <div class="absolute @DropdownPositionClass w-full @MenuWidthClass bg-white dark:bg-[#111c21] rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
+        <div class="custom-select-menu absolute @DropdownPositionClass w-full @MenuWidthClass bg-white dark:bg-[#111c21] rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 select-none">
             <div class="space-y-0.5 max-h-60 overflow-y-auto">
                 @foreach (var opt in Options)
                 {
@@ -53,6 +55,8 @@
     [Parameter] public string TriggerClass { get; set; } = string.Empty;
     [Parameter] public bool Disabled { get; set; } = false;
 
+    private readonly string _id = $"cs_{Guid.NewGuid():N}";
+    private DotNetObjectReference<CustomSelect>? _dotNetRef;
     private bool _isOpen = false;
 
     private bool IsFormMode => IsForm || Class.Contains("w-full") || Class.Contains("form") || Class.Contains("h-10");
@@ -117,24 +121,69 @@
         }
     }
 
-    private void ToggleDropdown()
+    private async Task ToggleDropdown()
     {
         if (Disabled) return;
         _isOpen = !_isOpen;
+        if (_isOpen)
+        {
+            try
+            {
+                _dotNetRef ??= DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("vargshalaSelect.register", _id, _dotNetRef);
+            }
+            catch { }
+        }
+        else
+        {
+            await CloseDropdownAsync();
+        }
     }
 
-    private void Close()
+    [JSInvokable]
+    public void CloseFromJs()
+    {
+        if (_isOpen)
+        {
+            _isOpen = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CloseDropdownAsync()
     {
         _isOpen = false;
+        if (_dotNetRef != null)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("vargshalaSelect.unregister", _id);
+            }
+            catch { }
+        }
     }
 
     private async Task SelectOption(string val)
     {
         Value = val;
-        _isOpen = false;
+        await CloseDropdownAsync();
         if (ValueChanged.HasDelegate)
         {
             await ValueChanged.InvokeAsync(val);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dotNetRef != null)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("vargshalaSelect.unregister", _id);
+            }
+            catch { }
+            _dotNetRef.Dispose();
+            _dotNetRef = null;
         }
     }
 

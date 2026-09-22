@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Vargshala.Application\Vargshala.Application.csproj" />
     <ProjectReference Include="..\Vargshala.Infrastructure\Vargshala.Infrastructure.csproj" />
     <ProjectReference Include="..\Vargshala.Contracts\Vargshala.Contracts.csproj" />
+    <ProjectReference Include="..\RazorpayUtility\RazorpayUtility.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -45,6 +45,7 @@ public class UpdateCouponCommandHandler : IRequestHandler<UpdateCouponCommand, A
         coupon.MinOrderAmount = req.MinOrderAmount;
         coupon.MaxDiscountAmount = req.MaxDiscountAmount;
         coupon.ApplicablePlan = req.ApplicablePlan;
+        coupon.PlanId = req.PlanId;
         coupon.MaxUses = req.MaxUses;
         coupon.ExpiryDate = req.ExpiryDate;
         coupon.IsActive = req.IsActive;

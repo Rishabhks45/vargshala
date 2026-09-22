@@ -40,6 +40,8 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
     public DbSet<MessageRead> MessageReads => Set<MessageRead>();
     public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
     public DbSet<AnnouncementReplyPermission> AnnouncementReplyPermissions => Set<AnnouncementReplyPermission>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<OrganizationSubscription> OrganizationSubscriptions => Set<OrganizationSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,6 +72,8 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
         modelBuilder.Entity<Message>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<MessageAttachment>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<AnnouncementReplyPermission>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<SubscriptionPlan>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<OrganizationSubscription>().HasQueryFilter(e => !e.IsDeleted);
     }
 
 
@@ -93,20 +97,24 @@ public class VargshalaDbContext : DbContext, IVargshalaDbContext
             }
         }
 
-        // Ensure all DateTime / DateTime? properties with Kind=Unspecified are converted to Utc for Npgsql timestamptz
+        // Ensure all DateTime / DateTime? properties are strictly converted to UTC for PostgreSQL timestamptz
         foreach (var entry in ChangeTracker.Entries())
         {
             if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
             {
                 foreach (var property in entry.Properties)
                 {
-                    if (property.Metadata.ClrType == typeof(DateTime) && property.CurrentValue is DateTime dt && dt.Kind == DateTimeKind.Unspecified)
+                    if (property.Metadata.ClrType == typeof(DateTime) && property.CurrentValue is DateTime dt && dt.Kind != DateTimeKind.Utc)
                     {
-                        property.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                        var utcDt = dt.Kind == DateTimeKind.Local ? dt.ToUniversalTime() : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                        property.CurrentValue = utcDt;
+                        property.Metadata.PropertyInfo?.SetValue(entry.Entity, utcDt);
                     }
-                    else if (property.Metadata.ClrType == typeof(DateTime?) && property.CurrentValue is DateTime dtNullable && dtNullable.Kind == DateTimeKind.Unspecified)
+                    else if (property.Metadata.ClrType == typeof(DateTime?) && property.CurrentValue is DateTime dtNullable && dtNullable.Kind != DateTimeKind.Utc)
                     {
-                        property.CurrentValue = DateTime.SpecifyKind(dtNullable, DateTimeKind.Utc);
+                        var utcDt = dtNullable.Kind == DateTimeKind.Local ? dtNullable.ToUniversalTime() : DateTime.SpecifyKind(dtNullable, DateTimeKind.Utc);
+                        property.CurrentValue = utcDt;
+                        property.Metadata.PropertyInfo?.SetValue(entry.Entity, utcDt);
                     }
                 }
             }

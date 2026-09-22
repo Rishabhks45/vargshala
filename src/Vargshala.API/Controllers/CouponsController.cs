@@ -34,9 +34,10 @@ public class CouponsController : ControllerBase
         [FromQuery] DiscountType? discountType,
         [FromQuery] ApplicablePlan? plan,
         [FromQuery] bool? isActive,
+        [FromQuery] Guid? planId,
         CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetCouponsQuery(request, category, discountType, plan, isActive), cancellationToken);
+        var result = await _mediator.Send(new GetCouponsQuery(request, category, discountType, plan, isActive, planId), cancellationToken);
         return Ok(result);
     }
 

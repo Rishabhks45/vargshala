@@ -38,7 +38,7 @@ public static class StartupExtensions
         #region HTTP Clients & Token Interceptor
         builder.Services.AddTransient<JwtTokenHandler>();
 
-        var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7288";
+        var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://vargshala-staging-api.runasp.net";
 
         // Anonymous client for auth endpoints (refresh, login)
         builder.Services.AddHttpClient("VargshalaApi.Anonymous", client =>
@@ -91,6 +91,7 @@ public static class StartupExtensions
         builder.Services.AddScoped<IBranchContextService, BranchContextService>();
         builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         builder.Services.AddScoped<ICouponService, CouponService>();
+        builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
         builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
         builder.Services.AddScoped<IFeeService, FeeService>();
         builder.Services.AddScoped<IMessageService, MessageService>();

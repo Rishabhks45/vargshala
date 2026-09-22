@@ -2,11 +2,13 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
 @using Vargshala.Contracts.Common
 @using Vargshala.Contracts.Coupons
+@using Vargshala.Contracts.Subscriptions
 @using Vargshala.Web.Common
 @using Vargshala.Web.Components.UI.Inputs
 @using Vargshala.Web.Components.UI.Skeletons
 @using Vargshala.Web.Services
 @inject ICouponService CouponService
+@inject ISubscriptionPlanService PlanService
 @inject INotificationService Toast
 @inject IJSRuntime JS
 @rendermode InteractiveServer
@@ -311,40 +313,61 @@
                                 <!-- 3. Scope / Applicable Plan -->
                                 <td class="py-2 px-4">
                                     <div class="flex items-center gap-1.5">
-                                        @switch (coupon.ApplicablePlan)
+                                        @if (!string.IsNullOrWhiteSpace(coupon.PlanName) && coupon.PlanName != "All Plans")
                                         {
-                                            case ApplicablePlan.Enterprise:
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                                                    <svg class="w-3 h-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-                                                    </svg>
-                                                    @coupon.ApplicablePlanName
-                                                </span>
-                                                break;
-                                            case ApplicablePlan.ProInstitute:
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                                                    <svg class="w-3 h-3 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                                                    </svg>
-                                                    @coupon.ApplicablePlanName
-                                                </span>
-                                                break;
-                                            case ApplicablePlan.Standard:
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
-                                                    <svg class="w-3 h-3 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                                                    </svg>
-                                                    @coupon.ApplicablePlanName
-                                                </span>
-                                                break;
-                                            default:
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#18262c] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
-                                                    </svg>
-                                                    @coupon.ApplicablePlanName
-                                                </span>
-                                                break;
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                                                <svg class="w-3 h-3 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                                                </svg>
+                                                @coupon.PlanName
+                                            </span>
+                                        }
+                                        else if (coupon.ApplicablePlan != ApplicablePlan.AllPlans)
+                                        {
+                                            @switch (coupon.ApplicablePlan)
+                                            {
+                                                case ApplicablePlan.Enterprise:
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                                        <svg class="w-3 h-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                                                        </svg>
+                                                        @coupon.ApplicablePlanName
+                                                    </span>
+                                                    break;
+                                                case ApplicablePlan.ProInstitute:
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                                                        <svg class="w-3 h-3 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                                                        </svg>
+                                                        @coupon.ApplicablePlanName
+                                                    </span>
+                                                    break;
+                                                case ApplicablePlan.Standard:
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                                                        <svg class="w-3 h-3 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                                                        </svg>
+                                                        @coupon.ApplicablePlanName
+                                                    </span>
+                                                    break;
+                                                default:
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#18262c] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
+                                                        </svg>
+                                                        @coupon.ApplicablePlanName
+                                                    </span>
+                                                    break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-[#18262c] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
+                                                </svg>
+                                                All Plans
+                                            </span>
                                         }
                                     </div>
                                 </td>
@@ -700,12 +723,9 @@
         new(nameof(DiscountType.FlatAmount), "Flat Amount (₹)")
     };
 
-    private readonly List<CustomSelect.CustomSelectOption> _planFilterOptions = new()
+    private List<CustomSelect.CustomSelectOption> _planFilterOptions = new()
     {
-        new("", "All Plans"),
-        new(nameof(ApplicablePlan.Standard), "Standard Plan"),
-        new(nameof(ApplicablePlan.ProInstitute), "Pro Institute"),
-        new(nameof(ApplicablePlan.Enterprise), "Enterprise")
+        new("", "All Plans")
     };
 
     private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
@@ -720,20 +740,55 @@
         .Select(d => new CustomSelect.CustomSelectOption(d.ToString(), d.GetDisplayName()))
         .ToList();
 
-    private readonly List<CustomSelect.CustomSelectOption> _drawerPlanOptions = Enum.GetValues<ApplicablePlan>()
-        .Select(p => new CustomSelect.CustomSelectOption(p.ToString(), p.GetDisplayName()))
-        .ToList();
+    private List<CustomSelect.CustomSelectOption> _drawerPlanOptions = new()
+    {
+        new("", "All Plans")
+    };
 
     private readonly List<CustomSelect.CustomSelectOption> _drawerCategoryOptions = Enum.GetValues<CampaignCategory>()
         .Select(c => new CustomSelect.CustomSelectOption(c.ToString(), c.GetDisplayName()))
         .ToList();
 
-    // Real dynamic coupons loaded from database API using PagedRequest
+    // Real dynamic coupons and subscription plans loaded from database API
     private List<CouponDto> _coupons = new();
+    private List<SubscriptionPlanDto> _activePlans = new();
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadPlansAsync();
         await LoadCouponsAsync(1);
+    }
+
+    private async Task LoadPlansAsync()
+    {
+        try
+        {
+            var res = await PlanService.GetActivePlansAsync();
+            if (res != null && res.Success && res.Data != null)
+            {
+                _activePlans = res.Data.ToList();
+                PopulatePlanOptions();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading plans for coupons dropdown: {ex.Message}");
+        }
+    }
+
+    private void PopulatePlanOptions()
+    {
+        _drawerPlanOptions = new List<CustomSelect.CustomSelectOption>
+        {
+            new("", "All Plans")
+        };
+        _drawerPlanOptions.AddRange(_activePlans.Select(p => new CustomSelect.CustomSelectOption(p.Id.ToString(), $"{p.Name} (₹{p.Price:N0})")));
+
+        _planFilterOptions = new List<CustomSelect.CustomSelectOption>
+        {
+            new("", "All Plans")
+        };
+        _planFilterOptions.AddRange(_activePlans.Select(p => new CustomSelect.CustomSelectOption(p.Id.ToString(), p.Name)));
     }
 
     private async Task LoadCouponsAsync(int page = 1)
@@ -745,6 +800,7 @@
         {
             DiscountType? discountType = Enum.TryParse<DiscountType>(_selectedType, out var dt) ? dt : null;
             ApplicablePlan? plan = Enum.TryParse<ApplicablePlan>(_selectedPlan, out var p) ? p : null;
+            Guid? planId = Guid.TryParse(_selectedPlan, out var pid) ? pid : null;
             bool? isActive = _selectedStatus == "Active" ? true : _selectedStatus == "Inactive" ? false : null;
 
             var pagedRequest = new PagedRequest
@@ -760,7 +816,8 @@
                 request: pagedRequest,
                 discountType: discountType,
                 plan: plan,
-                isActive: isActive);
+                isActive: isActive,
+                planId: planId);
 
             if (res != null && res.Success && res.Data != null)
             {
@@ -885,7 +942,7 @@
     private decimal _formDiscountValue = 20;
     private decimal? _formMinOrderAmount;
     private decimal? _formMaxDiscountAmount;
-    private string _formPlanString = nameof(ApplicablePlan.AllPlans);
+    private string _formPlanString = "";
     private int _formMaxUses = 100;
     private DateTime _formExpiryDate = DateTime.UtcNow.AddMonths(1);
     private string _formDescription = "";
@@ -898,7 +955,14 @@
 
     private string GetSelectedPlanDisplayName()
     {
-        return Enum.TryParse<ApplicablePlan>(_formPlanString, out var p) ? p.GetDisplayName() : _formPlanString;
+        if (string.IsNullOrWhiteSpace(_formPlanString))
+            return "All Plans";
+
+        var foundPlan = _activePlans.FirstOrDefault(p => p.Id.ToString().Equals(_formPlanString, StringComparison.OrdinalIgnoreCase));
+        if (foundPlan != null)
+            return foundPlan.Name;
+
+        return Enum.TryParse<ApplicablePlan>(_formPlanString, out var p) ? p.GetDisplayName() : "All Plans";
     }
 
     private async Task OpenAddDrawerAsync()
@@ -911,7 +975,7 @@
         _formDiscountValue = 20;
         _formMinOrderAmount = null;
         _formMaxDiscountAmount = null;
-        _formPlanString = nameof(ApplicablePlan.AllPlans);
+        _formPlanString = "";
         _formMaxUses = 100;
         _formExpiryDate = DateTime.UtcNow.AddMonths(1);
         _formDescription = "";
@@ -932,7 +996,7 @@
         _formDiscountValue = coupon.DiscountValue;
         _formMinOrderAmount = coupon.MinOrderAmount;
         _formMaxDiscountAmount = coupon.MaxDiscountAmount;
-        _formPlanString = coupon.ApplicablePlan.ToString();
+        _formPlanString = coupon.PlanId?.ToString() ?? (coupon.ApplicablePlan != ApplicablePlan.AllPlans ? coupon.ApplicablePlan.ToString() : "");
         _formMaxUses = coupon.MaxUses;
         _formExpiryDate = coupon.ExpiryDate;
         _formDescription = coupon.Description ?? "";
@@ -966,8 +1030,11 @@
         }
 
         var discountType = Enum.TryParse<DiscountType>(_formTypeString, out var dt) ? dt : DiscountType.Percentage;
+        Guid? planId = Guid.TryParse(_formPlanString, out var parsedPid) ? parsedPid : null;
         var applicablePlan = Enum.TryParse<ApplicablePlan>(_formPlanString, out var ap) ? ap : ApplicablePlan.AllPlans;
         var category = Enum.TryParse<CampaignCategory>(_formCategoryString, out var cat) ? cat : CampaignCategory.Promotional;
+
+        var expiryUtc = DateTime.SpecifyKind(_formExpiryDate.Date, DateTimeKind.Utc);
 
         if (_editingCoupon != null)
         {
@@ -982,8 +1049,9 @@
                 MinOrderAmount = _formMinOrderAmount,
                 MaxDiscountAmount = _formMaxDiscountAmount,
                 ApplicablePlan = applicablePlan,
+                PlanId = planId,
                 MaxUses = _formMaxUses,
-                ExpiryDate = _formExpiryDate,
+                ExpiryDate = expiryUtc,
                 IsActive = _formIsActive
             };
 
@@ -1009,8 +1077,9 @@
                 MinOrderAmount = _formMinOrderAmount,
                 MaxDiscountAmount = _formMaxDiscountAmount,
                 ApplicablePlan = applicablePlan,
+                PlanId = planId,
                 MaxUses = _formMaxUses,
-                ExpiryDate = _formExpiryDate,
+                ExpiryDate = expiryUtc,
                 IsActive = _formIsActive
             };
 

@@ -1,20 +1,39 @@
 @page "/controlpanel/subscriptions"
+@page "/controlpanel/subscription-plans"
+@page "/controlpanel/plans"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "SuperAdmin,1001")]
+@using Vargshala.Contracts.Common
+@using Vargshala.Contracts.Subscriptions
+@using Vargshala.SharedKernel.Enums
+@using Vargshala.Web.Common
+@using Vargshala.Web.Components.UI.Inputs
+@using Vargshala.Web.Components.UI.Skeletons
+@using Vargshala.Web.Services
+@inject ISubscriptionPlanService PlanService
+@inject INotificationService Toast
+@inject IJSRuntime JS
+@rendermode InteractiveServer
 
-<PageTitle>Subscriptions &amp; Billing - Control Panel</PageTitle>
+<PageTitle>Subscriptions &amp; Pricing Plans | Control Panel</PageTitle>
 
-<div class="space-y-6">
+<div class="flex-1 min-h-0 flex flex-col gap-3 transition-colors duration-200 h-full">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-[#004D40] text-teal-300 flex items-center justify-center text-sm shadow-md">💳</span>
-                Subscriptions &amp; Revenue
-            </h1>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Manage SaaS pricing plans, track monthly recurring revenue (MRR) and institute billing.
-            </p>
+    <!-- Top Header & Action Controls -->
+    <div class="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center shadow-md shrink-0">
+                <svg class="w-4 h-4 text-teal-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                </svg>
+            </span>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-tight">
+                    SaaS Subscriptions &amp; Pricing Plans
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    Configure Vargshala SaaS tiers, set capacity quotas (students, teachers, branches), and manage institute subscriptions
+                </p>
+            </div>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
@@ -24,221 +43,920 @@
             <a href="controlpanel/payment-logs" class="px-3.5 py-2 rounded-xl border border-tealborder dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#111c21] hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all flex items-center gap-1.5 shadow-2xs">
                 <span>💳</span> Payment Logs
             </a>
-            <button class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold hover:from-[#00a89a] hover:to-[#00897b] transition-all flex items-center gap-1.5 shadow-md">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Create Invoice
+            <button type="button" 
+                    @onclick="ExportCsv"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1f3037] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span>Export CSV</span>
+            </button>
+            <button type="button" 
+                    @onclick="OpenAddDrawerAsync"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                <span>New Pricing Plan</span>
             </button>
         </div>
     </div>
 
-    <!-- Revenue KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+    <!-- 4 Quick Stats KPI Cards (Theme 4 Deep Teal - Direct Display Without Blinking) -->
+    <div class="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- 1. Total Plans -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Monthly Recurring (MRR)</span>
-                <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">₹</span>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-black text-slate-800 dark:text-white">₹1,84,500</span>
-                <span class="text-[11px] text-emerald-600 dark:text-emerald-400 ml-2 font-medium">↑ +14.2% this mo</span>
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Tiers</p>
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">@_totalRecords</h3>
+                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                        @_plans.Count(p => p.IsActive) Active • @_plans.Count(p => !p.IsActive) Inactive
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#009488]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+        <!-- 2. Active Monthly Plans -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Paid Subscriptions</span>
-                <span class="w-8 h-8 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center text-sm font-bold">✓</span>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-black text-slate-800 dark:text-white">68</span>
-                <span class="text-[11px] text-[#009488] ml-2 font-medium">out of 94 institutes</span>
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Monthly Plans</p>
+                    <h3 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                        @_plans.Count(p => p.BillingCycle == BillingCycle.Monthly)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Recurring Monthly Billing</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+        <!-- 3. Enterprise / Unlimited Capacity -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Free Trials</span>
-                <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold">⏳</span>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-black text-slate-800 dark:text-white">22</span>
-                <span class="text-[11px] text-amber-600 dark:text-amber-400 ml-2 font-medium">14 days trial</span>
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Unlimited Tiers</p>
+                    <h3 class="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
+                        @_plans.Count(p => !p.MaxStudents.HasValue)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">No Student/Branch Cap</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                    </svg>
+                </div>
             </div>
         </div>
 
-        <div class="p-5 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs">
+        <!-- 4. Subscribed Institutes -->
+        <div class="card-surface p-4 border border-tealborder shadow-2xs relative overflow-hidden">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Pending Renewals (7 Days)</span>
-                <span class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm font-bold">⚠️</span>
-            </div>
-            <div class="mt-3">
-                <span class="text-2xl font-black text-rose-600 dark:text-rose-400">9</span>
-                <span class="text-[11px] text-rose-500 ml-2 font-medium">Auto-reminders active</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pricing Tiers Overview -->
-    <div class="p-6 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold text-slate-800 dark:text-white">Active SaaS Pricing Plans</h2>
-            <span class="text-xs font-semibold text-[#009488]">4 Plans Configured</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Plan 1 -->
-            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Free Trial</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400">14 Days</span>
-                    </div>
-                    <div class="text-xl font-black text-slate-800 dark:text-white">₹0 <span class="text-xs font-normal text-slate-400">/mo</span></div>
-                    <ul class="text-[11px] text-slate-600 dark:text-slate-400 space-y-1.5 mt-3">
-                        <li class="flex items-center gap-1.5">✓ Up to 50 Students</li>
-                        <li class="flex items-center gap-1.5">✓ Attendance &amp; Batches</li>
-                        <li class="flex items-center gap-1.5">✓ Basic Study Material</li>
-                    </ul>
+                    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Active Subscriptions</p>
+                    <h3 class="text-2xl font-black text-[#009488] dark:text-teal-400 mt-1">
+                        @_plans.Sum(p => p.ActiveInstitutesCount)
+                    </h3>
+                    <p class="text-[10px] text-slate-400 font-medium mt-0.5">Enrolled Coaching Institutes</p>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-700/40 text-[11px] font-bold text-slate-500">
-                    22 Active Coaching Institutes
-                </div>
-            </div>
-
-            <!-- Plan 2 -->
-            <div class="p-4 rounded-xl border border-teal-500/40 bg-teal-50/30 dark:bg-teal-950/20 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-teal-800 dark:text-teal-300">Standard</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-500/10 text-[#009488]">Popular</span>
-                    </div>
-                    <div class="text-xl font-black text-slate-800 dark:text-white">₹999 <span class="text-xs font-normal text-slate-400">/mo</span></div>
-                    <ul class="text-[11px] text-slate-600 dark:text-slate-400 space-y-1.5 mt-3">
-                        <li class="flex items-center gap-1.5">✓ Up to 250 Students</li>
-                        <li class="flex items-center gap-1.5">✓ Fees &amp; Expense Manager</li>
-                        <li class="flex items-center gap-1.5">✓ Push Notifications</li>
-                    </ul>
-                </div>
-                <div class="mt-4 pt-3 border-t border-teal-200/60 dark:border-teal-800/40 text-[11px] font-bold text-[#009488]">
-                    39 Active Coaching Institutes
-                </div>
-            </div>
-
-            <!-- Plan 3 -->
-            <div class="p-4 rounded-xl border border-indigo-500/30 bg-indigo-50/20 dark:bg-indigo-950/20 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">Pro Institute</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">High Growth</span>
-                    </div>
-                    <div class="text-xl font-black text-slate-800 dark:text-white">₹2,499 <span class="text-xs font-normal text-slate-400">/mo</span></div>
-                    <ul class="text-[11px] text-slate-600 dark:text-slate-400 space-y-1.5 mt-3">
-                        <li class="flex items-center gap-1.5">✓ Up to 1,000 Students</li>
-                        <li class="flex items-center gap-1.5">✓ Online Exams &amp; Quizzes</li>
-                        <li class="flex items-center gap-1.5">✓ SMS &amp; WhatsApp Alerts</li>
-                    </ul>
-                </div>
-                <div class="mt-4 pt-3 border-t border-indigo-200/60 dark:border-indigo-800/40 text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                    24 Active Coaching Institutes
-                </div>
-            </div>
-
-            <!-- Plan 4 -->
-            <div class="p-4 rounded-xl border border-purple-500/30 bg-purple-50/20 dark:bg-purple-950/20 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-bold text-purple-700 dark:text-purple-300">Enterprise</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-500/10 text-purple-600 dark:text-purple-400">Custom</span>
-                    </div>
-                    <div class="text-xl font-black text-slate-800 dark:text-white">₹5,999 <span class="text-xs font-normal text-slate-400">/mo</span></div>
-                    <ul class="text-[11px] text-slate-600 dark:text-slate-400 space-y-1.5 mt-3">
-                        <li class="flex items-center gap-1.5">✓ Unlimited Students</li>
-                        <li class="flex items-center gap-1.5">✓ Custom Institute Domain</li>
-                        <li class="flex items-center gap-1.5">✓ 24/7 Dedicated Support</li>
-                    </ul>
-                </div>
-                <div class="mt-4 pt-3 border-t border-purple-200/60 dark:border-purple-800/40 text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                    5 Active Coaching Institutes
+                <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-[#009488] flex items-center justify-center font-bold text-sm">
+                    🏛️
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Billing & Invoices Table -->
-    <div class="p-6 rounded-2xl bg-white dark:bg-[#111c21] border border-tealborder dark:border-slate-800/80 shadow-xs space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h2 class="text-sm font-bold text-slate-800 dark:text-white">Recent Subscription Invoices</h2>
-            
-            <div class="flex items-center gap-2">
-                <input type="text" placeholder="Search invoice or institute..."
-                       class="px-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/50 border border-tealborder dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-[#009488]" />
-                <CustomSelect @bind-Value="_statusFilter" 
-                              Options="_statusOptions" 
-                              Compact="true" />
-            </div>
+    <!-- Visual Tier Cards Showcase (Interactive Overview) -->
+    @if (_plans.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            @foreach (var plan in _plans.Take(4))
+            {
+                <div class="p-4 rounded-2xl border transition-all duration-200 @(plan.Name.Contains("Standard", StringComparison.OrdinalIgnoreCase) ? "border-[#009488]/40 bg-teal-50/40 dark:bg-teal-950/20 shadow-xs" : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#111c21] shadow-2xs") flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-black text-slate-800 dark:text-white">@plan.Name</span>
+                            @if (plan.Name.Contains("Standard", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-[#009488]/15 text-[#009488]">Popular</span>
+                            }
+                            else if (plan.Name.Contains("Enterprise", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-500/15 text-purple-600 dark:text-purple-400">Custom</span>
+                            }
+                            else if (plan.Name.Contains("Pro", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">High Growth</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-400">Starter</span>
+                            }
+                        </div>
+                        <div class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
+                            ₹@plan.Price.ToString("N0") <span class="text-xs font-normal text-slate-400">/@plan.BillingCycleName.ToLowerInvariant()</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[32px]">
+                            @(string.IsNullOrWhiteSpace(plan.Description) ? "All-in-one management suite with instant attendance, tests, and fees." : plan.Description)
+                        </p>
+
+                        <div class="space-y-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 text-[11px] text-slate-600 dark:text-slate-300">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Max Students</span>
+                                <span class="font-bold">@plan.MaxStudentsDisplay</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Max Teachers</span>
+                                <span class="font-bold">@plan.MaxTeachersDisplay</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Max Branches</span>
+                                <span class="font-bold">@plan.MaxBranchesDisplay</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                        <span class="text-[10px] font-bold text-slate-400">
+                            @plan.ActiveInstitutesCount Active Institutes
+                        </span>
+                        <button type="button" 
+                                @onclick="() => OpenEditDrawerAsync(plan)"
+                                class="text-[11px] font-bold text-[#009488] hover:underline cursor-pointer">
+                            Edit Plan →
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Search & Filter Controls (Matched with Students.razor & Users.razor) -->
+    <div class="shrink-0 card-surface p-3 border border-tealborder shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+        <!-- Reusable SearchInput Component with Debounce & Clear -->
+        <div class="relative w-full md:w-80">
+            <SearchInput @bind-Value="_searchQuery" 
+                         OnSearch="() => LoadPlansAsync(1)" 
+                         Placeholder="Search plan by name, description..." />
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                    <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        <th class="py-3 px-3">Invoice #</th>
-                        <th class="py-3 px-3">Institute Name</th>
-                        <th class="py-3 px-3">Plan</th>
-                        <th class="py-3 px-3">Billing Cycle</th>
-                        <th class="py-3 px-3">Amount</th>
-                        <th class="py-3 px-3">Status</th>
-                        <th class="py-3 px-3 text-right">Actions</th>
+        <!-- Filter Dropdowns with CustomSelect -->
+        <div class="flex items-center gap-2 w-full md:w-auto">
+            <div class="w-44">
+                <CustomSelect Value="@_selectedCycleString" 
+                              ValueChanged="HandleCycleChanged" 
+                              Options="_cycleFilterOptions" 
+                              Placeholder="All Billing Cycles" />
+            </div>
+            <div class="w-36">
+                <CustomSelect Value="@_selectedStatusString" 
+                              ValueChanged="HandleStatusChanged" 
+                              Options="_statusFilterOptions" 
+                              Placeholder="All Status" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Plans Data Table (table-fixed, explicit percentage widths on all <th>, no blinking) -->
+    <div class="flex-1 min-h-0 card-surface border border-tealborder shadow-xs flex flex-col overflow-hidden">
+        <div class="flex-1 min-h-0 overflow-auto scrollbar-hidden">
+            <table class="w-full min-w-[860px] text-left border-collapse table-fixed">
+                <thead class="sticky top-0 z-10 bg-white dark:bg-[#111c21] border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                    <tr class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider select-none uppercase bg-white dark:bg-[#111c21]">
+                        <th class="w-[24%] py-2.5 px-5 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Name")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Plan Name</span>
+                                <span class="@_sortState.GetIndicatorClass("Name")">@_sortState.GetIndicator("Name")</span>
+                            </div>
+                        </th>
+                        <th class="w-[12%] py-2.5 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("BillingCycle")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Cycle</span>
+                                <span class="@_sortState.GetIndicatorClass("BillingCycle")">@_sortState.GetIndicator("BillingCycle")</span>
+                            </div>
+                        </th>
+                        <th class="w-[14%] py-2.5 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("Price")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Price (₹)</span>
+                                <span class="@_sortState.GetIndicatorClass("Price")">@_sortState.GetIndicator("Price")</span>
+                            </div>
+                        </th>
+                        <th class="w-[14%] py-2.5 px-3 cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("MaxStudents")'>
+                            <div class="flex items-center gap-1.5">
+                                <span>Max Students</span>
+                                <span class="@_sortState.GetIndicatorClass("MaxStudents")">@_sortState.GetIndicator("MaxStudents")</span>
+                            </div>
+                        </th>
+                        <th class="w-[14%] py-2.5 px-3">
+                            <div class="flex items-center gap-1.5">
+                                <span>Teachers &amp; Branches</span>
+                            </div>
+                        </th>
+                        <th class="w-[10%] py-2.5 px-3 text-center cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 group" @onclick='() => HandleSortAsync("IsActive")'>
+                            <div class="flex items-center justify-center gap-1.5">
+                                <span>Status</span>
+                                <span class="@_sortState.GetIndicatorClass("IsActive")">@_sortState.GetIndicator("IsActive")</span>
+                            </div>
+                        </th>
+                        <th class="w-[12%] py-2.5 px-5 text-right select-none">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                        <td class="py-3 px-3 font-mono font-bold text-slate-700 dark:text-slate-200">INV-2026-084</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">Apex Physics Academy</td>
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/10 text-[#009488]">Standard</span></td>
-                        <td class="py-3 px-3 text-slate-500">01 Sep 2026 - 30 Sep 2026</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">₹999</td>
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Paid</span></td>
-                        <td class="py-3 px-3 text-right">
-                            <button class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40">Receipt ↓</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                        <td class="py-3 px-3 font-mono font-bold text-slate-700 dark:text-slate-200">INV-2026-083</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">Brillent Coaching Center</td>
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Pro Institute</span></td>
-                        <td class="py-3 px-3 text-slate-500">28 Aug 2026 - 27 Sep 2026</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">₹2,499</td>
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Paid</span></td>
-                        <td class="py-3 px-3 text-right">
-                            <button class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#009488] hover:bg-teal-50 dark:hover:bg-teal-950/40">Receipt ↓</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                        <td class="py-3 px-3 font-mono font-bold text-slate-700 dark:text-slate-200">INV-2026-082</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">Gravity IIT &amp; Medical Prep</td>
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400">Enterprise</span></td>
-                        <td class="py-3 px-3 text-slate-500">25 Aug 2026 - 24 Sep 2026</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-white">₹5,999</td>
-                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400">Due Today</span></td>
-                        <td class="py-3 px-3 text-right">
-                            <button class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40">Remind ✉</button>
-                        </td>
-                    </tr>
+                <tbody class="divide-y divide-slate-100/90 dark:divide-slate-800/60 text-xs @(_isLoading && _plans.Any() ? "opacity-60 pointer-events-none transition-opacity duration-150" : "transition-opacity duration-150")">
+                    @if (_isLoading && !_plans.Any())
+                    {
+                        <TableSkeletonRows Columns="7" Rows="5" />
+                    }
+                    else if (_plans.Any())
+                    {
+                        @foreach (var plan in _plans)
+                        {
+                            <tr class="hover:bg-teal-500/5 dark:hover:bg-teal-500/5 transition-colors">
+                                <!-- Plan Name & Description -->
+                                <td class="py-2.5 px-5">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-xl bg-teal-500/10 text-[#009488] font-black text-xs flex items-center justify-center shrink-0 shadow-inner">
+                                            @(plan.Name.Length > 0 ? plan.Name[0].ToString() : "P")
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-slate-800 dark:text-white leading-tight truncate">
+                                                @plan.Name
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 truncate mt-0.5">
+                                                @(string.IsNullOrWhiteSpace(plan.Description) ? "Standard coaching management tier" : plan.Description)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Billing Cycle -->
+                                <td class="py-2.5 px-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                        @plan.BillingCycleName
+                                    </span>
+                                </td>
+
+                                <!-- Price -->
+                                <td class="py-2.5 px-3 font-mono font-bold text-slate-800 dark:text-white">
+                                    ₹@plan.Price.ToString("N2")
+                                </td>
+
+                                <!-- Max Students -->
+                                <td class="py-2.5 px-3">
+                                    @if (plan.MaxStudents.HasValue)
+                                    {
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">
+                                            @plan.MaxStudents.Value.ToString("N0") Students
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 font-bold text-purple-600 dark:text-purple-400">
+                                            <span>∞</span> Unlimited
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Max Teachers & Branches -->
+                                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 text-[11px]">
+                                    <div>@plan.MaxTeachersDisplay Teachers</div>
+                                    <div class="text-[10px] text-slate-400">@plan.MaxBranchesDisplay Branches</div>
+                                </td>
+
+                                <!-- Interactive Status Badge -->
+                                <td class="py-2.5 px-3 text-center">
+                                    <button type="button" 
+                                            @onclick="() => TogglePlanStatusAsync(plan)"
+                                            title="Click to toggle status"
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 @(plan.IsActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700")">
+                                        <span class="w-1.5 h-1.5 rounded-full @(plan.IsActive ? "bg-emerald-500 animate-pulse" : "bg-slate-400")"></span>
+                                        @(plan.IsActive ? "Active" : "Inactive")
+                                    </button>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-2.5 px-5 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <!-- Edit Plan -->
+                                        <button type="button" 
+                                                @onclick="() => OpenEditDrawerAsync(plan)"
+                                                title="Edit Plan"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+
+                                        <!-- Toggle Status -->
+                                        <button type="button" 
+                                                @onclick="() => TogglePlanStatusAsync(plan)"
+                                                title="@(plan.IsActive ? "Deactivate Plan" : "Activate Plan")"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            @if (plan.IsActive)
+                                            {
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9v6m-4.5-6v6m-4.5 3a9 9 0 1118 0 9 9 0 01-18 0z" />
+                                                </svg>
+                                            }
+                                            else
+                                            {
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+                                                </svg>
+                                            }
+                                        </button>
+
+                                        <!-- Delete Plan -->
+                                        <button type="button" 
+                                                @onclick="() => OpenDeleteModal(plan)"
+                                                title="Delete Plan"
+                                                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all cursor-pointer inline-flex items-center justify-center">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <div class="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-[#009488] flex items-center justify-center mx-auto mb-2 text-2xl">
+                                    📦
+                                </div>
+                                <p class="font-bold text-slate-700 dark:text-slate-300 text-sm">No pricing plans found</p>
+                                <p class="text-xs text-slate-400 mt-1">Try changing your search query or create a new plan.</p>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="shrink-0 p-3 bg-white dark:bg-[#111c21] border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span class="text-xs text-slate-500">
+                Showing @((_query.PageNumber - 1) * _query.PageSize + (_plans.Count > 0 ? 1 : 0)) to @((_query.PageNumber - 1) * _query.PageSize + _plans.Count) of @_totalRecords records
+            </span>
+            <div class="flex items-center gap-2">
+                <button type="button" 
+                        @onclick="() => LoadPlansAsync(_query.PageNumber - 1)"
+                        disabled="@(_query.PageNumber <= 1)"
+                        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-50 dark:hover:bg-[#1f3037] disabled:opacity-40 disabled:cursor-not-allowed transition-all leading-none cursor-pointer">
+                    Previous
+                </button>
+                <span class="px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    Page @_query.PageNumber of @Math.Max(1, _totalPages)
+                </span>
+                <button type="button" 
+                        @onclick="() => LoadPlansAsync(_query.PageNumber + 1)"
+                        disabled="@(_query.PageNumber >= _totalPages)"
+                        class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#18262c] text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-50 dark:hover:bg-[#1f3037] disabled:opacity-40 disabled:cursor-not-allowed transition-all leading-none cursor-pointer">
+                    Next
+                </button>
+            </div>
         </div>
     </div>
 
 </div>
 
+<!-- ========================================================================= -->
+<!-- DRAWER: Create / Edit Subscription Plan (Standard max-w-lg) -->
+<!-- ========================================================================= -->
+@if (_showAddEditDrawer)
+{
+    <!-- Backdrop Overlay -->
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out @(_isDrawerOpen ? "opacity-100" : "opacity-0")" 
+         @onclick="CloseDrawerAsync"></div>
+
+    <!-- Right Slide-Over Drawer Container -->
+    <div class="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-[#111c21] shadow-2xl flex flex-col justify-between border-l border-teal-800/80 dark:border-slate-800 transform transition-transform duration-300 ease-in-out @(_isDrawerOpen ? "translate-x-0" : "translate-x-full") select-none overflow-hidden">
+        
+        <!-- Drawer Header with Theme 4 Deep Teal Gradient -->
+        <div class="px-6 py-5 bg-[#004D40] text-white flex items-center justify-between shadow-md relative shrink-0">
+            <div class="absolute -top-6 -right-6 w-32 h-32 bg-[#009488]/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-2xl bg-teal-500/20 p-1 flex items-center justify-center shadow-md shrink-0 text-xl font-bold text-teal-200">
+                    💳
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-white tracking-tight leading-tight flex items-center gap-1.5">
+                        <span>@(_editingPlan == null ? "Create New Pricing Plan" : "Edit Plan Details")</span>
+                    </h3>
+                    <p class="text-xs text-teal-200/90 font-medium">
+                        @(_editingPlan == null ? "Define tier capacity limits and recurring billing price" : $"Updating parameters for {_editingPlan.Name}")
+                    </p>
+                </div>
+            </div>
+
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    class="relative z-10 p-2 text-teal-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Drawer Body with EditForm -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+            @if (!string.IsNullOrEmpty(_formError))
+            {
+                <AlertNotification Type="AlertType.Error"
+                                   Message="@_formError"
+                                   Dismissible="true"
+                                   OnClose="() => _formError = null" />
+            }
+
+            <!-- Live Plan Card Preview -->
+            <div class="rounded-2xl bg-gradient-to-br from-[#004D40] to-[#00796B] p-4 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-[#009488]/40 rounded-full blur-2xl"></div>
+                
+                <div class="flex items-start justify-between relative z-10">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-teal-200 bg-white/15 px-2 py-0.5 rounded">
+                            @_formBillingCycle.ToString()
+                        </span>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            <h4 class="text-2xl font-black tracking-tight text-white">
+                                ₹@_formPrice.ToString("N0")
+                            </h4>
+                            <span class="text-xs text-teal-200">/@_formBillingCycle.ToString().ToLowerInvariant()</span>
+                        </div>
+                        <div class="text-sm font-bold text-white mt-0.5">
+                            @(string.IsNullOrWhiteSpace(_formName) ? "Plan Name" : _formName)
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20 text-teal-100">
+                            @(_formIsActive ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-t border-white/20 grid grid-cols-3 gap-2 text-[10px] text-teal-100 relative z-10 text-center">
+                    <div>
+                        <div class="font-bold text-white text-xs">@(_formMaxStudents.HasValue ? _formMaxStudents.Value.ToString("N0") : "∞")</div>
+                        <div class="text-teal-200/80">Students</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-white text-xs">@(_formMaxTeachers.HasValue ? _formMaxTeachers.Value.ToString("N0") : "∞")</div>
+                        <div class="text-teal-200/80">Teachers</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-white text-xs">@(_formMaxBranches.HasValue ? _formMaxBranches.Value.ToString("N0") : "∞")</div>
+                        <div class="text-teal-200/80">Branches</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plan Form Inputs -->
+            <div class="space-y-3.5">
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Plan Name *</label>
+                    <input type="text" @bind="_formName" placeholder="e.g. Pro Institute"
+                           class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Price (₹) *</label>
+                        <input type="number" @bind="_formPrice" step="1" min="0"
+                               class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Billing Cycle *</label>
+                        <CustomSelect Value="@_formBillingCycle.ToString()" 
+                                      ValueChanged="HandleFormCycleChanged" 
+                                      Options="_billingCycleOptions" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Max Students</label>
+                        <input type="number" @bind="_formMaxStudents" placeholder="Empty = ∞" min="1"
+                               class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+                        <span class="text-[10px] text-slate-400">Leave blank for unlimited</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Max Teachers</label>
+                        <input type="number" @bind="_formMaxTeachers" placeholder="Empty = ∞" min="1"
+                               class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+                        <span class="text-[10px] text-slate-400">Leave blank for unlimited</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Max Branches</label>
+                        <input type="number" @bind="_formMaxBranches" placeholder="Empty = ∞" min="1"
+                               class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]" />
+                        <span class="text-[10px] text-slate-400">Leave blank for unlimited</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Description / Marketing Highlights</label>
+                    <textarea @bind="_formDescription" rows="2" placeholder="Briefly describe key features of this pricing tier..."
+                              class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:border-[#009488]"></textarea>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <input type="checkbox" id="planActiveCheckbox" @bind="_formIsActive"
+                           class="w-4 h-4 rounded text-[#009488] focus:ring-[#009488] border-slate-300 cursor-pointer" />
+                    <label for="planActiveCheckbox" class="font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                        Enable this plan for public subscription checkout
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 bg-slate-50 dark:bg-[#18262c] border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3 shrink-0">
+            <button type="button" 
+                    @onclick="CloseDrawerAsync" 
+                    disabled="@_isSaving"
+                    class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" 
+                    @onclick="HandleSavePlanAsync" 
+                    disabled="@_isSaving"
+                    class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#004D40] to-[#009488] hover:from-[#00382E] hover:to-[#007A6F] text-white text-xs font-bold transition-all shadow-md shadow-[#004D40]/20 flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                @if (_isSaving)
+                {
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <span>@(_editingPlan == null ? "Create Plan" : "Update Plan")</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: Delete Confirmation -->
+<!-- ========================================================================= -->
+@if (_planToDelete != null)
+{
+    <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#111c21] rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
+                ⚠️
+            </div>
+            <div>
+                <h3 class="text-base font-extrabold text-slate-800 dark:text-white">Delete Pricing Plan</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Are you sure you want to delete <span class="font-bold text-slate-800 dark:text-white">@_planToDelete.Name</span>? This will archive the plan. Existing subscriptions will not be deleted.
+                </p>
+            </div>
+            <div class="flex items-center justify-center gap-2 pt-2">
+                <button type="button" 
+                        @onclick="() => _planToDelete = null" 
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" 
+                        @onclick="ConfirmDeletePlanAsync" 
+                        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer">
+                    Delete Plan
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
-    private string _statusFilter = "All Statuses";
-    private readonly List<CustomSelect.CustomSelectOption> _statusOptions = new()
+    #region State Variables
+    private List<SubscriptionPlanDto> _plans = new();
+    private int _totalRecords = 0;
+    private int _totalPages = 1;
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+
+    private readonly PagedRequest _query = new() { PageNumber = 1, PageSize = 10, SortBy = "Price", SortDirection = "asc" };
+    private readonly TableSortState _sortState = new();
+    private string _searchQuery = string.Empty;
+
+    private string _selectedCycleString = "All";
+    private string _selectedStatusString = "All";
+
+    private readonly List<CustomSelect.CustomSelectOption> _cycleFilterOptions = new()
     {
-        new("All Statuses", "All Statuses"),
-        new("Paid", "Paid"),
-        new("Pending", "Pending"),
-        new("Overdue", "Overdue")
+        new("All", "All Cycles"),
+        new(nameof(BillingCycle.Monthly), "Monthly"),
+        new(nameof(BillingCycle.Quarterly), "Quarterly"),
+        new(nameof(BillingCycle.Yearly), "Yearly"),
+        new(nameof(BillingCycle.Trial), "7-Day Trial")
     };
+
+    private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = new()
+    {
+        new("All", "All Status"),
+        new("Active", "Active Only"),
+        new("Inactive", "Inactive Only")
+    };
+
+    private readonly List<CustomSelect.CustomSelectOption> _billingCycleOptions = new()
+    {
+        new(nameof(BillingCycle.Monthly), "Monthly"),
+        new(nameof(BillingCycle.Quarterly), "Quarterly"),
+        new(nameof(BillingCycle.Yearly), "Yearly"),
+        new(nameof(BillingCycle.Trial), "7-Day Trial")
+    };
+    #endregion
+
+    #region Drawer Form State
+    private bool _showAddEditDrawer = false;
+    private bool _isDrawerOpen = false;
+    private SubscriptionPlanDto? _editingPlan = null;
+    private SubscriptionPlanDto? _planToDelete = null;
+    private string? _formError = null;
+
+    private string _formName = string.Empty;
+    private string? _formDescription = null;
+    private decimal _formPrice = 999;
+    private BillingCycle _formBillingCycle = BillingCycle.Monthly;
+    private int? _formMaxStudents = 250;
+    private int? _formMaxTeachers = 25;
+    private int? _formMaxBranches = 2;
+    private bool _formIsActive = true;
+    #endregion
+
+    #region Lifecycle
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlansAsync(1);
+    }
+    #endregion
+
+    #region Data Loading
+    private async Task LoadPlansAsync(int pageNumber = 1)
+    {
+        _isLoading = true;
+        _query.PageNumber = pageNumber;
+        _query.Search = string.IsNullOrWhiteSpace(_searchQuery) ? null : _searchQuery.Trim();
+        _query.SortBy = _sortState.Column ?? "Price";
+        _query.SortDirection = _sortState.Direction == SortDirection.Descending ? "desc" : "asc";
+
+        bool? isActive = _selectedStatusString switch
+        {
+            "Active" => true,
+            "Inactive" => false,
+            _ => null
+        };
+
+        BillingCycle? cycle = Enum.TryParse<BillingCycle>(_selectedCycleString, out var parsedCycle)
+            ? parsedCycle
+            : null;
+
+        var response = await PlanService.GetPlansPagedAsync(_query, isActive, cycle);
+        if (response.Success && response.Data != null)
+        {
+            _plans = response.Data.Items;
+            _totalRecords = response.Data.TotalRecords;
+            _totalPages = response.Data.TotalPages;
+        }
+        else
+        {
+            _plans = new();
+            _totalRecords = 0;
+            _totalPages = 1;
+            if (!string.IsNullOrEmpty(response.Message))
+            {
+                Toast.Error(response.Message);
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task HandleSortAsync(string column)
+    {
+        _sortState.Toggle(column);
+        await LoadPlansAsync(1);
+    }
+
+    private async Task HandleCycleChanged(string value)
+    {
+        _selectedCycleString = value;
+        await LoadPlansAsync(1);
+    }
+
+    private async Task HandleStatusChanged(string value)
+    {
+        _selectedStatusString = value;
+        await LoadPlansAsync(1);
+    }
+
+    private void HandleFormCycleChanged(string value)
+    {
+        if (Enum.TryParse<BillingCycle>(value, out var cycle))
+        {
+            _formBillingCycle = cycle;
+        }
+    }
+    #endregion
+
+    #region Drawer & Actions
+    private async Task OpenAddDrawerAsync()
+    {
+        _editingPlan = null;
+        _formError = null;
+        _formName = string.Empty;
+        _formDescription = null;
+        _formPrice = 999;
+        _formBillingCycle = BillingCycle.Monthly;
+        _formMaxStudents = 250;
+        _formMaxTeachers = 25;
+        _formMaxBranches = 2;
+        _formIsActive = true;
+
+        _showAddEditDrawer = true;
+        StateHasChanged();
+        await Task.Delay(20);
+        _isDrawerOpen = true;
+    }
+
+    private async Task OpenEditDrawerAsync(SubscriptionPlanDto plan)
+    {
+        _editingPlan = plan;
+        _formError = null;
+        _formName = plan.Name;
+        _formDescription = plan.Description;
+        _formPrice = plan.Price;
+        _formBillingCycle = plan.BillingCycle;
+        _formMaxStudents = plan.MaxStudents;
+        _formMaxTeachers = plan.MaxTeachers;
+        _formMaxBranches = plan.MaxBranches;
+        _formIsActive = plan.IsActive;
+
+        _showAddEditDrawer = true;
+        StateHasChanged();
+        await Task.Delay(20);
+        _isDrawerOpen = true;
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        _isDrawerOpen = false;
+        StateHasChanged();
+        await Task.Delay(300);
+        _showAddEditDrawer = false;
+        _editingPlan = null;
+    }
+
+    private async Task HandleSavePlanAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_formName))
+        {
+            _formError = "Plan name is required.";
+            return;
+        }
+
+        if (_formPrice < 0)
+        {
+            _formError = "Price must be 0 or greater.";
+            return;
+        }
+
+        _isSaving = true;
+        _formError = null;
+
+        if (_editingPlan == null)
+        {
+            var createReq = new CreateSubscriptionPlanRequest
+            {
+                Name = _formName.Trim(),
+                Description = _formDescription?.Trim(),
+                Price = _formPrice,
+                BillingCycle = _formBillingCycle,
+                MaxStudents = _formMaxStudents,
+                MaxTeachers = _formMaxTeachers,
+                MaxBranches = _formMaxBranches,
+                IsActive = _formIsActive
+            };
+
+            var res = await PlanService.CreatePlanAsync(createReq);
+            if (res.Success)
+            {
+                Toast.Success($"Subscription plan '{_formName}' created successfully.");
+                await CloseDrawerAsync();
+                await LoadPlansAsync(_query.PageNumber);
+            }
+            else
+            {
+                _formError = res.Message ?? "Failed to create plan.";
+            }
+        }
+        else
+        {
+            var updateReq = new UpdateSubscriptionPlanRequest
+            {
+                Id = _editingPlan.Id,
+                Name = _formName.Trim(),
+                Description = _formDescription?.Trim(),
+                Price = _formPrice,
+                BillingCycle = _formBillingCycle,
+                MaxStudents = _formMaxStudents,
+                MaxTeachers = _formMaxTeachers,
+                MaxBranches = _formMaxBranches,
+                IsActive = _formIsActive
+            };
+
+            var res = await PlanService.UpdatePlanAsync(_editingPlan.Id, updateReq);
+            if (res.Success)
+            {
+                Toast.Success($"Subscription plan '{_formName}' updated successfully.");
+                await CloseDrawerAsync();
+                await LoadPlansAsync(_query.PageNumber);
+            }
+            else
+            {
+                _formError = res.Message ?? "Failed to update plan.";
+            }
+        }
+
+        _isSaving = false;
+    }
+
+    private async Task TogglePlanStatusAsync(SubscriptionPlanDto plan)
+    {
+        var res = await PlanService.TogglePlanStatusAsync(plan.Id);
+        if (res.Success)
+        {
+            plan.IsActive = !plan.IsActive;
+            Toast.Success($"Plan '{plan.Name}' status updated.");
+            StateHasChanged();
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to update plan status.");
+        }
+    }
+
+    private void OpenDeleteModal(SubscriptionPlanDto plan)
+    {
+        _planToDelete = plan;
+    }
+
+    private async Task ConfirmDeletePlanAsync()
+    {
+        if (_planToDelete == null) return;
+
+        var res = await PlanService.DeletePlanAsync(_planToDelete.Id);
+        if (res.Success)
+        {
+            Toast.Success($"Plan '{_planToDelete.Name}' deleted.");
+            _planToDelete = null;
+            await LoadPlansAsync(_query.PageNumber);
+        }
+        else
+        {
+            Toast.Error(res.Message ?? "Failed to delete plan.");
+        }
+    }
+
+    private async Task ExportCsv()
+    {
+        if (!_plans.Any())
+        {
+            Toast.Warning("No plans available to export.");
+            return;
+        }
+
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("Plan Name,Billing Cycle,Price (INR),Max Students,Max Teachers,Max Branches,Status,Active Institutes");
+
+        foreach (var p in _plans)
+        {
+            csv.AppendLine($"\"{p.Name}\",\"{p.BillingCycleName}\",{p.Price},\"{p.MaxStudentsDisplay}\",\"{p.MaxTeachersDisplay}\",\"{p.MaxBranchesDisplay}\",\"{(p.IsActive ? "Active" : "Inactive")}\",{p.ActiveInstitutesCount}");
+        }
+
+        var fileName = $"Vargshala_Pricing_Plans_{DateTime.UtcNow:yyyyMMdd}.csv";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+        var base64 = Convert.ToBase64String(bytes);
+
+        await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, "text/csv", base64);
+        Toast.Success("Plans exported to CSV.");
+    }
+    #endregion
 }

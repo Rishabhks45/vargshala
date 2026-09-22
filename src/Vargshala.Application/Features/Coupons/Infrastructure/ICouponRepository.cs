@@ -16,6 +16,7 @@ public interface ICouponRepository
         DiscountType? discountType = null,
         ApplicablePlan? plan = null,
         bool? isActive = null,
+        Guid? planId = null,
         CancellationToken cancellationToken = default);
     Task AddAsync(Coupon coupon, CancellationToken cancellationToken = default);
     void Update(Coupon coupon);

@@ -95,6 +95,8 @@ public static class FeeMappingExtensions
             BranchId = entity.BranchId,
             BranchName = entity.Branch?.Name,
             StudentId = entity.StudentId,
+            OrganizationSubscriptionId = entity.OrganizationSubscriptionId,
+            PaymentType = entity.PaymentType,
             StudentName = studentName,
             StudentRollNumber = entity.Student?.RollNumber,
             StudentCode = entity.Student?.StudentCode,

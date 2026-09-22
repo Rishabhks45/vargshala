@@ -26,6 +26,7 @@ public class GetCouponsQueryHandler : IRequestHandler<GetCouponsQuery, ApiRespon
             request.DiscountType,
             request.Plan,
             request.IsActive,
+            request.PlanId,
             cancellationToken);
 
         var dtos = items.Select(c => new CouponDto
@@ -40,6 +41,8 @@ public class GetCouponsQueryHandler : IRequestHandler<GetCouponsQuery, ApiRespon
             MinOrderAmount = c.MinOrderAmount,
             MaxDiscountAmount = c.MaxDiscountAmount,
             ApplicablePlan = c.ApplicablePlan,
+            PlanId = c.PlanId,
+            PlanName = c.Plan != null ? c.Plan.Name : "All Plans",
             UsedCount = c.UsedCount,
             MaxUses = c.MaxUses,
             ExpiryDate = c.ExpiryDate,

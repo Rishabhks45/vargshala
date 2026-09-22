@@ -24,6 +24,7 @@ public class CouponService : ICouponService
         DiscountType? discountType = null,
         ApplicablePlan? plan = null,
         bool? isActive = null,
+        Guid? planId = null,
         CancellationToken cancellationToken = default)
     {
         var req = request ?? new PagedRequest();
@@ -47,6 +48,7 @@ public class CouponService : ICouponService
             if (category.HasValue) queryParams.Add($"category={(int)category.Value}");
             if (discountType.HasValue) queryParams.Add($"discountType={(int)discountType.Value}");
             if (plan.HasValue) queryParams.Add($"plan={(int)plan.Value}");
+            if (planId.HasValue) queryParams.Add($"planId={planId.Value}");
             if (isActive.HasValue) queryParams.Add($"isActive={isActive.Value}");
 
             var url = "api/v1/coupons?" + string.Join("&", queryParams);

@@ -798,39 +798,19 @@
     private string _selectedStatus = string.Empty;
     private TableSortState _sortState => _query.SortState;
 
-    private readonly List<CustomSelect.CustomSelectOption> _departmentFilterOptions = new()
-    {
-        new("", "All Departments"),
-        new("Computer Science", "Computer Science"),
-        new("Mathematics", "Mathematics"),
-        new("Physics", "Physics"),
-        new("Chemistry", "Chemistry"),
-        new("Biology", "Biology"),
-        new("English", "English")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _departmentFilterOptions = new[] { new CustomSelect.CustomSelectOption("", "All Departments") }
+        .Concat(Enum.GetValues<Department>().Select(d => new CustomSelect.CustomSelectOption(d.GetDisplayName(), d.GetDisplayName())))
+        .ToList();
 
-    private readonly List<CustomSelect.CustomSelectOption> _designationFilterOptions = new()
-    {
-        new("", "All Designations"),
-        new("Teacher", "Teacher"),
-        new("Senior Teacher", "Senior Teacher"),
-        new("HOD", "HOD"),
-        new("Assistant Teacher", "Assistant Teacher"),
-        new("Guest Lecturer", "Guest Lecturer"),
-        new("Principal", "Principal")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _designationFilterOptions = new[] { new CustomSelect.CustomSelectOption("", "All Designations") }
+        .Concat(Enum.GetValues<Designation>().Select(d => new CustomSelect.CustomSelectOption(d.ToString(), d.GetDisplayName())))
+        .ToList();
 
     private readonly List<CustomSelect.CustomSelectOption> _statusFilterOptions = StatusFilterHelper.GetStatusFilterOptions();
 
-    private readonly List<CustomSelect.CustomSelectOption> _drawerDepartmentOptions = new()
-    {
-        new("Computer Science", "Computer Science"),
-        new("Mathematics", "Mathematics"),
-        new("Physics", "Physics"),
-        new("Chemistry", "Chemistry"),
-        new("Biology", "Biology"),
-        new("English", "English")
-    };
+    private readonly List<CustomSelect.CustomSelectOption> _drawerDepartmentOptions = Enum.GetValues<Department>()
+        .Select(d => new CustomSelect.CustomSelectOption(d.GetDisplayName(), d.GetDisplayName()))
+        .ToList();
 
     private readonly List<CustomSelect.CustomSelectOption> _drawerDesignationOptions = Enum.GetValues<Designation>()
         .Select(d => new CustomSelect.CustomSelectOption(d.ToString(), d.GetDisplayName()))

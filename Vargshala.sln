@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vargshala.IntegrationTests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vargshala.SharedKernel", "src\Vargshala.SharedKernel\Vargshala.SharedKernel.csproj", "{31BC5E54-4C4D-4582-B587-124F7AADBB65}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorpayUtility", "src\RazorpayUtility\RazorpayUtility.csproj", "{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -143,6 +145,18 @@ Global
 		{31BC5E54-4C4D-4582-B587-124F7AADBB65}.Release|x64.Build.0 = Release|Any CPU
 		{31BC5E54-4C4D-4582-B587-124F7AADBB65}.Release|x86.ActiveCfg = Release|Any CPU
 		{31BC5E54-4C4D-4582-B587-124F7AADBB65}.Release|x86.Build.0 = Release|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Debug|x64.Build.0 = Debug|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Debug|x86.Build.0 = Debug|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Release|x64.ActiveCfg = Release|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Release|x64.Build.0 = Release|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Release|x86.ActiveCfg = Release|Any CPU
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -157,5 +171,6 @@ Global
 		{8AD4ACF7-8B7D-45CD-A014-821E3B67446E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{E9A6ABFF-256D-4ACB-81FF-175AA5D1B1F9} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{31BC5E54-4C4D-4582-B587-124F7AADBB65} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{0ECA227F-13DD-47E1-8B47-B6A2C6CE0B0E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

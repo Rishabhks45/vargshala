@@ -77,7 +77,9 @@ public class PaymentDto
     public Guid OrganizationId { get; set; }
     public Guid? BranchId { get; set; }
     public string? BranchName { get; set; }
-    public Guid StudentId { get; set; }
+    public Guid? StudentId { get; set; }
+    public Guid? OrganizationSubscriptionId { get; set; }
+    public PaymentType PaymentType { get; set; } = PaymentType.StudentFee;
     public string StudentName { get; set; } = string.Empty;
     public string? StudentRollNumber { get; set; }
     public string? StudentCode { get; set; }

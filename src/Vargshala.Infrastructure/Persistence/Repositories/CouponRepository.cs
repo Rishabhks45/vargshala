@@ -47,6 +47,7 @@ public class CouponRepository : ICouponRepository
     {
         return await _db.Coupons
             .AsNoTracking()
+            .Include(c => c.Plan)
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken);
     }
 
@@ -61,6 +62,7 @@ public class CouponRepository : ICouponRepository
         var normalizedCode = code.Trim().ToUpperInvariant();
         return await _db.Coupons
             .AsNoTracking()
+            .Include(c => c.Plan)
             .FirstOrDefaultAsync(c => c.Code == normalizedCode && !c.IsDeleted, cancellationToken);
     }
 
@@ -83,10 +85,12 @@ public class CouponRepository : ICouponRepository
         DiscountType? discountType = null,
         ApplicablePlan? plan = null,
         bool? isActive = null,
+        Guid? planId = null,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Coupons
             .AsNoTracking()
+            .Include(c => c.Plan)
             .Where(c => !c.IsDeleted);
 
         if (category.HasValue)
@@ -99,7 +103,11 @@ public class CouponRepository : ICouponRepository
             query = query.Where(c => c.DiscountType == discountType.Value);
         }
 
-        if (plan.HasValue)
+        if (planId.HasValue)
+        {
+            query = query.Where(c => c.PlanId == planId.Value || c.PlanId == null);
+        }
+        else if (plan.HasValue)
         {
             query = query.Where(c => c.ApplicablePlan == plan.Value || c.ApplicablePlan == ApplicablePlan.AllPlans);
         }

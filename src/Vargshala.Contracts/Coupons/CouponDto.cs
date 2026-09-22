@@ -21,6 +21,8 @@ public class CouponDto
 
     public ApplicablePlan ApplicablePlan { get; set; } = ApplicablePlan.AllPlans;
     public string ApplicablePlanName => ApplicablePlan.GetDisplayName();
+    public Guid? PlanId { get; set; }
+    public string? PlanName { get; set; }
     public int UsedCount { get; set; } = 0;
     public int MaxUses { get; set; } = 100;
 
@@ -45,6 +47,7 @@ public class CreateCouponRequest
     public decimal? MaxDiscountAmount { get; set; }
 
     public ApplicablePlan ApplicablePlan { get; set; } = ApplicablePlan.AllPlans;
+    public Guid? PlanId { get; set; }
     public int MaxUses { get; set; } = 100;
     public DateTime ExpiryDate { get; set; } = DateTime.UtcNow.AddMonths(1);
     public bool IsActive { get; set; } = true;
@@ -60,22 +63,16 @@ public class CreateCouponRequestValidator : AbstractValidator<CreateCouponReques
         RuleFor(x => x.Code)
             .NotEmpty().WithMessage("Coupon code is required.")
             .MaximumLength(50).WithMessage("Coupon code cannot exceed 50 characters.")
-            .Matches(@"^[A-Z0-9_\-]+$").WithMessage("Code must be uppercase alphanumeric (e.g. WELCOME50).");
+            .Matches("^[A-Z0-9_-]+$").WithMessage("Coupon code must be uppercase alphanumeric (can include hyphens and underscores).");
 
         RuleFor(x => x.DiscountValue)
             .GreaterThan(0).WithMessage("Discount value must be greater than zero.");
 
-        When(x => x.DiscountType == DiscountType.Percentage, () =>
-        {
-            RuleFor(x => x.DiscountValue)
-                .InclusiveBetween(1, 100).WithMessage("Percentage discount must be between 1% and 100%.");
-        });
+        RuleFor(x => x.ExpiryDate)
+            .Must(d => d.Date >= DateTime.UtcNow.Date).WithMessage("Expiry date must be in the future.");
 
         RuleFor(x => x.MaxUses)
-            .GreaterThan(0).WithMessage("Max redemptions quota must be at least 1.");
-
-        RuleFor(x => x.ExpiryDate)
-            .GreaterThan(DateTime.UtcNow.Date).WithMessage("Expiry date must be in the future.");
+            .GreaterThan(0).WithMessage("Max redemptions must be greater than zero.");
 
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
@@ -95,6 +92,7 @@ public class UpdateCouponRequest
     public decimal? MaxDiscountAmount { get; set; }
 
     public ApplicablePlan ApplicablePlan { get; set; } = ApplicablePlan.AllPlans;
+    public Guid? PlanId { get; set; }
     public int MaxUses { get; set; } = 100;
     public DateTime ExpiryDate { get; set; }
     public bool IsActive { get; set; } = true;

@@ -1,3 +1,4 @@
+using RazorpayUtility.Extensions;
 using Scalar.AspNetCore;
 using Serilog;
 using Vargshala.API.Extensions;
@@ -23,6 +24,10 @@ builder.Services.AddSignalR();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddScoped<IChatNotificationService, ChatNotificationService>();
+
+// Razorpay Payment Gateway DI
+builder.Services.AddRazorpayUtilityWithDatabase(
+    builder.Configuration.GetConnectionString("DefaultConnection")!);
 
 // JWT Authentication
 builder.Services.AddJwtAuthentication(builder.Configuration);

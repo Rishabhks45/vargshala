@@ -11,6 +11,7 @@ public interface ICouponService
         DiscountType? discountType = null,
         ApplicablePlan? plan = null,
         bool? isActive = null,
+        Guid? planId = null,
         CancellationToken cancellationToken = default);
 
     Task<CouponDto?> GetCouponByIdAsync(Guid id, CancellationToken cancellationToken = default);

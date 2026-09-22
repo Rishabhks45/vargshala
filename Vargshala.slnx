@@ -6,6 +6,8 @@
     <Project Path="src/Vargshala.Domain/Vargshala.Domain.csproj" />
     <Project Path="src/Vargshala.Infrastructure/Vargshala.Infrastructure.csproj" />
     <Project Path="src/Vargshala.Web/Vargshala.Web.csproj" />
+    <Project Path="src/Vargshala.SharedKernel/Vargshala.SharedKernel.csproj" />
+    <Project Path="src/RazorpayUtility/RazorpayUtility.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Vargshala.IntegrationTests/Vargshala.IntegrationTests.csproj" />

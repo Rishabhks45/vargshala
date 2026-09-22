@@ -14,7 +14,14 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(p => p.OrganizationId).IsRequired();
         builder.Property(p => p.BranchId);
-        builder.Property(p => p.StudentId).IsRequired();
+        builder.Property(p => p.StudentId);
+        builder.Property(p => p.OrganizationSubscriptionId);
+
+        builder.Property(p => p.PaymentType)
+            .HasConversion<string>()
+            .IsRequired()
+            .HasMaxLength(30)
+            .HasDefaultValue(PaymentType.StudentFee);
 
         builder.Property(p => p.ReceiptNumber)
             .HasMaxLength(50);
@@ -67,7 +74,14 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasOne(p => p.Student)
             .WithMany(s => s.Payments)
             .HasForeignKey(p => p.StudentId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(p => p.OrganizationSubscription)
+            .WithMany(s => s.Payments)
+            .HasForeignKey(p => p.OrganizationSubscriptionId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(p => p.CreatedByUser)
             .WithMany()
@@ -87,6 +101,8 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(p => p.OrganizationId).HasDatabaseName("IX_Payments_OrganizationId");
         builder.HasIndex(p => p.BranchId).HasDatabaseName("IX_Payments_BranchId");
         builder.HasIndex(p => p.StudentId).HasDatabaseName("IX_Payments_StudentId");
+        builder.HasIndex(p => p.OrganizationSubscriptionId).HasDatabaseName("IX_Payments_OrganizationSubscriptionId");
+        builder.HasIndex(p => p.PaymentType).HasDatabaseName("IX_Payments_PaymentType");
         builder.HasIndex(p => p.ReceiptNumber).HasDatabaseName("IX_Payments_ReceiptNumber");
         builder.HasIndex(p => p.PaymentDate).HasDatabaseName("IX_Payments_PaymentDate");
         builder.HasIndex(p => p.TransactionReference).HasDatabaseName("IX_Payments_TransactionReference");

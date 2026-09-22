@@ -9,5 +9,6 @@ public record GetCouponsQuery(
     CampaignCategory? Category = null,
     DiscountType? DiscountType = null,
     ApplicablePlan? Plan = null,
-    bool? IsActive = null
+    bool? IsActive = null,
+    Guid? PlanId = null
 ) : IRequest<ApiResponse<PagedResponse<CouponDto>>>;

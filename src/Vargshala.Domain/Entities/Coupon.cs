@@ -22,6 +22,7 @@ public class Coupon : BaseEntity
     public decimal? MaxDiscountAmount { get; set; }
 
     public ApplicablePlan ApplicablePlan { get; set; } = ApplicablePlan.AllPlans;
+    public Guid? PlanId { get; set; }
 
     public int UsedCount { get; set; } = 0;
 
@@ -31,4 +32,5 @@ public class Coupon : BaseEntity
 
     // Navigation
     public Organization? Organization { get; set; }
+    public SubscriptionPlan? Plan { get; set; }
 }

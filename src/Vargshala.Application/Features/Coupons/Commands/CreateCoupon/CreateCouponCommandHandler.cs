@@ -40,6 +40,7 @@ public class CreateCouponCommandHandler : IRequestHandler<CreateCouponCommand, A
             MinOrderAmount = req.MinOrderAmount,
             MaxDiscountAmount = req.MaxDiscountAmount,
             ApplicablePlan = req.ApplicablePlan,
+            PlanId = req.PlanId,
             UsedCount = 0,
             MaxUses = req.MaxUses,
             ExpiryDate = req.ExpiryDate,

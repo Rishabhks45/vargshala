@@ -37,6 +37,8 @@ public class GetCouponByIdQueryHandler : IRequestHandler<GetCouponByIdQuery, Api
             MinOrderAmount = entity.MinOrderAmount,
             MaxDiscountAmount = entity.MaxDiscountAmount,
             ApplicablePlan = entity.ApplicablePlan,
+            PlanId = entity.PlanId,
+            PlanName = entity.Plan != null ? entity.Plan.Name : "All Plans",
             UsedCount = entity.UsedCount,
             MaxUses = entity.MaxUses,
             ExpiryDate = entity.ExpiryDate,
