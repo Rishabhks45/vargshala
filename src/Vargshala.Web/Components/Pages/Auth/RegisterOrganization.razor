@@ -92,17 +92,34 @@
                         </div>
                     </div>
 
+                    <!-- Next Step: Subscription Plan & Checkout Banner -->
+                    <div class="p-3.5 rounded-2xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/30 border border-teal-200 dark:border-teal-800/60 text-xs">
+                        <div class="flex items-center gap-2 mb-1 text-[#004D40] dark:text-teal-200 font-black">
+                            <span class="text-sm">💳</span>
+                            <span>Next Step: Select Subscription Plan &amp; Checkout</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Activate your <strong>7-Day Free Trial</strong> or choose a coaching plan via Razorpay to unlock student admissions, batch allocation, and institute dashboard.
+                        </p>
+                    </div>
+
                     <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
-                        <button type="button" @onclick="NavigateToLogin"
-                                class="flex-1 py-2.5 rounded-full font-bold text-xs text-white transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
+                    <div class="flex flex-col gap-2 pt-1">
+                        <button type="button" @onclick="ProceedToCheckout"
+                                class="w-full py-3 rounded-full font-black text-xs text-white transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
                                 style="background: linear-gradient(135deg, var(--theme-header, #004D40) 0%, var(--theme-primary, #009488) 100%);">
-                            <span>Sign In to Dashboard →</span>
+                            <span>Proceed to Choose Plan &amp; Checkout →</span>
                         </button>
-                        <button type="button" @onclick='() => Navigation.NavigateTo("/")'
-                                class="px-4 py-2.5 rounded-full bg-white dark:bg-[#15232a] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold hover:text-[var(--theme-primary,#009488)] hover:border-[var(--theme-primary,#009488)] transition-all cursor-pointer">
-                            Home
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @onclick="NavigateToLogin"
+                                    class="flex-1 py-2 rounded-full bg-white dark:bg-[#15232a] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:text-[var(--theme-primary,#009488)] transition-all cursor-pointer text-center">
+                                Sign In Later
+                            </button>
+                            <button type="button" @onclick='() => Navigation.NavigateTo("/")'
+                                    class="px-4 py-2 rounded-full bg-white dark:bg-[#15232a] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:text-[var(--theme-primary,#009488)] transition-all cursor-pointer">
+                                Home
+                            </button>
+                        </div>
                     </div>
                 </div>
             }
@@ -577,6 +594,7 @@
     private bool _isSubmitting = false;
     private bool _isRegistered = false;
     private string? _errorMessage;
+    private LoginResponse? _loginData;
 
     private void NavigateToLogin()
     {
@@ -702,6 +720,7 @@
 
             if (response.Success)
             {
+                _loginData = response.Data;
                 _isRegistered = true;
             }
             else
@@ -720,6 +739,28 @@
         finally
         {
             _isSubmitting = false;
+        }
+    }
+
+    private void ProceedToCheckout()
+    {
+        if (_loginData != null && !string.IsNullOrWhiteSpace(_loginData.AccessToken))
+        {
+            var targetUrl = "/subscription";
+
+            var signInUrl = $"/account/signin?token={Uri.EscapeDataString(_loginData.AccessToken)}" +
+                            $"&refreshToken={Uri.EscapeDataString(_loginData.RefreshToken ?? string.Empty)}" +
+                            $"&rememberMe=true" +
+                            $"&orgName={Uri.EscapeDataString(_loginData.User?.OrganizationName ?? _model.OrganizationName)}" +
+                            $"&branchId={Uri.EscapeDataString(_loginData.User?.CurrentBranchId?.ToString() ?? string.Empty)}" +
+                            $"&branchName={Uri.EscapeDataString(_loginData.User?.CurrentBranchName ?? string.Empty)}" +
+                            $"&returnUrl={Uri.EscapeDataString(targetUrl)}";
+
+            Navigation.NavigateTo(signInUrl, forceLoad: true);
+        }
+        else
+        {
+            Navigation.NavigateTo("/login?returnUrl=/subscription", forceLoad: true);
         }
     }
 }

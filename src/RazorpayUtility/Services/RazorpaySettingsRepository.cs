@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using RazorpayUtility.Configuration;
 using RazorpayUtility.Data;
@@ -34,12 +34,12 @@ public class RazorpaySettingsRepository : IRazorpaySettingsRepository
                 {
                     KeyId = entity.KeyId,
                     KeySecret = entity.KeySecret,
-                    WebhookSecret = entity.WebhookSecret,
-                    Currency = entity.Currency,
-                    CompanyName = entity.CompanyName,
-                    ThemeColor = entity.ThemeColor,
-                    SuccessUrl = entity.SuccessUrl,
-                    CancelUrl = entity.CancelUrl
+                    WebhookSecret = entity.WebhookSecret ?? string.Empty,
+                    Currency = entity.Currency ?? "INR",
+                    CompanyName = entity.CompanyName ?? "Vargshala",
+                    ThemeColor = entity.ThemeColor ?? "#009488",
+                    SuccessUrl = entity.SuccessUrl ?? string.Empty,
+                    CancelUrl = entity.CancelUrl ?? string.Empty
                 };
             }
         }

@@ -15,7 +15,8 @@ builder.Host.UseSerilog((context, config) =>
     config.ReadFrom.Configuration(context.Configuration));
 
 // Services
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(RazorpayUtility.Controllers.RazorpayWebhookController).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerServices();
 builder.Services.AddSignalR();
@@ -25,8 +26,8 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddScoped<IChatNotificationService, ChatNotificationService>();
 
-// Razorpay Payment Gateway DI
-builder.Services.AddRazorpayUtilityWithDatabase(
+// Razorpay Payment Gateway DI & Webhook Event Handler
+builder.Services.AddRazorpayUtilityWithDatabaseAndEventHandler<Vargshala.Application.Services.RazorpayWebhookEventHandler>(
     builder.Configuration.GetConnectionString("DefaultConnection")!);
 
 // JWT Authentication

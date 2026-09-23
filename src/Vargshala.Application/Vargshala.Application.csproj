@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Vargshala.Domain\Vargshala.Domain.csproj" />
     <ProjectReference Include="..\Vargshala.Contracts\Vargshala.Contracts.csproj" />
+    <ProjectReference Include="..\RazorpayUtility\RazorpayUtility.csproj" />
   </ItemGroup>
 
   <ItemGroup>

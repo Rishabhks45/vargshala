@@ -42,7 +42,7 @@ public class SubscriptionPlansController : ControllerBase
     /// Gets paged list of SaaS subscription plans for platform control panel.
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "SuperAdmin,1001")]
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
     public async Task<IActionResult> GetPagedPlans(
         [FromQuery] PagedRequest request,
         [FromQuery] bool? isActive = null,
@@ -57,7 +57,7 @@ public class SubscriptionPlansController : ControllerBase
     /// Gets a single subscription plan by ID.
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "SuperAdmin,1001")]
+    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetSubscriptionPlanByIdQuery(id), cancellationToken);

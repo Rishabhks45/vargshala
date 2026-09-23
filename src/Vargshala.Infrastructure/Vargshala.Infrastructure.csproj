@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Vargshala.Application\Vargshala.Application.csproj" />
+    <ProjectReference Include="..\RazorpayUtility\RazorpayUtility.csproj" />
   </ItemGroup>
 
   <ItemGroup>
