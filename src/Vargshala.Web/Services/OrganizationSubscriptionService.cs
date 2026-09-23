@@ -113,4 +113,41 @@ public class OrganizationSubscriptionService : IOrganizationSubscriptionService
 
         return ApiResponse<OrganizationSubscriptionDto>.FailureResponse("Failed to confirm subscription payment.");
     }
+
+    public async Task<byte[]?> GetSubscriptionReceiptPdfAsync(
+        Guid paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var res = await _httpClient.GetAsync($"api/v1/organization-subscriptions/payments/{paymentId}/receipt/pdf", cancellationToken);
+            if (res.IsSuccessStatusCode)
+            {
+                return await res.Content.ReadAsByteArrayAsync(cancellationToken);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading subscription payment receipt PDF {PaymentId}", paymentId);
+            return null;
+        }
+    }
+
+    public async Task<ApiResponse<SubscriptionPaymentReceiptDto>> GetSubscriptionReceiptAsync(
+        Guid paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var res = await _httpClient.GetAsync($"api/v1/organization-subscriptions/payments/{paymentId}/receipt", cancellationToken);
+            var response = await res.Content.ReadFromJsonAsync<ApiResponse<SubscriptionPaymentReceiptDto>>(cancellationToken: cancellationToken);
+            return response ?? ApiResponse<SubscriptionPaymentReceiptDto>.FailureResponse("Receipt not found.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching subscription payment receipt {PaymentId}", paymentId);
+            return ApiResponse<SubscriptionPaymentReceiptDto>.FailureResponse(ex.Message);
+        }
+    }
 }

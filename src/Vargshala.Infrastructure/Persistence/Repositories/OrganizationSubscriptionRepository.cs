@@ -103,6 +103,68 @@ public class OrganizationSubscriptionRepository : IOrganizationSubscriptionRepos
         }).ToList();
     }
 
+    public async Task<SubscriptionPaymentReceiptDto?> GetSubscriptionPaymentReceiptAsync(
+        Guid paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        var payment = await _context.Payments
+            .Include(p => p.Organization)
+            .Include(p => p.OrganizationSubscription)
+                .ThenInclude(s => s!.Plan)
+            .FirstOrDefaultAsync(p => p.Id == paymentId && p.PaymentType == PaymentType.Subscription, cancellationToken);
+
+        if (payment == null) return null;
+
+        var plan = payment.OrganizationSubscription?.Plan;
+        var org = payment.Organization;
+
+        string? couponCode = null;
+        if (!string.IsNullOrWhiteSpace(payment.Remarks) && payment.Remarks.Contains("Coupon:", StringComparison.OrdinalIgnoreCase))
+        {
+            var idx = payment.Remarks.IndexOf("Coupon:", StringComparison.OrdinalIgnoreCase);
+            couponCode = payment.Remarks[(idx + 7)..].Trim();
+        }
+
+        decimal originalAmount = plan?.Price ?? payment.Amount;
+        decimal discountAmount = Math.Max(0, originalAmount - payment.Amount);
+
+        return new SubscriptionPaymentReceiptDto
+        {
+            PaymentId = payment.Id,
+            ReceiptNumber = payment.ReceiptNumber ?? payment.Id.ToString()[..8].ToUpperInvariant(),
+            PaymentDate = payment.PaymentDate,
+            Amount = payment.Amount,
+            OriginalAmount = originalAmount,
+            DiscountAmount = discountAmount,
+            Currency = "INR",
+            PaymentMethod = payment.PaymentMethod,
+            TransactionReference = payment.TransactionReference,
+            RazorpayOrderId = payment.ReceiptNumber?.StartsWith("order_") == true ? payment.ReceiptNumber : null,
+            Status = payment.Status,
+            Remarks = payment.Remarks,
+            CouponCode = couponCode,
+
+            OrganizationId = payment.OrganizationId,
+            OrganizationName = org?.Name ?? "Institute",
+            OrganizationEmail = org?.Email,
+            OrganizationPhone = org?.Mobile,
+            OrganizationAddress = org?.Address,
+
+            PlanId = plan?.Id,
+            PlanName = plan?.Name ?? "Subscription Plan",
+            BillingCycle = plan?.BillingCycle.ToString() ?? "Monthly",
+            StudentQuota = plan?.MaxStudents.HasValue == true ? $"{plan.MaxStudents.Value:N0} Students" : "Unlimited",
+            TeacherQuota = plan?.MaxTeachers.HasValue == true ? $"{plan.MaxTeachers.Value:N0} Faculty" : "Unlimited",
+            BranchQuota = plan?.MaxBranches.HasValue == true ? $"{plan.MaxBranches.Value:N0} Branches" : "Unlimited",
+            SubscriptionStartDate = payment.OrganizationSubscription?.StartDate,
+            SubscriptionEndDate = payment.OrganizationSubscription?.EndDate,
+
+            IssuerName = "Vargshala EdTech SaaS",
+            IssuerWebsite = "https://vargshala.com",
+            IssuerSupportEmail = "billing@vargshala.com"
+        };
+    }
+
     public async Task<SubscriptionPlan?> GetPlanByIdAsync(
         Guid planId,
         CancellationToken cancellationToken = default)

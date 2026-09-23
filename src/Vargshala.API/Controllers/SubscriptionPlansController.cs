@@ -54,10 +54,10 @@ public class SubscriptionPlansController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a single subscription plan by ID.
+    /// Gets a single subscription plan by ID (available for pricing details and organization subscription checkout).
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "SuperAdmin,BackOffice,1001,1002")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetSubscriptionPlanByIdQuery(id), cancellationToken);

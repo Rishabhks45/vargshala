@@ -88,11 +88,13 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IMessageRepository, MessageRepository>();
         services.AddScoped<Vargshala.Application.Features.SubscriptionPlans.Infrastructure.ISubscriptionPlanRepository, SubscriptionPlanRepository>();
         services.AddScoped<Vargshala.Application.Features.OrganizationSubscriptions.Infrastructure.IOrganizationSubscriptionRepository, OrganizationSubscriptionRepository>();
+        services.AddScoped<Vargshala.Application.Features.Payments.Infrastructure.IPaymentLogRepository, PaymentLogRepository>();
         services.AddScoped<Vargshala.Application.Features.Messages.Security.IConversationAuthorizationService, Vargshala.Infrastructure.Services.Messages.ConversationAuthorizationService>();
 
-        // QuestPDF PDF Receipt Generator
+        // QuestPDF PDF Receipt Generators
         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         services.AddScoped<Vargshala.Application.Abstractions.Pdf.IFeeReceiptPdfGenerator, Vargshala.Infrastructure.Services.Receipts.QuestPdfFeeReceiptGenerator>();
+        services.AddScoped<Vargshala.Application.Abstractions.Pdf.ISubscriptionReceiptPdfGenerator, Vargshala.Infrastructure.Services.Receipts.QuestPdfSubscriptionReceiptGenerator>();
 
         // HttpContextAccessor (needed by CurrentUser)
         services.AddHttpContextAccessor();

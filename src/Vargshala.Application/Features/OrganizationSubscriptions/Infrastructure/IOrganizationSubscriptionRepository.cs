@@ -11,6 +11,7 @@ public interface IOrganizationSubscriptionRepository
     Task<SubscriptionPlan?> GetPlanByIdAsync(Guid planId, CancellationToken cancellationToken = default);
     Task<Coupon?> GetCouponByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task IncrementCouponUsedCountAsync(Guid couponId, CancellationToken cancellationToken = default);
+    Task<SubscriptionPaymentReceiptDto?> GetSubscriptionPaymentReceiptAsync(Guid paymentId, CancellationToken cancellationToken = default);
     Task<OrganizationSubscription> CreateOrRenewSubscriptionAsync(
         Guid organizationId,
         Guid planId,

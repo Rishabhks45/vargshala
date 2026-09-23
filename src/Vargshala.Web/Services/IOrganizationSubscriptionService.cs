@@ -9,4 +9,6 @@ public interface IOrganizationSubscriptionService
     Task<ApiResponse<List<SubscriptionBillingHistoryDto>>> GetSubscriptionHistoryAsync(CancellationToken cancellationToken = default);
     Task<ApiResponse<SubscriptionCheckoutResponse>> CheckoutAsync(SubscriptionCheckoutRequest request, CancellationToken cancellationToken = default);
     Task<ApiResponse<OrganizationSubscriptionDto>> ConfirmPaymentAsync(ConfirmSubscriptionPaymentRequest request, CancellationToken cancellationToken = default);
+    Task<byte[]?> GetSubscriptionReceiptPdfAsync(Guid paymentId, CancellationToken cancellationToken = default);
+    Task<ApiResponse<SubscriptionPaymentReceiptDto>> GetSubscriptionReceiptAsync(Guid paymentId, CancellationToken cancellationToken = default);
 }

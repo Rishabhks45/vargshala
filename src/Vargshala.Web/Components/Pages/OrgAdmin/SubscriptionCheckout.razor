@@ -1,0 +1,926 @@
+@page "/subscription/checkout/{PlanId:guid}"
+@page "/subscription/checkout"
+@page "/checkout/{PlanId:guid}"
+@page "/checkout"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "OrganizationAdmin,SuperAdmin,1001,1002")]
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IOrganizationSubscriptionService SubscriptionService
+@inject ISubscriptionPlanService PlanService
+@inject INotificationService Toast
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>Subscription Checkout | Vargshala</PageTitle>
+
+<div class="flex-1 min-h-0 h-full overflow-y-auto pr-1 pb-16 space-y-6 select-text transition-colors duration-200" style="@("scrollbar-width: thin;")">
+
+    <!-- Top Navigation & Breadcrumbs -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+            <button type="button" 
+                    @onclick='() => Navigation.NavigateTo("/subscription")'
+                    class="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    title="Back to Subscription Plans">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </button>
+            <div>
+                <nav class="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-0.5">
+                    <a href="/subscription" class="hover:text-[#009488] transition-colors">Subscription</a>
+                    <span>/</span>
+                    <span class="text-slate-700 dark:text-slate-200 font-bold">Checkout</span>
+                </nav>
+                <h1 class="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+                    Complete Subscription Checkout
+                </h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button type="button" 
+                    @onclick='() => Navigation.NavigateTo("/subscription")'
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#1f3037] transition-all shadow-2xs cursor-pointer">
+                Change Plan
+            </button>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-pulse">
+            <div class="lg:col-span-7 space-y-4">
+                <div class="card-surface p-6 h-64 rounded-3xl bg-slate-100 dark:bg-slate-800/40"></div>
+                <div class="card-surface p-6 h-40 rounded-3xl bg-slate-100 dark:bg-slate-800/40"></div>
+            </div>
+            <div class="lg:col-span-5">
+                <div class="card-surface p-6 h-96 rounded-3xl bg-slate-100 dark:bg-slate-800/40"></div>
+            </div>
+        </div>
+    }
+    else if (_isSuccessConfirmation)
+    {
+        <!-- ========================================================================= -->
+        <!-- SUCCESS STATE: Plan Activated & Receipt Available -->
+        <!-- ========================================================================= -->
+        <div class="max-w-2xl mx-auto py-8">
+            <div class="card-surface p-8 sm:p-10 rounded-3xl border border-tealborder shadow-xl text-center space-y-6 relative overflow-hidden">
+                <!-- Ambient Glow -->
+                <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#009488]/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#004D40] to-[#009488] text-white flex items-center justify-center mx-auto shadow-lg shadow-[#004D40]/30 text-3xl font-black">
+                    ✓
+                </div>
+
+                <div class="space-y-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                        🎉 Payment &amp; Activation Complete
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight">
+                        Your Subscription is Now Active!
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                        Your coaching institute capacity quotas have been upgraded instantly. An official tax invoice has been generated for your records.
+                    </p>
+                </div>
+
+                <!-- Transaction Details Card -->
+                <div class="p-5 rounded-2xl bg-slate-50 dark:bg-[#142025] border border-slate-200/80 dark:border-slate-800 text-left text-xs space-y-3 font-medium">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-200/70 dark:border-slate-800/80">
+                        <span class="text-slate-400">Activated Plan:</span>
+                        <span class="font-extrabold text-[#009488] text-sm">@_selectedPlan?.Name</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_confirmedOrderId))
+                    {
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-200/70 dark:border-slate-800/80">
+                            <span class="text-slate-400">Order ID:</span>
+                            <span class="font-mono text-slate-700 dark:text-slate-200 font-bold">@_confirmedOrderId</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_confirmedPaymentId))
+                    {
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-200/70 dark:border-slate-800/80">
+                            <span class="text-slate-400">Payment Reference:</span>
+                            <span class="font-mono text-slate-700 dark:text-slate-200 font-bold">@_confirmedPaymentId</span>
+                        </div>
+                    }
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Amount Paid:</span>
+                        <span class="font-black text-base text-emerald-600">
+                            @(_finalAmount <= 0 ? "Free Trial" : $"₹{_finalAmount:N2}")
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                    @if (_latestPaymentId.HasValue)
+                    {
+                        <button type="button" 
+                                @onclick="DownloadConfirmedReceiptAsync"
+                                disabled="@_isDownloadingReceipt"
+                                class="w-full sm:w-auto px-5 py-3 rounded-xl bg-white dark:bg-[#18262c] border border-teal-500/40 text-[#009488] dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                            @if (_isDownloadingReceipt)
+                            {
+                                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span>Generating Invoice...</span>
+                            }
+                            else
+                            {
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span>Download Tax Invoice (PDF)</span>
+                            }
+                        </button>
+                    }
+
+                    <button type="button" 
+                            @onclick='() => Navigation.NavigateTo("/subscription")'
+                            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#009488] to-[#00796b] text-white text-xs font-bold shadow-md hover:from-[#00a89a] hover:to-[#00897b] transition-all cursor-pointer">
+                        Return to Subscription &amp; Billing →
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else if (_selectedPlan == null)
+    {
+        <!-- Plan not found fallback -->
+        <div class="card-surface p-12 text-center space-y-4 rounded-3xl border border-tealborder max-w-lg mx-auto">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto text-xl">⚠️</div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Plan Not Found</h3>
+            <p class="text-xs text-slate-500">The requested subscription plan could not be located or may no longer be available.</p>
+            <button type="button" 
+                    @onclick='() => Navigation.NavigateTo("/subscription")'
+                    class="px-5 py-2.5 rounded-xl bg-[#009488] text-white text-xs font-bold hover:bg-[#00796b] transition-colors cursor-pointer">
+                View Available Plans
+            </button>
+        </div>
+    }
+    else
+    {
+        <!-- ========================================================================= -->
+        <!-- MAIN CHECKOUT 2-COLUMN GRID (Left: Details, Right: Summary & CTA) -->
+        <!-- ========================================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN: Plan Details, Quotas & Promo Coupon (7 Cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Plan Downgrade Warning Notice -->
+                @if (IsPriceDowngrade && _currentQuota?.CurrentSubscription != null)
+                {
+                    <div class="p-6 rounded-3xl border border-amber-300 dark:border-amber-700/80 bg-gradient-to-br from-amber-50 via-amber-50/40 to-orange-50/30 dark:from-amber-950/40 dark:via-[#1f1a14] dark:to-[#171410] shadow-sm space-y-4">
+                        <div class="flex items-start gap-3.5">
+                            <span class="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0 font-black">
+                                ⚠️
+                            </span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                        Plan Downgrade Notice
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                        Your current active subscription offers higher tier benefits
+                                    </span>
+                                </div>
+                                <h3 class="text-base font-black text-slate-900 dark:text-white">
+                                    You are downgrading to a lower-tier subscription plan
+                                </h3>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                                    Your institute is currently on the <strong class="text-slate-900 dark:text-white">@_currentQuota.CurrentSubscription.PlanName (₹@_currentQuota.CurrentSubscription.PlanPrice.ToString("N0"))</strong> plan, which offers higher quotas and features than the selected <strong class="text-slate-900 dark:text-white">@_selectedPlan.Name (₹@_selectedPlan.Price.ToString("N0"))</strong> plan.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Details -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs border-t border-amber-200/60 dark:border-amber-900/40 font-medium">
+                            <div class="p-3.5 rounded-2xl bg-white/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1">
+                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">Current Plan Validity:</span>
+                                <p class="text-slate-800 dark:text-slate-200 leading-relaxed">
+                                    Your current plan has <strong class="text-amber-700 dark:text-amber-300 font-bold">@_currentQuota.CurrentSubscription.RemainingDays days remaining</strong>. Activating this lower plan will immediately replace your current subscription and forfeit unutilized days without refund.
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-white/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 space-y-1">
+                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">Capacity Quota Changes:</span>
+                                <p class="text-slate-800 dark:text-slate-200 leading-relaxed">
+                                    Students: <strong>@_currentQuota.CurrentSubscription.MaxStudentsDisplay</strong> ➔ <strong>@_selectedPlan.MaxStudentsDisplay</strong><br />
+                                    Faculty: <strong>@_currentQuota.CurrentSubscription.MaxTeachersDisplay</strong> ➔ <strong>@_selectedPlan.MaxTeachersDisplay</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        @if (IsCurrentStudentsExceedingNewPlan)
+                        {
+                            <div class="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 font-bold flex items-center gap-2">
+                                <span>🚨</span>
+                                <span>Warning: Your institute currently has @_currentQuota.CurrentStudentsCount active students enrolled, which exceeds the selected plan's limit of @_selectedPlan.MaxStudentsDisplay!</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- 1. Selected Plan Features Card -->
+                <div class="card-surface p-6 rounded-3xl border border-tealborder shadow-xs space-y-5">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-[#009488] border border-teal-200 dark:border-teal-800/60 mb-1.5 uppercase tracking-wide">
+                                Selected Coaching Tier
+                            </span>
+                            <h2 class="text-2xl font-black text-slate-800 dark:text-white tracking-tight">
+                                @_selectedPlan.Name
+                            </h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                @(string.IsNullOrWhiteSpace(_selectedPlan.Description) ? "Comprehensive institute management suite with multi-branch allocation and exam grading." : _selectedPlan.Description)
+                            </p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-2xl font-black text-slate-900 dark:text-white">
+                                @(_selectedPlan.Price == 0 ? "Free Trial" : $"₹{_selectedPlan.Price:N0}")
+                            </div>
+                            <span class="text-[11px] font-semibold text-slate-400 block">
+                                / @_selectedPlan.BillingCycleName
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Quota & Capacity Grid -->
+                    <div class="grid grid-cols-3 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#142025] border border-slate-200/80 dark:border-slate-800/80">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Student Limit</span>
+                            <span class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 block">
+                                @_selectedPlan.MaxStudentsDisplay
+                            </span>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#142025] border border-slate-200/80 dark:border-slate-800/80">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Faculty Limit</span>
+                            <span class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 block">
+                                @_selectedPlan.MaxTeachersDisplay
+                            </span>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#142025] border border-slate-200/80 dark:border-slate-800/80">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Branch Limit</span>
+                            <span class="text-sm font-extrabold text-slate-800 dark:text-white mt-0.5 block">
+                                @_selectedPlan.MaxBranchesDisplay
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Feature Checks -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-xs text-slate-600 dark:text-slate-300">
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+                            <span>Student Admissions &amp; Enrollment</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+                            <span>Batch Scheduling &amp; Class Timetable</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+                            <span>Fee Collection &amp; Instant Receipts</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+                            <span>Automated Attendance &amp; Parent SMS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Coaching Institute & Billing Info Snapshot -->
+                <div class="card-surface p-6 rounded-3xl border border-tealborder shadow-xs space-y-3.5">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">
+                        Coaching Institute Information
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-slate-400 text-[11px] block">Institute Name:</span>
+                            <span class="font-bold text-slate-800 dark:text-white text-sm">
+                                @(_currentQuota?.CurrentSubscription?.OrganizationName ?? "Your Coaching Institute")
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px] block">Billing Cycle:</span>
+                            <span class="font-bold text-slate-800 dark:text-white text-sm">
+                                @_selectedPlan.BillingCycleName
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Promo / Discount Coupon Section -->
+                <div class="card-surface p-6 rounded-3xl border border-tealborder shadow-xs space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🏷️ Have a Discount Coupon?</span>
+                        </label>
+                        @if (_isCouponValid && !string.IsNullOrWhiteSpace(_appliedCouponCode))
+                        {
+                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+                                Coupon Applied
+                            </span>
+                        }
+                    </div>
+
+                    <div class="flex items-center gap-2.5">
+                        <div class="relative flex-1">
+                            <input type="text" 
+                                   @bind="_couponInput" 
+                                   @bind:event="oninput"
+                                   disabled="@_isProcessingPayment"
+                                   placeholder="e.g. DIWALI20" 
+                                   class="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-[#18262c] border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-[#142025] focus:border-[#009488] focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-800 dark:text-white font-mono uppercase font-bold tracking-wider placeholder-slate-400" />
+                            @if (!string.IsNullOrWhiteSpace(_couponInput))
+                            {
+                                <button type="button" 
+                                        @onclick="() => _couponInput = string.Empty" 
+                                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            }
+                        </div>
+
+                        <button type="button" 
+                                @onclick="ApplyCouponAsync" 
+                                disabled="@(string.IsNullOrWhiteSpace(_couponInput) || _isApplyingCoupon || _isProcessingPayment)"
+                                class="px-5 py-2.5 rounded-xl bg-[#004D40] hover:bg-[#00382e] text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 shrink-0 flex items-center gap-2">
+                            @if (_isApplyingCoupon)
+                            {
+                                <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Verifying...</span>
+                            }
+                            else
+                            {
+                                <span>Apply</span>
+                            }
+                        </button>
+
+                        @if (_isCouponValid)
+                        {
+                            <button type="button" 
+                                    @onclick="RemoveCoupon" 
+                                    class="px-3.5 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold transition-colors cursor-pointer shrink-0">
+                                Remove
+                            </button>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_couponMessage))
+                    {
+                        <div class="p-3 rounded-xl text-xs font-medium @(_isCouponValid ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80" : "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/80") flex items-center gap-2">
+                            <span>@(_isCouponValid ? "✓" : "⚠")</span>
+                            <span>@_couponMessage</span>
+                        </div>
+                    }
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Sticky Order Summary & Razorpay CTA (5 Cols) -->
+            <div class="lg:col-span-5 sticky top-6 space-y-4">
+
+                <div class="card-surface p-6 rounded-3xl border border-tealborder shadow-xl space-y-5 bg-white dark:bg-[#111c21]">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <h3 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
+                            Order Summary
+                        </h3>
+                        <span class="text-[11px] font-mono font-bold text-[#009488]">
+                            @_selectedPlan.BillingCycleName
+                        </span>
+                    </div>
+
+                    <!-- Transparent Pricing Breakdown -->
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                            <span>Base Plan Price:</span>
+                            <span class="font-bold text-slate-800 dark:text-white font-mono">
+                                ₹@_selectedPlan.Price.ToString("N2")
+                            </span>
+                        </div>
+
+                        @if (_isCouponValid && _discountAmount > 0)
+                        {
+                            <div class="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                                <span class="flex items-center gap-1">
+                                    <span>Coupon Discount (@_appliedCouponCode):</span>
+                                </span>
+                                <span class="font-bold font-mono">
+                                    -₹@_discountAmount.ToString("N2")
+                                </span>
+                            </div>
+                        }
+
+                        <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 pt-1">
+                            <span>Estimated Taxes (GST):</span>
+                            <span class="font-medium text-slate-600 dark:text-slate-300">
+                                Inclusive
+                            </span>
+                        </div>
+
+                        <!-- Total Payable Highlight -->
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline">
+                            <div>
+                                <span class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider block">
+                                    Total Payable
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-medium">
+                                    Immediate activation
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl sm:text-3xl font-black text-[#004D40] dark:text-teal-300 font-mono tracking-tight">
+                                    @(_finalAmount <= 0 ? "₹0.00" : $"₹{_finalAmount:N2}")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Alert -->
+                    @if (!string.IsNullOrWhiteSpace(_checkoutErrorMessage))
+                    {
+                        <div class="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2.5">
+                            <span class="text-sm shrink-0">⚠️</span>
+                            <p class="leading-relaxed">@_checkoutErrorMessage</p>
+                        </div>
+                    }
+
+                    @if (IsPriceDowngrade && _currentQuota?.CurrentSubscription != null)
+                    {
+                        <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-2">
+                            <span>⚠️</span>
+                            <span>Downgrade from @_currentQuota.CurrentSubscription.PlanName (₹@_currentQuota.CurrentSubscription.PlanPrice.ToString("N0"))</span>
+                        </div>
+                    }
+
+                    <!-- Payment Action Button -->
+                    <button type="button" 
+                            @onclick="HandleCheckoutClickAsync"
+                            disabled="@_isProcessingPayment"
+                            class="w-full py-4 rounded-2xl font-black text-sm text-white shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 @(IsPriceDowngrade ? "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-amber-900/20" : "bg-gradient-to-r from-[#009488] to-[#00796b] hover:from-[#00a89a] hover:to-[#00897b] hover:shadow-teal-900/20") transform hover:-translate-y-0.5 active:translate-y-0">
+                        @if (_isProcessingPayment)
+                        {
+                            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Connecting Payment Gateway...</span>
+                        }
+                        else if (IsPriceDowngrade)
+                        {
+                            <span>Confirm Downgrade &amp; @(_finalAmount <= 0 ? "Activate" : $"Pay ₹{_finalAmount:N2}") →</span>
+                        }
+                        else if (_finalAmount <= 0)
+                        {
+                            <span>Activate Subscription Free →</span>
+                        }
+                        else
+                        {
+                            <span>Pay ₹@_finalAmount.ToString("N2") via Razorpay →</span>
+                        }
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+<!-- Plan Downgrade Confirmation Modal -->
+@if (_showDowngradeConfirmModal && _currentQuota?.CurrentSubscription != null && _selectedPlan != null)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+        <div class="bg-white dark:bg-[#111c21] rounded-3xl max-w-lg w-full shadow-2xl border border-amber-300 dark:border-amber-700/80 p-6 sm:p-7 space-y-5 text-left relative overflow-hidden my-auto">
+            
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl font-bold shrink-0">
+                    ⚠️
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-slate-900 dark:text-white">
+                        Confirm Subscription Downgrade
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Your current subscription provides superior quotas and tier benefits
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 text-xs text-slate-700 dark:text-slate-300 space-y-2.5">
+                <p>
+                    Your organization is currently on the <strong class="text-slate-900 dark:text-white">@_currentQuota.CurrentSubscription.PlanName</strong> (₹@_currentQuota.CurrentSubscription.PlanPrice.ToString("N0")) plan.
+                </p>
+                <p>
+                    Downgrading to <strong class="text-slate-900 dark:text-white">@_selectedPlan.Name</strong> (₹@_selectedPlan.Price.ToString("N0")) will reduce your capacity limits. Your remaining <strong class="text-amber-700 dark:text-amber-300 font-bold">@_currentQuota.CurrentSubscription.RemainingDays active days</strong> will be forfeited and replaced immediately.
+                </p>
+                @if (IsCurrentStudentsExceedingNewPlan)
+                {
+                    <p class="text-rose-600 dark:text-rose-400 font-bold">
+                        🚨 Warning: Enrolled students (@_currentQuota.CurrentStudentsCount) exceed this plan's limit of @_selectedPlan.MaxStudentsDisplay!
+                    </p>
+                }
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="button" 
+                        @onclick="CancelDowngradeModal"
+                        class="flex-1 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer text-center">
+                    Keep Current Plan
+                </button>
+                <button type="button" 
+                        @onclick="ConfirmDowngradeAndProceedAsync"
+                        class="flex-1 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 cursor-pointer text-center">
+                    Confirm &amp; Proceed with Downgrade
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _showDowngradeConfirmModal = false;
+    private bool _isDowngradeConfirmedByUser = false;
+
+    private bool IsPriceDowngrade =>
+        _currentQuota?.CurrentSubscription != null &&
+        _currentQuota.CurrentSubscription.IsActive &&
+        _selectedPlan != null &&
+        _currentQuota.CurrentSubscription.PlanId != _selectedPlan.Id &&
+        _currentQuota.CurrentSubscription.PlanPrice > _selectedPlan.Price;
+
+    private bool IsCurrentStudentsExceedingNewPlan =>
+        IsPriceDowngrade &&
+        _selectedPlan?.MaxStudents.HasValue == true &&
+        (_currentQuota?.CurrentStudentsCount ?? 0) > _selectedPlan.MaxStudents.Value;
+
+    private async Task HandleCheckoutClickAsync()
+    {
+        if (IsPriceDowngrade && !_isDowngradeConfirmedByUser)
+        {
+            _showDowngradeConfirmModal = true;
+            return;
+        }
+
+        await InitiateCheckoutAsync();
+    }
+
+    private void CancelDowngradeModal()
+    {
+        _showDowngradeConfirmModal = false;
+        Navigation.NavigateTo("/subscription");
+    }
+
+    private async Task ConfirmDowngradeAndProceedAsync()
+    {
+        _showDowngradeConfirmModal = false;
+        _isDowngradeConfirmedByUser = true;
+        await InitiateCheckoutAsync();
+    }
+
+    [Parameter] public Guid? PlanId { get; set; }
+    [SupplyParameterFromQuery(Name = "planId")] public Guid? PlanIdQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "coupon")] public string? CouponQuery { get; set; }
+
+    private SubscriptionPlanDto? _selectedPlan;
+    private QuotaUsageDto? _currentQuota;
+    private SubscriptionCheckoutResponse? _cachedCheckoutData;
+
+    private bool _isLoading = true;
+    private bool _isApplyingCoupon = false;
+    private bool _isProcessingPayment = false;
+    private bool _isSuccessConfirmation = false;
+    private bool _isDownloadingReceipt = false;
+
+    private string _couponInput = string.Empty;
+    private string? _appliedCouponCode;
+    private decimal _discountAmount = 0m;
+    private bool _isCouponValid = false;
+    private string? _couponMessage;
+    private string? _checkoutErrorMessage;
+
+    private string? _confirmedOrderId;
+    private string? _confirmedPaymentId;
+    private Guid? _latestPaymentId;
+
+    private DotNetObjectReference<SubscriptionCheckout>? _dotNetRef;
+
+    private decimal _finalAmount => _selectedPlan == null 
+        ? 0m 
+        : Math.Max(0m, _selectedPlan.Price - _discountAmount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dotNetRef = DotNetObjectReference.Create(this);
+
+        var targetPlanId = PlanId ?? PlanIdQuery;
+        if (!targetPlanId.HasValue || targetPlanId == Guid.Empty)
+        {
+            Navigation.NavigateTo("/subscription");
+            return;
+        }
+
+        await LoadCheckoutDataAsync(targetPlanId.Value);
+
+        if (!string.IsNullOrWhiteSpace(CouponQuery))
+        {
+            _couponInput = CouponQuery.Trim();
+            await ApplyCouponAsync();
+        }
+    }
+
+    private async Task LoadCheckoutDataAsync(Guid planId)
+    {
+        _isLoading = true;
+        try
+        {
+            var planTask = PlanService.GetPlanByIdAsync(planId);
+            var quotaTask = SubscriptionService.GetCurrentSubscriptionAsync();
+
+            await Task.WhenAll(planTask, quotaTask);
+
+            var planRes = await planTask;
+            if (planRes.Success && planRes.Data != null)
+            {
+                _selectedPlan = planRes.Data;
+            }
+            else
+            {
+                Toast.Error("Unable to load the requested plan.");
+            }
+
+            var quotaRes = await quotaTask;
+            if (quotaRes.Success && quotaRes.Data != null)
+            {
+                _currentQuota = quotaRes.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Error loading checkout: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ApplyCouponAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_couponInput))
+        {
+            Toast.Warning("Please enter a coupon code.");
+            return;
+        }
+
+        if (_selectedPlan == null) return;
+
+        _isApplyingCoupon = true;
+        _couponMessage = null;
+
+        try
+        {
+            var code = _couponInput.Trim().ToUpperInvariant();
+            var res = await SubscriptionService.CheckoutAsync(new SubscriptionCheckoutRequest
+            {
+                PlanId = _selectedPlan.Id,
+                CouponCode = code
+            });
+
+            if (res.Success && res.Data != null)
+            {
+                _cachedCheckoutData = res.Data;
+                _discountAmount = res.Data.DiscountAmount;
+                _appliedCouponCode = code;
+                _isCouponValid = true;
+                _couponMessage = res.Data.DiscountAmount > 0 
+                    ? $"✓ Coupon '{code}' applied: ₹{res.Data.DiscountAmount:N2} discount!" 
+                    : (!string.IsNullOrWhiteSpace(res.Data.CouponDescription) ? $"✓ Coupon applied: {res.Data.CouponDescription}" : "✓ Coupon applied successfully!");
+                Toast.Success(_couponMessage);
+            }
+            else
+            {
+                _discountAmount = 0m;
+                _appliedCouponCode = null;
+                _isCouponValid = false;
+                _cachedCheckoutData = null;
+                _couponMessage = !string.IsNullOrWhiteSpace(res.Message) ? res.Message : "Invalid coupon code.";
+                Toast.Error(_couponMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _discountAmount = 0m;
+            _appliedCouponCode = null;
+            _isCouponValid = false;
+            _cachedCheckoutData = null;
+            _couponMessage = $"Error validating coupon: {ex.Message}";
+            Toast.Error(_couponMessage);
+        }
+        finally
+        {
+            _isApplyingCoupon = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveCoupon()
+    {
+        _couponInput = string.Empty;
+        _appliedCouponCode = null;
+        _cachedCheckoutData = null;
+        _discountAmount = 0m;
+        _isCouponValid = false;
+        _couponMessage = null;
+    }
+
+    private async Task InitiateCheckoutAsync()
+    {
+        if (_selectedPlan == null) return;
+        _isProcessingPayment = true;
+        _checkoutErrorMessage = null;
+
+        try
+        {
+            SubscriptionCheckoutResponse checkoutData;
+
+            if (_cachedCheckoutData != null && 
+                string.Equals(_cachedCheckoutData.CouponCode, _appliedCouponCode, StringComparison.OrdinalIgnoreCase))
+            {
+                checkoutData = _cachedCheckoutData;
+            }
+            else
+            {
+                var checkoutReq = new SubscriptionCheckoutRequest
+                {
+                    PlanId = _selectedPlan.Id,
+                    CouponCode = string.IsNullOrWhiteSpace(_appliedCouponCode) ? null : _appliedCouponCode.Trim()
+                };
+
+                var response = await SubscriptionService.CheckoutAsync(checkoutReq);
+                if (!response.Success || response.Data == null)
+                {
+                    _checkoutErrorMessage = response.Message ?? "Failed to initialize subscription checkout";
+                    Toast.Error(_checkoutErrorMessage);
+                    _isProcessingPayment = false;
+                    return;
+                }
+
+                checkoutData = response.Data;
+            }
+
+            // Free plan or 100% coupon discount -> directly activate without Razorpay modal
+            if (checkoutData.IsFreePlan || checkoutData.FinalAmount <= 0)
+            {
+                await HandlePaymentConfirmationAsync(null, null, null);
+                return;
+            }
+
+            // Paid plan -> Open official Razorpay Checkout SDK Modal
+            var options = new
+            {
+                keyId = checkoutData.RazorpayKeyId,
+                amount = checkoutData.FinalAmount,
+                currency = checkoutData.Currency,
+                orderId = checkoutData.RazorpayOrderId,
+                companyName = checkoutData.CompanyName ?? "Vargshala SaaS",
+                description = $"Subscription - {checkoutData.PlanName}",
+                themeColor = checkoutData.ThemeColor ?? "#004D40",
+                prefillName = _currentQuota?.CurrentSubscription?.OrganizationName ?? "Institute Admin",
+                prefillEmail = "",
+                prefillContact = ""
+            };
+
+            await JS.InvokeVoidAsync("RazorpayInterop.openCheckout", options, _dotNetRef);
+        }
+        catch (Exception ex)
+        {
+            _checkoutErrorMessage = ex.Message;
+            Toast.Error($"Checkout initialization error: {ex.Message}");
+            _isProcessingPayment = false;
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnRazorpaySuccess(string razorpayOrderId, string razorpayPaymentId, string razorpaySignature)
+    {
+        await HandlePaymentConfirmationAsync(razorpayOrderId, razorpayPaymentId, razorpaySignature);
+    }
+
+    [JSInvokable]
+    public void OnRazorpayDismissed()
+    {
+        _isProcessingPayment = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnRazorpayFailed(string reason)
+    {
+        _isProcessingPayment = false;
+        _checkoutErrorMessage = $"Payment unsuccessful: {reason}";
+        Toast.Error(_checkoutErrorMessage);
+        StateHasChanged();
+    }
+
+    private async Task HandlePaymentConfirmationAsync(string? orderId, string? paymentId, string? signature)
+    {
+        if (_selectedPlan == null) return;
+        _isProcessingPayment = true;
+
+        try
+        {
+            var confirmReq = new ConfirmSubscriptionPaymentRequest
+            {
+                PlanId = _selectedPlan.Id,
+                CouponCode = string.IsNullOrWhiteSpace(_appliedCouponCode) ? null : _appliedCouponCode.Trim(),
+                RazorpayOrderId = orderId ?? string.Empty,
+                RazorpayPaymentId = paymentId ?? string.Empty,
+                RazorpaySignature = signature ?? string.Empty
+            };
+
+            var confirmRes = await SubscriptionService.ConfirmPaymentAsync(confirmReq);
+            if (confirmRes.Success)
+            {
+                _confirmedOrderId = orderId;
+                _confirmedPaymentId = paymentId;
+                _isSuccessConfirmation = true;
+                Toast.Success("🎉 Plan activated successfully!");
+
+                // Fetch latest payment history to enable immediate PDF receipt download
+                try
+                {
+                    var historyRes = await SubscriptionService.GetSubscriptionHistoryAsync();
+                    if (historyRes.Success && historyRes.Data?.Any() == true)
+                    {
+                        var latest = historyRes.Data.OrderByDescending(h => h.PaymentDate).FirstOrDefault();
+                        if (latest != null)
+                        {
+                            _latestPaymentId = latest.PaymentId;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Non-critical, ignore
+                }
+            }
+            else
+            {
+                _checkoutErrorMessage = confirmRes.Message ?? "Payment confirmation failed.";
+                Toast.Error(_checkoutErrorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _checkoutErrorMessage = ex.Message;
+            Toast.Error($"Confirmation error: {ex.Message}");
+        }
+        finally
+        {
+            _isProcessingPayment = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadConfirmedReceiptAsync()
+    {
+        if (!_latestPaymentId.HasValue || _isDownloadingReceipt) return;
+        _isDownloadingReceipt = true;
+
+        try
+        {
+            var pdfBytes = await SubscriptionService.GetSubscriptionReceiptPdfAsync(_latestPaymentId.Value);
+            if (pdfBytes != null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var fileName = $"Vargshala_Tax_Invoice_{_selectedPlan?.Name.Replace(" ", "_")}.pdf";
+                await JS.InvokeVoidAsync("downloadFileFromBase64", fileName, "application/pdf", base64);
+                Toast.Success("Tax Invoice downloaded successfully.");
+            }
+            else
+            {
+                Toast.Error("Unable to generate receipt PDF.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"Download failed: {ex.Message}");
+        }
+        finally
+        {
+            _isDownloadingReceipt = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
+}

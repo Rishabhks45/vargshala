@@ -89,4 +89,36 @@ public class OrganizationSubscriptionsController : ControllerBase
         }
         return Ok(result);
     }
+
+    /// <summary>
+    /// Gets the structured official receipt data for a subscription payment.
+    /// </summary>
+    [HttpGet("payments/{paymentId:guid}/receipt")]
+    [Authorize(Roles = "OrganizationAdmin,SuperAdmin,1001,1002")]
+    public async Task<IActionResult> GetReceipt(Guid paymentId, CancellationToken cancellationToken)
+    {
+        var query = new Vargshala.Application.Features.OrganizationSubscriptions.Queries.GetSubscriptionPaymentReceipt.GetSubscriptionPaymentReceiptQuery(paymentId);
+        var result = await _mediator.Send(query, cancellationToken);
+        if (!result.Success)
+        {
+            return NotFound(result);
+        }
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Downloads the official QuestPDF generated PDF tax invoice / receipt for a subscription payment.
+    /// </summary>
+    [HttpGet("payments/{paymentId:guid}/receipt/pdf")]
+    [Authorize(Roles = "OrganizationAdmin,SuperAdmin,1001,1002")]
+    public async Task<IActionResult> GetReceiptPdf(Guid paymentId, CancellationToken cancellationToken)
+    {
+        var query = new Vargshala.Application.Features.OrganizationSubscriptions.Queries.GetSubscriptionPaymentReceiptPdf.GetSubscriptionPaymentReceiptPdfQuery(paymentId);
+        var result = await _mediator.Send(query, cancellationToken);
+        if (!result.Success || result.Data == null)
+        {
+            return NotFound(result);
+        }
+        return File(result.Data.FileBytes, result.Data.ContentType, result.Data.FileName);
+    }
 }
