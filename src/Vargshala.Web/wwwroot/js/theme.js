@@ -20,6 +20,25 @@
             cardBorderDark: '#1e2f37',
             cardBorderLight: '#e2f1ef'
         },
+        'white-palette': {
+            id: 'white-palette',
+            name: 'White Palette',
+            category: 'Clean Light',
+            header: '#FFFFFF',
+            headerDark: '#0F172A',
+            primary: '#0F172A',
+            primaryHover: '#1E293B',
+            primaryLight: '#334155',
+            gradientStart: '#0F172A',
+            gradientEnd: '#334155',
+            lightBg: '#F8FAFC',
+            accent: '#475569',
+            canvasBg: '#F8FAFC',
+            canvasDark: '#0B0F17',
+            cardDark: '#111827',
+            cardBorderDark: '#1F2937',
+            cardBorderLight: '#E2E8F0'
+        },
         'purple': {
             id: 'purple',
             name: 'Purple',
@@ -617,7 +636,8 @@
         var root = document.documentElement;
         var isDark = root.classList.contains('dark');
 
-        root.style.setProperty('--theme-header', t.header);
+        var currentHeader = isDark ? (t.headerDark || '#111c21') : t.header;
+        root.style.setProperty('--theme-header', currentHeader);
         root.style.setProperty('--theme-header-dark', t.headerDark);
         root.style.setProperty('--theme-primary', t.primary);
         root.style.setProperty('--theme-primary-hover', t.primaryHover);

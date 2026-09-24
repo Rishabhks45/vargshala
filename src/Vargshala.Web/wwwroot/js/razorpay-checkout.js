@@ -10,6 +10,28 @@ window.RazorpayInterop = {
         }
 
         try {
+            // Dynamically resolve theme color according to active Vargshala theme
+            var dynamicColor = '';
+            try {
+                if (window.getAppTheme && window.vargshalaThemes) {
+                    var currentThemeId = window.getAppTheme();
+                    var currentTheme = window.vargshalaThemes[currentThemeId];
+                    if (currentTheme && currentTheme.primary) {
+                        dynamicColor = currentTheme.primary;
+                    }
+                }
+                if (!dynamicColor && typeof getComputedStyle !== 'undefined') {
+                    var cssPrimary = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary').trim();
+                    if (cssPrimary) {
+                        dynamicColor = cssPrimary;
+                    }
+                }
+            } catch (themeErr) {
+                console.warn('Could not detect active theme color for Razorpay:', themeErr);
+            }
+
+            var resolvedThemeColor = dynamicColor || options.themeColor || '#004D40';
+
             var rzpOptions = {
                 key: options.keyId,
                 amount: Math.round(options.amount * 100), // convert to paise
@@ -18,7 +40,7 @@ window.RazorpayInterop = {
                 description: options.description || 'SaaS Subscription Plan',
                 order_id: options.orderId,
                 theme: {
-                    color: options.themeColor || '#004D40'
+                    color: resolvedThemeColor
                 },
                 prefill: {
                     name: options.prefillName || '',

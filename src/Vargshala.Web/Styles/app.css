@@ -38,7 +38,8 @@
     --radius: 10px;
   }
 
-  html, body {
+  html,
+  body {
     height: 100%;
     width: 100%;
     margin: 0;
@@ -919,10 +920,12 @@ input[type="radio"]:checked {
     opacity: 0;
     transform: translate3d(36px, -6px, 0) scale(0.94);
   }
+
   70% {
     opacity: 1;
     transform: translate3d(-3px, 0, 0) scale(1.01);
   }
+
   100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
@@ -937,15 +940,18 @@ input[type="radio"]:checked {
     max-height: 140px;
     margin-bottom: 0;
   }
+
   20% {
     opacity: 0.95;
     transform: translate3d(-4px, 0, 0) scale(1.01);
   }
+
   70% {
     opacity: 0.15;
     transform: translate3d(45px, 0, 0) scale(0.94);
     max-height: 140px;
   }
+
   100% {
     opacity: 0;
     transform: translate3d(90px, 0, 0) scale(0.88);
@@ -965,6 +971,7 @@ input[type="radio"]:checked {
     opacity: 0;
     transform: translate3d(0, -6px, 0) scale(0.98);
   }
+
   100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
@@ -978,10 +985,12 @@ input[type="radio"]:checked {
     transform: translate3d(0, 0, 0) scale(1);
     max-height: 160px;
   }
+
   50% {
     opacity: 0.3;
     transform: translate3d(0, -4px, 0) scale(0.98);
   }
+
   100% {
     opacity: 0;
     transform: translate3d(0, -8px, 0) scale(0.95);
@@ -1016,4 +1025,255 @@ input[type="radio"]:checked {
   animation: alert-inline-exit 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
   will-change: transform, opacity, max-height;
   pointer-events: none !important;
+}
+
+/* ==========================================================================
+   White Palette Theme Overrides (Clean Light Aesthetic - Zero Green)
+   ========================================================================== */
+
+/* 1. Header & Shell Background */
+html[data-theme="white-palette"]:not(.dark) .theme-shell-bg,
+html[data-theme="white-palette"]:not(.dark) header.theme-shell-bg,
+html[data-theme="white-palette"]:not(.dark) div.theme-shell-bg {
+  background-color: #ffffff !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header {
+  background-color: #ffffff !important;
+  border: none !important;
+}
+
+/* Header typography */
+html[data-theme="white-palette"]:not(.dark) header h1 {
+  color: #0f172a !important;
+}
+
+/* Header action buttons (sidebar toggle, dark mode, notifications) */
+html[data-theme="white-palette"]:not(.dark) header button[title*="Sidebar"],
+html[data-theme="white-palette"]:not(.dark) header button[title*="Dark / Light"],
+html[data-theme="white-palette"]:not(.dark) header button[title*="Notification"] {
+  color: #475569 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header button[title*="Sidebar"]:hover,
+html[data-theme="white-palette"]:not(.dark) header button[title*="Dark / Light"]:hover,
+html[data-theme="white-palette"]:not(.dark) header button[title*="Notification"]:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Notification badge ring */
+html[data-theme="white-palette"]:not(.dark) header .ring-\[\#004D40\] {
+  --tw-ring-color: #ffffff !important;
+}
+
+/* Header Subtitle details */
+html[data-theme="white-palette"]:not(.dark) header p span.text-white {
+  color: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header p span.text-teal-200 {
+  color: #475569 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header p span.text-teal-400\/80 {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header p span.text-amber-300 {
+  color: #d97706 !important;
+}
+
+/* Branch Selector trigger button in header */
+html[data-theme="white-palette"]:not(.dark) header button[class*="bg-white/10"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header button[class*="bg-white/10"]:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header button[class*="bg-white/10"] svg {
+  color: #64748b !important;
+}
+
+/* User Profile in header */
+html[data-theme="white-palette"]:not(.dark) header [aria-label*="User menu"] p:first-child {
+  color: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) header [aria-label*="User menu"] p:last-child {
+  color: #64748b !important;
+}
+
+/* 2. Sidebar Navigation (aside) */
+html[data-theme="white-palette"]:not(.dark) aside,
+html[data-theme="white-palette"]:not(.dark) aside.theme-shell-bg {
+  background-color: #ffffff !important;
+  border: none !important;
+}
+
+/* Sidebar Logo Brand Text */
+html[data-theme="white-palette"]:not(.dark) aside svg.vargshala-brand-svg path:first-of-type,
+html[data-theme="white-palette"]:not(.dark) aside .vargshala-brand-text path:first-of-type {
+  fill: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside svg.vargshala-brand-svg path:last-of-type,
+html[data-theme="white-palette"]:not(.dark) aside .vargshala-brand-text path:last-of-type {
+  fill: #475569 !important;
+}
+
+/* Inactive Sidebar Nav Items */
+html[data-theme="white-palette"]:not(.dark) aside nav a:not(.theme-active-nav):not(.active),
+html[data-theme="white-palette"]:not(.dark) aside nav button:not(.theme-active-nav):not(.active) {
+  color: #475569 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside nav a:not(.theme-active-nav):not(.active) svg,
+html[data-theme="white-palette"]:not(.dark) aside nav button:not(.theme-active-nav):not(.active) svg {
+  color: #64748b !important;
+  stroke: #64748b !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside nav a:not(.theme-active-nav):not(.active):hover,
+html[data-theme="white-palette"]:not(.dark) aside nav button:not(.theme-active-nav):not(.active):hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside nav a:not(.theme-active-nav):not(.active):hover svg,
+html[data-theme="white-palette"]:not(.dark) aside nav button:not(.theme-active-nav):not(.active):hover svg {
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+
+/* Active Sidebar Nav Item (Sleek Slate/Dark Pill - No Green!) */
+html[data-theme="white-palette"]:not(.dark) aside nav a.theme-active-nav,
+html[data-theme="white-palette"]:not(.dark) aside nav a.active,
+html[data-theme="white-palette"]:not(.dark) .theme-active-nav {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside nav a.theme-active-nav svg,
+html[data-theme="white-palette"]:not(.dark) aside nav a.active svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside nav a.theme-active-nav:hover,
+html[data-theme="white-palette"]:not(.dark) aside nav a.active:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* Sub-nav items in sidebar */
+html[data-theme="white-palette"]:not(.dark) aside nav a[class*="text-teal-200\/90"]:not(.active) {
+  color: #64748b !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside nav a[class*="text-teal-200\/90"]:not(.active):hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Watermark in Sidebar */
+html[data-theme="white-palette"]:not(.dark) aside .text-teal-200\/90 {
+  color: #64748b !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside .text-teal-300 {
+  color: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) aside img[src*="plant-books"] {
+  opacity: 0.12 !important;
+  filter: grayscale(100%) opacity(60%) !important;
+}
+
+/* 3. Main Content Canvas & Radii */
+html[data-theme="white-palette"]:not(.dark) main {
+  background-color: #f8fafc !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 4. Cards & Panels */
+html[data-theme="white-palette"]:not(.dark) .card-surface {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 5. Complete Green/Teal Removal Across White Theme */
+html[data-theme="white-palette"]:not(.dark) .text-teal-600,
+html[data-theme="white-palette"]:not(.dark) .text-teal-700,
+html[data-theme="white-palette"]:not(.dark) .text-teal-800,
+html[data-theme="white-palette"]:not(.dark) .text-\[\#009488\],
+html[data-theme="white-palette"]:not(.dark) .text-\[\#004D40\] {
+  color: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .text-teal-500,
+html[data-theme="white-palette"]:not(.dark) .text-emerald-500,
+html[data-theme="white-palette"]:not(.dark) .text-emerald-600 {
+  color: #334155 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .bg-teal-50,
+html[data-theme="white-palette"]:not(.dark) .bg-teal-100,
+html[data-theme="white-palette"]:not(.dark) .bg-teal-500\/10,
+html[data-theme="white-palette"]:not(.dark) .bg-emerald-50 {
+  background-color: #f1f5f9 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .border-teal-200,
+html[data-theme="white-palette"]:not(.dark) .border-teal-300,
+html[data-theme="white-palette"]:not(.dark) .border-emerald-200,
+html[data-theme="white-palette"]:not(.dark) .border-tealborder {
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .border-teal-500,
+html[data-theme="white-palette"]:not(.dark) .border-teal-600,
+html[data-theme="white-palette"]:not(.dark) .border-\[\#009488\] {
+  border-color: #0f172a !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .badge-teal {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .btn-primary {
+  background-color: #0f172a !important;
+  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
+}
+
+html[data-theme="white-palette"]:not(.dark) .btn-primary:hover {
+  background-color: #000000 !important;
+  background-image: linear-gradient(135deg, #000000 0%, #0f172a 100%) !important;
+}
+
+/* Progress bars: sleek slate-900 instead of green */
+html[data-theme="white-palette"]:not(.dark) .bg-teal-500,
+html[data-theme="white-palette"]:not(.dark) .bg-teal-600,
+html[data-theme="white-palette"]:not(.dark) .bg-emerald-500 {
+  background-color: #0f172a !important;
+}
+
+/* Active plan button and pills */
+html[data-theme="white-palette"]:not(.dark) .bg-\[\#009488\],
+html[data-theme="white-palette"]:not(.dark) .hover\:bg-\[\#009488\]:hover {
+  background-color: #0f172a !important;
 }

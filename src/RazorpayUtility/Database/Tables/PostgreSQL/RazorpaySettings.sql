@@ -3,8 +3,8 @@ DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM "RazorpaySettings") THEN
         UPDATE "RazorpaySettings"
-        SET "KeyId" = 'rzp_test_Tf0t6zwP0gLdPg',
-            "KeySecret" = 'XZuIrvy735yPL4zU8Ka9VSKm',
+        SET "KeyId" = 'rzp_test_TfnQ1aafSh7RW5',
+            "KeySecret" = 'YThfPO8FspD7W6dHIC9W8PdO',
             "WebhookSecret" = 'VargshalaSecret@2026',
             "Currency" = 'INR',
             "CompanyName" = 'Vargshala',
@@ -14,8 +14,8 @@ BEGIN
         INSERT INTO "RazorpaySettings" ("Id", "KeyId", "KeySecret", "WebhookSecret", "Currency", "CompanyName", "ThemeColor", "UpdatedAt")
         VALUES (
             gen_random_uuid(),
-            'rzp_test_Tf0t6zwP0gLdPg',
-            'XZuIrvy735yPL4zU8Ka9VSKm',
+            'rzp_test_TfnQ1aafSh7RW5',
+            'YThfPO8FspD7W6dHIC9W8PdO',
             'VargshalaSecret@2026',
             'INR',
             'Vargshala',

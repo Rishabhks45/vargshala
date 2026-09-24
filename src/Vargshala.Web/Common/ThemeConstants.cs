@@ -14,6 +14,7 @@ public static class ThemeConstants
     public static readonly List<ThemeTemplate> AllThemes = new()
     {
         new("deep-teal", "Deep Teal", "Theme 4 (Default)", "#004D40", "#009488", "#00796B", "#F0FDFA"),
+        new("white-palette", "White Palette", "Clean Light", "#FFFFFF", "#0F172A", "#334155", "#F8FAFC"),
         new("purple", "Purple", "Material Palette", "#4A148C", "#9C27B0", "#6A1B9A", "#F3E5F5"),
         new("deep-purple", "Deep Purple", "Material Palette", "#311B92", "#673AB7", "#4527A0", "#EDE7F6"),
         new("indigo", "Indigo", "Material Palette", "#1A237E", "#3F51B5", "#283593", "#E8EAF6"),
