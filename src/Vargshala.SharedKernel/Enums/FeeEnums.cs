@@ -57,6 +57,23 @@ public enum PaymentStatus
     Refunded = 4
 }
 
+public static class PaymentStatuses
+{
+    public const string Completed = nameof(PaymentStatus.Completed);
+    public const string Pending = nameof(PaymentStatus.Pending);
+    public const string Failed = nameof(PaymentStatus.Failed);
+    public const string Refunded = nameof(PaymentStatus.Refunded);
+}
+
+public static class PaymentStatusExtensions
+{
+    public static string GetDisplayName(this PaymentStatus status)
+        => EnumHelper.GetDisplayName(status);
+
+    public static PaymentStatus? ParsePaymentStatus(string? val)
+        => EnumHelper.TryParseFromDisplayName<PaymentStatus>(val, out var result) ? result : null;
+}
+
 public enum FeeDiscountType
 {
     [Display(Name = "Fixed Amount (₹)")]

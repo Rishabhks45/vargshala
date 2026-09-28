@@ -80,7 +80,7 @@ public class CollectPaymentCommandHandler : IRequestHandler<CollectPaymentComman
             PaymentMethod = req.PaymentMethod,
             TransactionReference = string.IsNullOrWhiteSpace(req.TransactionReference) ? null : req.TransactionReference.Trim(),
             Remarks = string.IsNullOrWhiteSpace(req.Remarks) ? null : req.Remarks.Trim(),
-            Status = "Completed",
+            Status = PaymentStatuses.Completed,
             CreatedBy = _currentUser.UserId,
             CreatedAt = DateTime.UtcNow
         };

@@ -22,6 +22,7 @@
     <!-- Authentication -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageVersion Include="QuestPDF" Version="2026.8.0" />
+    <PackageVersion Include="Razorpay" Version="3.3.2" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.8.0" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
     <!-- Swagger & API Documentation -->

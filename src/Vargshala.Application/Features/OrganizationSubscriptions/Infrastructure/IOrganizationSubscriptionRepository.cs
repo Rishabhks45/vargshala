@@ -5,13 +5,27 @@ namespace Vargshala.Application.Features.OrganizationSubscriptions.Infrastructur
 
 public interface IOrganizationSubscriptionRepository
 {
-    Task<OrganizationSubscription?> GetCurrentActiveSubscriptionAsync(Guid organizationId, CancellationToken cancellationToken = default);
-    Task<QuotaUsageDto> GetQuotaUsageAsync(Guid organizationId, CancellationToken cancellationToken = default);
-    Task<List<SubscriptionBillingHistoryDto>> GetBillingHistoryAsync(Guid organizationId, CancellationToken cancellationToken = default);
-    Task<SubscriptionPlan?> GetPlanByIdAsync(Guid planId, CancellationToken cancellationToken = default);
-    Task<Coupon?> GetCouponByCodeAsync(string code, CancellationToken cancellationToken = default);
-    Task IncrementCouponUsedCountAsync(Guid couponId, CancellationToken cancellationToken = default);
-    Task<SubscriptionPaymentReceiptDto?> GetSubscriptionPaymentReceiptAsync(Guid paymentId, CancellationToken cancellationToken = default);
+    Task<OrganizationSubscription?> GetCurrentActiveSubscriptionAsync(
+        Guid organizationId, 
+        CancellationToken cancellationToken = default);
+    Task<QuotaUsageDto> GetQuotaUsageAsync(
+        Guid organizationId, 
+        CancellationToken cancellationToken = default);
+    Task<List<SubscriptionBillingHistoryDto>> GetBillingHistoryAsync(
+        Guid organizationId, 
+        CancellationToken cancellationToken = default);
+    Task<SubscriptionPlan?> GetPlanByIdAsync(
+        Guid planId, 
+        CancellationToken cancellationToken = default);
+    Task<Coupon?> GetCouponByCodeAsync(
+        string code, 
+        CancellationToken cancellationToken = default);
+    Task IncrementCouponUsedCountAsync(
+        Guid couponId, 
+        CancellationToken cancellationToken = default);
+    Task<SubscriptionPaymentReceiptDto?> GetSubscriptionPaymentReceiptAsync(
+        Guid paymentId, 
+        CancellationToken cancellationToken = default);
     Task<OrganizationSubscription> CreateOrRenewSubscriptionAsync(
         Guid organizationId,
         Guid planId,
@@ -20,5 +34,35 @@ public interface IOrganizationSubscriptionRepository
         string transactionRef,
         string receiptNumber,
         string? remarks,
+        CancellationToken cancellationToken = default);
+
+    Task RecordFailedPaymentAsync(
+        Guid? organizationId,
+        decimal amount,
+        string paymentMethod,
+        string transactionRef,
+        string receiptNumber,
+        string? failureReason,
+        CancellationToken cancellationToken = default);
+
+    Task RecordRefundAsync(
+        string paymentTransactionRef,
+        string refundId,
+        decimal refundAmount,
+        CancellationToken cancellationToken = default);
+
+    Task<Payment?> GetPaymentByTransactionRefAsync(
+        string transactionRef,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CancelSubscriptionAsync(
+        Guid organizationId,
+        string? cancelReason = null,
+        CancellationToken cancellationToken = default);
+
+    Task<OrganizationSubscription> ChangeSubscriptionPlanDirectAsync(
+        Guid organizationId,
+        Guid targetPlanId,
+        string? remarks = null,
         CancellationToken cancellationToken = default);
 }

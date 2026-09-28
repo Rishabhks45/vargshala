@@ -203,6 +203,31 @@ public class OrganizationSubscriptionRepository : IOrganizationSubscriptionRepos
         string? remarks,
         CancellationToken cancellationToken = default)
     {
+        // 1. Idempotency Check: Prevent duplicate subscription/payment creation if both Webhook & UI confirm arrive
+        if (!string.IsNullOrWhiteSpace(transactionRef) && transactionRef != "FREE-PLAN")
+        {
+            var existingPayment = await _context.Payments
+                .Include(p => p.OrganizationSubscription)
+                    .ThenInclude(s => s!.Plan)
+                .Include(p => p.OrganizationSubscription)
+                    .ThenInclude(s => s!.Organization)
+                .FirstOrDefaultAsync(p => p.TransactionReference == transactionRef || (receiptNumber != null && p.ReceiptNumber == receiptNumber), cancellationToken);
+
+            if (existingPayment?.OrganizationSubscription != null)
+            {
+                if (existingPayment.Status != PaymentStatuses.Completed)
+                {
+                    existingPayment.Status = PaymentStatuses.Completed;
+                    if (!string.IsNullOrWhiteSpace(remarks))
+                    {
+                        existingPayment.Remarks = remarks;
+                    }
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                return existingPayment.OrganizationSubscription;
+            }
+        }
+
         var plan = await _context.SubscriptionPlans.FirstAsync(p => p.Id == planId, cancellationToken);
         var currentSub = await GetCurrentActiveSubscriptionAsync(organizationId, cancellationToken);
 
@@ -212,8 +237,21 @@ public class OrganizationSubscriptionRepository : IOrganizationSubscriptionRepos
         if (currentSub != null && currentSub.EndDate >= DateTime.UtcNow &&
             (currentSub.Status == SubscriptionStatus.Active || currentSub.Status == SubscriptionStatus.Trial))
         {
-            startDate = currentSub.StartDate;
-            endDate = CalculateEndDate(currentSub.EndDate, plan.BillingCycle);
+            if (currentSub.PlanId == plan.Id)
+            {
+                // Renewal of the same plan
+                startDate = currentSub.StartDate;
+                endDate = CalculateEndDate(currentSub.EndDate, plan.BillingCycle);
+            }
+            else
+            {
+                // Plan change (upgrade / downgrade) -> expire existing subscription
+                currentSub.Status = SubscriptionStatus.Expired;
+                currentSub.AutoRenew = false;
+                currentSub.UpdatedAt = DateTime.UtcNow;
+                startDate = DateTime.UtcNow;
+                endDate = CalculateEndDate(startDate, plan.BillingCycle);
+            }
         }
         else
         {
@@ -247,8 +285,194 @@ public class OrganizationSubscriptionRepository : IOrganizationSubscriptionRepos
             PaymentMethod = paymentMethod,
             TransactionReference = transactionRef,
             ReceiptNumber = receiptNumber,
-            Status = "Completed",
+            Status = PaymentStatuses.Completed,
             Remarks = remarks,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return await _context.OrganizationSubscriptions
+            .Include(s => s.Plan)
+            .Include(s => s.Organization)
+            .FirstAsync(s => s.Id == newSub.Id, cancellationToken);
+    }
+
+    public async Task RecordFailedPaymentAsync(
+        Guid? organizationId,
+        decimal amount,
+        string paymentMethod,
+        string transactionRef,
+        string receiptNumber,
+        string? failureReason,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(transactionRef)) return;
+
+        var existing = await _context.Payments
+            .FirstOrDefaultAsync(p => p.TransactionReference == transactionRef, cancellationToken);
+
+        if (existing != null)
+        {
+            existing.Status = PaymentStatuses.Failed;
+            existing.Remarks = failureReason ?? "Payment failed on gateway";
+            await _context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        if (organizationId.HasValue && organizationId.Value != Guid.Empty)
+        {
+            var failedPayment = new Payment
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = organizationId.Value,
+                PaymentType = PaymentType.Subscription,
+                Amount = amount,
+                PaymentDate = DateTime.UtcNow,
+                PaymentMethod = paymentMethod,
+                TransactionReference = transactionRef,
+                ReceiptNumber = receiptNumber,
+                Status = PaymentStatuses.Failed,
+                Remarks = failureReason ?? "Payment failed on gateway",
+                CreatedAt = DateTime.UtcNow,
+                IsActive = false
+            };
+
+            _context.Payments.Add(failedPayment);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task RecordRefundAsync(
+        string paymentTransactionRef,
+        string refundId,
+        decimal refundAmount,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(paymentTransactionRef)) return;
+
+        var payment = await _context.Payments
+            .Include(p => p.OrganizationSubscription)
+            .FirstOrDefaultAsync(p => p.TransactionReference == paymentTransactionRef, cancellationToken);
+
+        if (payment != null)
+        {
+            payment.Status = PaymentStatuses.Refunded;
+            payment.Remarks = $"Refund Processed: {refundId} (₹{refundAmount:N2}). {payment.Remarks}".Trim();
+
+            if (payment.OrganizationSubscription != null && refundAmount >= payment.Amount)
+            {
+                payment.OrganizationSubscription.Status = SubscriptionStatus.Cancelled;
+                payment.OrganizationSubscription.IsActive = false;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<Payment?> GetPaymentByTransactionRefAsync(
+        string transactionRef,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(transactionRef)) return null;
+
+        return await _context.Payments
+            .AsNoTracking()
+            .Include(p => p.OrganizationSubscription)
+                .ThenInclude(s => s!.Plan)
+            .FirstOrDefaultAsync(p => p.TransactionReference == transactionRef, cancellationToken);
+    }
+
+    public async Task<bool> CancelSubscriptionAsync(
+        Guid organizationId,
+        string? cancelReason = null,
+        CancellationToken cancellationToken = default)
+    {
+        var activeSub = await _context.OrganizationSubscriptions
+            .Where(s => s.OrganizationId == organizationId &&
+                        (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.Trial))
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (activeSub == null) return false;
+
+        activeSub.Status = SubscriptionStatus.Cancelled;
+        activeSub.AutoRenew = false;
+        activeSub.UpdatedAt = DateTime.UtcNow;
+
+        if (!string.IsNullOrWhiteSpace(cancelReason))
+        {
+            var latestPayment = await _context.Payments
+                .Where(p => p.OrganizationSubscriptionId == activeSub.Id)
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (latestPayment != null)
+            {
+                latestPayment.Remarks = string.IsNullOrWhiteSpace(latestPayment.Remarks)
+                    ? $"Cancelled: {cancelReason}"
+                    : $"{latestPayment.Remarks} | Cancelled: {cancelReason}";
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<OrganizationSubscription> ChangeSubscriptionPlanDirectAsync(
+        Guid organizationId,
+        Guid targetPlanId,
+        string? remarks = null,
+        CancellationToken cancellationToken = default)
+    {
+        var plan = await _context.SubscriptionPlans.FirstAsync(p => p.Id == targetPlanId, cancellationToken);
+
+        // Expire all current active/trial subscriptions for this organization
+        var currentSubs = await _context.OrganizationSubscriptions
+            .Where(s => s.OrganizationId == organizationId &&
+                        (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.Trial))
+            .ToListAsync(cancellationToken);
+
+        foreach (var sub in currentSubs)
+        {
+            sub.Status = SubscriptionStatus.Expired;
+            sub.AutoRenew = false;
+            sub.UpdatedAt = DateTime.UtcNow;
+        }
+
+        DateTime startDate = DateTime.UtcNow;
+        DateTime endDate = CalculateEndDate(startDate, plan.BillingCycle);
+
+        var newSub = new OrganizationSubscription
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organizationId,
+            PlanId = plan.Id,
+            StartDate = startDate,
+            EndDate = endDate,
+            Status = plan.Price == 0 && plan.BillingCycle == BillingCycle.Trial ? SubscriptionStatus.Trial : SubscriptionStatus.Active,
+            AutoRenew = false,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        _context.OrganizationSubscriptions.Add(newSub);
+
+        var payment = new Payment
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organizationId,
+            OrganizationSubscriptionId = newSub.Id,
+            PaymentType = PaymentType.Subscription,
+            Amount = plan.Price,
+            PaymentDate = DateTime.UtcNow,
+            PaymentMethod = "DirectChange",
+            TransactionReference = $"CHANGE-{Guid.NewGuid():N}"[..25],
+            ReceiptNumber = $"REC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}"[..25],
+            Status = PaymentStatuses.Completed,
+            Remarks = remarks ?? $"Direct plan change to {plan.Name}",
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };

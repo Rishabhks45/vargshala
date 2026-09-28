@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vargshala.Application.Features.OrganizationSubscriptions.Commands.CancelSubscription;
+using Vargshala.Application.Features.OrganizationSubscriptions.Commands.ChangeSubscriptionPlan;
 using Vargshala.Application.Features.OrganizationSubscriptions.Commands.ConfirmSubscriptionPayment;
 using Vargshala.Application.Features.OrganizationSubscriptions.Commands.CreateSubscriptionOrder;
 using Vargshala.Application.Features.OrganizationSubscriptions.Queries.GetCurrentSubscription;
@@ -83,6 +85,40 @@ public class OrganizationSubscriptionsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new ConfirmSubscriptionPaymentCommand(request), cancellationToken);
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Cancels the caller organization's active SaaS subscription.
+    /// </summary>
+    [HttpPost("cancel")]
+    [Authorize(Roles = "OrganizationAdmin,SuperAdmin,1001,1002")]
+    public async Task<IActionResult> CancelSubscription(
+        [FromBody] CancelSubscriptionRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new CancelSubscriptionCommand(request), cancellationToken);
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Switches the caller organization's active subscription plan directly (e.g. to a free tier or internal switch).
+    /// </summary>
+    [HttpPost("change-plan")]
+    [Authorize(Roles = "OrganizationAdmin,SuperAdmin,1001,1002")]
+    public async Task<IActionResult> ChangePlan(
+        [FromBody] ChangeSubscriptionPlanRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new ChangeSubscriptionPlanCommand(request), cancellationToken);
         if (!result.Success)
         {
             return BadRequest(result);

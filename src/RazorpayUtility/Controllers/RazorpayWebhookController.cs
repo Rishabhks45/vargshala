@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using RazorpayUtility.Interfaces;
 
@@ -8,7 +9,9 @@ namespace RazorpayUtility.Controllers;
 /// Controller for receiving and processing asynchronous Razorpay webhook events.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [Route("api/[controller]")]
+[Route("api/webhooks/razorpay")]
 public class RazorpayWebhookController : ControllerBase
 {
     private readonly IRazorpayWebhookService _webhookService;
@@ -28,29 +31,21 @@ public class RazorpayWebhookController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> HandleWebhook(CancellationToken cancellationToken)
     {
-        try
+        string signature = Request.Headers["X-Razorpay-Signature"].ToString();
+        using StreamReader reader = new(Request.Body);
+        string jsonPayload = await reader.ReadToEndAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(jsonPayload))
         {
-            string signature = Request.Headers["X-Razorpay-Signature"].ToString();
-            using StreamReader reader = new(Request.Body);
-            string jsonPayload = await reader.ReadToEndAsync(cancellationToken);
-
-            if (string.IsNullOrWhiteSpace(jsonPayload))
-            {
-                return BadRequest("Empty webhook body payload.");
-            }
-
-            bool processed = await _webhookService.ProcessWebhookAsync(jsonPayload, signature, cancellationToken);
-            if (!processed)
-            {
-                return BadRequest("Webhook processing or signature verification failed.");
-            }
-
-            return Ok(new { status = "acknowledged" });
+            return BadRequest("Empty webhook body payload.");
         }
-        catch (Exception ex)
+
+        bool processed = await _webhookService.ProcessWebhookAsync(jsonPayload, signature, cancellationToken);
+        if (!processed)
         {
-            _logger.LogError(ex, "Unhandled exception processing Razorpay webhook: {Message}", ex.Message);
-            return StatusCode(500, "Internal error processing webhook.");
+            return BadRequest("Webhook processing or signature verification failed.");
         }
+
+        return Ok(new { status = "acknowledged" });
     }
 }

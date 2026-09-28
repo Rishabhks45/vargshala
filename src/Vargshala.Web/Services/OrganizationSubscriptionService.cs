@@ -114,6 +114,58 @@ public class OrganizationSubscriptionService : IOrganizationSubscriptionService
         return ApiResponse<OrganizationSubscriptionDto>.FailureResponse("Failed to confirm subscription payment.");
     }
 
+    public async Task<ApiResponse<bool>> CancelSubscriptionAsync(
+        CancelSubscriptionRequest? request = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var res = await _httpClient.PostAsJsonAsync(
+                "api/v1/organization-subscriptions/cancel",
+                request ?? new CancelSubscriptionRequest(),
+                cancellationToken);
+
+            var response = await res.Content.ReadFromJsonAsync<ApiResponse<bool>>(cancellationToken: cancellationToken);
+            if (response != null)
+            {
+                return response;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling SaaS subscription");
+            return ApiResponse<bool>.FailureResponse(ex.Message);
+        }
+
+        return ApiResponse<bool>.FailureResponse("Failed to cancel subscription.");
+    }
+
+    public async Task<ApiResponse<OrganizationSubscriptionDto>> ChangePlanDirectAsync(
+        ChangeSubscriptionPlanRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var res = await _httpClient.PostAsJsonAsync(
+                "api/v1/organization-subscriptions/change-plan",
+                request,
+                cancellationToken);
+
+            var response = await res.Content.ReadFromJsonAsync<ApiResponse<OrganizationSubscriptionDto>>(cancellationToken: cancellationToken);
+            if (response != null)
+            {
+                return response;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error changing SaaS subscription plan directly");
+            return ApiResponse<OrganizationSubscriptionDto>.FailureResponse(ex.Message);
+        }
+
+        return ApiResponse<OrganizationSubscriptionDto>.FailureResponse("Failed to change subscription plan.");
+    }
+
     public async Task<byte[]?> GetSubscriptionReceiptPdfAsync(
         Guid paymentId,
         CancellationToken cancellationToken = default)

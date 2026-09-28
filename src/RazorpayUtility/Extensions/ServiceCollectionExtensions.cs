@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RazorpayUtility.Data;
 using RazorpayUtility.Interfaces;
@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
 
         // 3. Register Core Services
         services.AddScoped<IRazorpaySettingsRepository, RazorpaySettingsRepository>();
+        services.AddScoped<IRazorpayClientProvider, RazorpayClientProvider>();
         services.AddScoped<IRazorpayOrderService, RazorpayOrderService>();
         services.AddScoped<IRazorpayQrCodeService, RazorpayQrCodeService>();
         services.AddScoped<IRazorpayPaymentService, RazorpayPaymentService>();
